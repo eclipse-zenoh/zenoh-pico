@@ -27,10 +27,10 @@
 //       type of the value
 //   _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key_ptr) -> size_t
 //       hash function for the key
-//   _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) -> bool
-//       equality function for keys
 //
 // Optional:
+//   _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) -> bool
+//       equality function for keys (default: memcmp == 0)
 //   _ZP_HASHMAP_TEMPLATE_NAME
 //       base name for all generated symbols
 //       (default: _ZP_CAT(key_type, _ZP_CAT(val_type, hmap)))
@@ -68,11 +68,11 @@
 #ifndef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME
 #error "_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME must be defined before including hashmap_template.h"
 #endif
-#ifndef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
-#error "_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME must be defined before including hashmap_template.h"
-#endif
 
 // ── Optional macros with defaults ────────────────────────────────────────────
+#ifndef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) (*(key_a_ptr) == *(key_b_ptr))
+#endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT
 #define _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT 16
@@ -113,8 +113,8 @@
 // _occupied == false means the slot is free in the pool.
 
 typedef struct _ZP_HASHMAP_TEMPLATE_NODE_TYPE {
-    _ZP_HASHMAP_TEMPLATE_KEY_TYPE _key;
-    _ZP_HASHMAP_TEMPLATE_VAL_TYPE _val;
+    _ZP_HASHMAP_TEMPLATE_KEY_TYPE key;
+    _ZP_HASHMAP_TEMPLATE_VAL_TYPE val;
     size_t _next;  // index of next node in chain, CAPACITY == end-of-list
 } _ZP_HASHMAP_TEMPLATE_NODE_TYPE;
 
@@ -174,8 +174,8 @@ static inline _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     size_t idx = map->_buckets[b];
     while (idx != _ZP_HASHMAP_TEMPLATE_CAPACITY) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->_key, key)) {
-            return &n->_val;
+        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
+            return &n->val;
         }
         idx = n->_next;
     }
@@ -203,9 +203,11 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, is_empty)(const _ZP_HASHMA
 // Takes ownership of *key and *val via move.
 // If key already exists: old value is destroyed, new value is moved in.
 // The new key is destroyed (existing key kept).
-// Returns false only when the pool is exhausted and key is not already present.
+// Returns a pointer to the new location of inserted node, NULL only when the pool is exhausted and key is not already
+// present.
 
-static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
+static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
+                                                      insert)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
                                                               _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key,
                                                               _ZP_HASHMAP_TEMPLATE_VAL_TYPE *val) {
     size_t b = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT;
@@ -213,28 +215,28 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMPLA
     size_t idx = map->_buckets[b];
     while (idx != _ZP_HASHMAP_TEMPLATE_CAPACITY) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->_key, key)) {
+        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
             // Update: destroy incoming key, replace value in-place
             _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key);
-            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->_val);
-            _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->_val, val);
-            return true;
+            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
+            _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
+            return n;
         }
         idx = n->_next;
     }
     // New entry — allocate a pool node
     size_t new_idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_alloc)(map);
     if (new_idx == _ZP_HASHMAP_TEMPLATE_CAPACITY) {
-        return false;  // pool exhausted
+        return NULL;  // pool exhausted
     }
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[new_idx];
-    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&n->_key, key);
-    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->_val, val);
+    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&n->key, key);
+    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
     // Prepend to bucket chain (O(1))
     n->_next = map->_buckets[b];
     map->_buckets[b] = new_idx;
     map->_size++;
-    return true;
+    return n;
 }
 
 // ── remove ────────────────────────────────────────────────────────────────────
@@ -249,18 +251,18 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove)(_ZP_HASHMAP_TEMPLA
     size_t idx = map->_buckets[b];
     while (idx != _ZP_HASHMAP_TEMPLATE_CAPACITY) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->_key, key)) {
+        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
             // Unlink from chain
             if (prev == _ZP_HASHMAP_TEMPLATE_CAPACITY) {
                 map->_buckets[b] = n->_next;  // was the head
             } else {
                 map->_pool[prev]._next = n->_next;
             }
-            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->_key);
+            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->key);
             if (out_val != NULL) {
-                _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(out_val, &n->_val);
+                _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(out_val, &n->val);
             } else {
-                _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->_val);
+                _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
             }
             _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_free)(map, idx);
             map->_size--;
@@ -281,8 +283,8 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
         size_t idx = map->_buckets[b];
         while (idx != _ZP_HASHMAP_TEMPLATE_CAPACITY) {
             _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->_key);
-            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->_val);
+            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->key);
+            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
             idx = n->_next;
         }
         map->_buckets[b] = _ZP_HASHMAP_TEMPLATE_CAPACITY;

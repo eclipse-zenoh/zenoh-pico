@@ -34,16 +34,16 @@ typedef struct _z_background_executor_t {
 } _z_background_executor_t;
 
 z_result_t _z_background_executor_new(_z_background_executor_t *be);
-// Returns a handle to the spawned task and a result indicating whether the spawn was successful.
-// If the spawn was successful, the caller can use the handle to cancel the task or check its status.
-// If the spawn failed, the caller should not use the handle.
-// The background executor takes ownership of the future and will destroy it when the task is executed or cancelled or
-// in case of spawn failure.
-z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut);
+// Spawns a future to be executed in the background.
+// The caller can optionally receive a handle to the future, which can be used to check the future's status or cancel
+// it. If the caller does not care about the future's status, they can pass NULL as handle_out.
+z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *opt_handle_out);
 z_result_t _z_background_executor_suspend(_z_background_executor_t *be);
 z_result_t _z_background_executor_resume(_z_background_executor_t *be);
 z_result_t _z_background_executor_destroy(_z_background_executor_t *be);
-
+z_result_t _z_background_executor_get_fut_status(_z_background_executor_t *be, const _z_fut_handle_t *handle,
+                                                 _z_fut_status_t *status_out);
+z_result_t _z_background_executor_cancel_fut(_z_background_executor_t *be, const _z_fut_handle_t *handle);
 #ifdef __cplusplus
 extern "C" {
 #endif

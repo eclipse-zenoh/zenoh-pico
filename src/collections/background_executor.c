@@ -85,11 +85,12 @@ z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be)
     return _z_mutex_unlock(&be->_mutex);
 }
 
-z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut) {
+z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut,
+                                              _z_fut_handle_t *handle) {
     _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
-    z_result_t ret = _z_executor_spawn(&be->_executor, fut) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    *handle = _z_executor_spawn(&be->_executor, fut);
     _z_background_executor_inner_unlock_and_resume(be);
-    return ret;
+    return handle->is_valid ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
 
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
@@ -129,12 +130,16 @@ z_result_t _z_background_executor_new(_z_background_executor_t *be) {
     return ret;
 }
 
-z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut) {
+z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *handle_out) {
     if (_Z_RC_IS_NULL(&be->_inner)) {
         return _Z_ERR_INVALID;
     }
-
-    return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut);
+    if (handle_out != NULL) {
+        return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut, handle_out);
+    } else {
+        _z_fut_handle_t dummy_handle;
+        return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut, &dummy_handle);
+    }
 }
 
 z_result_t _z_background_executor_suspend(_z_background_executor_t *be) {
@@ -163,6 +168,25 @@ z_result_t _z_background_executor_destroy(_z_background_executor_t *be) {
     _z_task_join(&be->_task);
     _z_background_executor_inner_rc_drop(&be->_inner);
     return _Z_RES_OK;
+}
+
+z_result_t _z_background_executor_get_fut_status(_z_background_executor_t *be, const _z_fut_handle_t *handle,
+                                                 _z_fut_status_t *status_out) {
+    if (_Z_RC_IS_NULL(&be->_inner)) {
+        return _Z_ERR_INVALID;
+    }
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
+    *status_out = _z_executor_get_fut_status(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
+    return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
+}
+
+z_result_t _z_background_executor_cancel_fut(_z_background_executor_t *be, const _z_fut_handle_t *handle) {
+    if (_Z_RC_IS_NULL(&be->_inner)) {
+        return _Z_ERR_INVALID;
+    }
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
+    _z_executor_cancel_fut(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
+    return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
 }
 #else
 // to prevent "empty compilation unit" warning when multi-threading is disabled

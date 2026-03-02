@@ -42,9 +42,9 @@
 #define _ZP_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(x) (void)(x)
 #endif
 #ifndef _ZP_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME
-#define _ZP_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src)
-*(dst) = *(src);
-_ZP_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
+#define _ZP_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src) \
+    *(dst) = *(src);                                   \
+    _ZP_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
 #endif
 
 #define _ZP_DEQUE_TEMPLATE_TYPE _ZP_CAT(_ZP_DEQUE_TEMPLATE_NAME, t)

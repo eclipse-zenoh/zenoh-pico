@@ -90,7 +90,7 @@ static _z_fut_fn_result_t fn_finish(void *arg, _z_executor_t *ex) {
     a->call_count++;
     _z_condvar_signal_all(&a->condvar);
     _z_mutex_unlock(&a->mutex);
-    return (_z_fut_fn_result_t){._ready = true};
+    return (_z_fut_fn_result_t){._status = _Z_FUT_STATUS_READY};
 }
 
 // Reschedules with immediate wake_up_time on first call, finishes on second.
@@ -105,12 +105,11 @@ static _z_fut_fn_result_t fn_reschedule_once(void *arg, _z_executor_t *ex) {
     z_clock_advance_ms(&wake, a->wait_ms);
     if (count == 1) {
         return (_z_fut_fn_result_t){
-            ._ready = false,
-            ._has_wake_up_time = true,
+            ._status = _Z_FUT_STATUS_SLEEPING,
             ._wake_up_time = wake,
         };
     }
-    return (_z_fut_fn_result_t){._ready = true};
+    return (_z_fut_fn_result_t){._status = _Z_FUT_STATUS_READY};
 }
 
 static void destroy_fn(void *arg) {
@@ -140,9 +139,8 @@ static void test_spawn_runs_task(void) {
     test_arg_t arg;
     test_arg_init(&arg);
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_finish, destroy_fn);
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
 
     test_arg_wait_calls(&arg, 1);
     assert(arg.call_count == 1);
@@ -166,15 +164,16 @@ static void test_cancel_before_execution(void) {
     // Suspend so the task cannot be picked up before we cancel it
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_finish, destroy_fn);
-    _z_fut_handle_rc_t h = _z_fut_get_handle(&fut);
-    assert(!_Z_RC_IS_NULL(&h));
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h;
+    assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
+    assert(h.is_valid);
 
     // Cancel while executor is suspended
-    _z_fut_handle_cancel(_Z_RC_IN_VAL(&h));
-    assert(_z_fut_handle_status(_Z_RC_IN_VAL(&h)) == _Z_FUT_STATUS_CANCELLED);
+    assert(_z_background_executor_cancel_fut(&be, &h) == _Z_RES_OK);
+    _z_fut_status_t status;
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status == _Z_FUT_STATUS_READY);  // cancelled tasks are considered ready (not pending, running, or sleeping);
 
     assert(_z_background_executor_resume(&be) == _Z_RES_OK);
 
@@ -183,12 +182,11 @@ static void test_cancel_before_execution(void) {
     assert(arg.destroyed == true);
     assert(arg.call_count == 0);  // body never ran
 
-    _z_fut_handle_rc_drop(&h);
     assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
     test_arg_clear(&arg);
 }
 
-// A future with an immediate timed reschedule runs exactly twice.
+// A future with timed reschedule runs exactly twice.
 static void test_timed_reschedule_runs_twice(void) {
     printf("Test: timed reschedule runs task body exactly twice\n");
     _z_background_executor_t be;
@@ -198,9 +196,8 @@ static void test_timed_reschedule_runs_twice(void) {
     test_arg_init(&arg);
     arg.wait_ms = 500;
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_reschedule_once, destroy_fn);
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+    _z_fut_t fut = _z_fut_new(&arg, fn_reschedule_once, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
 
     z_sleep_ms(100);                        // give the background thread a chance to run the first call and reschedule
     assert(test_arg_get_calls(&arg) == 1);  // first call must have happened, but not the second yet
@@ -224,9 +221,8 @@ static void test_suspend_blocks_execution(void) {
 
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_finish, destroy_fn);
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
 
     // Give the background thread ample opportunity to (incorrectly) run the task
     z_sleep_ms(100);
@@ -258,9 +254,8 @@ static void test_nested_suspend_resume(void) {
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_finish, destroy_fn);
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
 
     z_sleep_ms(100);
     _z_mutex_lock(&arg.mutex);
@@ -296,9 +291,8 @@ static void test_multiple_tasks_all_complete(void) {
     for (int i = 0; i < N; i++) {
         test_arg_init(&args[i]);
         args[i].wait_ms = (unsigned long)(300 * (i + 1));  // stagger the wait times so tasks finish in order
-        _z_fut_t fut;
-        _z_fut_new(&fut, &args[i], fn_reschedule_once, destroy_fn);
-        assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+        _z_fut_t fut = _z_fut_new(&args[i], fn_reschedule_once, destroy_fn);
+        assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
     }
 
     for (int i = 0; i < N; i++) {
@@ -332,9 +326,8 @@ static void test_destroy_with_pending_tasks(void) {
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
     for (int i = 0; i < N; i++) {
         test_arg_init(&args[i]);
-        _z_fut_t fut;
-        _z_fut_new(&fut, &args[i], fn_finish, destroy_fn);
-        assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
+        _z_fut_t fut = _z_fut_new(&args[i], fn_finish, destroy_fn);
+        assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
     }
     // Resume so the background thread can process cancellations on destroy
     assert(_z_background_executor_resume(&be) == _Z_RES_OK);
@@ -360,19 +353,19 @@ static void test_handle_status_transitions(void) {
 
     assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
 
-    _z_fut_t fut;
-    _z_fut_new(&fut, &arg, fn_finish, destroy_fn);
-    _z_fut_handle_rc_t h = _z_fut_get_handle(&fut);
-    assert(_z_background_executor_spawn(&be, &fut) == _Z_RES_OK);
-
-    assert(_z_fut_handle_status(_Z_RC_IN_VAL(&h)) == _Z_FUT_STATUS_PENDING);
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h;
+    assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
+    _z_fut_status_t status;
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status == _Z_FUT_STATUS_RUNNING);
 
     assert(_z_background_executor_resume(&be) == _Z_RES_OK);
 
     test_arg_wait_calls(&arg, 1);
-    assert(_z_fut_handle_status(_Z_RC_IN_VAL(&h)) == _Z_FUT_STATUS_READY);
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status == _Z_FUT_STATUS_READY);
 
-    _z_fut_handle_rc_drop(&h);
     assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
     test_arg_clear(&arg);
 }
