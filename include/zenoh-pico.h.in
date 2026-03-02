@@ -35,9 +35,4 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 
-#ifdef ZENOH_PICO_COLLECTIONS_ATOMIC_H
-#error \
-    "atomic.h should never be included in a header, since atomic types have compiler-dependent layout, and thus should not be visible outside of zenoh-pico."
-#endif
-
 #endif /* ZENOH_PICO_H */

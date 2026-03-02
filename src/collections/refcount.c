@@ -22,8 +22,8 @@
 
 #define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
 typedef struct {
-    _z_atomic_uint32_t _strong_cnt;
-    _z_atomic_uint32_t _weak_cnt;
+    _z_atomic_size_t _strong_cnt;
+    _z_atomic_size_t _weak_cnt;
 } _z_inner_rc_t;
 
 static inline _z_inner_rc_t* _z_rc_inner(void* rc) { return (_z_inner_rc_t*)rc; }
@@ -34,8 +34,8 @@ z_result_t _z_rc_init(void** cnt) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _z_inner_rc_t* rc = *cnt;
-    _z_atomic_uint32_init(&rc->_strong_cnt, 1);
-    _z_atomic_uint32_init(&rc->_weak_cnt, 1);
+    _z_atomic_size_init(&rc->_strong_cnt, 1);
+    _z_atomic_size_init(&rc->_weak_cnt, 1);
     // Note we increase weak count by 1 when creating a new rc, to take ownership of counter.
     return _Z_RES_OK;
 }
@@ -45,7 +45,7 @@ z_result_t _z_rc_increase_strong(void* cnt) {
     if (c == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
-    if (_z_atomic_uint32_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
+    if (_z_atomic_size_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
         _Z_ERROR("Rc strong count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
@@ -57,7 +57,7 @@ z_result_t _z_rc_increase_weak(void* cnt) {
     if (c == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
-    if (_z_atomic_uint32_fetch_add(&c->_weak_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
+    if (_z_atomic_size_fetch_add(&c->_weak_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
         _Z_ERROR("Rc weak count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
@@ -66,7 +66,7 @@ z_result_t _z_rc_increase_weak(void* cnt) {
 
 bool _z_rc_decrease_strong(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
-    if (_z_atomic_uint32_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
+    if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
     // destroy fake weak that we created during strong init
@@ -76,7 +76,7 @@ bool _z_rc_decrease_strong(void** cnt) {
 
 bool _z_rc_decrease_weak(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
-    if (_z_atomic_uint32_fetch_sub(&c->_weak_cnt, 1, _z_memory_order_release) > 1) {
+    if (_z_atomic_size_fetch_sub(&c->_weak_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
     _z_atomic_thread_fence(
@@ -91,10 +91,10 @@ z_result_t _z_rc_weak_upgrade(void* cnt) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
-    uint32_t prev = _z_atomic_uint32_load(&c->_strong_cnt, _z_memory_order_relaxed);
+    size_t prev = _z_atomic_size_load(&c->_strong_cnt, _z_memory_order_relaxed);
     while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {
-        if (_z_atomic_uint32_compare_exchange_weak(&c->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire,
-                                                   _z_memory_order_relaxed)) {
+        if (_z_atomic_size_compare_exchange_weak(&c->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire,
+                                                 _z_memory_order_relaxed)) {
             return _Z_RES_OK;
         }
     }
@@ -105,8 +105,8 @@ size_t _z_rc_weak_count(void* rc) {
     if (rc == NULL) {
         return 0;
     }
-    size_t strong_count = _z_atomic_uint32_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
-    size_t weak_count = _z_atomic_uint32_load(&_z_rc_inner(rc)->_weak_cnt, _z_memory_order_relaxed);
+    size_t strong_count = _z_atomic_size_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
+    size_t weak_count = _z_atomic_size_load(&_z_rc_inner(rc)->_weak_cnt, _z_memory_order_relaxed);
     if (weak_count == 0) {
         return 0;
     }
@@ -114,11 +114,11 @@ size_t _z_rc_weak_count(void* rc) {
 }
 
 size_t _z_rc_strong_count(void* rc) {
-    return rc == NULL ? 0 : _z_atomic_uint32_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
+    return rc == NULL ? 0 : _z_atomic_size_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
 }
 
 typedef struct {
-    _z_atomic_uint32_t _strong_cnt;
+    _z_atomic_size_t _strong_cnt;
 } _z_inner_simple_rc_t;
 
 #define RC_CNT_SIZE sizeof(_z_inner_simple_rc_t)
@@ -134,14 +134,14 @@ z_result_t _z_simple_rc_init(void** rc, const void* val, size_t val_size) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _z_inner_simple_rc_t* inner = _z_simple_rc_inner(*rc);
-    _z_atomic_uint32_init(&inner->_strong_cnt, 1);
+    _z_atomic_size_init(&inner->_strong_cnt, 1);
     memcpy(_z_simple_rc_value(*rc), val, val_size);
     return _Z_RES_OK;
 }
 
 z_result_t _z_simple_rc_increase(void* rc) {
     _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
-    if (_z_atomic_uint32_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
+    if (_z_atomic_size_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
         _Z_ERROR("Rc strong count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
@@ -150,12 +150,12 @@ z_result_t _z_simple_rc_increase(void* rc) {
 
 bool _z_simple_rc_decrease(void* rc) {
     _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
-    if (_z_atomic_uint32_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
+    if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
     return true;
 }
 
 size_t _z_simple_rc_strong_count(void* rc) {
-    return rc == NULL ? 0 : _z_atomic_uint32_load(&(_z_simple_rc_inner(rc)->_strong_cnt), _z_memory_order_relaxed);
+    return rc == NULL ? 0 : _z_atomic_size_load(&(_z_simple_rc_inner(rc)->_strong_cnt), _z_memory_order_relaxed);
 }
