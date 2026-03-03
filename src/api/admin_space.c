@@ -443,9 +443,11 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_session_mutex_lock(session);
-#endif
+    if (_z_session_mutex_lock_if_open(session) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for admin space query - session may be closing");
+        _z_session_rc_drop(&session_rc);
+        return;
+    }
 
     _ze_admin_space_reply_list_t *replies = _ze_admin_space_reply_list_new();
 
@@ -465,9 +467,7 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
             break;
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
     _z_session_mutex_unlock(session);
-#endif
 
     _ze_admin_space_reply_list_t *next = replies;
     while (next != NULL) {

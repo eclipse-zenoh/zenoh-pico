@@ -571,7 +571,7 @@ static inline _z_encoding_t *_z_encoding_from_moved(z_moved_encoding_t *encoding
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_move,
                               _z_sample_clear)
-_Z_OWNED_FUNCTIONS_RC_IMPL(session)
+_Z_OWNED_FUNCTIONS_RC_IMPL_NO_DROP_CLONE(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_closure_sample_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_closure_query_callback_t, z_closure_drop_callback_t)
@@ -824,12 +824,20 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
 
 void z_close_options_default(z_close_options_t *options) { options->__dummy = 0; }
 
+void z_session_drop(z_moved_session_t *zs) {
+    if (!_Z_RC_IS_NULL(&zs->_this._rc)) {
+        // force closing of the session (since it might not do it automatically due to temporary pending rc copies)
+        z_close(&zs->_this._rc, NULL);
+        _z_session_rc_drop(&zs->_this._rc);
+    }
+}
+
 z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
     _ZP_UNUSED(options);
     if (_Z_RC_IS_NULL(zs)) {
         return _Z_RES_OK;
     }
-    _z_session_clear(_Z_RC_IN_VAL(zs));
+    _z_session_close(_Z_RC_IN_VAL(zs));
     return _Z_RES_OK;
 }
 
@@ -1757,7 +1765,13 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
 #else
     _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
 #endif
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for queryable keyexpr retrieval - session may be closing");
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
+        return ret;
+    }
     _z_session_queryable_rc_slist_t *node = zn->_local_queryable;
     while (node != NULL) {
         _z_session_queryable_rc_t *val = _z_session_queryable_rc_slist_value(node);
@@ -2049,7 +2063,13 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
 #else
     _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
 #endif
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for subscriber keyexpr retrieval - session may be closing");
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
+        return ret;
+    }
     _z_subscription_rc_slist_t *node = zn->_subscriptions;
     while (node != NULL) {
         _z_subscription_rc_t *val = _z_subscription_rc_slist_value(node);

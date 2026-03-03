@@ -170,7 +170,12 @@ _z_session_queryable_rc_t _z_register_session_queryable(_z_session_t *zn, _z_ses
     if (_Z_RC_IS_NULL(&out)) {
         return out;
     }
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to acquire session mutex for registering queryable - session is closed");
+        _z_session_queryable_rc_drop(&out);
+        *q = _z_session_queryable_null();
+        return out;
+    }
     _z_unsafe_queryable_cache_invalidate(zn);
     zn->_local_queryable = _z_session_queryable_rc_slist_push_empty(zn->_local_queryable);
     _z_session_queryable_rc_t *ret = _z_session_queryable_rc_slist_value(zn->_local_queryable);
@@ -194,7 +199,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &out->ke, wireexpr, peer, true));
     _z_queryable_cache_data_t *cache_entry = NULL;
     z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&out->ke));
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_queryable_lru_cache_get(&zn->_queryable_cache, out);
     if (cache_entry != NULL && cache_entry->is_remote != out->is_remote) {

@@ -170,7 +170,11 @@ _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_ki
     if (_Z_RC_IS_NULL(&out)) {
         return out;
     }
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _z_subscription_rc_drop(&out);
+        *s = _z_subscription_null();
+        return _z_subscription_rc_null();
+    }
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         zn->_subscriptions = _z_subscription_rc_slist_push_empty(zn->_subscriptions);
         ret = _z_subscription_rc_slist_value(zn->_subscriptions);
@@ -228,7 +232,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
                                             _z_transport_peer_common_t *peer) {
     out->is_remote = (peer != NULL);
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &out->ke, wireexpr, peer, true));
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&out->ke));
     _z_subscription_cache_data_t *cache_entry = NULL;
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_RX_CACHE == 1

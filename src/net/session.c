@@ -364,9 +364,9 @@ void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
 }
 #endif  // Z_FEATURE_AUTO_RECONNECT == 1
 
-void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
-
-bool _z_session_is_closed(const _z_session_t *session) { return session->_tp._type == _Z_TRANSPORT_NONE; }
+bool _z_session_is_closed(const _z_session_t *session) {
+    return _z_atomic_bool_load((_z_atomic_bool_t *)&session->_is_closed, _z_memory_order_acquire);
+}
 
 bool _z_session_has_router_peer(const _z_session_t *session) {
     if (session->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
@@ -391,8 +391,8 @@ bool _z_session_has_router_peer(const _z_session_t *session) {
     return false;
 }
 
-_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session) {
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(session);
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *weak) {
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(weak);
     if (!_Z_RC_IS_NULL(&sess_rc) && _z_session_is_closed(_Z_RC_IN_VAL(&sess_rc))) {
         _z_session_rc_drop(&sess_rc);
     }

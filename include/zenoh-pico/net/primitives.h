@@ -59,11 +59,12 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     key: The resource key to map to a numerical id. The callee gets
  *             the ownership of any allocated value.
+ *     out_id: The memory location where to store the numerical id of the declared resource.
  *
  * Returns:
- *     A numerical id of the declared resource.
+ *     0 in case of success, or a negative value identifying the error.
  */
-uint16_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key);
+z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id);
 
 /**
  * Associate a numerical id with the given resource key.
