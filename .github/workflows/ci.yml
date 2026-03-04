@@ -295,6 +295,7 @@ jobs:
 
       - name: Build with GCC 10
         run: |
+          sudo apt update
           sudo apt install -y ninja-build gcc-10
           CC=gcc-10 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
