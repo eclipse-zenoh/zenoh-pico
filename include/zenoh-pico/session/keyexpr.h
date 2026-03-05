@@ -64,6 +64,7 @@ static inline _z_keyexpr_t _z_keyexpr_null(void) {
 
 bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
+bool _z_keyexpr_intersects2(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
