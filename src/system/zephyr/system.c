@@ -21,6 +21,7 @@
 #endif
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -59,7 +60,11 @@ void z_free(void *ptr) { k_free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
+#ifdef CONFIG_ZENOH_PICO_THREADS_NUM
+#define Z_THREADS_NUM CONFIG_ZENOH_PICO_THREADS_NUM
+#else
 #define Z_THREADS_NUM 4
+#endif
 
 #ifdef CONFIG_TEST_EXTRA_STACK_SIZE
 #define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACK_SIZE
@@ -70,19 +75,91 @@ void z_free(void *ptr) { k_free(ptr); }
 #endif
 
 K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
-static int thread_index = 0;
+static bool thread_stack_in_use[Z_THREADS_NUM];
+static pthread_mutex_t thread_stack_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+    void *(*fun)(void *);
+    void *arg;
+    int stack_slot;
+} _z_zephyr_task_ctx_t;
+
+static _z_zephyr_task_ctx_t thread_ctx[Z_THREADS_NUM];
+
+static void _z_zephyr_task_release_stack(int stack_slot) {
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    thread_stack_in_use[stack_slot] = false;
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    _Z_DEBUG("zephyr task slot %d released", stack_slot);
+}
+
+static pthread_key_t thread_stack_key;
+static pthread_once_t thread_stack_key_once = PTHREAD_ONCE_INIT;
+
+static void _z_zephyr_task_stack_destr(void *ctx) {
+    if (ctx == NULL) {
+        return;
+    }
+    _z_zephyr_task_ctx_t *tctx = (_z_zephyr_task_ctx_t *)ctx;
+    _z_zephyr_task_release_stack(tctx->stack_slot);
+}
+
+static void _z_zephyr_task_stack_key_init(void) {
+    (void)pthread_key_create(&thread_stack_key, _z_zephyr_task_stack_destr);
+}
+
+static void *_z_zephyr_task_entry(void *ctx) {
+    _z_zephyr_task_ctx_t *tctx = (_z_zephyr_task_ctx_t *)ctx;
+    (void)pthread_once(&thread_stack_key_once, _z_zephyr_task_stack_key_init);
+    (void)pthread_setspecific(thread_stack_key, tctx);
+    return tctx->fun(tctx->arg);
+}
 
 /*------------------ Task ------------------*/
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    z_task_attr_t *lattr = NULL;
-    z_task_attr_t tmp;
-    if (attr == NULL) {
-        (void)pthread_attr_init(&tmp);
-        (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++], Z_PTHREAD_STACK_SIZE_DEFAULT);
-        lattr = &tmp;
+    if (attr != NULL) {
+        int rc = pthread_create(task, attr, fun, arg);
+        if (rc != 0) {
+            _z_report_system_error(rc);
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+        }
+        return _Z_RES_OK;
     }
 
-    _Z_CHECK_SYS_ERR(pthread_create(task, lattr, fun, arg));
+    int stack_slot = -1;
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    for (int i = 0; i < Z_THREADS_NUM; i++) {
+        if (!thread_stack_in_use[i]) {
+            thread_stack_in_use[i] = true;
+            stack_slot = i;
+            break;
+        }
+    }
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    if (stack_slot < 0) {
+        _Z_ERROR("zephyr task stack slot OOM: all %d stack slots are in use", Z_THREADS_NUM);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    _Z_DEBUG("zephyr task slot %d allocated for task %p", stack_slot, fun);
+
+    _z_zephyr_task_ctx_t *ctx = &thread_ctx[stack_slot];
+    ctx->fun = fun;
+    ctx->arg = arg;
+    ctx->stack_slot = stack_slot;
+
+    z_task_attr_t tmp;
+    (void)pthread_attr_init(&tmp);
+    (void)pthread_attr_setstack(&tmp, &thread_stack_area[stack_slot], Z_PTHREAD_STACK_SIZE_DEFAULT);
+
+    int rc = pthread_create(task, &tmp, _z_zephyr_task_entry, ctx);
+    if (rc != 0) {
+        (void)pthread_mutex_lock(&thread_stack_mutex);
+        thread_stack_in_use[stack_slot] = false;
+        (void)pthread_mutex_unlock(&thread_stack_mutex);
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+    return _Z_RES_OK;
 }
 
 z_result_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
