@@ -135,6 +135,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_sys_net_socket_t socket, bool owns_socket,
                                          _z_transport_peer_unicast_t **output_peer) {
 #if Z_FEATURE_CONNECTIVITY == 1
+    bool dispatch_connected_event = output_peer == NULL;
     _z_session_t *session = _z_transport_common_get_session(&ztu->_common);
     _z_transport_peer_common_t peer_snapshot = {0};
     _z_string_t link_src = _z_string_null();
@@ -192,24 +193,34 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                              &peer->common._link_dst);
         }
     }
-    peer_snapshot._remote_zid = peer->common._remote_zid;
-    peer_snapshot._remote_whatami = peer->common._remote_whatami;
-    if (_z_string_check(&peer->common._link_src) && (_z_string_copy(&link_src, &peer->common._link_src) != _Z_RES_OK)) {
-        _z_string_clear(&link_src);
+    if (dispatch_connected_event) {
+        peer_snapshot._remote_zid = peer->common._remote_zid;
+        peer_snapshot._remote_whatami = peer->common._remote_whatami;
+        if (_z_string_check(&peer->common._link_src) &&
+            (_z_string_copy(&link_src, &peer->common._link_src) != _Z_RES_OK)) {
+            _z_string_clear(&link_src);
+        }
+        if (_z_string_check(&peer->common._link_dst) &&
+            (_z_string_copy(&link_dst, &peer->common._link_dst) != _Z_RES_OK)) {
+            _z_string_clear(&link_dst);
+        }
     }
-    if (_z_string_check(&peer->common._link_dst) && (_z_string_copy(&link_dst, &peer->common._link_dst) != _Z_RES_OK)) {
-        _z_string_clear(&link_dst);
-    }
-    _z_connectivity_peer_connected(session, &peer_snapshot, false, mtu, is_streamed, is_reliable,
-                                   _z_string_check(&link_src) ? &link_src : NULL,
-                                   _z_string_check(&link_dst) ? &link_dst : NULL);
-    _z_string_clear(&link_src);
-    _z_string_clear(&link_dst);
 #endif
     _z_transport_peer_mutex_unlock(&ztu->_common);
 
     if (output_peer != NULL) {
         *output_peer = peer;
     }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    if (dispatch_connected_event) {
+        _z_connectivity_peer_connected(session, &peer_snapshot, false, mtu, is_streamed, is_reliable,
+                                       _z_string_check(&link_src) ? &link_src : NULL,
+                                       _z_string_check(&link_dst) ? &link_dst : NULL);
+    }
+    _z_string_clear(&link_src);
+    _z_string_clear(&link_dst);
+#endif
+
     return _Z_RES_OK;
 }

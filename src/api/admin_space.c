@@ -23,6 +23,10 @@
 
 #if Z_FEATURE_ADMIN_SPACE == 1
 
+#define _Z_ADMIN_SPACE_QUERYABLE_KE_BUF_SIZE 128
+#define _Z_ADMIN_SPACE_PEER_TRANSPORT_KE_BUF_SIZE 192
+#define _Z_ADMIN_SPACE_PEER_LINK_KE_BUF_SIZE 256
+
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_STARSTAR
 static z_result_t _ze_admin_space_queryable_ke(z_owned_keyexpr_t *ke, const z_id_t *zid) {
     z_internal_keyexpr_null(ke);
@@ -30,7 +34,7 @@ static z_result_t _ze_admin_space_queryable_ke(z_owned_keyexpr_t *ke, const z_id
     z_owned_string_t zid_str;
     _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
 
-    char buf[128];
+    char buf[_Z_ADMIN_SPACE_QUERYABLE_KE_BUF_SIZE];
     int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
                      (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
                      _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,
@@ -57,7 +61,7 @@ static z_result_t _ze_admin_space_peer_transport_ke(z_owned_keyexpr_t *ke, const
     z_owned_string_t peer_zid_str;
     _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(peer_zid, &peer_zid_str), z_string_drop(z_string_move(&zid_str)));
 
-    char buf[192];
+    char buf[_Z_ADMIN_SPACE_PEER_TRANSPORT_KE_BUF_SIZE];
     int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s%s%.*s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
                      (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
                      _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,
@@ -88,7 +92,7 @@ static z_result_t _ze_admin_space_peer_link_ke(z_owned_keyexpr_t *ke, const z_id
     _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(link_id, &link_id_str), z_string_drop(z_string_move(&zid_str));
                            z_string_drop(z_string_move(&peer_zid_str)));
 
-    char buf[256];
+    char buf[_Z_ADMIN_SPACE_PEER_LINK_KE_BUF_SIZE];
     int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s%s%.*s%s%s%s%.*s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
                      (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
                      _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,

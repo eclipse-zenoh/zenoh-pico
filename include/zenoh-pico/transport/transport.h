@@ -219,6 +219,18 @@ z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt, bool detach_tasks);
 void _z_transport_free(_z_transport_t **zt);
 
+static inline void _z_transport_get_link_properties(const _z_transport_common_t *transport, uint16_t *mtu,
+                                                    bool *is_streamed, bool *is_reliable) {
+    *mtu = 0;
+    *is_streamed = false;
+    *is_reliable = false;
+    if (transport != NULL && transport->_link != NULL) {
+        *mtu = transport->_link->_mtu;
+        *is_streamed = transport->_link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
+        *is_reliable = transport->_link->_cap._is_reliable;
+    }
+}
+
 #if Z_FEATURE_BATCHING == 1
 bool _z_transport_start_batching(_z_transport_t *zt);
 void _z_transport_stop_batching(_z_transport_t *zt);
