@@ -400,18 +400,19 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         entry->common._dbuf_best_effort = _z_wbuf_null();
 #endif
 #if Z_FEATURE_CONNECTIVITY == 1
+        _z_transport_peer_common_t connected_peer = {0};
         uint16_t mtu = 0;
         bool is_streamed = false;
         bool is_reliable = false;
-        if (ztm->_common._link != NULL) {
-            mtu = ztm->_common._link->_mtu;
-            is_streamed = ztm->_common._link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
-            is_reliable = ztm->_common._link->_cap._is_reliable;
-        }
-        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztm->_common), &entry->common, true, mtu,
+        _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
+        _z_transport_peer_common_copy(&connected_peer, &entry->common);
+        _z_transport_peer_mutex_unlock(&ztm->_common);
+        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztm->_common), &connected_peer, true, mtu,
                                        is_streamed, is_reliable,
-                                       _z_string_check(&entry->common._link_src) ? &entry->common._link_src : NULL,
-                                       _z_string_check(&entry->common._link_dst) ? &entry->common._link_dst : NULL);
+                                       _z_string_check(&connected_peer._link_src) ? &connected_peer._link_src : NULL,
+                                       _z_string_check(&connected_peer._link_dst) ? &connected_peer._link_dst : NULL);
+        _z_transport_peer_common_clear(&connected_peer);
+        _z_transport_peer_mutex_lock(&ztm->_common);
 #endif
     } else {  // Existing peer
         // Note that we receive data from the peer
@@ -421,11 +422,24 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
 #if Z_FEATURE_CONNECTIVITY == 1
-            _z_connectivity_peer_disconnected_from_transport(_z_transport_common_get_session(&ztm->_common),
-                                                             &ztm->_common, &entry->common, true);
+            _z_transport_peer_common_t disconnected_peer = {0};
+            uint16_t mtu = 0;
+            bool is_streamed = false;
+            bool is_reliable = false;
+            _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
+            _z_transport_peer_common_copy(&disconnected_peer, &entry->common);
 #endif
             // TODO: cleanup here should also be done on mappings/subs/etc...
             _z_transport_peer_multicast_slist_drop_first_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
+#if Z_FEATURE_CONNECTIVITY == 1
+            _z_transport_peer_mutex_unlock(&ztm->_common);
+            _z_connectivity_peer_disconnected(
+                _z_transport_common_get_session(&ztm->_common), &disconnected_peer, true, mtu, is_streamed, is_reliable,
+                _z_string_check(&disconnected_peer._link_src) ? &disconnected_peer._link_src : NULL,
+                _z_string_check(&disconnected_peer._link_dst) ? &disconnected_peer._link_dst : NULL);
+            _z_transport_peer_common_clear(&disconnected_peer);
+            _z_transport_peer_mutex_lock(&ztm->_common);
+#endif
             return _Z_RES_OK;
         }
         // Update SNs
@@ -493,11 +507,24 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
 #if Z_FEATURE_CONNECTIVITY == 1
-                _z_connectivity_peer_disconnected_from_transport(_z_transport_common_get_session(&ztm->_common),
-                                                                 &ztm->_common, &entry->common, true);
+                _z_transport_peer_common_t disconnected_peer = {0};
+                uint16_t mtu = 0;
+                bool is_streamed = false;
+                bool is_reliable = false;
+                _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
+                _z_transport_peer_common_copy(&disconnected_peer, &entry->common);
 #endif
                 ztm->_peers = _z_transport_peer_multicast_slist_drop_first_filter(
                     ztm->_peers, _z_transport_peer_multicast_eq, entry);
+#if Z_FEATURE_CONNECTIVITY == 1
+                _z_transport_peer_mutex_unlock(&ztm->_common);
+                _z_connectivity_peer_disconnected(
+                    _z_transport_common_get_session(&ztm->_common), &disconnected_peer, true, mtu, is_streamed,
+                    is_reliable, _z_string_check(&disconnected_peer._link_src) ? &disconnected_peer._link_src : NULL,
+                    _z_string_check(&disconnected_peer._link_dst) ? &disconnected_peer._link_dst : NULL);
+                _z_transport_peer_common_clear(&disconnected_peer);
+                _z_transport_peer_mutex_lock(&ztm->_common);
+#endif
             }
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;

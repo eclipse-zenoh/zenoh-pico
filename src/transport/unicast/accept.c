@@ -26,6 +26,42 @@
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
+#if Z_FEATURE_CONNECTIVITY == 1
+static void _zp_unicast_dispatch_connected_event(_z_transport_unicast_t *ztu, const _z_transport_peer_unicast_t *peer) {
+    if (ztu == NULL || peer == NULL) {
+        return;
+    }
+
+    _z_transport_peer_common_t connected_peer = {0};
+    uint16_t mtu = 0;
+    bool is_streamed = false;
+    bool is_reliable = false;
+    bool has_snapshot = false;
+
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    _z_transport_peer_unicast_slist_t *it = ztu->_peers;
+    while (it != NULL) {
+        _z_transport_peer_unicast_t *current_peer = _z_transport_peer_unicast_slist_value(it);
+        if (current_peer == peer) {
+            _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
+            _z_transport_peer_common_copy(&connected_peer, &current_peer->common);
+            has_snapshot = true;
+            break;
+        }
+        it = _z_transport_peer_unicast_slist_next(it);
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+
+    if (has_snapshot) {
+        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztu->_common), &connected_peer, false, mtu,
+                                       is_streamed, is_reliable,
+                                       _z_string_check(&connected_peer._link_src) ? &connected_peer._link_src : NULL,
+                                       _z_string_check(&connected_peer._link_dst) ? &connected_peer._link_dst : NULL);
+        _z_transport_peer_common_clear(&connected_peer);
+    }
+}
+#endif
+
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
     const _z_sys_net_socket_t *socket_ptr = _z_link_get_socket(ztu->_common._link);
@@ -83,10 +119,18 @@ static void *_zp_unicast_accept_task(void *ctx) {
             continue;
         }
         // Add peer
-        _z_transport_peer_unicast_t *new_peer;
-        _z_transport_peer_unicast_add(ztu, &param, con_socket, true, &new_peer);
+        _z_transport_peer_unicast_t *new_peer = NULL;
+        ret = _z_transport_peer_unicast_add(ztu, &param, con_socket, true, &new_peer);
+        if (ret != _Z_RES_OK) {
+            _z_socket_close(&con_socket);
+            continue;
+        }
         if (new_peer != NULL) {
-            _z_interest_push_declarations_to_peer(_z_transport_common_get_session(&ztu->_common), (void *)new_peer);
+            (void)_z_interest_push_declarations_to_peer(_z_transport_common_get_session(&ztu->_common),
+                                                        (void *)new_peer);
+#if Z_FEATURE_CONNECTIVITY == 1
+            _zp_unicast_dispatch_connected_event(ztu, new_peer);
+#endif
         }
     }
     z_free(accept_task_is_running);
