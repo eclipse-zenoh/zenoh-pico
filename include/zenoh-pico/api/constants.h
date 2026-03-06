@@ -139,6 +139,8 @@ typedef enum {
 #define _Z_KEYEXPR_SESSION_LEN (sizeof(_Z_KEYEXPR_SESSION) - 1)
 #define _Z_KEYEXPR_PICO "pico"
 #define _Z_KEYEXPR_PICO_LEN (sizeof(_Z_KEYEXPR_PICO) - 1)
+#define _Z_KEYEXPR_TRANSPORTS "transports"
+#define _Z_KEYEXPR_TRANSPORTS_LEN (sizeof(_Z_KEYEXPR_TRANSPORTS) - 1)
 #define _Z_KEYEXPR_TRANSPORT_UNICAST "transport/unicast"
 #define _Z_KEYEXPR_TRANSPORT_UNICAST_LEN (sizeof(_Z_KEYEXPR_TRANSPORT_UNICAST) - 1)
 #define _Z_KEYEXPR_TRANSPORT_MULTICAST "transport/multicast"
@@ -147,6 +149,8 @@ typedef enum {
 #define _Z_KEYEXPR_TRANSPORT_RAWETH_LEN (sizeof(_Z_KEYEXPR_TRANSPORT_RAWETH) - 1)
 #define _Z_KEYEXPR_LINK "link"
 #define _Z_KEYEXPR_LINK_LEN (sizeof(_Z_KEYEXPR_LINK) - 1)
+#define _Z_KEYEXPR_PEERS "peers"
+#define _Z_KEYEXPR_PEERS_LEN (sizeof(_Z_KEYEXPR_PEERS) - 1)
 #define _Z_KEYEXPR_SEPARATOR "/"
 #define _Z_KEYEXPR_SEPARATOR_LEN (sizeof(_Z_KEYEXPR_SEPARATOR) - 1)
 
