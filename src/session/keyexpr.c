@@ -1422,11 +1422,6 @@ bool _z_keyexpr_intersects_inner(const char *left, size_t left_len, const char *
                                  bool can_have_verbatim) {
     size_t left_processed = 0;
     size_t right_processed = 0;
-    /*
-    if ((left_len == right_len) && (strncmp(left, right, left_len) == 0)) {
-        return true;
-    }
-    */
 
     while (left_len > left_processed && right_len > right_processed) {
         left_len -= left_processed;
@@ -1511,6 +1506,11 @@ bool _z_keyexpr_intersects2(const _z_keyexpr_t *left, const _z_keyexpr_t *right)
     size_t right_len = _z_string_len(&right->_keyexpr);
     const char *left_start = _z_string_data(&left->_keyexpr);
     const char *right_start = _z_string_data(&right->_keyexpr);
+
+    // fast path for identical key expressions, do we really need it ?
+    if ((left_len == right_len) && (strncmp(left_start, right_start, left_len) == 0)) {
+        return true;
+    }
 
     return _z_keyexpr_intersects_inner(left_start, left_len, right_start, right_len, true);
 }
