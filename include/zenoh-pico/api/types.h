@@ -314,9 +314,9 @@ typedef struct {
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: **Deprecated**. This field is ignored.
- *     Congestion control for replies is always ``Z_CONGESTION_CONTROL_BLOCK``.
+ *     Congestion control for replies is taken from the query.
  *   z_priority_t priority: **Deprecated**. This field is ignored.
- *     Priority for replies is always ``Z_PRIORITY_DEFAULT``.
+ *     Priority for replies is taken from the query.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
@@ -324,8 +324,8 @@ typedef struct {
  */
 typedef struct {
     z_moved_encoding_t *encoding;
-    z_congestion_control_t congestion_control;  // Deprecated: ignored, always Z_CONGESTION_CONTROL_BLOCK
-    z_priority_t priority;                      // Deprecated: ignored, always Z_PRIORITY_DEFAULT
+    z_congestion_control_t congestion_control;  // Deprecated: ignored, taken from query
+    z_priority_t priority;                      // Deprecated: ignored, taken from query
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
@@ -339,17 +339,17 @@ typedef struct {
  *
  * Members:
  *   z_congestion_control_t congestion_control: **Deprecated**. This field is ignored.
- *     Congestion control for replies is always ``Z_CONGESTION_CONTROL_BLOCK``.
+ *     Congestion control for replies is taken from the query.
  *   z_priority_t priority: **Deprecated**. This field is ignored.
- *     Priority for replies is always ``Z_PRIORITY_DEFAULT``.
+ *     Priority for replies is taken from the query.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
-    z_congestion_control_t congestion_control;  // Deprecated: ignored, always Z_CONGESTION_CONTROL_BLOCK
-    z_priority_t priority;                      // Deprecated: ignored, always Z_PRIORITY_DEFAULT
+    z_congestion_control_t congestion_control;  // Deprecated: ignored, taken from query
+    z_priority_t priority;                      // Deprecated: ignored, taken from query
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
