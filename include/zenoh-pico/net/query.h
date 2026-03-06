@@ -38,6 +38,7 @@ typedef struct _z_query_t {
     _z_bytes_t _attachment;
     _z_string_t _parameters;
     _z_source_info_t _source_info;
+    _z_n_qos_t _qos;
     bool _anyke;
     bool _is_local;
 } _z_query_t;

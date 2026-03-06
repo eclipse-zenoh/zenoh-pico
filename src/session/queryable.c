@@ -230,7 +230,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 }
 
 z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_t *msgq, _z_wireexpr_t *q_key,
-                                 uint32_t qid, _z_transport_peer_common_t *peer) {
+                                 uint32_t qid, _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
     bool is_local = peer == NULL;
     _z_session_t *zn = _z_transport_common_get_session(transport);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
@@ -266,6 +266,7 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_wireexpr_clear(q_key); _z_msg_query_clear(msgq);
                            _z_queryable_cache_data_clear(&qle_infos); _z_query_rc_drop(&query))
 
+    _Z_RC_IN_VAL(&query)->_qos = qos;
     _Z_RC_IN_VAL(&query)->_is_local = is_local;
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_nb; i++) {

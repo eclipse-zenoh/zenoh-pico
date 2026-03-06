@@ -101,7 +101,8 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
         case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
+            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, req->_ext_qos,
+                                         peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             _z_n_msg_request_clear(req);
