@@ -211,9 +211,6 @@ static inline z_congestion_control_t z_internal_congestion_control_default_push(
 static inline z_congestion_control_t z_internal_congestion_control_default_request(void) {
     return Z_CONGESTION_CONTROL_BLOCK;
 }
-static inline z_congestion_control_t z_internal_congestion_control_default_response(void) {
-    return Z_CONGESTION_CONTROL_BLOCK;
-}
 
 /**
  * Priority of Zenoh messages values.
