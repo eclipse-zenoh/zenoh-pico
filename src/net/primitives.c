@@ -438,8 +438,8 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
         _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_NOT_MATCH);
     }
     // Build the reply context decorator. This is NOT the final reply.
-    _z_n_qos_t qos = _z_n_qos_create(is_express, _z_n_qos_get_congestion_control(query->_qos),
-                                      _z_n_qos_get_priority(query->_qos));
+    _z_n_qos_t qos =
+        _z_n_qos_create(is_express, _z_n_qos_get_congestion_control(query->_qos), _z_n_qos_get_priority(query->_qos));
     if (query->_is_local) {
         return _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos, timestamp, att,
                                                 source_info);
