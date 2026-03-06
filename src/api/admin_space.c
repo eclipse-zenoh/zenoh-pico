@@ -539,11 +539,10 @@ static z_result_t _ze_admin_space_encode_pico_transport_0_multicast_peer(_z_json
     return _ze_admin_space_encode_multicast_peer(je, pctx->peer);
 }
 
-static z_result_t _ze_admin_space_query_handle_pico_transport_0_unicast_peers(const z_loaned_query_t *query,
-                                                                              const z_id_t *local_zid,
-                                                                              _z_transport_unicast_t *tp,
-                                                                              _ze_admin_space_reply_list_t **replies) {
-    z_result_t ret = _Z_RES_OK;
+static void _ze_admin_space_query_handle_pico_transport_0_unicast_peers(const z_loaned_query_t *query,
+                                                                        const z_id_t *local_zid,
+                                                                        _z_transport_unicast_t *tp,
+                                                                        _ze_admin_space_reply_list_t **replies) {
     _z_transport_peer_mutex_lock(&tp->_common);
 
     for (_z_transport_peer_unicast_slist_t *peers = tp->_peers; peers != NULL;
@@ -551,30 +550,34 @@ static z_result_t _ze_admin_space_query_handle_pico_transport_0_unicast_peers(co
         const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(peers);
 
         z_owned_keyexpr_t ke;
+        z_result_t ret;
+
         ret = _ze_admin_space_pico_transports_0_peers_peer_ke(&ke, local_zid, &peer->common._remote_zid);
         if (ret != _Z_RES_OK) {
-            break;
+            _Z_WARN("Failed to build key expression for pico/session/transports/0/peers peer query: %d", ret);
+            continue;
         }
 
         _ze_admin_space_unicast_peer_ctx_t ctx = {
             .peer = peer,
         };
+
         ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), &ctx, replies,
                                                   _ze_admin_space_encode_pico_transport_0_unicast_peer);
-        z_keyexpr_drop(z_keyexpr_move(&ke));
         if (ret != _Z_RES_OK) {
-            break;
+            _Z_WARN("Failed to handle admin space query for pico/session/transports/0/peers peer endpoint: %d", ret);
         }
+
+        z_keyexpr_drop(z_keyexpr_move(&ke));
     }
 
     _z_transport_peer_mutex_unlock(&tp->_common);
-    return ret;
 }
 
-static z_result_t _ze_admin_space_query_handle_pico_transport_0_multicast_peers(
-    const z_loaned_query_t *query, const z_id_t *local_zid, _z_transport_multicast_t *tp,
-    _ze_admin_space_reply_list_t **replies) {
-    z_result_t ret = _Z_RES_OK;
+static void _ze_admin_space_query_handle_pico_transport_0_multicast_peers(const z_loaned_query_t *query,
+                                                                          const z_id_t *local_zid,
+                                                                          _z_transport_multicast_t *tp,
+                                                                          _ze_admin_space_reply_list_t **replies) {
     _z_transport_peer_mutex_lock(&tp->_common);
 
     for (_z_transport_peer_multicast_slist_t *peers = tp->_peers; peers != NULL;
@@ -582,95 +585,119 @@ static z_result_t _ze_admin_space_query_handle_pico_transport_0_multicast_peers(
         const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(peers);
 
         z_owned_keyexpr_t ke;
+        z_result_t ret;
+
         ret = _ze_admin_space_pico_transports_0_peers_peer_ke(&ke, local_zid, &peer->common._remote_zid);
         if (ret != _Z_RES_OK) {
-            break;
+            _Z_WARN("Failed to build key expression for pico/session/transports/0/peers peer query: %d", ret);
+            continue;
         }
 
         _ze_admin_space_multicast_peer_ctx_t ctx = {
             .peer = peer,
         };
+
         ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), &ctx, replies,
                                                   _ze_admin_space_encode_pico_transport_0_multicast_peer);
-        z_keyexpr_drop(z_keyexpr_move(&ke));
         if (ret != _Z_RES_OK) {
-            break;
+            _Z_WARN("Failed to handle admin space query for pico/session/transports/0/peers peer endpoint: %d", ret);
         }
+
+        z_keyexpr_drop(z_keyexpr_move(&ke));
     }
 
     _z_transport_peer_mutex_unlock(&tp->_common);
-    return ret;
 }
 
-static z_result_t _ze_admin_space_query_handle_pico_transport_0_peers(const z_loaned_query_t *query,
-                                                                      _z_session_t *session,
-                                                                      _ze_admin_space_reply_list_t **replies) {
+static void _ze_admin_space_query_handle_pico_transport_0_peers(const z_loaned_query_t *query, _z_session_t *session,
+                                                                _ze_admin_space_reply_list_t **replies) {
     switch (session->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            return _ze_admin_space_query_handle_pico_transport_0_unicast_peers(
-                query, &session->_local_zid, &session->_tp._transport._unicast, replies);
+            _ze_admin_space_query_handle_pico_transport_0_unicast_peers(query, &session->_local_zid,
+                                                                        &session->_tp._transport._unicast, replies);
+            break;
 
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            return _ze_admin_space_query_handle_pico_transport_0_multicast_peers(
-                query, &session->_local_zid, &session->_tp._transport._multicast, replies);
+            _ze_admin_space_query_handle_pico_transport_0_multicast_peers(query, &session->_local_zid,
+                                                                          &session->_tp._transport._multicast, replies);
+            break;
 
         case _Z_TRANSPORT_RAWETH_TYPE:
-            return _ze_admin_space_query_handle_pico_transport_0_multicast_peers(
-                query, &session->_local_zid, &session->_tp._transport._raweth, replies);
+            _ze_admin_space_query_handle_pico_transport_0_multicast_peers(query, &session->_local_zid,
+                                                                          &session->_tp._transport._raweth, replies);
+            break;
 
         default:
-            return _Z_RES_OK;
+            break;
     }
 }
 
-static z_result_t _ze_admin_space_query_handle_pico(const z_loaned_query_t *query, _z_session_t *session,
-                                                    _ze_admin_space_reply_list_t **replies) {
+static void _ze_admin_space_query_handle_pico(const z_loaned_query_t *query, _z_session_t *session,
+                                              _ze_admin_space_reply_list_t **replies) {
     z_owned_keyexpr_t ke;
     z_result_t ret;
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_pico_ke(&ke, &session->_local_zid));
-    ret =
-        _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies, _ze_admin_space_encode_pico);
-    z_keyexpr_drop(z_keyexpr_move(&ke));
-    if (ret != _Z_RES_OK) {
-        return ret;
+    ret = _ze_admin_space_pico_ke(&ke, &session->_local_zid);
+    if (ret == _Z_RES_OK) {
+        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
+                                                  _ze_admin_space_encode_pico);
+        if (ret != _Z_RES_OK) {
+            _Z_WARN("Failed to handle admin space query for pico endpoint: %d", ret);
+        }
+        z_keyexpr_drop(z_keyexpr_move(&ke));
+    } else {
+        _Z_WARN("Failed to build key expression for pico query: %d", ret);
     }
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_pico_session_ke(&ke, &session->_local_zid));
-    ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                              _ze_admin_space_encode_pico_session);
-    z_keyexpr_drop(z_keyexpr_move(&ke));
-    if (ret != _Z_RES_OK) {
-        return ret;
+    ret = _ze_admin_space_pico_session_ke(&ke, &session->_local_zid);
+    if (ret == _Z_RES_OK) {
+        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
+                                                  _ze_admin_space_encode_pico_session);
+        if (ret != _Z_RES_OK) {
+            _Z_WARN("Failed to handle admin space query for pico/session endpoint: %d", ret);
+        }
+        z_keyexpr_drop(z_keyexpr_move(&ke));
+    } else {
+        _Z_WARN("Failed to build key expression for pico/session query: %d", ret);
     }
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_pico_transports_ke(&ke, &session->_local_zid));
-    ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                              _ze_admin_space_encode_pico_transports);
-    z_keyexpr_drop(z_keyexpr_move(&ke));
-    if (ret != _Z_RES_OK) {
-        return ret;
+    ret = _ze_admin_space_pico_transports_ke(&ke, &session->_local_zid);
+    if (ret == _Z_RES_OK) {
+        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
+                                                  _ze_admin_space_encode_pico_transports);
+        if (ret != _Z_RES_OK) {
+            _Z_WARN("Failed to handle admin space query for pico/session/transports endpoint: %d", ret);
+        }
+        z_keyexpr_drop(z_keyexpr_move(&ke));
+    } else {
+        _Z_WARN("Failed to build key expression for pico/session/transports query: %d", ret);
     }
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_pico_transports_0_ke(&ke, &session->_local_zid));
-    ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                              _ze_admin_space_encode_pico_transport_0);
-    z_keyexpr_drop(z_keyexpr_move(&ke));
-    if (ret != _Z_RES_OK) {
-        return ret;
+    ret = _ze_admin_space_pico_transports_0_ke(&ke, &session->_local_zid);
+    if (ret == _Z_RES_OK) {
+        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
+                                                  _ze_admin_space_encode_pico_transport_0);
+        if (ret != _Z_RES_OK) {
+            _Z_WARN("Failed to handle admin space query for pico/session/transports/0 endpoint: %d", ret);
+        }
+        z_keyexpr_drop(z_keyexpr_move(&ke));
+    } else {
+        _Z_WARN("Failed to build key expression for pico/session/transports/0 query: %d", ret);
     }
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_pico_transports_0_peers_ke(&ke, &session->_local_zid));
-    ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                              _ze_admin_space_encode_pico_transport_0_peers);
-    z_keyexpr_drop(z_keyexpr_move(&ke));
-    if (ret != _Z_RES_OK) {
-        return ret;
+    ret = _ze_admin_space_pico_transports_0_peers_ke(&ke, &session->_local_zid);
+    if (ret == _Z_RES_OK) {
+        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
+                                                  _ze_admin_space_encode_pico_transport_0_peers);
+        if (ret != _Z_RES_OK) {
+            _Z_WARN("Failed to handle admin space query for pico/session/transports/0/peers endpoint: %d", ret);
+        }
+        z_keyexpr_drop(z_keyexpr_move(&ke));
+    } else {
+        _Z_WARN("Failed to build key expression for pico/session/transports/0/peers query: %d", ret);
     }
 
-    _Z_RETURN_IF_ERR(_ze_admin_space_query_handle_pico_transport_0_peers(query, session, replies));
-
-    return _Z_RES_OK;
+    _ze_admin_space_query_handle_pico_transport_0_peers(query, session, replies);
 }
 
 static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
@@ -685,13 +712,7 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
     _ze_admin_space_reply_list_t *replies = _ze_admin_space_reply_list_new();
 
-    z_result_t res = _ze_admin_space_query_handle_pico(query, session, &replies);
-    if (res != _Z_RES_OK) {
-        _Z_ERROR("Failed to handle admin space query for pico endpoint: %d", res);
-        _ze_admin_space_reply_list_free(&replies);
-        _z_session_rc_drop(&session_rc);
-        return;
-    }
+    _ze_admin_space_query_handle_pico(query, session, &replies);
 
     _ze_admin_space_reply_list_t *next = replies;
     while (next != NULL) {
@@ -701,7 +722,7 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
         z_owned_encoding_t encoding;
         if (z_encoding_clone(&encoding, z_encoding_application_json()) == _Z_RES_OK) {
             opt.encoding = z_encoding_move(&encoding);
-            res = z_query_reply(query, z_keyexpr_loan(&reply->ke), z_bytes_move(&reply->payload), &opt);
+            z_result_t res = z_query_reply(query, z_keyexpr_loan(&reply->ke), z_bytes_move(&reply->payload), &opt);
             if (res != _Z_RES_OK) {
                 z_view_string_t keystr;
                 if (z_keyexpr_as_view_string(z_keyexpr_loan(&reply->ke), &keystr) == _Z_RES_OK) {
