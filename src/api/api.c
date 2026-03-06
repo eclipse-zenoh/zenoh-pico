@@ -1790,7 +1790,7 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
-    options->congestion_control = z_internal_congestion_control_default_response();
+    options->congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1820,8 +1820,8 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 #endif
     z_result_t ret =
         _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr, _z_bytes_from_moved(payload),
-                      _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
-                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment), source_info);
+                      _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.is_express, opts.timestamp,
+                      _z_bytes_from_moved(opts.attachment), source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1846,15 +1846,15 @@ z_result_t _z_query_reply_sample(const z_loaned_query_t *query, z_loaned_sample_
     }
 
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &sample->keyexpr, &sample->payload, &sample->encoding,
-                                   sample->kind, opts.congestion_control, opts.priority, opts.is_express,
-                                   &sample->timestamp, &sample->attachment, &sample->source_info);
+                                   sample->kind, opts.is_express, &sample->timestamp, &sample->attachment,
+                                   &sample->source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     return ret;
 }
 
 void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
-    options->congestion_control = z_internal_congestion_control_default_response();
+    options->congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1882,8 +1882,8 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     source_info = opts.source_info;
 #endif
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr, NULL, NULL, Z_SAMPLE_KIND_DELETE,
-                                   opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
-                                   _z_bytes_from_moved(opts.attachment), source_info);
+                                   opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment),
+                                   source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);

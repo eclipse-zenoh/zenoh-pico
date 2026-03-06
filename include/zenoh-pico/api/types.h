@@ -313,8 +313,10 @@ typedef struct {
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
- *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
- *   z_priority_t priority: The priority of this message when routed.
+ *   z_congestion_control_t congestion_control: **Deprecated**. This field is ignored.
+ *     Congestion control for replies is always ``Z_CONGESTION_CONTROL_BLOCK``.
+ *   z_priority_t priority: **Deprecated**. This field is ignored.
+ *     Priority for replies is always ``Z_PRIORITY_DEFAULT``.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
@@ -322,8 +324,8 @@ typedef struct {
  */
 typedef struct {
     z_moved_encoding_t *encoding;
-    z_congestion_control_t congestion_control;
-    z_priority_t priority;
+    z_congestion_control_t congestion_control;  // Deprecated: ignored, always Z_CONGESTION_CONTROL_BLOCK
+    z_priority_t priority;                      // Deprecated: ignored, always Z_PRIORITY_DEFAULT
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
@@ -336,16 +338,18 @@ typedef struct {
  * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del`.
  *
  * Members:
- *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
- *   z_priority_t priority: The priority of this message when routed.
+ *   z_congestion_control_t congestion_control: **Deprecated**. This field is ignored.
+ *     Congestion control for replies is always ``Z_CONGESTION_CONTROL_BLOCK``.
+ *   z_priority_t priority: **Deprecated**. This field is ignored.
+ *     Priority for replies is always ``Z_PRIORITY_DEFAULT``.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
-    z_congestion_control_t congestion_control;
-    z_priority_t priority;
+    z_congestion_control_t congestion_control;  // Deprecated: ignored, always Z_CONGESTION_CONTROL_BLOCK
+    z_priority_t priority;                      // Deprecated: ignored, always Z_PRIORITY_DEFAULT
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;

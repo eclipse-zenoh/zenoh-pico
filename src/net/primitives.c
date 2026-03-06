@@ -429,8 +429,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
 }
 
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_declared_keyexpr_t *keyexpr,
-                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
-                         const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
+                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind, bool is_express,
                          const _z_timestamp_t *timestamp, _z_bytes_t *att, _z_source_info_t *source_info) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _Z_DEBUG("send_reply: rid=%jd kind=%d", (intmax_t)query->_request_id, (int)kind);
@@ -439,7 +438,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
         _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_NOT_MATCH);
     }
     // Build the reply context decorator. This is NOT the final reply.
-    _z_n_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
+    _z_n_qos_t qos = _z_n_qos_make(is_express, true, Z_PRIORITY_DEFAULT);
     if (query->_is_local) {
         return _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos, timestamp, att,
                                                 source_info);
