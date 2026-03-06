@@ -978,8 +978,8 @@ z_result_t _z_declared_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs
 }
 
 typedef enum _z_chunk_match_result_t {
-    _Z_CHUNK_MATCH_RESULT_YES,
     _Z_CHUNK_MATCH_RESULT_NO,
+    _Z_CHUNK_MATCH_RESULT_YES,
     _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD,
     _Z_CHUNK_MATCH_RESULT_RIGHT_SUPERWILD,
 } _z_chunk_match_result_t;
@@ -1014,22 +1014,13 @@ static inline bool _z_keyexpr_is_double_star(const char *begin, const char *end)
     return len == 2 && begin[0] == _Z_STAR && begin[1] == _Z_STAR;
 }
 
-bool _z_chunks_intersect_special(const char *lbegin, const char *lend, const char *rbegin, const char *rend) {
-    // left is a non-empty part of a chunk following a stardsl and preceeding a stardsl i.e. $*lllll$*
-    // right is chunk that does not start, nor end with a stardsl(s), but can contain stardsl in the middle
-    // original left chunk has the following form $*L1$*L2$*...$*LN$*
-    // so there are only 2 cases where it can intersect with right:
-    // 1. right contains a stardsl in the middle, in this case bound stardsls in left can match parts before and after
-    // stardsl in the right, while right's stardsl can match the middle part of left
-    //
-    // 2. right does not contain a stardsl, but every subchunk of left (L1, L2, ..., LN) is present in right in the
-    // correct order (and they do not overlap).
+static inline bool _z_chunk_contains_stardsl(const char *begin, const char *end) {
+    return memchr(begin, _Z_DSL0, (size_t)(end - begin)) != NULL;
+}
 
-    if (memchr(rbegin, _Z_DSL0, (size_t)(rend - rbegin)) != NULL) {
-        return true;
-    }
-
-    // right is guaranteed not to have stardsl
+static bool _z_chunks_right_contains_all_stardsl_subchunks_of_left(const char *lbegin, const char *lend,
+                                                                   const char *rbegin, const char *rend) {
+    // Check if right chunk contains all stardsl subchunks of left chunk
     const char *next_dsl = NULL;
     bool matched = false;
     do {
@@ -1050,6 +1041,21 @@ bool _z_chunks_intersect_special(const char *lbegin, const char *lend, const cha
         lbegin += clen + _Z_DSL_LEN;  // skip the matched part and the following stardsl
     } while (matched && next_dsl != NULL);
     return matched;
+}
+
+bool _z_chunks_intersect_special(const char *lbegin, const char *lend, const char *rbegin, const char *rend) {
+    // left is a non-empty part of a chunk following a stardsl and preceeding a stardsl i.e. $*lllll$*
+    // right is chunk that does not start, nor end with a stardsl(s), but can contain stardsl in the middle
+    // original left chunk has the following form $*L1$*L2$*...$*LN$*
+    // so there are only 2 cases where it can intersect with right:
+    // 1. right contains a stardsl in the middle, in this case bound stardsls in left can match parts before and after
+    // stardsl in the right, while right's stardsl can match the middle part of left
+    //
+    // 2. right does not contain a stardsl, but every subchunk of left (L1, L2, ..., LN) is present in right in the
+    // correct order (and they do not overlap).
+
+    return _z_chunk_contains_stardsl(rbegin, rend) ||
+           _z_chunks_right_contains_all_stardsl_subchunks_of_left(lbegin, lend, rbegin, rend);
 }
 
 _z_chunk_forward_match_data_t _z_chunks_intersect_forward_backward(const char *lbegin, const char *lend,
@@ -1445,4 +1451,344 @@ bool _z_keyexpr_intersects2(const _z_keyexpr_t *left, const _z_keyexpr_t *right)
     }
 
     return _z_keyexpr_intersects_inner(left_start, left_start + left_len, right_start, right_start + right_len, true);
+}
+
+bool _z_chunks_include_special(const char *lbegin, const char *lend, const char *rbegin, const char *rend) {
+    // left is a non-empty part of a chunk following a stardsl and preceeding a stardsl i.e. $*lllll$*
+    // right is chunk that does not start, nor end with a stardsl(s), but can contain stardsl in the middle
+    // original left chunk has the following form $*L1$*L2$*...$*LN$*
+    // so there is only 1 case where it can include right:
+    //
+    // Every subchunk of left (L1, L2, ..., LN) is present in right in the
+    // correct order (and they do not overlap), which implies that right has the form
+    // R1L1R2L2R3...RNLNR(N+1), in this case all Ri can be included by $* in left
+    return _z_chunks_right_contains_all_stardsl_subchunks_of_left(lbegin, lend, rbegin, rend);
+}
+
+_z_chunk_forward_match_data_t _z_chunks_include_forward_backward(const char *lbegin, const char *lend,
+                                                                 const char *rbegin, const char *rend) {
+    // left is a part of a chunk following a stardsl. i.e $*llllll
+    _z_chunk_forward_match_data_t result = {0};
+    result.lend = _z_chunk_end(lbegin, lend);
+    result.rend = _z_chunk_end(rbegin, rend);
+
+    lend = result.lend;
+    rend = result.rend;
+
+    while (lend > lbegin && rend > rbegin) {
+        lend--;
+        rend--;
+        if (*lend == _Z_DSL1) {
+            result.result = _z_chunks_include_special(lbegin, lend + 1 - _Z_DSL_LEN, rbegin, rend + 1)
+                                ? _Z_CHUNK_MATCH_RESULT_YES
+                                : _Z_CHUNK_MATCH_RESULT_NO;
+            return result;
+        } else if (*rend == _Z_DSL1 ||
+                   *lend != *rend) {  // stardsl in right that can not be included by left, so no match
+            return result;
+        }
+    }
+    if (lbegin == lend) {  // remainder of left is entirely matched, leading stardsl can include the rest of right
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+    } else {  // rbegin == rend remainder of right is entirely matched, but there are still chars in left (which are not
+              // strardsl due to canonicalization), so no match
+        result.result = _Z_CHUNK_MATCH_RESULT_NO;
+    }
+    return result;
+}
+
+_z_chunk_forward_match_data_t _z_chunks_include_forward(const char *lbegin, const char *lend, const char *rbegin,
+                                                        const char *rend) {
+    // left and right are guaranteed to be non-empty canonized chunks
+    _z_chunk_forward_match_data_t result = {0};
+    // assume canonized chunks
+    bool left_is_wild = *lbegin == _Z_STAR;
+    bool right_is_wild = *rbegin == _Z_STAR;
+
+    bool left_is_superwild = left_is_wild && (lbegin + 2 <= lend) && *(lbegin + 1) == _Z_STAR;
+    bool right_is_superwild = right_is_wild && (rbegin + 2 <= rend) && *(rbegin + 1) == _Z_STAR;
+
+    if (left_is_superwild) {
+        result.result = _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD;
+        return result;
+    } else if (right_is_superwild) {
+        return result;
+    }
+    bool left_is_verbatim = *lbegin == _Z_VERBATIM;
+    bool right_is_verbatim = *rbegin == _Z_VERBATIM;
+
+    if (left_is_verbatim != right_is_verbatim) {
+        return result;
+    } else if (left_is_wild) {
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+        result.lend = lbegin + 1;
+        result.rend = _z_chunk_end(rbegin, rend);
+        return result;
+    } else if (right_is_wild) {
+        return result;
+    }
+
+    // at this stage we should only care about stardsl, as the presence of verbatim or wild is already checked.
+    while (lbegin < lend && rbegin < rend && *lbegin != _Z_SEPARATOR && *rbegin != _Z_SEPARATOR) {
+        if (*lbegin == _Z_DSL0) {
+            return _z_chunks_include_forward_backward(lbegin + _Z_DSL_LEN, lend, rbegin, rend);
+        } else if (*rbegin == _Z_DSL0 || *lbegin != *rbegin) {
+            return result;
+        }
+        lbegin++;
+        rbegin++;
+    }
+    bool is_left_exhausted = lbegin == lend || *lbegin == _Z_SEPARATOR;
+    bool is_right_exhausted = rbegin == rend || *rbegin == _Z_SEPARATOR;
+    if (is_left_exhausted && is_right_exhausted) {
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+        result.lend = lbegin;
+        result.rend = rbegin;
+    } else if (is_left_exhausted) {  // right has a suffix that left can not match, so no inclusion
+        result.result = _Z_CHUNK_MATCH_RESULT_NO;
+    } else if (is_right_exhausted && *lbegin == _Z_DSL0 &&
+               (lbegin + _Z_DSL_LEN == lend || *(lbegin + 2) == _Z_SEPARATOR)) {
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+        result.lend = lbegin + _Z_DSL_LEN;
+        result.rend = rbegin;
+    } else {
+        result.result = _Z_CHUNK_MATCH_RESULT_NO;
+    }
+    return result;
+}
+
+_z_chunk_backward_match_data_t _z_chunks_include_backward_forward(const char *lbegin, const char *lend,
+                                                                  const char *rbegin, const char *rend) {
+    // left is a part of a chunk preceeding a stardsl i.e lllll$*
+    _z_chunk_backward_match_data_t result = {0};
+    lbegin = _z_chunk_begin(lbegin, lend);
+    rbegin = _z_chunk_begin(rbegin, rend);
+    result.lbegin = lbegin;
+    result.rbegin = rbegin;
+
+    // chunks can not be star, nor doublestar
+    while (lbegin < lend && rbegin < rend) {
+        if (*lbegin == _Z_DSL0) {
+            result.result = _z_chunks_include_special(lbegin + 2, lend, rbegin, rend) ? _Z_CHUNK_MATCH_RESULT_YES
+                                                                                      : _Z_CHUNK_MATCH_RESULT_NO;
+            return result;
+        } else if (*rbegin == _Z_DSL0 || *lbegin != *rbegin) {
+            result.result = _Z_CHUNK_MATCH_RESULT_NO;
+            return result;
+        }
+        lbegin++;
+        rbegin++;
+    }
+
+    if (lbegin == lend) {  // remainder of left is entirely matched, suffix stardsl can match the rest of right
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+    } else {  // rbegin == result.right, remainder of right is entirely matched, but there are still chars in left
+              // (which are not strardsl due to canonicalization), so no match
+        result.result = _Z_CHUNK_MATCH_RESULT_NO;
+    }
+    return result;
+}
+
+_z_chunk_backward_match_data_t _z_chunks_include_backward(const char *lbegin, const char *lend, const char *rbegin,
+                                                          const char *rend) {
+    _z_chunk_backward_match_data_t result = {0};
+    const char *llast = lend - 1;
+    const char *rlast = rend - 1;
+    // assume canonized chunks
+    bool left_is_wild = *llast == _Z_STAR;
+    bool right_is_wild = *rlast == _Z_STAR;
+
+    bool left_is_superwild = left_is_wild && (lbegin + 2 <= lend) && *(llast - 1) == _Z_STAR;
+    bool right_is_superwild = right_is_wild && (rbegin + 2 <= rend) && *(rlast - 1) == _Z_STAR;
+
+    if (left_is_superwild) {
+        result.result = _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD;
+        return result;
+    } else if (right_is_superwild) {
+        return result;
+    }
+    left_is_wild = left_is_wild && (lbegin == llast || *(llast - 1) == _Z_SEPARATOR);
+    right_is_wild = right_is_wild && (rbegin == rlast || *(rlast - 1) == _Z_SEPARATOR);
+    if (left_is_wild) {
+        result.lbegin = llast;
+        result.rbegin = _z_chunk_begin(rbegin, rend);
+        result.result = *result.rbegin == _Z_VERBATIM ? _Z_CHUNK_MATCH_RESULT_NO : _Z_CHUNK_MATCH_RESULT_YES;
+        return result;
+    } else if (right_is_wild) {  // right has a star that can not be included by left
+        return result;
+    }
+
+    while (llast >= lbegin && rlast >= rbegin && *llast != _Z_SEPARATOR && *rlast != _Z_SEPARATOR) {
+        if (*llast == _Z_DSL1) {
+            return _z_chunks_include_backward_forward(lbegin, llast + 1 - _Z_DSL_LEN, rbegin, rlast + 1);
+        } else if (*rlast == _Z_DSL1) {
+            return result;
+        }
+        if (*llast != *rlast) {
+            result.result = _Z_CHUNK_MATCH_RESULT_NO;
+            return result;
+        }
+        llast--;
+        rlast--;
+    }
+    bool left_exhausted = lbegin == llast + 1 || *llast == _Z_SEPARATOR;
+    bool right_exhausted = rbegin == rlast + 1 || *rlast == _Z_SEPARATOR;
+    if (left_exhausted && right_exhausted) {
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+        result.lbegin = llast + 1;
+        result.rbegin = rlast + 1;
+    } else if (right_exhausted && *llast == _Z_DSL1 &&
+               (llast == lbegin + 1 || (llast > lbegin + 1 && *(llast - 2) == _Z_SEPARATOR))) {
+        result.result = _Z_CHUNK_MATCH_RESULT_YES;
+        result.lbegin = llast + 1 - _Z_DSL_LEN;
+        result.rbegin = rlast + 1;
+    } else {
+        result.result = _Z_CHUNK_MATCH_RESULT_NO;
+    }
+    return result;
+}
+
+bool _z_keyexpr_include_special(const char *lbegin, const char *lend, const char *rbegin, const char *rend) {
+    // left is a non-empty part of a ke sorrounded by doublestar i.e. **/l/l/l/l**
+    // right is ke that does not start, nor end with a doublestar(s), but can contain doublestar in the middle
+    // none of the kes contain any verbatim chunks
+    // so there are only 1 cases where left can include right:
+    //
+    // Every chunk of left **/L1/**/L2/**/../LN/** is include in ke in right
+    // in the correct order and without overlap, i.e right has the form R1l1R2l2R3...RNlNR(N+1), where li < Li, in this
+    // case all Ri can be included by ** in left
+
+    // right is guaranteed not to have doublestars
+    while (lbegin < lend) {
+        const char *lcbegin = lbegin;
+        const char *lcend = _z_keyexpr_get_next_double_star_chunk(lbegin, lend);
+        lcend = lcend != NULL ? lcend - _Z_DELIMITER_LEN : lend;
+        const char *rcbegin = rbegin;
+
+        while (lcbegin < lcend) {
+            if (rcbegin >= rend) {
+                return false;
+            }
+            _z_chunk_forward_match_data_t res = _z_chunks_include_forward(lcbegin, lcend, rcbegin, rend);
+            if (res.result == _Z_CHUNK_MATCH_RESULT_YES) {
+                lcbegin = res.lend + _Z_DELIMITER_LEN;
+                rcbegin = res.rend + _Z_DELIMITER_LEN;
+            } else {  // res.result == _Z_CHUNK_MATCH_RESULT_NO
+                // reset subke matching and try to match current left subke with the next right chunk
+                lcbegin = lbegin;
+                rbegin = _z_chunk_end(rbegin, rend) + _Z_DELIMITER_LEN;
+                rcbegin = rbegin;
+            }
+        }
+        lbegin = lcbegin;
+        rbegin = rcbegin;
+    }
+    return true;
+}
+
+bool _z_keyexpr_includes_parts(const char *lbegin, const char *lend, const char *rbegin, const char *rend);
+
+bool _z_keyexpr_include_backward(const char *lbegin, const char *lend, const char *rbegin, const char *rend,
+                                 bool can_have_verbatim) {
+    // left is a suffix following a doublestar i.e. **/l/l/l/l
+    while (lbegin < lend && rbegin < rend) {
+        _z_chunk_backward_match_data_t res = _z_chunks_include_backward(lbegin, lend, rbegin, rend);
+        if (res.result == _Z_CHUNK_MATCH_RESULT_NO) {
+            return false;
+        } else if (res.result == _Z_CHUNK_MATCH_RESULT_YES) {
+            bool left_exhausted = lbegin == res.lbegin;
+            bool right_exhausted = rbegin == res.rbegin;
+            if (left_exhausted && right_exhausted) {
+                return true;  // leading doublestar in left matches an empty string
+            } else if (left_exhausted) {
+                // left is exhausted, right is matched if it does not contain any verbatim chunks
+                return !can_have_verbatim ||
+                       _z_keyexpr_get_next_verbatim_chunk(rbegin, res.rbegin - _Z_DELIMITER_LEN) == NULL;
+            } else if (right_exhausted) {
+                return false;  // right is exhausted, left is not (and thus contain at least one non doublestar chunk),
+                               // match is impossible
+            }
+            lend = res.lbegin - _Z_DELIMITER_LEN;
+            rend = res.rbegin - _Z_DELIMITER_LEN;
+        } else if (can_have_verbatim) {
+            // Now this becomes more complicated
+            // in the absence of verbatim chunks, we could apply the same logic as for matching stardsl chunks, but not
+            // here. Given that we anyway would need to scan both kes for verbatim chunks and compare them we rather
+            // fallback to splitting kes across verbatim chunks and running intersections on each subke.
+            return _z_keyexpr_includes_parts(lbegin - _Z_DOUBLE_STAR_LEN - _Z_DELIMITER_LEN, lend, rbegin, rend);
+        } else if (res.result == _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD) {
+            return _z_keyexpr_include_special(lbegin, lend - _Z_DOUBLE_STAR_LEN - _Z_DELIMITER_LEN, rbegin, rend);
+        } else if (res.result == _Z_CHUNK_MATCH_RESULT_RIGHT_SUPERWILD) {
+            return false;
+        }
+    }
+    bool left_exhausted = lbegin >= lend;
+    bool right_exhausted = rbegin >= rend;
+    return right_exhausted && (left_exhausted || _z_keyexpr_is_double_star(lbegin, lend));
+}
+
+bool _z_keyexpr_includes_inner(const char *lbegin, const char *lend, const char *rbegin, const char *rend,
+                               bool can_have_verbatim) {
+    while (lbegin < lend && rbegin < rend) {
+        _z_chunk_forward_match_data_t res = _z_chunks_include_forward(lbegin, lend, rbegin, rend);
+        if (res.result == _Z_CHUNK_MATCH_RESULT_YES) {
+            lbegin = res.lend + _Z_DELIMITER_LEN;
+            rbegin = res.rend + _Z_DELIMITER_LEN;
+        } else if (res.result == _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD) {
+            if (lbegin + _Z_DOUBLE_STAR_LEN == lend) {  // left is exhausted
+                return _z_keyexpr_get_next_verbatim_chunk(rbegin, rend) == NULL;
+            }
+            return _z_keyexpr_include_backward(lbegin + _Z_DOUBLE_STAR_LEN + _Z_DELIMITER_LEN, lend, rbegin, rend,
+                                               can_have_verbatim);
+        } else {
+            // superwild right chunk without superwild left implies no inclusion
+            return false;
+        }
+    }
+
+    bool left_exhausted = lbegin >= lend;
+    bool right_exhausted = rbegin >= rend;
+    return right_exhausted && (left_exhausted || _z_keyexpr_is_double_star(lbegin, lend));
+}
+
+bool _z_keyexpr_includes_parts(const char *lbegin, const char *lend, const char *rbegin, const char *rend) {
+    while (lbegin < lend && rbegin < rend) {
+        const char *lverbatim = _z_keyexpr_get_next_verbatim_chunk(lbegin, lend);
+        const char *rverbatim = _z_keyexpr_get_next_verbatim_chunk(rbegin, rend);
+        if (lverbatim == NULL && rverbatim == NULL) {
+            return _z_keyexpr_includes_inner(lbegin, lend, rbegin, rend, false);
+        } else if (lverbatim == NULL ||
+                   rverbatim == NULL) {  // different number of verbatim chunks, they can not intersect
+            return false;
+        }
+
+        if (!_z_keyexpr_includes_inner(lbegin, lverbatim - _Z_DELIMITER_LEN, rbegin, rverbatim - _Z_DELIMITER_LEN,
+                                       false)) {
+            return false;  // prefixes before verbatim chunks do not match, so kes can not match
+        }
+
+        _z_chunk_forward_match_data_t res = _z_chunks_include_forward(lverbatim, lend, rverbatim, rend);
+        if (res.result != _Z_CHUNK_MATCH_RESULT_YES) {
+            return false;  // verbatim chunks do not match, so kes can not match
+        }
+        lbegin = res.lend + _Z_DELIMITER_LEN;
+        rbegin = res.rend + _Z_DELIMITER_LEN;
+    }
+    bool left_exhausted = lbegin >= lend;
+    bool right_exhausted = rbegin >= rend;
+    return right_exhausted && (left_exhausted || _z_keyexpr_is_double_star(lbegin, lend));
+}
+
+bool _z_keyexpr_includes2(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    size_t left_len = _z_string_len(&left->_keyexpr);
+    size_t right_len = _z_string_len(&right->_keyexpr);
+    const char *left_start = _z_string_data(&left->_keyexpr);
+    const char *right_start = _z_string_data(&right->_keyexpr);
+
+    // fast path for identical key expressions, do we really need it ?
+    if ((left_len == right_len) && (strncmp(left_start, right_start, left_len) == 0)) {
+        return true;
+    }
+
+    return _z_keyexpr_includes_inner(left_start, left_start + left_len, right_start, right_start + right_len, true);
 }
