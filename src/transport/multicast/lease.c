@@ -59,15 +59,17 @@ z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 #if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
 
 static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
-    _ZP_UNUSED(ztm);
+    _z_session_t *session = _z_transport_common_get_session(&ztm->_common);
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztm->_common));
+    _z_liveliness_subscription_undeclare_all(session);
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_session_rc_t zs = _z_session_weak_upgrade(&ztm->_common._session);
 #endif
-    _z_multicast_transport_clear(ztm, true);
+    _z_session_transport_mutex_lock(session);
+    _z_transport_clear(&session->_tp, true);
+    _z_session_transport_mutex_unlock(session);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_reopen(&zs);
@@ -145,8 +147,29 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                 // Drop if needed
                 if (drop_peer) {
                     _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
+#if Z_FEATURE_CONNECTIVITY == 1
+                    _z_transport_peer_common_t disconnected_peer = {0};
+                    uint16_t mtu = 0;
+                    bool is_streamed = false;
+                    bool is_reliable = false;
+                    _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
+                    _z_transport_peer_common_copy(&disconnected_peer, &curr_peer->common);
+#endif
                     _z_interest_peer_disconnected(s, &curr_peer->common);
                     ztm->_peers = _z_transport_peer_multicast_slist_drop_element(ztm->_peers, prev_drop);
+#if Z_FEATURE_CONNECTIVITY == 1
+                    _z_transport_peer_mutex_unlock(&ztm->_common);
+                    _z_connectivity_peer_disconnected(
+                        s, &disconnected_peer, true, mtu, is_streamed, is_reliable,
+                        _z_string_check(&disconnected_peer._link_src) ? &disconnected_peer._link_src : NULL,
+                        _z_string_check(&disconnected_peer._link_dst) ? &disconnected_peer._link_dst : NULL);
+                    _z_transport_peer_common_clear(&disconnected_peer);
+                    _z_transport_peer_mutex_lock(&ztm->_common);
+                    curr_list = ztm->_peers;
+                    prev = NULL;
+                    prev_drop = NULL;
+                    continue;
+#endif
                 }
             }
             _z_transport_peer_mutex_unlock(&ztm->_common);

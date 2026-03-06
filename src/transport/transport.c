@@ -59,14 +59,14 @@ z_result_t _z_send_close(_z_transport_t *zt, uint8_t reason, bool link_only) {
 
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, false); }
 
-void _z_transport_clear(_z_transport_t *zt) {
+void _z_transport_clear(_z_transport_t *zt, bool detach_tasks) {
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _z_unicast_transport_clear(&zt->_transport._unicast, false);
+            _z_unicast_transport_clear(&zt->_transport._unicast, detach_tasks);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _z_multicast_transport_clear(&zt->_transport._multicast, false);
+            _z_multicast_transport_clear(&zt->_transport._multicast, detach_tasks);
             break;
         default:
             break;
@@ -80,7 +80,7 @@ void _z_transport_free(_z_transport_t **zt) {
         return;
     }
     // Clear and free transport
-    _z_transport_clear(ptr);
+    _z_transport_clear(ptr, false);
     z_free(ptr);
     *zt = NULL;
 }
