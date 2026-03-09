@@ -675,9 +675,8 @@ static const _ze_admin_space_endpoint_t _ze_admin_space_pico_endpoints[] = {
 
 static void _ze_admin_space_query_handle_pico(const z_loaned_query_t *query, _z_session_t *session,
                                               _ze_admin_space_reply_list_t **replies) {
-    _ze_admin_space_query_handle_endpoints(
-        query, session, _ze_admin_space_pico_endpoints,
-        sizeof(_ze_admin_space_pico_endpoints) / sizeof(_ze_admin_space_pico_endpoints[0]), replies);
+    _ze_admin_space_query_handle_endpoints(query, session, _ze_admin_space_pico_endpoints,
+                                           _ZP_ARRAY_SIZE(_ze_admin_space_pico_endpoints), replies);
 
     _ze_admin_space_query_handle_pico_transport_0_peers(query, session, replies);
 }
