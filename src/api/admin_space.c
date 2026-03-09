@@ -29,6 +29,15 @@ typedef struct {
     size_t len;
 } _ze_admin_space_ke_segment_t;
 
+typedef z_result_t (*_ze_admin_space_encode_fn_t)(_z_json_encoder_t *je, void *ctx);
+typedef z_result_t (*_ze_admin_space_ke_builder_t)(z_owned_keyexpr_t *ke, const z_id_t *zid);
+
+typedef struct {
+    const char *name;
+    _ze_admin_space_ke_builder_t build_ke;
+    _ze_admin_space_encode_fn_t encode;
+} _ze_admin_space_endpoint_t;
+
 static z_result_t _ze_admin_space_build_ke(z_owned_keyexpr_t *ke, const z_id_t *zid,
                                            const _ze_admin_space_ke_segment_t *segments, size_t segment_count) {
     z_internal_keyexpr_null(ke);
@@ -322,6 +331,15 @@ static z_result_t _ze_admin_space_encode_unicast_peer(_z_json_encoder_t *je, con
     return _z_json_encoder_end_object(je);
 }
 
+static z_result_t _ze_admin_space_encode_multicast_peer(_z_json_encoder_t *je,
+                                                        const _z_transport_peer_multicast_t *peer) {
+    _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));
+    _Z_RETURN_IF_ERR(_ze_admin_space_encode_peer_common(je, &peer->common));
+    _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "remote_addr"));
+    _Z_RETURN_IF_ERR(_z_json_encoder_write_z_slice(je, &peer->_remote_addr));
+    return _z_json_encoder_end_object(je);
+}
+
 static z_result_t _ze_admin_space_encode_unicast_peers(_z_json_encoder_t *je,
                                                        const _z_transport_peer_unicast_slist_t *peers) {
     _Z_RETURN_IF_ERR(_z_json_encoder_start_array(je));
@@ -332,15 +350,6 @@ static z_result_t _ze_admin_space_encode_unicast_peers(_z_json_encoder_t *je,
     }
 
     return _z_json_encoder_end_array(je);
-}
-
-static z_result_t _ze_admin_space_encode_multicast_peer(_z_json_encoder_t *je,
-                                                        const _z_transport_peer_multicast_t *peer) {
-    _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));
-    _Z_RETURN_IF_ERR(_ze_admin_space_encode_peer_common(je, &peer->common));
-    _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "remote_addr"));
-    _Z_RETURN_IF_ERR(_z_json_encoder_write_z_slice(je, &peer->_remote_addr));
-    return _z_json_encoder_end_object(je);
 }
 
 static z_result_t _ze_admin_space_encode_multicast_peers(_z_json_encoder_t *je,
@@ -470,20 +479,6 @@ static z_result_t _ze_admin_space_encode_session(_z_json_encoder_t *je, _z_sessi
     return _Z_RES_OK;
 }
 
-typedef z_result_t (*_ze_admin_space_encode_fn_t)(_z_json_encoder_t *je, void *ctx);
-
-static z_result_t _ze_admin_space_reply_if_intersects(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke,
-                                                      void *ctx, _ze_admin_space_reply_list_t **replies,
-                                                      _ze_admin_space_encode_fn_t encode) {
-    if (z_keyexpr_intersects(z_query_keyexpr(query), ke)) {
-        _z_json_encoder_t je;
-        _Z_RETURN_IF_ERR(_z_json_encoder_empty(&je));
-        _Z_CLEAN_RETURN_IF_ERR(encode(&je, ctx), _z_json_encoder_clear(&je));
-        _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_add_reply(&je, ke, replies), _z_json_encoder_clear(&je));
-    }
-    return _Z_RES_OK;
-}
-
 static z_result_t _ze_admin_space_encode_pico(_z_json_encoder_t *je, void *ctx) {
     _z_session_t *session = (_z_session_t *)ctx;
     _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));
@@ -519,6 +514,18 @@ static z_result_t _ze_admin_space_encode_pico_transport_0_peers(_z_json_encoder_
     z_result_t ret = _ze_admin_space_encode_transport_peers(je, &session->_tp);
     _z_session_mutex_unlock(session);
     return ret;
+}
+
+static z_result_t _ze_admin_space_reply_if_intersects(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke,
+                                                      void *ctx, _ze_admin_space_reply_list_t **replies,
+                                                      _ze_admin_space_encode_fn_t encode) {
+    if (z_keyexpr_intersects(z_query_keyexpr(query), ke)) {
+        _z_json_encoder_t je;
+        _Z_RETURN_IF_ERR(_z_json_encoder_empty(&je));
+        _Z_CLEAN_RETURN_IF_ERR(encode(&je, ctx), _z_json_encoder_clear(&je));
+        _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_add_reply(&je, ke, replies), _z_json_encoder_clear(&je));
+    }
+    return _Z_RES_OK;
 }
 
 typedef struct {
@@ -632,70 +639,45 @@ static void _ze_admin_space_query_handle_pico_transport_0_peers(const z_loaned_q
     }
 }
 
+static void _ze_admin_space_try_reply(const z_loaned_query_t *query, _z_session_t *session,
+                                      _ze_admin_space_reply_list_t **replies, const _ze_admin_space_endpoint_t *ep) {
+    z_owned_keyexpr_t ke;
+    z_result_t ret = ep->build_ke(&ke, &session->_local_zid);
+    if (ret != _Z_RES_OK) {
+        _Z_WARN("Failed to build key expression for %s query: %d", ep->name, ret);
+        return;
+    }
+
+    ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies, ep->encode);
+    if (ret != _Z_RES_OK) {
+        _Z_WARN("Failed to handle admin space query for %s endpoint: %d", ep->name, ret);
+    }
+
+    z_keyexpr_drop(z_keyexpr_move(&ke));
+}
+
+static void _ze_admin_space_query_handle_endpoints(const z_loaned_query_t *query, _z_session_t *session,
+                                                   const _ze_admin_space_endpoint_t *endpoints, size_t endpoint_count,
+                                                   _ze_admin_space_reply_list_t **replies) {
+    for (size_t i = 0; i < endpoint_count; i++) {
+        _ze_admin_space_try_reply(query, session, replies, &endpoints[i]);
+    }
+}
+
+static const _ze_admin_space_endpoint_t _ze_admin_space_pico_endpoints[] = {
+    {"pico", _ze_admin_space_pico_ke, _ze_admin_space_encode_pico},
+    {"pico/session", _ze_admin_space_pico_session_ke, _ze_admin_space_encode_pico_session},
+    {"pico/session/transports", _ze_admin_space_pico_transports_ke, _ze_admin_space_encode_pico_transports},
+    {"pico/session/transports/0", _ze_admin_space_pico_transports_0_ke, _ze_admin_space_encode_pico_transport_0},
+    {"pico/session/transports/0/peers", _ze_admin_space_pico_transports_0_peers_ke,
+     _ze_admin_space_encode_pico_transport_0_peers},
+};
+
 static void _ze_admin_space_query_handle_pico(const z_loaned_query_t *query, _z_session_t *session,
                                               _ze_admin_space_reply_list_t **replies) {
-    z_owned_keyexpr_t ke;
-    z_result_t ret;
-
-    ret = _ze_admin_space_pico_ke(&ke, &session->_local_zid);
-    if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                                  _ze_admin_space_encode_pico);
-        if (ret != _Z_RES_OK) {
-            _Z_WARN("Failed to handle admin space query for pico endpoint: %d", ret);
-        }
-        z_keyexpr_drop(z_keyexpr_move(&ke));
-    } else {
-        _Z_WARN("Failed to build key expression for pico query: %d", ret);
-    }
-
-    ret = _ze_admin_space_pico_session_ke(&ke, &session->_local_zid);
-    if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                                  _ze_admin_space_encode_pico_session);
-        if (ret != _Z_RES_OK) {
-            _Z_WARN("Failed to handle admin space query for pico/session endpoint: %d", ret);
-        }
-        z_keyexpr_drop(z_keyexpr_move(&ke));
-    } else {
-        _Z_WARN("Failed to build key expression for pico/session query: %d", ret);
-    }
-
-    ret = _ze_admin_space_pico_transports_ke(&ke, &session->_local_zid);
-    if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                                  _ze_admin_space_encode_pico_transports);
-        if (ret != _Z_RES_OK) {
-            _Z_WARN("Failed to handle admin space query for pico/session/transports endpoint: %d", ret);
-        }
-        z_keyexpr_drop(z_keyexpr_move(&ke));
-    } else {
-        _Z_WARN("Failed to build key expression for pico/session/transports query: %d", ret);
-    }
-
-    ret = _ze_admin_space_pico_transports_0_ke(&ke, &session->_local_zid);
-    if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                                  _ze_admin_space_encode_pico_transport_0);
-        if (ret != _Z_RES_OK) {
-            _Z_WARN("Failed to handle admin space query for pico/session/transports/0 endpoint: %d", ret);
-        }
-        z_keyexpr_drop(z_keyexpr_move(&ke));
-    } else {
-        _Z_WARN("Failed to build key expression for pico/session/transports/0 query: %d", ret);
-    }
-
-    ret = _ze_admin_space_pico_transports_0_peers_ke(&ke, &session->_local_zid);
-    if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), session, replies,
-                                                  _ze_admin_space_encode_pico_transport_0_peers);
-        if (ret != _Z_RES_OK) {
-            _Z_WARN("Failed to handle admin space query for pico/session/transports/0/peers endpoint: %d", ret);
-        }
-        z_keyexpr_drop(z_keyexpr_move(&ke));
-    } else {
-        _Z_WARN("Failed to build key expression for pico/session/transports/0/peers query: %d", ret);
-    }
+    _ze_admin_space_query_handle_endpoints(
+        query, session, _ze_admin_space_pico_endpoints,
+        sizeof(_ze_admin_space_pico_endpoints) / sizeof(_ze_admin_space_pico_endpoints[0]), replies);
 
     _ze_admin_space_query_handle_pico_transport_0_peers(query, session, replies);
 }
