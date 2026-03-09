@@ -100,7 +100,7 @@ static inline bool _z_chunk_is_stardsl(const char *begin, const char *kend) {
     return *begin == _Z_DSL0 && (begin + _Z_DSL_LEN == kend || *(begin + 2) == _Z_DELIMITER);
 }
 
-static inline bool _z_chunk_is_stardsl_reverse(const char *kbegin, const char *last) {
+static inline bool _z_chunk_is_stardsl_backward(const char *kbegin, const char *last) {
     // does not test for **
     return *last == _Z_DSL1 && (last == kbegin + 1 || (last > kbegin + 1 && *(last - 2) == _Z_DELIMITER));
 }
@@ -141,14 +141,14 @@ static inline const char *_z_keyexpr_get_next_verbatim_chunk(const char *begin, 
 
 bool _ZP_CAT(_z_chunk_special, _ZP_KE_MATCH_OP)(const char *lbegin, const char *lend, const char *rbegin,
                                                 const char *rend) {
-    // left is a non-empty part of a chunk following a stardsl and preceeding a stardsl i.e. $*lllll$*
-    // right is chunk that does not start, nor end with a stardsl(s), but can contain stardsl in the middle
+    // left is a non-empty part of a chunk following a stardsl and preceeding a stardsl i.e. $*lllll$*,
+    // right is chunk that does not start, nor end with a stardsl(s), but can contain stardsl in the middle,
     // original left chunk has the following form $*L1$*L2$*...$*LN$*
     // so there are only 2 cases where it can intersect with right:
     // 1. right contains a stardsl in the middle, in this case bound stardsls in left can match parts before and after
-    // stardsl in the right, while right's stardsl can match the middle part of left
+    // stardsl in the right, while right's stardsl can match the middle part of left.
     //
-    // 2. right does not contain a stardsl, but every subchunk of left (L1, L2, ..., LN) is present in right in the
+    // 2. every subchunk of left (L1, L2, ..., LN) is present in right in the
     // correct order (and they do not overlap).
     //
     // For includes relation, only case 2 is valid.
@@ -362,11 +362,11 @@ _z_chunk_backward_match_data_t _ZP_CAT(_z_chunk_backward, _ZP_KE_MATCH_OP)(const
         result.result = _Z_CHUNK_MATCH_RESULT_YES;
         result.lbegin = llast + 1;
         result.rbegin = rlast + 1;
-    } else if (_ZP_KE_MATCH_TYPE_INTERSECTS && left_exhausted && _z_chunk_is_stardsl_reverse(rkbegin, rlast)) {
+    } else if (_ZP_KE_MATCH_TYPE_INTERSECTS && left_exhausted && _z_chunk_is_stardsl_backward(rkbegin, rlast)) {
         result.result = _Z_CHUNK_MATCH_RESULT_YES;
         result.lbegin = llast + 1;
         result.rbegin = rlast + 1 - _Z_DSL_LEN;
-    } else if (right_exhausted && _z_chunk_is_stardsl_reverse(lkbegin, llast)) {
+    } else if (right_exhausted && _z_chunk_is_stardsl_backward(lkbegin, llast)) {
         result.result = _Z_CHUNK_MATCH_RESULT_YES;
         result.lbegin = llast + 1 - _Z_DSL_LEN;
         result.rbegin = rlast + 1;
@@ -381,9 +381,9 @@ bool _ZP_CAT(_z_keyexpr_special, _ZP_KE_MATCH_OP)(const char *lbegin, const char
     // none of the kes contain any verbatim chunks
     // so there are only 2 cases where left can intersect with right:
     // 1. right contains a doublestar in the middle, in this case bound doublestars in left can match parts before and
-    // after doublestar in right, while right's doublestar can match the middle part of left
+    // after doublestar in right, while right's doublestar can match the middle part of left.
     //
-    // 2. right does not contain a doublestar, but every chunk of left **/L1/**/L2/**/../LN/** is matched in ke in right
+    // 2. every chunk of left **/L1/**/L2/**/../LN/** is matched in right
     // in the correct order and without overlap.
 
     // For includes relation, only case 2 is valid.
@@ -391,7 +391,7 @@ bool _ZP_CAT(_z_keyexpr_special, _ZP_KE_MATCH_OP)(const char *lbegin, const char
         return true;
     }
 
-    // right is guaranteed not to have doublestars
+    // right is guaranteed not to have doublestars for intersects, while for includes we do not care
     while (lbegin < lend) {
         const char *lcbegin = lbegin;
         const char *lcend = _z_keyexpr_get_next_double_star_chunk(lbegin, lend);
@@ -407,7 +407,7 @@ bool _ZP_CAT(_z_keyexpr_special, _ZP_KE_MATCH_OP)(const char *lbegin, const char
             if (res.result == _Z_CHUNK_MATCH_RESULT_YES) {
                 lcbegin = res.lend + _Z_DELIMITER_LEN;
                 rcbegin = res.rend + _Z_DELIMITER_LEN;
-            } else {  // res.result == _Z_CHUNK_MATCH_RESULT_NO
+            } else {  // the only other possible case is res.result == _Z_CHUNK_MATCH_RESULT_NO
                 // reset subke matching and try to match current left subke with the next right chunk
                 lcbegin = lbegin;
                 rbegin = _z_chunk_end(rbegin, rend) + _Z_DELIMITER_LEN;
@@ -447,10 +447,10 @@ bool _ZP_CAT(_z_keyexpr_backward, _ZP_KE_MATCH_OP)(const char *lbegin, const cha
             lend = res.lbegin - _Z_DELIMITER_LEN;
             rend = res.rbegin - _Z_DELIMITER_LEN;
         } else if (can_have_verbatim) {
-            // Now this becomes more complicated
-            // in the absence of verbatim chunks, we could apply the same logic as for matching stardsl chunks, but not
-            // here. Given that we anyway would need to scan both kes for verbatim chunks and compare them we rather
-            // fallback to splitting kes across verbatim chunks and running intersections on each subke.
+            // Now this becomes more complicated.
+            // In the absence of verbatim chunks, we could apply the same logic as for matching stardsl chunks, but not
+            // here. Given that we would anyway need to scan both kes for verbatim chunks and compare them, we rather
+            // fallback to splitting kes across verbatim chunks boundary and run matching on each subke.
             return _ZP_CAT(_z_keyexpr_parts, _ZP_KE_MATCH_OP)(lbegin - _Z_DOUBLE_STAR_LEN - _Z_DELIMITER_LEN, lend,
                                                               rbegin, rend);
         } else if (res.result == _Z_CHUNK_MATCH_RESULT_LEFT_SUPERWILD) {
@@ -503,7 +503,7 @@ bool _ZP_CAT(_z_keyexpr_parts, _ZP_KE_MATCH_OP)(const char *lbegin, const char *
         const char *rverbatim = _z_keyexpr_get_next_verbatim_chunk(rbegin, rend);
         if (lverbatim == NULL && rverbatim == NULL) {
             return _ZP_CAT(_z_keyexpr_forward, _ZP_KE_MATCH_OP)(lbegin, lend, rbegin, rend, false);
-        } else if (lverbatim == NULL || rverbatim == NULL) {  // different number of verbatim chunks, they can not match
+        } else if (lverbatim == NULL || rverbatim == NULL) {  // different number of verbatim chunks, kes can not match
             return false;
         }
 
