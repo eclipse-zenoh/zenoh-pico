@@ -66,9 +66,26 @@ typedef struct {
 #endif
 } _z_transport_peer_common_t;
 
+#if Z_FEATURE_CONNECTIVITY == 1
+typedef struct {
+    _z_id_t _remote_zid;
+    z_whatami_t _remote_whatami;
+    _z_string_t _link_src;
+    _z_string_t _link_dst;
+    bool _owns_endpoints;
+} _z_connectivity_peer_event_data_t;
+#endif
+
 void _z_transport_peer_common_clear(_z_transport_peer_common_t *src);
 void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src);
 bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right);
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_connectivity_peer_event_data_clear(_z_connectivity_peer_event_data_t *event_data);
+void _z_connectivity_peer_event_data_copy_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                      const _z_transport_peer_common_t *src);
+void _z_connectivity_peer_event_data_alias_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                       const _z_transport_peer_common_t *src);
+#endif
 
 typedef struct {
     _z_transport_peer_common_t common;

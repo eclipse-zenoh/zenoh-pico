@@ -440,14 +440,12 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #if Z_FEATURE_CONNECTIVITY == 1
-void _z_connectivity_peer_connected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
-                                    uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
-                                    const _z_string_t *dst);
-void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
-                                       uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
-                                       const _z_string_t *dst);
+void _z_connectivity_peer_connected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                    bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
+void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                       bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
 void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, const _z_transport_common_t *transport,
-                                                      const _z_transport_peer_common_t *peer, bool is_multicast);
+                                                      const _z_connectivity_peer_event_data_t *peer, bool is_multicast);
 #endif
 
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {

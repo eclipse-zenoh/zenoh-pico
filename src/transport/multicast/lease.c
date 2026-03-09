@@ -137,9 +137,9 @@ static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *z
         _Z_INFO("Deleting peer because it has expired after %zums", peer->_lease);
         _z_interest_peer_disconnected(s, &peer->common);
 #if Z_FEATURE_CONNECTIVITY == 1
-        _z_connectivity_peer_disconnected(s, &peer->common, true, mtu, is_streamed, is_reliable,
-                                          _z_string_check(&peer->common._link_src) ? &peer->common._link_src : NULL,
-                                          _z_string_check(&peer->common._link_dst) ? &peer->common._link_dst : NULL);
+        _z_connectivity_peer_event_data_t disconnected_peer = {0};
+        _z_connectivity_peer_event_data_alias_from_common(&disconnected_peer, &peer->common);
+        _z_connectivity_peer_disconnected(s, &disconnected_peer, true, mtu, is_streamed, is_reliable);
 #endif
         it = _z_transport_peer_multicast_slist_next(it);
     }

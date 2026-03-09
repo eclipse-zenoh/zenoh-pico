@@ -24,9 +24,19 @@
 
 #if Z_FEATURE_CONNECTIVITY == 1
 
-static z_result_t _z_connectivity_link_fill(_z_info_link_t *link, const _z_transport_peer_common_t *peer, uint16_t mtu,
-                                            bool is_streamed, bool is_reliable, const _z_string_t *src,
-                                            const _z_string_t *dst) {
+static inline void _z_connectivity_transport_from_event_data(_z_info_transport_t *out,
+                                                             const _z_connectivity_peer_event_data_t *peer,
+                                                             bool is_multicast) {
+    *out = (_z_info_transport_t){0};
+    out->_zid = peer->_remote_zid;
+    out->_whatami = peer->_remote_whatami;
+    out->_is_qos = false;
+    out->_is_multicast = is_multicast;
+    out->_is_shm = false;
+}
+
+static z_result_t _z_connectivity_link_fill(_z_info_link_t *link, const _z_connectivity_peer_event_data_t *peer,
+                                            uint16_t mtu, bool is_streamed, bool is_reliable) {
     *link = (_z_info_link_t){0};
     link->_src = _z_string_null();
     link->_dst = _z_string_null();
@@ -34,11 +44,11 @@ static z_result_t _z_connectivity_link_fill(_z_info_link_t *link, const _z_trans
     link->_mtu = mtu;
     link->_is_streamed = is_streamed;
     link->_is_reliable = is_reliable;
-    if (src != NULL) {
-        _Z_RETURN_IF_ERR(_z_string_copy(&link->_src, src));
+    if (_z_string_check(&peer->_link_src)) {
+        _Z_RETURN_IF_ERR(_z_string_copy(&link->_src, &peer->_link_src));
     }
-    if (dst != NULL) {
-        _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&link->_dst, dst), _z_string_clear(&link->_src));
+    if (_z_string_check(&peer->_link_dst)) {
+        _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&link->_dst, &peer->_link_dst), _z_string_clear(&link->_src));
     }
     return _Z_RES_OK;
 }
@@ -54,17 +64,16 @@ static inline void _z_connectivity_link_event_clear(_z_info_link_event_t *event)
     event->kind = Z_SAMPLE_KIND_DEFAULT;
 }
 
-static inline const _z_string_t *_z_connectivity_optional_link_endpoint(const _z_string_t *endpoint) {
-    return _z_string_check(endpoint) ? endpoint : NULL;
-}
-
 static bool _z_connectivity_dispatch_link_put_for_peer(_z_closure_link_event_t *callback,
                                                        const _z_transport_common_t *transport_common,
                                                        const _z_transport_peer_common_t *peer, bool is_multicast,
                                                        bool has_transport_filter,
                                                        const _z_info_transport_t *transport_filter) {
+    _z_connectivity_peer_event_data_t peer_event_data = {0};
+    _z_connectivity_peer_event_data_alias_from_common(&peer_event_data, peer);
+
     _z_info_transport_t info_transport;
-    _z_info_transport_from_peer(&info_transport, peer, is_multicast);
+    _z_connectivity_transport_from_event_data(&info_transport, &peer_event_data, is_multicast);
     if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, transport_filter)) {
         return true;
     }
@@ -76,9 +85,7 @@ static bool _z_connectivity_dispatch_link_put_for_peer(_z_closure_link_event_t *
 
     _z_info_link_event_t event = {0};
     event.kind = Z_SAMPLE_KIND_PUT;
-    if (_z_connectivity_link_fill(&event.link, peer, mtu, is_streamed, is_reliable,
-                                  _z_connectivity_optional_link_endpoint(&peer->_link_src),
-                                  _z_connectivity_optional_link_endpoint(&peer->_link_dst)) != _Z_RES_OK) {
+    if (_z_connectivity_link_fill(&event.link, &peer_event_data, mtu, is_streamed, is_reliable) != _Z_RES_OK) {
         _z_connectivity_link_event_clear(&event);
         return false;
     }
@@ -811,48 +818,47 @@ z_result_t z_undeclare_link_events_listener(z_moved_link_events_listener_t *list
     return ret;
 }
 
-void _z_connectivity_peer_connected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
-                                    uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
-                                    const _z_string_t *dst) {
+void _z_connectivity_peer_connected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                    bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable) {
     if (session == NULL || peer == NULL) {
         return;
     }
 
     _z_info_transport_event_t transport_event = {0};
     transport_event.kind = Z_SAMPLE_KIND_PUT;
-    _z_info_transport_from_peer(&transport_event.transport, peer, is_multicast);
+    _z_connectivity_transport_from_event_data(&transport_event.transport, peer, is_multicast);
     _z_connectivity_dispatch_transport_event(session, &transport_event);
 
     _z_info_link_event_t link_event = {0};
     link_event.kind = Z_SAMPLE_KIND_PUT;
-    if (_z_connectivity_link_fill(&link_event.link, peer, mtu, is_streamed, is_reliable, src, dst) == _Z_RES_OK) {
+    if (_z_connectivity_link_fill(&link_event.link, peer, mtu, is_streamed, is_reliable) == _Z_RES_OK) {
         _z_connectivity_dispatch_link_event(session, &link_event, is_multicast);
     }
     _z_connectivity_link_event_clear(&link_event);
 }
 
-void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
-                                       uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
-                                       const _z_string_t *dst) {
+void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                       bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable) {
     if (session == NULL || peer == NULL) {
         return;
     }
 
     _z_info_link_event_t link_event = {0};
     link_event.kind = Z_SAMPLE_KIND_DELETE;
-    if (_z_connectivity_link_fill(&link_event.link, peer, mtu, is_streamed, is_reliable, src, dst) == _Z_RES_OK) {
+    if (_z_connectivity_link_fill(&link_event.link, peer, mtu, is_streamed, is_reliable) == _Z_RES_OK) {
         _z_connectivity_dispatch_link_event(session, &link_event, is_multicast);
     }
     _z_connectivity_link_event_clear(&link_event);
 
     _z_info_transport_event_t transport_event = {0};
     transport_event.kind = Z_SAMPLE_KIND_DELETE;
-    _z_info_transport_from_peer(&transport_event.transport, peer, is_multicast);
+    _z_connectivity_transport_from_event_data(&transport_event.transport, peer, is_multicast);
     _z_connectivity_dispatch_transport_event(session, &transport_event);
 }
 
 void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, const _z_transport_common_t *transport,
-                                                      const _z_transport_peer_common_t *peer, bool is_multicast) {
+                                                      const _z_connectivity_peer_event_data_t *peer,
+                                                      bool is_multicast) {
     if (peer == NULL) {
         return;
     }
@@ -862,9 +868,7 @@ void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, con
     bool is_reliable = false;
     _z_transport_link_properties_from_transport(transport, &mtu, &is_streamed, &is_reliable);
 
-    _z_connectivity_peer_disconnected(session, peer, is_multicast, mtu, is_streamed, is_reliable,
-                                      _z_connectivity_optional_link_endpoint(&peer->_link_src),
-                                      _z_connectivity_optional_link_endpoint(&peer->_link_dst));
+    _z_connectivity_peer_disconnected(session, peer, is_multicast, mtu, is_streamed, is_reliable);
 }
 
 #endif

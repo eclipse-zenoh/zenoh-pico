@@ -79,6 +79,45 @@ void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_tra
     dst->_remote_whatami = src->_remote_whatami;
 }
 
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_connectivity_peer_event_data_clear(_z_connectivity_peer_event_data_t *event_data) {
+    if (event_data == NULL) {
+        return;
+    }
+    if (event_data->_owns_endpoints) {
+        _z_string_clear(&event_data->_link_src);
+        _z_string_clear(&event_data->_link_dst);
+    }
+    *event_data = (_z_connectivity_peer_event_data_t){0};
+}
+
+void _z_connectivity_peer_event_data_copy_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                      const _z_transport_peer_common_t *src) {
+    *dst = (_z_connectivity_peer_event_data_t){0};
+    dst->_link_src = _z_string_null();
+    dst->_link_dst = _z_string_null();
+    dst->_remote_zid = src->_remote_zid;
+    dst->_remote_whatami = src->_remote_whatami;
+    dst->_owns_endpoints = true;
+
+    (void)_z_string_copy(&dst->_link_src, &src->_link_src);
+    if (_z_string_copy(&dst->_link_dst, &src->_link_dst) != _Z_RES_OK) {
+        _z_string_clear(&dst->_link_src);
+    }
+}
+
+void _z_connectivity_peer_event_data_alias_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                       const _z_transport_peer_common_t *src) {
+    *dst = (_z_connectivity_peer_event_data_t){
+        ._remote_zid = src->_remote_zid,
+        ._remote_whatami = src->_remote_whatami,
+        ._link_src = src->_link_src,
+        ._link_dst = src->_link_dst,
+        ._owns_endpoints = false,
+    };
+}
+#endif
+
 bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right) {
     return _z_id_eq(&left->_remote_zid, &right->_remote_zid);
 }
@@ -142,9 +181,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
 #if Z_FEATURE_CONNECTIVITY == 1
     bool dispatch_connected_event = output_peer == NULL;
     _z_session_t *session = _z_transport_common_get_session(&ztu->_common);
-    _z_transport_peer_common_t peer_snapshot = {0};
-    _z_string_t link_src = _z_string_null();
-    _z_string_t link_dst = _z_string_null();
+    _z_connectivity_peer_event_data_t peer_event_data = {0};
     char local_addr[160] = {0};
     char remote_addr[160] = {0};
     uint16_t mtu = 0;
@@ -199,16 +236,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
         }
     }
     if (dispatch_connected_event) {
-        peer_snapshot._remote_zid = peer->common._remote_zid;
-        peer_snapshot._remote_whatami = peer->common._remote_whatami;
-        if (_z_string_check(&peer->common._link_src) &&
-            (_z_string_copy(&link_src, &peer->common._link_src) != _Z_RES_OK)) {
-            _z_string_clear(&link_src);
-        }
-        if (_z_string_check(&peer->common._link_dst) &&
-            (_z_string_copy(&link_dst, &peer->common._link_dst) != _Z_RES_OK)) {
-            _z_string_clear(&link_dst);
-        }
+        _z_connectivity_peer_event_data_copy_from_common(&peer_event_data, &peer->common);
     }
 #endif
     _z_transport_peer_mutex_unlock(&ztu->_common);
@@ -219,12 +247,9 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
 
 #if Z_FEATURE_CONNECTIVITY == 1
     if (dispatch_connected_event) {
-        _z_connectivity_peer_connected(session, &peer_snapshot, false, mtu, is_streamed, is_reliable,
-                                       _z_string_check(&link_src) ? &link_src : NULL,
-                                       _z_string_check(&link_dst) ? &link_dst : NULL);
+        _z_connectivity_peer_connected(session, &peer_event_data, false, mtu, is_streamed, is_reliable);
     }
-    _z_string_clear(&link_src);
-    _z_string_clear(&link_dst);
+    _z_connectivity_peer_event_data_clear(&peer_event_data);
 #endif
 
     return _Z_RES_OK;

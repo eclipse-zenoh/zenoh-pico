@@ -70,9 +70,9 @@ static void _zp_unicast_report_disconnected_peers(_z_transport_unicast_t *ztu,
         _Z_INFO("Deleting peer because it has expired after %zums", ztu->_common._lease);
         _z_interest_peer_disconnected(zs, &peer->common);
 #if Z_FEATURE_CONNECTIVITY == 1
-        _z_connectivity_peer_disconnected(zs, &peer->common, false, mtu, is_streamed, is_reliable,
-                                          _z_string_check(&peer->common._link_src) ? &peer->common._link_src : NULL,
-                                          _z_string_check(&peer->common._link_dst) ? &peer->common._link_dst : NULL);
+        _z_connectivity_peer_event_data_t disconnected_peer = {0};
+        _z_connectivity_peer_event_data_alias_from_common(&disconnected_peer, &peer->common);
+        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
 #endif
         it = _z_transport_peer_unicast_slist_next(it);
     }
@@ -85,7 +85,7 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_liveliness_subscription_undeclare_all(zs);
 #endif
 #if Z_FEATURE_CONNECTIVITY == 1
-    _z_transport_peer_common_t disconnected_peer = {0};
+    _z_connectivity_peer_event_data_t disconnected_peer = {0};
     uint16_t mtu = 0;
     bool is_streamed = false;
     bool is_reliable = false;
@@ -94,16 +94,13 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     if (curr_peer != NULL) {
         _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
-        _z_transport_peer_common_copy(&disconnected_peer, &curr_peer->common);
+        _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
         has_disconnected_peer = true;
     }
     _z_transport_peer_mutex_unlock(&ztu->_common);
     if (has_disconnected_peer) {
-        _z_connectivity_peer_disconnected(
-            zs, &disconnected_peer, false, mtu, is_streamed, is_reliable,
-            _z_string_check(&disconnected_peer._link_src) ? &disconnected_peer._link_src : NULL,
-            _z_string_check(&disconnected_peer._link_dst) ? &disconnected_peer._link_dst : NULL);
-        _z_transport_peer_common_clear(&disconnected_peer);
+        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
+        _z_connectivity_peer_event_data_clear(&disconnected_peer);
     }
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
