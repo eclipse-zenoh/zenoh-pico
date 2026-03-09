@@ -60,7 +60,7 @@ static z_result_t _ze_admin_space_build_ke(z_owned_keyexpr_t *ke, const z_id_t *
         off += (size_t)n;
     }
 
-    return z_keyexpr_from_str(ke, buf);
+    return z_keyexpr_from_substr(ke, buf, off);
 }
 
 // ke = _Z_KEYEXPR_AT / ZID / Z_KEYEXPR_STARSTAR
