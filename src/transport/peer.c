@@ -73,6 +73,7 @@ void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_tra
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
     dst->_patch = src->_patch;
 #endif
+    dst->_remote_resources = NULL;
     dst->_received = src->_received;
     dst->_remote_zid = src->_remote_zid;
     dst->_remote_whatami = src->_remote_whatami;
@@ -119,6 +120,10 @@ void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_t
     dst->_sn_rx_best_effort = src->_sn_rx_best_effort;
     dst->_socket = src->_socket;
     dst->_owns_socket = false;  // Ownership is not copied
+    dst->_pending = false;
+    dst->flow_state = _Z_FLOW_STATE_INACTIVE;
+    dst->flow_curr_size = 0;
+    dst->flow_buff = _z_zbuf_null();
     _z_transport_peer_common_copy(&dst->common, &src->common);
 }
 
