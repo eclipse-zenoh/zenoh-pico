@@ -204,6 +204,9 @@ typedef struct _z_session_t {
     // entity Id for admin space queryable (0 if not started)
     uint32_t _admin_space_queryable_id;
 #if Z_FEATURE_CONNECTIVITY == 1
+    // entity Id for session connectivity queryable (0 if not started)
+    uint32_t _admin_space_session_queryable_id;
+#if Z_FEATURE_PUBLICATION == 1
     // listener ids for admin-space connectivity event bridge (0 if not started)
     size_t _admin_space_transport_listener_id;
     size_t _admin_space_link_listener_id;
@@ -214,6 +217,7 @@ typedef struct _z_session_t {
     size_t _connectivity_next_listener_id;
     _z_connectivity_transport_listener_intmap_t _connectivity_transport_event_listeners;
     _z_connectivity_link_listener_intmap_t _connectivity_link_event_listeners;
+#endif
 #endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;

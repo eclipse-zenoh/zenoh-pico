@@ -176,6 +176,16 @@ static void assert_contains(const z_loaned_string_t *s, const char *needle) {
     ASSERT_TRUE(_z_strstr(start, end, needle) != NULL);
 }
 
+static void assert_not_contains(const z_loaned_string_t *s, const char *needle) {
+    const char *start = z_string_data(s);
+    const char *end = start + z_string_len(s);
+    if (_z_strstr(start, end, needle) != NULL) {
+        fprintf(stderr, "Assertion failed: unexpected substring found.\nActual: %.*s\nNeedle: %s\n", (int)(end - start),
+                start, needle);
+    }
+    ASSERT_TRUE(_z_strstr(start, end, needle) == NULL);
+}
+
 static void assert_contains_z_string(const z_loaned_string_t *haystack, const z_loaned_string_t *needle) {
     const char *h_start = z_string_data(haystack);
     const char *h_end = h_start + z_string_len(haystack);
@@ -988,6 +998,235 @@ void test_admin_space_transport_0_peer_endpoints_succeeds(void) {
     admin_space_test_sessions_close(&ss);
 }
 
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_LINK_TCP == 1 && \
+    Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_PUBLICATION == 1
+static void open_listener_session(z_owned_session_t *session, const char *listen_locator) {
+    z_owned_config_t cfg;
+    z_config_default(&cfg);
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_LISTEN_KEY, listen_locator));
+    ASSERT_OK(z_open(session, z_config_move(&cfg), NULL));
+    ASSERT_OK(zp_start_read_task(z_session_loan_mut(session), NULL));
+    ASSERT_OK(zp_start_lease_task(z_session_loan_mut(session), NULL));
+}
+
+static void open_connector_session(z_owned_session_t *session, const char *connect_locator) {
+    z_owned_config_t cfg;
+    z_config_default(&cfg);
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_CONNECT_KEY, connect_locator));
+    ASSERT_OK(z_open(session, z_config_move(&cfg), NULL));
+    ASSERT_OK(zp_start_read_task(z_session_loan_mut(session), NULL));
+    ASSERT_OK(zp_start_lease_task(z_session_loan_mut(session), NULL));
+}
+
+static void close_session_with_tasks(z_owned_session_t *session) {
+    ASSERT_OK(zp_stop_read_task(z_session_loan_mut(session)));
+    ASSERT_OK(zp_stop_lease_task(z_session_loan_mut(session)));
+    z_session_drop(z_session_move(session));
+}
+
+static void wait_for_sample_kind(z_owned_fifo_handler_sample_t *handler, z_sample_kind_t expected_kind,
+                                 z_owned_string_t *payload_out) {
+    if (payload_out != NULL) {
+        z_internal_string_null(payload_out);
+    }
+
+    for (unsigned i = 0; i < 50; ++i) {
+        z_owned_sample_t sample;
+        z_result_t res = z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(handler), &sample);
+        if (res == Z_CHANNEL_NODATA) {
+            z_sleep_ms(100);
+            continue;
+        }
+
+        ASSERT_OK(res);
+        if (z_sample_kind(z_loan(sample)) == expected_kind) {
+            if (payload_out != NULL && expected_kind == Z_SAMPLE_KIND_PUT) {
+                ASSERT_OK(z_bytes_to_string(z_sample_payload(z_loan(sample)), payload_out));
+            }
+            z_drop(z_move(sample));
+            return;
+        }
+        z_drop(z_move(sample));
+    }
+
+    ASSERT_TRUE(false);
+}
+
+static void assert_no_sample(z_owned_fifo_handler_sample_t *handler) {
+    for (unsigned i = 0; i < 5; ++i) {
+        z_owned_sample_t sample;
+        z_result_t res = z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(handler), &sample);
+        if (res == Z_CHANNEL_NODATA) {
+            z_sleep_ms(100);
+            continue;
+        }
+
+        if (res == _Z_RES_OK) {
+            z_drop(z_move(sample));
+        }
+        ASSERT_TRUE(false);
+    }
+}
+
+static void wait_admin_space_ready(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *probe_ke) {
+    bool ready = false;
+    for (unsigned i = 0; i < 50; ++i) {
+        admin_space_query_reply_list_t *results = run_admin_space_query(zs, probe_ke);
+        ready = admin_space_query_reply_list_len(results) > 0;
+        admin_space_query_reply_list_free(&results);
+        if (ready) {
+            break;
+        }
+        z_sleep_ms(100);
+    }
+    ASSERT_TRUE(ready);
+}
+
+void test_admin_space_rfc_connectivity_query_and_events(void) {
+    z_owned_session_t s1, s2, s3;
+    open_listener_session(&s1, "tcp/127.0.0.1:7448");
+    ASSERT_OK(zp_start_admin_space(z_session_loan_mut(&s1)));
+    open_connector_session(&s2, "tcp/127.0.0.1:7448");
+
+    z_id_t s1_zid = z_info_zid(z_session_loan(&s1));
+    z_owned_string_t s1_zid_str;
+    ASSERT_OK(z_id_to_string(&s1_zid, &s1_zid_str));
+
+    char session_query_ke_str[256];
+    int session_query_ke_len = snprintf(session_query_ke_str, sizeof(session_query_ke_str), "@/%.*s/%s/**",
+                                        (int)z_string_len(z_string_loan(&s1_zid_str)),
+                                        z_string_data(z_string_loan(&s1_zid_str)), _Z_KEYEXPR_SESSION);
+    ASSERT_TRUE(session_query_ke_len > 0 && (size_t)session_query_ke_len < sizeof(session_query_ke_str));
+
+    z_view_keyexpr_t session_query_ke;
+    ASSERT_OK(z_view_keyexpr_from_str(&session_query_ke, session_query_ke_str));
+    wait_admin_space_ready(z_session_loan(&s1), z_view_keyexpr_loan(&session_query_ke));
+
+    admin_space_query_reply_list_t *results =
+        run_admin_space_query(z_session_loan(&s2), z_view_keyexpr_loan(&session_query_ke));
+    ASSERT_TRUE(admin_space_query_reply_list_len(results) == 0);
+    admin_space_query_reply_list_free(&results);
+
+    results = run_admin_space_query(z_session_loan(&s1), z_view_keyexpr_loan(&session_query_ke));
+    ASSERT_TRUE(admin_space_query_reply_list_len(results) >= 2);
+    bool saw_transport = false;
+    bool saw_link = false;
+    for (admin_space_query_reply_list_t *it = results; it != NULL; it = admin_space_query_reply_list_next(it)) {
+        const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(it);
+        z_view_string_t key_view;
+        ASSERT_OK(z_keyexpr_as_view_string(z_keyexpr_loan(&reply->ke), &key_view));
+        const z_loaned_string_t *key = z_view_string_loan(&key_view);
+        const char *k_start = z_string_data(key);
+        const char *k_end = k_start + z_string_len(key);
+        if (_z_strstr(k_start, k_end, "/session/transport/unicast/") != NULL &&
+            _z_strstr(k_start, k_end, "/link/") == NULL) {
+            saw_transport = true;
+            assert_contains(z_string_loan(&reply->payload), "\"zid\"");
+            assert_contains(z_string_loan(&reply->payload), "\"whatami\"");
+            assert_contains(z_string_loan(&reply->payload), "\"is_qos\"");
+            assert_contains(z_string_loan(&reply->payload), "\"is_shm\"");
+        }
+        if (_z_strstr(k_start, k_end, "/session/transport/unicast/") != NULL &&
+            _z_strstr(k_start, k_end, "/link/") != NULL) {
+            saw_link = true;
+            assert_contains(z_string_loan(&reply->payload), "\"src\"");
+            assert_contains(z_string_loan(&reply->payload), "\"dst\"");
+            assert_contains(z_string_loan(&reply->payload), "\"group\":null");
+            assert_contains(z_string_loan(&reply->payload), "\"mtu\"");
+            assert_contains(z_string_loan(&reply->payload), "\"is_reliable\"");
+            assert_contains(z_string_loan(&reply->payload), "\"is_streamed\"");
+            assert_not_contains(z_string_loan(&reply->payload), "\"zid\"");
+        }
+    }
+    ASSERT_TRUE(saw_transport);
+    ASSERT_TRUE(saw_link);
+    admin_space_query_reply_list_free(&results);
+
+    char transport_sub_ke_str[256];
+    int transport_sub_ke_len =
+        snprintf(transport_sub_ke_str, sizeof(transport_sub_ke_str), "@/%.*s/%s/%s/*",
+                 (int)z_string_len(z_string_loan(&s1_zid_str)), z_string_data(z_string_loan(&s1_zid_str)),
+                 _Z_KEYEXPR_SESSION, _Z_KEYEXPR_TRANSPORT_UNICAST);
+    ASSERT_TRUE(transport_sub_ke_len > 0 && (size_t)transport_sub_ke_len < sizeof(transport_sub_ke_str));
+
+    char link_sub_ke_str[320];
+    int link_sub_ke_len = snprintf(
+        link_sub_ke_str, sizeof(link_sub_ke_str), "@/%.*s/%s/%s/*/%s/*", (int)z_string_len(z_string_loan(&s1_zid_str)),
+        z_string_data(z_string_loan(&s1_zid_str)), _Z_KEYEXPR_SESSION, _Z_KEYEXPR_TRANSPORT_UNICAST, _Z_KEYEXPR_LINK);
+    ASSERT_TRUE(link_sub_ke_len > 0 && (size_t)link_sub_ke_len < sizeof(link_sub_ke_str));
+    z_drop(z_move(s1_zid_str));
+
+    z_view_keyexpr_t transport_sub_ke;
+    z_view_keyexpr_t link_sub_ke;
+    ASSERT_OK(z_view_keyexpr_from_str(&transport_sub_ke, transport_sub_ke_str));
+    ASSERT_OK(z_view_keyexpr_from_str(&link_sub_ke, link_sub_ke_str));
+
+    z_owned_closure_sample_t transport_sub_closure;
+    z_owned_fifo_handler_sample_t transport_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&transport_sub_closure, &transport_sub_handler, 8));
+    z_owned_subscriber_t transport_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s1), &transport_sub, z_view_keyexpr_loan(&transport_sub_ke),
+                                   z_closure_sample_move(&transport_sub_closure), NULL));
+
+    z_owned_closure_sample_t link_sub_closure;
+    z_owned_fifo_handler_sample_t link_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&link_sub_closure, &link_sub_handler, 8));
+    z_owned_subscriber_t link_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s1), &link_sub, z_view_keyexpr_loan(&link_sub_ke),
+                                   z_closure_sample_move(&link_sub_closure), NULL));
+
+    z_owned_closure_sample_t remote_transport_sub_closure;
+    z_owned_fifo_handler_sample_t remote_transport_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&remote_transport_sub_closure, &remote_transport_sub_handler, 8));
+    z_owned_subscriber_t remote_transport_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s2), &remote_transport_sub, z_view_keyexpr_loan(&transport_sub_ke),
+                                   z_closure_sample_move(&remote_transport_sub_closure), NULL));
+
+    z_owned_closure_sample_t remote_link_sub_closure;
+    z_owned_fifo_handler_sample_t remote_link_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&remote_link_sub_closure, &remote_link_sub_handler, 8));
+    z_owned_subscriber_t remote_link_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s2), &remote_link_sub, z_view_keyexpr_loan(&link_sub_ke),
+                                   z_closure_sample_move(&remote_link_sub_closure), NULL));
+
+    open_connector_session(&s3, "tcp/127.0.0.1:7448");
+
+    z_owned_string_t transport_put_payload;
+    z_owned_string_t link_put_payload;
+    wait_for_sample_kind(&transport_sub_handler, Z_SAMPLE_KIND_PUT, &transport_put_payload);
+    wait_for_sample_kind(&link_sub_handler, Z_SAMPLE_KIND_PUT, &link_put_payload);
+    assert_contains(z_string_loan(&transport_put_payload), "\"is_qos\"");
+    assert_contains(z_string_loan(&transport_put_payload), "\"is_shm\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"group\":null");
+    assert_not_contains(z_string_loan(&link_put_payload), "\"zid\"");
+    z_drop(z_move(transport_put_payload));
+    z_drop(z_move(link_put_payload));
+    assert_no_sample(&remote_transport_sub_handler);
+    assert_no_sample(&remote_link_sub_handler);
+
+    close_session_with_tasks(&s3);
+    wait_for_sample_kind(&link_sub_handler, Z_SAMPLE_KIND_DELETE, NULL);
+    wait_for_sample_kind(&transport_sub_handler, Z_SAMPLE_KIND_DELETE, NULL);
+    assert_no_sample(&remote_transport_sub_handler);
+    assert_no_sample(&remote_link_sub_handler);
+
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&transport_sub)));
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&link_sub)));
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&remote_transport_sub)));
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&remote_link_sub)));
+    z_drop(z_move(transport_sub_handler));
+    z_drop(z_move(link_sub_handler));
+    z_drop(z_move(remote_transport_sub_handler));
+    z_drop(z_move(remote_link_sub_handler));
+
+    ASSERT_OK(zp_stop_admin_space(z_session_loan_mut(&s1)));
+    close_session_with_tasks(&s2);
+    close_session_with_tasks(&s1);
+}
+#endif
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -1001,6 +1240,11 @@ int main(int argc, char **argv) {
     test_admin_space_transport_0_endpoint_succeeds();
     test_admin_space_transport_0_peers_endpoint_succeeds();
     test_admin_space_transport_0_peer_endpoints_succeeds();
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_LINK_TCP == 1 &&  \
+    Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_LOCAL_QUERYABLE == 1 && \
+    Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    test_admin_space_rfc_connectivity_query_and_events();
+#endif
     return 0;
 }
 
