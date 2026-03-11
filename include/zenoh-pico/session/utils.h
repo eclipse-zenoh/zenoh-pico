@@ -52,6 +52,15 @@ static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { (void)_z_
 static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) {
     (void)_z_mutex_rec_unlock(&zn->_mutex_transport);
 }
+#if Z_FEATURE_ADMIN_SPACE == 1
+static inline void _z_session_admin_space_mutex_lock(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_admin_space); }
+static inline void _z_session_admin_space_mutex_unlock(_z_session_t *zn) {
+    (void)_z_mutex_unlock(&zn->_mutex_admin_space);
+}
+#else
+static inline void _z_session_admin_space_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_admin_space_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+#endif
 #else
 static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) {
     _ZP_UNUSED(zn);
@@ -63,6 +72,8 @@ static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_admin_space_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_admin_space_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif
 
 #ifdef __cplusplus

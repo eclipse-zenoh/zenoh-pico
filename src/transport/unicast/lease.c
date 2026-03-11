@@ -91,8 +91,8 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     bool is_reliable = false;
     bool has_disconnected_peer = false;
     _z_transport_peer_mutex_lock(&ztu->_common);
-    _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-    if (curr_peer != NULL) {
+    if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
         _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
         _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
         has_disconnected_peer = true;

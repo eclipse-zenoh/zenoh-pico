@@ -99,14 +99,12 @@ typedef struct {
     _z_closure_transport_event_t _closure;
     _z_sync_group_notifier_t _session_callback_drop_notifier;
     _z_sync_group_notifier_t _listener_callback_drop_notifier;
-    size_t _in_callback_depth;
 } _z_connectivity_transport_cb_state_t;
 
 typedef struct {
     _z_closure_link_event_t _closure;
     _z_sync_group_notifier_t _session_callback_drop_notifier;
     _z_sync_group_notifier_t _listener_callback_drop_notifier;
-    size_t _in_callback_depth;
 } _z_connectivity_link_cb_state_t;
 
 static void _z_connectivity_transport_cb_state_clear(_z_connectivity_transport_cb_state_t *state) {
@@ -168,7 +166,6 @@ static z_result_t _z_connectivity_take_transport_callback(
         ._closure = closure,
         ._session_callback_drop_notifier = _z_sync_group_notifier_null(),
         ._listener_callback_drop_notifier = _z_sync_group_notifier_null(),
-        ._in_callback_depth = 0,
     };
 
     z_result_t ret =
@@ -213,7 +210,6 @@ static z_result_t _z_connectivity_take_link_callback(_z_void_rc_t *out, z_moved_
         ._closure = closure,
         ._session_callback_drop_notifier = _z_sync_group_notifier_null(),
         ._listener_callback_drop_notifier = _z_sync_group_notifier_null(),
-        ._in_callback_depth = 0,
     };
 
     z_result_t ret =
@@ -271,20 +267,9 @@ static void _z_connectivity_dispatch_transport_event(_z_session_t *session, _z_i
         _z_connectivity_transport_listener_intmap_iterator_make(&snapshot);
     while (_z_connectivity_transport_listener_intmap_iterator_next(&it)) {
         _z_connectivity_transport_listener_t *listener = _z_connectivity_transport_listener_intmap_iterator_value(&it);
-        _z_connectivity_transport_cb_state_t *state = _z_connectivity_transport_listener_state(listener);
         _z_closure_transport_event_t *closure = _z_connectivity_transport_listener_callback(listener);
         if (closure != NULL && closure->call != NULL) {
-            _z_session_mutex_lock(session);
-            state->_in_callback_depth += 1;
-            _z_session_mutex_unlock(session);
-
             closure->call(event, closure->context);
-
-            _z_session_mutex_lock(session);
-            if (state->_in_callback_depth > 0) {
-                state->_in_callback_depth -= 1;
-            }
-            _z_session_mutex_unlock(session);
         }
     }
 
@@ -306,20 +291,9 @@ static void _z_connectivity_dispatch_link_event(_z_session_t *session, _z_info_l
             continue;
         }
 
-        _z_connectivity_link_cb_state_t *state = _z_connectivity_link_listener_state(listener);
         _z_closure_link_event_t *closure = _z_connectivity_link_listener_callback(listener);
         if (closure != NULL && closure->call != NULL) {
-            _z_session_mutex_lock(session);
-            state->_in_callback_depth += 1;
-            _z_session_mutex_unlock(session);
-
             closure->call(event, closure->context);
-
-            _z_session_mutex_lock(session);
-            if (state->_in_callback_depth > 0) {
-                state->_in_callback_depth -= 1;
-            }
-            _z_session_mutex_unlock(session);
         }
     }
 
@@ -332,12 +306,6 @@ static void _z_connectivity_replay_transport_history(_z_session_t *session,
         return;
     }
     _z_closure_transport_event_t *callback = &callback_state->_closure;
-
-    if (callback_state != NULL) {
-        _z_session_mutex_lock(session);
-        callback_state->_in_callback_depth += 1;
-        _z_session_mutex_unlock(session);
-    }
 
     _z_transport_t *transport = &session->_tp;
     _z_transport_common_t *transport_common = _z_transport_get_common(transport);
@@ -376,14 +344,6 @@ static void _z_connectivity_replay_transport_history(_z_session_t *session,
     if (transport_common != NULL) {
         _z_transport_peer_mutex_unlock(transport_common);
     }
-
-    if (callback_state != NULL) {
-        _z_session_mutex_lock(session);
-        if (callback_state->_in_callback_depth > 0) {
-            callback_state->_in_callback_depth -= 1;
-        }
-        _z_session_mutex_unlock(session);
-    }
 }
 
 static void _z_connectivity_replay_link_history(_z_session_t *session, _z_connectivity_link_cb_state_t *callback_state,
@@ -393,12 +353,6 @@ static void _z_connectivity_replay_link_history(_z_session_t *session, _z_connec
         return;
     }
     _z_closure_link_event_t *callback = &callback_state->_closure;
-
-    if (callback_state != NULL) {
-        _z_session_mutex_lock(session);
-        callback_state->_in_callback_depth += 1;
-        _z_session_mutex_unlock(session);
-    }
 
     _z_transport_t *transport = &session->_tp;
     _z_transport_common_t *transport_common = _z_transport_get_common(transport);
@@ -437,14 +391,6 @@ static void _z_connectivity_replay_link_history(_z_session_t *session, _z_connec
     if (transport_common != NULL) {
         _z_transport_peer_mutex_unlock(transport_common);
     }
-
-    if (callback_state != NULL) {
-        _z_session_mutex_lock(session);
-        if (callback_state->_in_callback_depth > 0) {
-            callback_state->_in_callback_depth -= 1;
-        }
-        _z_session_mutex_unlock(session);
-    }
 }
 
 bool _z_transport_events_listener_check(const _z_transport_events_listener_t *listener) {
@@ -461,30 +407,19 @@ void _z_transport_events_listener_clear(_z_transport_events_listener_t *listener
 
 static z_result_t _z_transport_events_listener_undeclare(_z_transport_events_listener_t *listener) {
     _z_session_rc_t session_rc = _z_session_weak_upgrade(&listener->_session);
-    bool wait_for_callbacks = true;
     if (!_Z_RC_IS_NULL(&session_rc)) {
         _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
         _z_session_mutex_lock(session);
-        _z_connectivity_transport_listener_t *listener_state = _z_connectivity_transport_listener_intmap_get(
-            &session->_connectivity_transport_event_listeners, listener->_id);
-        if (listener_state != NULL) {
-#if Z_FEATURE_MULTI_THREAD != 1
-            _z_connectivity_transport_cb_state_t *callback_state =
-                _z_connectivity_transport_listener_state(listener_state);
-            if (callback_state != NULL && callback_state->_in_callback_depth > 0) {
-                wait_for_callbacks = false;
-            }
-#endif
-        }
         _z_connectivity_transport_listener_intmap_remove(&session->_connectivity_transport_event_listeners,
                                                          listener->_id);
         _z_session_mutex_unlock(session);
         _z_session_rc_drop(&session_rc);
     }
 
-    return wait_for_callbacks && _z_sync_group_check(&listener->_callback_drop_sync_group)
-               ? _z_sync_group_wait(&listener->_callback_drop_sync_group)
-               : _Z_RES_OK;
+    if (_z_sync_group_check(&listener->_callback_drop_sync_group)) {
+        return _z_sync_group_wait(&listener->_callback_drop_sync_group);
+    }
+    return _Z_RES_OK;
 }
 
 void _z_transport_events_listener_drop(_z_transport_events_listener_t *listener) {
@@ -506,28 +441,18 @@ void _z_link_events_listener_clear(_z_link_events_listener_t *listener) {
 
 static z_result_t _z_link_events_listener_undeclare(_z_link_events_listener_t *listener) {
     _z_session_rc_t session_rc = _z_session_weak_upgrade(&listener->_session);
-    bool wait_for_callbacks = true;
     if (!_Z_RC_IS_NULL(&session_rc)) {
         _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
         _z_session_mutex_lock(session);
-        _z_connectivity_link_listener_t *listener_state =
-            _z_connectivity_link_listener_intmap_get(&session->_connectivity_link_event_listeners, listener->_id);
-        if (listener_state != NULL) {
-#if Z_FEATURE_MULTI_THREAD != 1
-            _z_connectivity_link_cb_state_t *callback_state = _z_connectivity_link_listener_state(listener_state);
-            if (callback_state != NULL && callback_state->_in_callback_depth > 0) {
-                wait_for_callbacks = false;
-            }
-#endif
-        }
         _z_connectivity_link_listener_intmap_remove(&session->_connectivity_link_event_listeners, listener->_id);
         _z_session_mutex_unlock(session);
         _z_session_rc_drop(&session_rc);
     }
 
-    return wait_for_callbacks && _z_sync_group_check(&listener->_callback_drop_sync_group)
-               ? _z_sync_group_wait(&listener->_callback_drop_sync_group)
-               : _Z_RES_OK;
+    if (_z_sync_group_check(&listener->_callback_drop_sync_group)) {
+        return _z_sync_group_wait(&listener->_callback_drop_sync_group);
+    }
+    return _Z_RES_OK;
 }
 
 void _z_link_events_listener_drop(_z_link_events_listener_t *listener) {

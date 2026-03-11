@@ -841,9 +841,7 @@ static void _ze_admin_space_query_handle_connectivity_session(const z_loaned_que
         _z_session_transport_mutex_unlock(session);
         return;
     }
-#if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_lock(&session->_tp._transport._unicast._common);
-#endif
 
     const _z_transport_common_t *transport_common = &session->_tp._transport._unicast._common;
     const _z_transport_peer_unicast_slist_t *peers = session->_tp._transport._unicast._peers;
@@ -900,9 +898,7 @@ static void _ze_admin_space_query_handle_connectivity_session(const z_loaned_que
         peers = _z_transport_peer_unicast_slist_next(peers);
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_unlock(&session->_tp._transport._unicast._common);
-#endif
     _z_session_transport_mutex_unlock(session);
 }
 #endif  // Z_FEATURE_CONNECTIVITY == 1
@@ -1233,17 +1229,17 @@ static void _ze_admin_space_publish_link_event(z_loaned_link_event_t *event, voi
 
 z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
-    if (session->_admin_space_queryable_id != 0) {
-        // Already started
-        return _Z_RES_OK;
-    }
-
     z_id_t zid = z_info_zid(zs);
     z_result_t ret = _Z_RES_OK;
+    _z_session_admin_space_mutex_lock(session);
+    if (session->_admin_space_queryable_id != 0) {
+        goto out;
+    }
 
     _z_session_weak_t *pico_session_weak = _z_session_rc_clone_as_weak_ptr(zs);
     if (_Z_RC_IS_NULL(pico_session_weak)) {
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        goto out;
     }
 
     z_owned_keyexpr_t ke;
@@ -1251,7 +1247,7 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
     if (ret != _Z_RES_OK) {
         _z_session_weak_drop(pico_session_weak);
         z_free(pico_session_weak);
-        return ret;
+        goto out;
     }
 
     z_owned_closure_query_t callback;
@@ -1261,14 +1257,14 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
         z_keyexpr_drop(z_keyexpr_move(&ke));
         _z_session_weak_drop(pico_session_weak);
         z_free(pico_session_weak);
-        return ret;
+        goto out;
     }
 
     z_owned_queryable_t admin_space_queryable;
     ret = z_declare_queryable(zs, &admin_space_queryable, z_keyexpr_loan(&ke), z_closure_query_move(&callback), NULL);
     z_keyexpr_drop(z_keyexpr_move(&ke));
     if (ret != _Z_RES_OK) {
-        return ret;
+        goto out;
     }
 
     session->_admin_space_queryable_id = admin_space_queryable._val._entity_id;
@@ -1350,7 +1346,8 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
 #endif
 #endif
 
-    return _Z_RES_OK;
+    ret = _Z_RES_OK;
+    goto out;
 
 #if Z_FEATURE_CONNECTIVITY == 1
 #if Z_FEATURE_PUBLICATION == 1
@@ -1385,12 +1382,17 @@ err_queryable: {
         ret = undeclare_queryable_ret;
     }
 }
-    return ret;
 #endif
+out:
+    _z_session_admin_space_mutex_unlock(session);
+    return ret;
 }
 
 z_result_t zp_stop_admin_space(z_loaned_session_t *zs) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
+    z_result_t ret = _Z_RES_OK;
+
+    _z_session_admin_space_mutex_lock(session);
     uint32_t admin_space_queryable_id = session->_admin_space_queryable_id;
 #if Z_FEATURE_CONNECTIVITY == 1
     uint32_t admin_space_session_queryable_id = session->_admin_space_session_queryable_id;
@@ -1400,23 +1402,18 @@ z_result_t zp_stop_admin_space(z_loaned_session_t *zs) {
 
     if (admin_space_queryable_id == 0 && admin_space_session_queryable_id == 0 &&
         admin_space_transport_listener_id == 0 && admin_space_link_listener_id == 0) {
-        // Already stopped
-        return _Z_RES_OK;
+        goto out;
     }
 #else
     if (admin_space_queryable_id == 0 && admin_space_session_queryable_id == 0) {
-        // Already stopped
-        return _Z_RES_OK;
+        goto out;
     }
 #endif
 #else
     if (admin_space_queryable_id == 0) {
-        // Already stopped
-        return _Z_RES_OK;
+        goto out;
     }
 #endif
-
-    z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
     if (admin_space_transport_listener_id != 0) {
@@ -1458,6 +1455,8 @@ z_result_t zp_stop_admin_space(z_loaned_session_t *zs) {
         }
     }
 
+out:
+    _z_session_admin_space_mutex_unlock(session);
     return ret;
 }
 

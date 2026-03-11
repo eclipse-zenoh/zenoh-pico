@@ -64,6 +64,14 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         _z_mutex_drop(&zn->_mutex_inner);
         _Z_ERROR_RETURN(ret);
     }
+#if Z_FEATURE_ADMIN_SPACE == 1
+    ret = _z_mutex_init(&zn->_mutex_admin_space);
+    if (ret != _Z_RES_OK) {
+        _z_mutex_rec_drop(&zn->_mutex_transport);
+        _z_mutex_drop(&zn->_mutex_inner);
+        _Z_ERROR_RETURN(ret);
+    }
+#endif
 #endif
     zn->_mode = Z_WHATAMI_CLIENT;
     zn->_tp._type = _Z_TRANSPORT_NONE;
@@ -141,6 +149,9 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
     if (ret != _Z_RES_OK) {
 #if Z_FEATURE_MULTI_THREAD == 1
+#if Z_FEATURE_ADMIN_SPACE == 1
+        _z_mutex_drop(&zn->_mutex_admin_space);
+#endif
         _z_mutex_rec_drop(&zn->_mutex_transport);
         _z_mutex_drop(&zn->_mutex_inner);
 #endif
@@ -183,7 +194,12 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_connectivity_transport_listener_intmap_clear(&zn->_connectivity_transport_event_listeners);
     _z_connectivity_link_listener_intmap_clear(&zn->_connectivity_link_event_listeners);
     zn->_connectivity_next_listener_id = 1;
+    _z_session_mutex_unlock(zn);
+#endif
 #if Z_FEATURE_ADMIN_SPACE == 1
+    _z_session_admin_space_mutex_lock(zn);
+    zn->_admin_space_queryable_id = 0;
+#if Z_FEATURE_CONNECTIVITY == 1
 #if Z_FEATURE_QUERYABLE == 1
     zn->_admin_space_session_queryable_id = 0;
 #endif
@@ -192,7 +208,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     zn->_admin_space_link_listener_id = 0;
 #endif
 #endif
-    _z_session_mutex_unlock(zn);
+    _z_session_admin_space_mutex_unlock(zn);
 #endif
 #endif
     _z_sync_group_wait(&zn->_callback_drop_sync_group);
@@ -240,10 +256,11 @@ void _z_session_clear(_z_session_t *zn) {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
+#if Z_FEATURE_ADMIN_SPACE == 1
+    _z_mutex_drop(&zn->_mutex_admin_space);
+#endif
+    _z_mutex_rec_drop(&zn->_mutex_transport);
     _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_sync_group_drop(&zn->_callback_drop_sync_group);
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_rec_drop(&zn->_mutex_transport);
-#endif
 }
