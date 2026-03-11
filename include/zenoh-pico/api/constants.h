@@ -256,6 +256,19 @@ typedef enum {
 } z_query_target_t;
 #define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
 
+/**
+ * Key expressions types to which Queryable should reply to.
+ *
+ * Enumerators:
+ *   Z_REPLY_KEYEXPR_ANY: Replies to any key expression queries.
+ *   Z_REPLY_KEYEXPR_MATCHING_QUERY: Replies only to queries with intersecting key expressions.
+ */
+typedef enum z_reply_keyexpr_t {
+    Z_REPLY_KEYEXPR_ANY = 0,
+    Z_REPLY_KEYEXPR_MATCHING_QUERY = 1,
+} z_reply_keyexpr_t;
+#define Z_REPLY_KEYEXPR_DEFAULT Z_REPLY_KEYEXPR_MATCHING_QUERY
+
 #ifdef __cplusplus
 }
 #endif

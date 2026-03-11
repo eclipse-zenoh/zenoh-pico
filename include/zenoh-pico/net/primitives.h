@@ -277,13 +277,18 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
  *     priority: The priority of the query.
  *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *     timeout_ms: The timeout value of this query.
+ *     encoding: The optional default encoding to use during query. The callee gets the ownership.
+ *     reliability: The reliability of the querier messages.
+ *     allowed_destination: Locality restrictions for delivery.
+ *     accept_replies: The accepted replies for this querier.
  * Returns:
  *    0 in case of success, negative error code otherwise.
  */
 z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
-                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination);
+                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination,
+                              z_reply_keyexpr_t accept_replies);
 
 /**
  * Undeclare a :c:type:`_z_querier_t`.
@@ -316,6 +321,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     qos: QoS to apply when routing this query.
  *     allowed_destination: Locality restrictions for delivery.
  *     source_info: Querier source info.
+ *     accept_replies: The accepted replies for this query.
  *     opt_cancellation_token: Optional cancellation token to cancel the query, can be null.
  *
  */
@@ -324,7 +330,8 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
                     z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
                     _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
                     _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
-                    z_locality_t allowed_destination, _z_cancellation_token_rc_t *opt_cancellation_token);
+                    z_reply_keyexpr_t accept_replies, z_locality_t allowed_destination,
+                    _z_cancellation_token_rc_t *opt_cancellation_token);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

@@ -497,7 +497,8 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
-                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination) {
+                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination,
+                              z_reply_keyexpr_t accept_replies) {
     *querier = _z_querier_null();
     querier->_encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     querier->reliability = reliability;
@@ -507,6 +508,7 @@ z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, 
     querier->_target = target;
     querier->_priority = priority;
     querier->_is_express = is_express;
+    querier->_accept_replies = accept_replies;
     querier->_timeout_ms = timeout_ms;
     querier->_allowed_destination = allowed_destination;
     querier->_zn = _z_session_rc_clone_as_weak(zn);
@@ -538,7 +540,8 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
                     z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
                     _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
                     _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
-                    z_locality_t allowed_destination, _z_cancellation_token_rc_t *opt_cancellation_token) {
+                    z_reply_keyexpr_t accept_replies, z_locality_t allowed_destination,
+                    _z_cancellation_token_rc_t *opt_cancellation_token) {
     _z_session_t *zn = _Z_RC_IN_VAL(session);
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
@@ -577,8 +580,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_key = ke_query;
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anykey =
-        (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_QUERY_MATCH) != NULL);
+    pq->_anyke = accept_replies == Z_REPLY_KEYEXPR_ANY;
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;
@@ -607,13 +609,13 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, &wireexpr, &params, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
-                            timeout_ms, attachment, qos, source_info);
+                            timeout_ms, attachment, qos, source_info, pq->_anyke);
         ret = _z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL);
     }
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (ret == _Z_RES_OK && allow_local) {
         ret = _z_session_deliver_query_locally(zn, &keyexpr->_inner, &params, consolidation, payload, encoding,
-                                               attachment, source_info, qid, timeout_ms, qos);
+                                               attachment, source_info, qid, timeout_ms, qos, pq->_anyke);
     }
 #endif
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_unregister_pending_query(zn, qid));

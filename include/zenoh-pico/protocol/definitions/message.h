@@ -107,6 +107,7 @@ typedef struct {
     _z_value_t _ext_value;
     z_consolidation_mode_t _consolidation;
     _z_bytes_t _ext_attachment;
+    bool _anyke;
 } _z_msg_query_t;
 typedef struct {
     bool info;

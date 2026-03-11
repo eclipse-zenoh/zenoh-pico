@@ -439,6 +439,8 @@ z_entity_global_id_t z_source_info_id(const z_source_info_t *info) { return info
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
+z_reply_keyexpr_t z_reply_keyexpr_default(void) { return Z_REPLY_KEYEXPR_DEFAULT; }
+
 z_query_consolidation_t z_query_consolidation_auto(void) {
     return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
 }
@@ -459,6 +461,10 @@ z_query_consolidation_t z_query_consolidation_default(void) { return z_query_con
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
     parameters->_val = _z_string_alias(_Z_RC_IN_VAL(query)->_parameters);
+}
+
+z_reply_keyexpr_t z_query_accepts_replies(const z_loaned_query_t *query) {
+    return _Z_RC_IN_VAL(query)->_anyke ? Z_REPLY_KEYEXPR_ANY : Z_REPLY_KEYEXPR_MATCHING_QUERY;
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_attachment; }
@@ -1414,6 +1420,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->source_info = NULL;
     options->cancellation_token = NULL;
 #endif
+    options->accept_replies = z_reply_keyexpr_default();
 }
 
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
@@ -1453,7 +1460,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     ret = _z_query(zs, _z_optional_id_make_none(), keyexpr, parameters, parameters_len, opt.target,
                    opt.consolidation.mode, _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding),
                    closure.call, closure.drop, closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment),
-                   qos, source_info, allowed_destination, cancellation_token);
+                   qos, source_info, opt.accept_replies, allowed_destination, cancellation_token);
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
     z_cancellation_token_drop(opt.cancellation_token);
@@ -1489,6 +1496,7 @@ void z_querier_options_default(z_querier_options_t *options) {
     options->allowed_destination = z_locality_default();
 #endif
     options->timeout_ms = 0;
+    options->accept_replies = z_reply_keyexpr_default();
 }
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
@@ -1511,10 +1519,10 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     allowed_destination = opt.allowed_destination;
 #endif
 
-    z_result_t res =
-        _z_declare_querier(&querier->_val, zs, keyexpr, opt.consolidation.mode, opt.congestion_control, opt.target,
-                           opt.priority, opt.is_express, opt.timeout_ms,
-                           opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability, allowed_destination);
+    z_result_t res = _z_declare_querier(&querier->_val, zs, keyexpr, opt.consolidation.mode, opt.congestion_control,
+                                        opt.target, opt.priority, opt.is_express, opt.timeout_ms,
+                                        opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability,
+                                        allowed_destination, opt.accept_replies);
     _Z_SET_IF_OK(res,
                  _z_write_filter_create(zs, &querier->_val._filter, &querier->_val._key, _Z_INTEREST_FLAG_QUERYABLES,
                                         querier->_val._target == Z_QUERY_TARGET_ALL_COMPLETE, allowed_destination));
@@ -1577,8 +1585,8 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         ret = _z_query(&sess_rc, _z_optional_id_make_some(querier->_id), &querier->_key, parameters, parameters_len,
                        querier->_target, querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
                        closure.call, closure.drop, closure.context, querier->_timeout_ms,
-                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_allowed_destination,
-                       cancellation_token);
+                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_accept_replies,
+                       querier->_allowed_destination, cancellation_token);
     } else if (closure.drop != NULL) {
         closure.drop(closure.context);
     }

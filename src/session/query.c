@@ -111,7 +111,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         return _Z_RES_OK;
     }
 
-    if (!pen_qry->_anykey && !_z_keyexpr_intersects(&pen_qry->_key, keyexpr)) {
+    if (!pen_qry->_anyke && !_z_keyexpr_intersects(&pen_qry->_key, keyexpr)) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(keyexpr);
         _z_msg_put_clear(msg);

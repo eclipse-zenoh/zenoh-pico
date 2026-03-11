@@ -325,7 +325,7 @@ static void test_query_local_only_single(void) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                               Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
-                              NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, NULL);
+                              NULL, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_SESSION_LOCAL, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
@@ -444,7 +444,7 @@ static void test_query_local_only_multiple(void) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                               Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
-                              NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, NULL);
+                              NULL, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_SESSION_LOCAL, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_query_secondary_count, memory_order_relaxed) == 1);
@@ -480,7 +480,7 @@ static void test_query_local_and_remote(void) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                               Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
-                              NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, NULL);
+                              NULL, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_SESSION_LOCAL, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
@@ -497,7 +497,7 @@ static void test_query_local_and_remote(void) {
     // Permit remote delivery; still send to loopback, but network request must be emitted as well
     res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                    Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000, NULL, qos,
-                   NULL, Z_LOCALITY_ANY, NULL);
+                   NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_ANY, NULL);
     assert(res == _Z_RES_OK);
 
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
@@ -714,7 +714,7 @@ static void test_query_remote_only_destination(void) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                               Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
-                              NULL, qos, NULL, Z_LOCALITY_REMOTE, NULL);
+                              NULL, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_REMOTE, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
@@ -749,7 +749,7 @@ static void test_queryable_remote_only_origin(void) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
                               Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
-                              NULL, qos, NULL, Z_LOCALITY_ANY, NULL);
+                              NULL, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_ANY, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);

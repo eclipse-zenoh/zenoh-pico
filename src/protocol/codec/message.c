@@ -33,6 +33,7 @@
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/result.h"
 
 /*=============================*/
@@ -394,8 +395,8 @@ z_result_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     z_result_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    bool has_params = _z_slice_check(&msg->_parameters);
-    if (has_params) {
+    bool has_params = _z_slice_check(&msg->_parameters) && msg->_parameters.len > 0;
+    if (has_params || msg->_anyke) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }
     bool has_consolidation = (msg->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT);
@@ -410,9 +411,22 @@ z_result_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     if (has_consolidation) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_consolidation));
     }
-    if (has_params) {
+    if (msg->_anyke && !_z_parameters_has_anyke(&msg->_parameters)) {
+        if (has_params) {
+            _z_slice_t anykey_slice = _z_slice_from_buf_custom_deleter(
+                (uint8_t *)";"_Z_QUERY_PARAMS_KEY_ANYKE, 1 + _Z_QUERY_PARAMS_KEY_ANYKE_LEN, _z_delete_context_static());
+            _z_slice_t combined[2] = {msg->_parameters, anykey_slice};
+            _Z_RETURN_IF_ERR(_z_slices_encode(wbf, combined, 2));
+        } else {
+            _z_slice_t anykey_slice = _z_slice_from_buf_custom_deleter(
+                (uint8_t *)_Z_QUERY_PARAMS_KEY_ANYKE, _Z_QUERY_PARAMS_KEY_ANYKE_LEN, _z_delete_context_static());
+            _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &anykey_slice));
+        }
+    } else if (has_params) {
+        // _anyke already in params or _anyke == false
         _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_parameters));
     }
+
     if (required_exts.body) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03;
         if (required_exts.info || required_exts.attachment) {
@@ -468,6 +482,29 @@ z_result_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
+bool _z_parameters_has_anyke(const _z_slice_t *parameters) {
+    const uint8_t *start = parameters->start;
+    const uint8_t *end = parameters->start + parameters->len;
+    while (true) {
+        size_t len = (size_t)(end - start);
+        const uint8_t *pos = _z_memmem(start, len, _Z_QUERY_PARAMS_KEY_ANYKE, _Z_QUERY_PARAMS_KEY_ANYKE_LEN);
+        if (pos == NULL) {
+            break;
+        }
+        // Check left boundary: must be start of string or preceded by ';'
+        bool left_ok = (pos == parameters->start) || (*(pos - 1) == ';');
+        // Check right boundary: must be end of string or followed by ';'
+        bool right_ok = (pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN == end) || (*(pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN) == ';');
+        if (left_ok && right_ok) {
+            return true;
+        }
+
+        start = pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN + 1;
+        if (start > end) break;
+    }
+    return false;
+}
+
 z_result_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_QUERY");
     z_result_t ret = _Z_RES_OK;
@@ -479,6 +516,7 @@ z_result_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q_P)) {
         _Z_RETURN_IF_ERR(_z_slice_decode(&msg->_parameters, zbf));
+        msg->_anyke = _z_parameters_has_anyke(&msg->_parameters);
     } else {
         _z_slice_clear(&msg->_parameters);
     }

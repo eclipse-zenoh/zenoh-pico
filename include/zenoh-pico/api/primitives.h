@@ -1021,6 +1021,14 @@ z_entity_global_id_t z_source_info_id(const z_source_info_t *info);
 z_query_target_t z_query_target_default(void);
 
 /**
+ * Builds a default query reply key expression type.
+ *
+ * Return:
+ *   The constructed :c:type:`z_reply_keyexpr_t`.
+ */
+z_reply_keyexpr_t z_reply_keyexpr_default(void);
+
+/**
  * Builds an automatic query consolidation :c:type:`z_query_consolidation_t`.
  *
  * A query consolidation strategy will automatically be selected depending on the query selector.
@@ -1079,6 +1087,18 @@ z_query_consolidation_t z_query_consolidation_none(void);
  *   parameters: Pointer to an uninitialized :c:type:`z_view_string_t` to contain the parameters.
  */
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters);
+
+/**
+ * Queries may or may not accept replies on key expressions that do not intersect with their own key expression.
+ * This getter allows you to check whether or not a specific query does so.
+ *
+ * Parameters:
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the target from.
+ *
+ * Return:
+ *   The query reply key expression type as a :c:type:`z_reply_keyexpr_t`.
+ */
+z_reply_keyexpr_t z_query_accepts_replies(const z_loaned_query_t *query);
 
 /**
  * Gets a query payload by aliasing it.
