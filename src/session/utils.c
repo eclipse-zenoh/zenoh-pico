@@ -232,20 +232,8 @@ void _z_session_clear(_z_session_t *zn) {
     _z_config_clear(&zn->_config);
 #endif
     _z_session_transport_mutex_lock(zn);
-    _z_transport_type_t transport_type = zn->_tp._type;
-    zn->_tp._type = _Z_TRANSPORT_NONE;
+    _z_transport_clear(&zn->_tp, false);
     _z_session_transport_mutex_unlock(zn);
-    switch (transport_type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            _z_unicast_transport_clear(&zn->_tp._transport._unicast, false);
-            break;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            _z_multicast_transport_clear(&zn->_tp._transport._multicast, false);
-            break;
-        default:
-            break;
-    }
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_PERIODIC_TASKS == 1
     if (_zp_periodic_scheduler_check(&zn->_periodic_scheduler)) {
