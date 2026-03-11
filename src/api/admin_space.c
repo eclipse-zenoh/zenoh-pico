@@ -22,9 +22,7 @@
 
 #if Z_FEATURE_ADMIN_SPACE == 1
 
-#define _ZE_ADMIN_SPACE_KE_BUF_LEN 128
-#define _ZE_ADMIN_SPACE_SESSION_TRANSPORT_KE_BUF_LEN 192
-#define _ZE_ADMIN_SPACE_SESSION_LINK_KE_BUF_LEN 256
+#define _ZE_ADMIN_SPACE_KE_BUF_LEN 256
 
 typedef struct {
     const char *data;
@@ -168,60 +166,44 @@ static z_result_t _ze_admin_space_session_queryable_ke(z_owned_keyexpr_t *ke, co
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_TRANSPORT_UNICAST / PEER_ZID
 static z_result_t _ze_admin_space_session_transport_ke(z_owned_keyexpr_t *ke, const z_id_t *zid,
                                                        const z_id_t *peer_zid) {
-    z_internal_keyexpr_null(ke);
-
-    z_owned_string_t zid_str;
-    _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
     z_owned_string_t peer_zid_str;
-    _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(peer_zid, &peer_zid_str), z_string_drop(z_string_move(&zid_str)));
+    _Z_RETURN_IF_ERR(z_id_to_string(peer_zid, &peer_zid_str));
 
-    char buf[_ZE_ADMIN_SPACE_SESSION_TRANSPORT_KE_BUF_LEN];
-    int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%.*s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
-                     (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
-                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_TRANSPORT_UNICAST,
-                     _Z_KEYEXPR_SEPARATOR, (int)z_string_len(z_string_loan(&peer_zid_str)),
-                     z_string_data(z_string_loan(&peer_zid_str)));
+    const z_loaned_string_t *peer_zid_loan = z_string_loan(&peer_zid_str);
+    const _ze_admin_space_ke_segment_t segments[] = {
+        {_Z_KEYEXPR_SESSION, _Z_KEYEXPR_SESSION_LEN},
+        {_Z_KEYEXPR_TRANSPORT_UNICAST, _Z_KEYEXPR_TRANSPORT_UNICAST_LEN},
+        {z_string_data(peer_zid_loan), z_string_len(peer_zid_loan)},
+    };
 
-    z_string_drop(z_string_move(&zid_str));
+    z_result_t ret = _ze_admin_space_build_ke(ke, zid, segments, 3);
     z_string_drop(z_string_move(&peer_zid_str));
-
-    if (n < 0 || (size_t)n >= sizeof(buf)) {
-        return _Z_ERR_INVALID;
-    }
-    return z_keyexpr_from_str(ke, buf);
+    return ret;
 }
 
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_TRANSPORT_UNICAST / PEER_ZID / _Z_KEYEXPR_LINK /
 // LINK_ID
 static z_result_t _ze_admin_space_session_link_ke(z_owned_keyexpr_t *ke, const z_id_t *zid, const z_id_t *peer_zid,
                                                   const z_id_t *link_id) {
-    z_internal_keyexpr_null(ke);
-
-    z_owned_string_t zid_str;
-    _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
     z_owned_string_t peer_zid_str;
-    _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(peer_zid, &peer_zid_str), z_string_drop(z_string_move(&zid_str)));
+    _Z_RETURN_IF_ERR(z_id_to_string(peer_zid, &peer_zid_str));
     z_owned_string_t link_id_str;
-    _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(link_id, &link_id_str), z_string_drop(z_string_move(&zid_str));
-                           z_string_drop(z_string_move(&peer_zid_str)));
+    _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(link_id, &link_id_str), z_string_drop(z_string_move(&peer_zid_str)));
 
-    char buf[_ZE_ADMIN_SPACE_SESSION_LINK_KE_BUF_LEN];
-    int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%.*s%s%s%s%.*s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
-                     (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
-                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_TRANSPORT_UNICAST,
-                     _Z_KEYEXPR_SEPARATOR, (int)z_string_len(z_string_loan(&peer_zid_str)),
-                     z_string_data(z_string_loan(&peer_zid_str)), _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_LINK,
-                     _Z_KEYEXPR_SEPARATOR, (int)z_string_len(z_string_loan(&link_id_str)),
-                     z_string_data(z_string_loan(&link_id_str)));
+    const z_loaned_string_t *peer_zid_loan = z_string_loan(&peer_zid_str);
+    const z_loaned_string_t *link_id_loan = z_string_loan(&link_id_str);
+    const _ze_admin_space_ke_segment_t segments[] = {
+        {_Z_KEYEXPR_SESSION, _Z_KEYEXPR_SESSION_LEN},
+        {_Z_KEYEXPR_TRANSPORT_UNICAST, _Z_KEYEXPR_TRANSPORT_UNICAST_LEN},
+        {z_string_data(peer_zid_loan), z_string_len(peer_zid_loan)},
+        {_Z_KEYEXPR_LINK, _Z_KEYEXPR_LINK_LEN},
+        {z_string_data(link_id_loan), z_string_len(link_id_loan)},
+    };
 
-    z_string_drop(z_string_move(&zid_str));
+    z_result_t ret = _ze_admin_space_build_ke(ke, zid, segments, 5);
     z_string_drop(z_string_move(&peer_zid_str));
     z_string_drop(z_string_move(&link_id_str));
-
-    if (n < 0 || (size_t)n >= sizeof(buf)) {
-        return _Z_ERR_INVALID;
-    }
-    return z_keyexpr_from_str(ke, buf);
+    return ret;
 }
 #endif  // Z_FEATURE_CONNECTIVITY == 1
 
@@ -413,33 +395,8 @@ void _ze_admin_space_reply_clear(_ze_admin_space_reply_t *reply) {
     _ze_admin_space_reply_null(reply);
 }
 
-static z_result_t _ze_admin_space_add_reply(_z_json_encoder_t *je, const z_loaned_keyexpr_t *ke,
-                                            _ze_admin_space_reply_list_t **replies) {
-    _ze_admin_space_reply_t *reply = z_malloc(sizeof(_ze_admin_space_reply_t));
-    if (reply == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    _ze_admin_space_reply_null(reply);
-
-    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&reply->ke, ke), z_free(reply));
-    _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_finish(je, &reply->payload), _ze_admin_space_reply_clear(reply);
-                           z_free(reply));
-
-    _ze_admin_space_reply_list_t *old = *replies;
-    _ze_admin_space_reply_list_t *tmp = _ze_admin_space_reply_list_push(*replies, reply);
-    if (tmp == old) {
-        _ze_admin_space_reply_clear(reply);
-        z_free(reply);
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    *replies = tmp;
-
-    return _Z_RES_OK;
-}
-
-#if Z_FEATURE_CONNECTIVITY == 1
-static z_result_t _ze_admin_space_add_reply_payload(const z_loaned_keyexpr_t *ke, z_moved_bytes_t *payload,
-                                                    _ze_admin_space_reply_list_t **replies) {
+static z_result_t _ze_admin_space_add_reply_bytes(const z_loaned_keyexpr_t *ke, z_moved_bytes_t *payload,
+                                                  _ze_admin_space_reply_list_t **replies) {
     _ze_admin_space_reply_t *reply = z_malloc(sizeof(_ze_admin_space_reply_t));
     if (reply == NULL) {
         z_bytes_drop(payload);
@@ -458,9 +415,17 @@ static z_result_t _ze_admin_space_add_reply_payload(const z_loaned_keyexpr_t *ke
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     *replies = tmp;
+
     return _Z_RES_OK;
 }
-#endif  // Z_FEATURE_CONNECTIVITY == 1
+
+static z_result_t _ze_admin_space_add_reply(_z_json_encoder_t *je, const z_loaned_keyexpr_t *ke,
+                                            _ze_admin_space_reply_list_t **replies) {
+    z_owned_bytes_t payload;
+    z_internal_bytes_null(&payload);
+    _Z_RETURN_IF_ERR(_z_json_encoder_finish(je, &payload));
+    return _ze_admin_space_add_reply_bytes(ke, z_bytes_move(&payload), replies);
+}
 
 static z_result_t _ze_admin_space_encode_transport_common(_z_json_encoder_t *je, const _z_transport_common_t *common) {
     return _ze_admin_space_encode_link(je, common->_link);
@@ -857,8 +822,8 @@ static void _ze_admin_space_query_handle_connectivity_session(const z_loaned_que
                 ret = _ze_admin_space_encode_connectivity_transport_payload(&payload, &peer->common._remote_zid,
                                                                             peer->common._remote_whatami, false, false);
                 if (ret == _Z_RES_OK) {
-                    ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&transport_ke), z_bytes_move(&payload),
-                                                            replies);
+                    ret =
+                        _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&transport_ke), z_bytes_move(&payload), replies);
                 }
                 if (ret != _Z_RES_OK) {
                     _Z_WARN("Failed to add connectivity transport status reply: %d", ret);
@@ -884,7 +849,7 @@ static void _ze_admin_space_query_handle_connectivity_session(const z_loaned_que
                 ret = _ze_admin_space_encode_connectivity_link_payload(
                     &payload, &peer->common._link_src, &peer->common._link_dst, mtu, is_streamed, is_reliable);
                 if (ret == _Z_RES_OK) {
-                    ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&link_ke), z_bytes_move(&payload), replies);
+                    ret = _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&link_ke), z_bytes_move(&payload), replies);
                 }
                 if (ret != _Z_RES_OK) {
                     _Z_WARN("Failed to add connectivity link status reply: %d", ret);
