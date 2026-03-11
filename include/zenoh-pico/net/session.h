@@ -189,7 +189,7 @@ typedef struct _z_session_t {
     struct _z_write_filter_registration_t *_write_filters;
 #endif
 
-#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1 || Z_FEATURE_ADMIN_SPACE == 1 || Z_FEATURE_CONNECTIVITY == 1
     // Periodic task scheduler
 #if Z_FEATURE_PERIODIC_TASKS == 1
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -212,12 +212,11 @@ typedef struct _z_session_t {
     size_t _admin_space_link_listener_id;
 #endif
 #endif
-
+#endif
 #if Z_FEATURE_CONNECTIVITY == 1
     size_t _connectivity_next_listener_id;
     _z_connectivity_transport_listener_intmap_t _connectivity_transport_event_listeners;
     _z_connectivity_link_listener_intmap_t _connectivity_link_event_listeners;
-#endif
 #endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;
