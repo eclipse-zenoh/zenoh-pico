@@ -1372,6 +1372,8 @@ _z_msg_query_t gen_query_anyke(const char *parameters, bool _anyke) {
         ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
         ._parameters = _z_slice_from_buf_custom_deleter(
+            // SAFETY: only use null-terminated parameters in tests.
+            // Flawfinder: ignore [CWE-126]
             (const uint8_t *)parameters, parameters == NULL ? 0 : strlen(parameters), _z_delete_context_static()),
         ._anyke = _anyke,
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
@@ -1417,6 +1419,8 @@ void query_message_anyke(void) {
             z_result_t res = _z_query_decode(&decoded, &zbf, header);
             assert(_Z_RES_OK == res);
             if (anyke) {
+                // SAFETY: only use null-terminated parameters in tests.
+                // Flawfinder: ignore [CWE-126]
                 size_t params_len = params[i] == NULL ? 0 : strlen(params[i]);
                 assert(decoded._anyke);
                 assert(_z_parameters_has_anyke(&decoded._parameters));
