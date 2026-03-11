@@ -239,8 +239,8 @@ _z_chunk_forward_match_data_t _ZP_CAT(_z_chunk_forward, _ZP_KE_MATCH_OP)(const c
         } else if (_ZP_KE_MATCH_TYPE_INTERSECTS && *rbegin == _Z_DSL0) {
             _z_chunk_forward_match_data_t res =
                 _ZP_CAT(_z_chunk_forward_backward, _ZP_KE_MATCH_OP)(rbegin + _Z_DSL_LEN, rkend, lbegin, lkend);
-            result.lend = res.lend;
-            result.rend = res.rend;
+            result.lend = res.rend;
+            result.rend = res.lend;
             result.result = res.result;
             return result;
         } else if (*lbegin != *rbegin) {
@@ -274,6 +274,9 @@ _z_chunk_backward_match_data_t _ZP_CAT(_z_chunk_backward_forward,
     _z_chunk_backward_match_data_t result = {0};
     const char *lbegin = _z_chunk_begin(lkbegin, lend);
     const char *rbegin = _z_chunk_begin(rkbegin, rend);
+    if ((*lbegin == _Z_VERBATIM) != (*rbegin == _Z_VERBATIM)) {  // one is verbatim, the other is not, so no match
+        return result;
+    }
     result.lbegin = lbegin;
     result.rbegin = rbegin;
 
@@ -441,7 +444,7 @@ bool _ZP_CAT(_z_keyexpr_backward, _ZP_KE_MATCH_OP)(const char *lbegin, const cha
                 return !can_have_verbatim ||
                        _z_keyexpr_get_next_verbatim_chunk(rbegin, res.rbegin - _Z_DELIMITER_LEN) == NULL;
             } else if (right_exhausted) {
-                return false;  // right is exhausted, left is not (and thus contain at least one non doublestar chunk),
+                return false;  // right is exhausted, left is not (and thus contains at least one non doublestar chunk),
                                // match is impossible
             }
             lend = res.lbegin - _Z_DELIMITER_LEN;
@@ -507,8 +510,9 @@ bool _ZP_CAT(_z_keyexpr_parts, _ZP_KE_MATCH_OP)(const char *lbegin, const char *
             return false;
         }
 
-        if (!_ZP_CAT(_z_keyexpr_forward, _ZP_KE_MATCH_OP)(lbegin, lverbatim - _Z_DELIMITER_LEN, rbegin,
-                                                          rverbatim - _Z_DELIMITER_LEN, false)) {
+        const char *lskend = lverbatim == lbegin ? lbegin : lverbatim - _Z_DELIMITER_LEN;
+        const char *rskend = rverbatim == rbegin ? rbegin : rverbatim - _Z_DELIMITER_LEN;
+        if (!_ZP_CAT(_z_keyexpr_forward, _ZP_KE_MATCH_OP)(lbegin, lskend, rbegin, rskend, false)) {
             return false;  // prefixes before verbatim chunks do not match, so kes can not match
         }
 
