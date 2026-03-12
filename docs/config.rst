@@ -136,6 +136,7 @@ All the generated options must be changed in zenoh-pico's CMake (beware of CMake
 The following options are here to reduce binary sizes for users that don't need those features but need the extra memory. 
 
 * `Z_FEATURE_UNSTABLE_API`: (DEFAULT: OFF) Toggle compilation of unstable API functions.
+* `Z_FEATURE_CONNECTIVITY`: (DEFAULT: ON) Toggle compilation of connectivity status/events API functions. This feature requires `Z_FEATURE_UNSTABLE_API`.
 * `Z_FEATURE_MULTI_THREAD`: (DEFAULT: ON) Toggle compilation of multi thread capabilities. Will limit the library to single thread only without this.
 * `Z_FEATURE_PUBLICATION`: (DEFAULT: ON) Toggle compilation of publication API functions, the library can't publish without this.
 * `Z_FEATURE_ADVANCED_PUBLICATION`: (DEFAULT: OFF) Toggle compilation of advanced publication API functions.
@@ -165,4 +166,4 @@ The following options are here to reduce binary sizes for users that don't need 
 * `Z_FEATURE_LINK_SERIAL`: (DEFAULT: OFF) Toggle compilation of Serial link support.
 * `Z_FEATURE_LINK_SERIAL_USB`: (DEFAULT: OFF) Toggle compilation of Serial USB link support.
 * `Z_FEATURE_LINK_TLS`: (DEFAULT: OFF) Toggle compilation of TLS support.
-* `Z_FEATURE_ADMIN_SPACE`: (DEFAULT: OFF) Toggle compilation of admin space API functions.
+* `Z_FEATURE_ADMIN_SPACE`: (DEFAULT: OFF) Toggle compilation of admin space API functions. This feature requires both `Z_FEATURE_UNSTABLE_API` and `Z_FEATURE_QUERYABLE`.

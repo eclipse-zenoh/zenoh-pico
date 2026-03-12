@@ -248,6 +248,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     param->_req_id_res = iam._body._init._req_id_res;
     param->_batch_size = iam._body._init._batch_size;
     param->_remote_zid = tmsg._body._init._zid;
+    param->_remote_whatami = tmsg._body._init._whatami;
     param->_key_id_res = 0x08 << param->_key_id_res;
     param->_req_id_res = 0x08 << param->_req_id_res;
     _z_t_msg_clear(&tmsg);

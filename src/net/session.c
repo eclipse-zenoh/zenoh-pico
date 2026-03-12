@@ -241,7 +241,9 @@ z_result_t _z_reopen(_z_session_rc_t *zn) {
     }
 
     do {
+        _z_session_transport_mutex_lock(zs);
         ret = _z_open(zn, &zs->_config, &zs->_local_zid);
+        _z_session_transport_mutex_unlock(zs);
         if (ret != _Z_RES_OK) {
             if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
                 ret == _Z_ERR_TRANSPORT_TX_FAILED || ret == _Z_ERR_TRANSPORT_RX_FAILED) {

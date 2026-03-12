@@ -59,15 +59,17 @@ z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 #if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
 
 static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
-    _ZP_UNUSED(ztm);
+    _z_session_t *session = _z_transport_common_get_session(&ztm->_common);
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztm->_common));
+    _z_liveliness_subscription_undeclare_all(session);
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_session_rc_t zs = _z_session_weak_upgrade(&ztm->_common._session);
 #endif
-    _z_multicast_transport_clear(ztm, true);
+    _z_session_transport_mutex_lock(session);
+    _z_transport_clear(&session->_tp, true);
+    _z_session_transport_mutex_unlock(session);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_reopen(&zs);
@@ -109,6 +111,41 @@ static _z_zint_t _z_get_next_lease(_z_transport_peer_multicast_slist_t *peers) {
     return ret;
 }
 
+static bool _zp_multicast_peer_is_expired(const _z_transport_peer_multicast_t *target,
+                                          const _z_transport_peer_multicast_t *peer) {
+    _ZP_UNUSED(target);
+    return !peer->common._received;
+}
+
+static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *ztm,
+                                                     _z_transport_peer_multicast_slist_t **dropped_peers) {
+    if (dropped_peers == NULL || *dropped_peers == NULL) {
+        return;
+    }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    uint16_t mtu = 0;
+    bool is_streamed = false;
+    bool is_reliable = false;
+    _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
+#endif
+
+    _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
+    _z_transport_peer_multicast_slist_t *it = *dropped_peers;
+    while (it != NULL) {
+        _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
+        _Z_INFO("Deleting peer because it has expired after %zums", peer->_lease);
+        _z_interest_peer_disconnected(s, &peer->common);
+#if Z_FEATURE_CONNECTIVITY == 1
+        _z_connectivity_peer_event_data_t disconnected_peer = {0};
+        _z_connectivity_peer_event_data_alias_from_common(&disconnected_peer, &peer->common);
+        _z_connectivity_peer_disconnected(s, &disconnected_peer, true, mtu, is_streamed, is_reliable);
+#endif
+        it = _z_transport_peer_multicast_slist_next(it);
+    }
+    _z_transport_peer_multicast_slist_free(dropped_peers);
+}
+
 void *_zp_multicast_lease_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
     ztm->_common._transmitted = false;
@@ -120,36 +157,19 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
     while (ztm->_common._lease_task_running) {
         if (next_lease <= 0) {
-            _z_transport_peer_multicast_slist_t *prev = NULL;
-            _z_transport_peer_multicast_slist_t *prev_drop = NULL;
+            _z_transport_peer_multicast_slist_t *dropped_peers = _z_transport_peer_multicast_slist_new();
             _z_transport_peer_mutex_lock(&ztm->_common);
+            ztm->_peers = _z_transport_peer_multicast_slist_extract_all_filter(ztm->_peers, &dropped_peers,
+                                                                               _zp_multicast_peer_is_expired, NULL);
             _z_transport_peer_multicast_slist_t *curr_list = ztm->_peers;
             while (curr_list != NULL) {
-                bool drop_peer = false;
                 _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_slist_value(curr_list);
-                if (curr_peer->common._received) {
-                    // Reset the lease parameters
-                    curr_peer->common._received = false;
-                    curr_peer->_next_lease = curr_peer->_lease;
-                } else {
-                    _Z_INFO("Deleting peer because it has expired after %zums", curr_peer->_lease);
-                    drop_peer = true;
-                    prev_drop = prev;
-                }
-                // Update previous only if current node is not dropped
-                if (!drop_peer) {
-                    prev = curr_list;
-                }
-                // Progress list
+                curr_peer->common._received = false;
+                curr_peer->_next_lease = curr_peer->_lease;
                 curr_list = _z_transport_peer_multicast_slist_next(curr_list);
-                // Drop if needed
-                if (drop_peer) {
-                    _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
-                    _z_interest_peer_disconnected(s, &curr_peer->common);
-                    ztm->_peers = _z_transport_peer_multicast_slist_drop_element(ztm->_peers, prev_drop);
-                }
             }
             _z_transport_peer_mutex_unlock(&ztm->_common);
+            _zp_multicast_report_disconnected_events(ztm, &dropped_peers);
         }
 
         if (next_join <= 0) {
