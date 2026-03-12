@@ -67,6 +67,37 @@ static void print_link(z_loaned_link_t *link, void *ctx) {
     } else {
         printf("<n/a>");
     }
+    z_owned_string_t group;
+    z_link_group(link, &group);
+    z_owned_string_t auth_id;
+    z_link_auth_identifier(link, &auth_id);
+    z_owned_string_array_t interfaces;
+    z_link_interfaces(link, &interfaces);
+    uint8_t prio_min, prio_max;
+    bool has_prio = z_link_priorities(link, &prio_min, &prio_max);
+    z_reliability_t reliability;
+    bool has_rel = z_link_reliability(link, &reliability);
+
+    if (z_string_len(z_loan(group)) > 0) {
+        printf(", group=%.*s", (int)z_string_len(z_loan(group)), z_string_data(z_loan(group)));
+    }
+    if (z_string_len(z_loan(auth_id)) > 0) {
+        printf(", auth_id=%.*s", (int)z_string_len(z_loan(auth_id)), z_string_data(z_loan(auth_id)));
+    }
+    printf(", interfaces=[");
+    size_t iface_len = z_string_array_len(z_loan(interfaces));
+    for (size_t i = 0; i < iface_len; i++) {
+        const z_loaned_string_t *iface = z_string_array_get(z_loan(interfaces), i);
+        if (i > 0) printf(", ");
+        printf("%.*s", (int)z_string_len(iface), z_string_data(iface));
+    }
+    printf("]");
+    if (has_prio) {
+        printf(", priorities=[%u, %u]", (unsigned)prio_min, (unsigned)prio_max);
+    }
+    if (has_rel) {
+        printf(", reliability=%s", (reliability == Z_RELIABILITY_RELIABLE) ? "reliable" : "best_effort");
+    }
     printf(", mtu=%u, is_streamed=%s, is_reliable=%s}\n", (unsigned)z_link_mtu(link),
            bool_to_str(z_link_is_streamed(link)), bool_to_str(z_link_is_reliable(link)));
 
@@ -77,6 +108,9 @@ static void print_link(z_loaned_link_t *link, void *ctx) {
     if (has_dst) {
         z_drop(z_move(dst));
     }
+    z_drop(z_move(group));
+    z_drop(z_move(auth_id));
+    z_drop(z_move(interfaces));
 }
 #endif
 
