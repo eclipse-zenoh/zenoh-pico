@@ -98,9 +98,6 @@ void open_sessions(z_owned_session_t *s, z_owned_session_t *s2, bool local) {
 
 void test_get_accept_replies(bool local) {
     printf("Testing get accept_replies options local = %d...\n", local);
-    z_owned_config_t config;
-    z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
 
     z_owned_session_t s, s2;
     open_sessions(&s, &s2, local);
@@ -257,9 +254,6 @@ void test_get_accept_replies(bool local) {
 
 void test_querier_accept_replies(bool local) {
     printf("Testing querier accept_replies options local = %d...\n", local);
-    z_owned_config_t config;
-    z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
 
     z_owned_session_t s, s2;
     open_sessions(&s, &s2, local);
