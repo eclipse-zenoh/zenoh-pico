@@ -44,6 +44,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -580,7 +581,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_key = ke_query;
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anyke = accept_replies == Z_REPLY_KEYEXPR_ANY;
+    pq->_anyke = accept_replies == Z_REPLY_KEYEXPR_ANY || _z_parameters_has_anyke(parameters, parameters_len);
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;

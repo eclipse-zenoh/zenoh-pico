@@ -18,6 +18,7 @@
 #include "zenoh-pico/protocol/codec/serial.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/utils/query_params.h"
 #define ZENOH_PICO_TEST_H
 
 #include <stdbool.h>
@@ -1423,7 +1424,7 @@ void query_message_anyke(void) {
                 // Flawfinder: ignore [CWE-126]
                 size_t params_len = params[i] == NULL ? 0 : strlen(params[i]);
                 assert(decoded._anyke);
-                assert(_z_parameters_has_anyke(&decoded._parameters));
+                assert(_z_parameters_has_anyke((const char *)decoded._parameters.start, decoded._parameters.len));
                 assert(params_len <= decoded._parameters.len);
                 assert(strncmp(params[i], (const char *)decoded._parameters.start, params_len) == 0);
             } else {
