@@ -18,17 +18,12 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-static void fprint_zid(FILE *stream, const z_id_t *id) {
-    for (int i = 15; i >= 0; i--) {
-        fprintf(stream, "%02X", id->id[i]);
-    }
-}
-
 void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
-    printf(" ");
-    fprint_zid(stdout, id);
-    printf("\n");
+    z_owned_string_t id_str;
+    z_id_to_string(id, &id_str);
+    printf(" %.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
+    z_drop(z_move(id_str));
 }
 
 #if Z_FEATURE_CONNECTIVITY == 1
@@ -37,26 +32,29 @@ static const char *bool_to_str(bool value) { return value ? "true" : "false"; }
 static void print_transport(z_loaned_transport_t *transport, void *ctx) {
     (void)(ctx);
     z_id_t zid = z_transport_zid(transport);
+    z_owned_string_t id_str;
+    z_id_to_string(&zid, &id_str);
     z_view_string_t whatami;
     z_whatami_to_view_string(z_transport_whatami(transport), &whatami);
 
-    printf("  transport{zid=");
-    fprint_zid(stdout, &zid);
-    printf(", whatami=%.*s, is_qos=%s, is_multicast=%s, is_shm=%s}\n", (int)z_string_len(z_loan(whatami)),
+    printf("  transport{zid=%.*s, whatami=%.*s, is_qos=%s, is_multicast=%s, is_shm=%s}\n",
+           (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)), (int)z_string_len(z_loan(whatami)),
            z_string_data(z_loan(whatami)), bool_to_str(z_transport_is_qos(transport)),
            bool_to_str(z_transport_is_multicast(transport)), bool_to_str(z_transport_is_shm(transport)));
+    z_drop(z_move(id_str));
 }
 
 static void print_link(z_loaned_link_t *link, void *ctx) {
     (void)(ctx);
     z_id_t zid = z_link_zid(link);
+    z_owned_string_t id_str;
+    z_id_to_string(&zid, &id_str);
     z_owned_string_t src;
     z_owned_string_t dst;
     bool has_src = z_link_src(link, &src) == 0;
     bool has_dst = z_link_dst(link, &dst) == 0;
 
-    printf("  link{zid=");
-    fprint_zid(stdout, &zid);
+    printf("  link{zid=%.*s", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
     printf(", src=");
     if (has_src) {
         printf("%.*s", (int)z_string_len(z_loan(src)), z_string_data(z_loan(src)));
@@ -72,6 +70,7 @@ static void print_link(z_loaned_link_t *link, void *ctx) {
     printf(", mtu=%u, is_streamed=%s, is_reliable=%s}\n", (unsigned)z_link_mtu(link),
            bool_to_str(z_link_is_streamed(link)), bool_to_str(z_link_is_reliable(link)));
 
+    z_drop(z_move(id_str));
     if (has_src) {
         z_drop(z_move(src));
     }
@@ -102,7 +101,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
+        z_drop(z_move(s));
         return -1;
     }
 
@@ -125,8 +124,8 @@ int main(int argc, char **argv) {
 #if Z_FEATURE_CONNECTIVITY == 1
     printf("Connected transports:\n");
     z_owned_closure_transport_t transport_cb;
-    if (z_closure_transport(&transport_cb, print_transport, NULL, NULL) < 0 ||
-        z_info_transports(z_loan(s), z_closure_transport_move(&transport_cb)) < 0) {
+    z_closure(&transport_cb, print_transport, NULL, NULL);
+    if (z_info_transports(z_loan(s), z_move(transport_cb)) < 0) {
         printf("Unable to fetch connected transports\n");
         z_drop(z_move(s));
         return -1;
@@ -134,8 +133,8 @@ int main(int argc, char **argv) {
 
     printf("Connected links:\n");
     z_owned_closure_link_t link_cb;
-    if (z_closure_link(&link_cb, print_link, NULL, NULL) < 0 ||
-        z_info_links(z_loan(s), z_closure_link_move(&link_cb), NULL) < 0) {
+    z_closure(&link_cb, print_link, NULL, NULL);
+    if (z_info_links(z_loan(s), z_move(link_cb), NULL) < 0) {
         printf("Unable to fetch connected links\n");
         z_drop(z_move(s));
         return -1;
