@@ -621,11 +621,6 @@ _z_info_link_t _z_info_link_null(void) {
     _z_info_link_t link = {0};
     link._src = _z_string_null();
     link._dst = _z_string_null();
-    link._group = _z_string_null();
-    link._auth_identifier = _z_string_null();
-    link._interfaces = _z_string_svec_null();
-    link._has_priorities = false;
-    link._has_reliability = false;
     return link;
 }
 z_result_t _z_info_link_copy(_z_info_link_t *dst, const _z_info_link_t *src) {
@@ -634,20 +629,8 @@ z_result_t _z_info_link_copy(_z_info_link_t *dst, const _z_info_link_t *src) {
     dst->_mtu = src->_mtu;
     dst->_is_streamed = src->_is_streamed;
     dst->_is_reliable = src->_is_reliable;
-    dst->_priority_min = src->_priority_min;
-    dst->_priority_max = src->_priority_max;
-    dst->_has_priorities = src->_has_priorities;
-    dst->_reliability = src->_reliability;
-    dst->_has_reliability = src->_has_reliability;
     _Z_RETURN_IF_ERR(_z_string_copy(&dst->_src, &src->_src));
     _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_dst, &src->_dst), _z_string_clear(&dst->_src));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_group, &src->_group),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst)));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_auth_identifier, &src->_auth_identifier),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group)));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_svec_copy(&dst->_interfaces, &src->_interfaces, true),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group),
-                            _z_string_clear(&dst->_auth_identifier)));
     return _Z_RES_OK;
 }
 z_result_t _z_info_link_move(_z_info_link_t *dst, _z_info_link_t *src) {
@@ -656,36 +639,15 @@ z_result_t _z_info_link_move(_z_info_link_t *dst, _z_info_link_t *src) {
     dst->_mtu = src->_mtu;
     dst->_is_streamed = src->_is_streamed;
     dst->_is_reliable = src->_is_reliable;
-    dst->_priority_min = src->_priority_min;
-    dst->_priority_max = src->_priority_max;
-    dst->_has_priorities = src->_has_priorities;
-    dst->_reliability = src->_reliability;
-    dst->_has_reliability = src->_has_reliability;
     _Z_RETURN_IF_ERR(_z_string_move(&dst->_src, &src->_src));
     _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_dst, &src->_dst), _z_string_clear(&dst->_src));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_group, &src->_group),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst)));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_auth_identifier, &src->_auth_identifier),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group)));
-    _Z_RETURN_IF_ERR(_z_string_svec_move(&dst->_interfaces, &src->_interfaces));
     *src = _z_info_link_null();
     return _Z_RES_OK;
 }
 void _z_info_link_clear(_z_info_link_t *link) {
     _z_string_clear(&link->_src);
     _z_string_clear(&link->_dst);
-    _z_string_clear(&link->_group);
-    _z_string_clear(&link->_auth_identifier);
-    _z_string_svec_clear(&link->_interfaces);
-    link->_zid = (_z_id_t){0};
-    link->_mtu = 0;
-    link->_is_streamed = false;
-    link->_is_reliable = false;
-    link->_priority_min = 0;
-    link->_priority_max = 0;
-    link->_has_priorities = false;
-    link->_reliability = Z_RELIABILITY_BEST_EFFORT;
-    link->_has_reliability = false;
+    *link = _z_info_link_null();
 }
 
 bool _z_info_transport_event_check(const _z_info_transport_event_t *event) {
@@ -1252,30 +1214,26 @@ bool z_link_is_streamed(const z_loaned_link_t *link) { return link->_is_streamed
 bool z_link_is_reliable(const z_loaned_link_t *link) { return link->_is_reliable; }
 
 void z_link_group(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
     str_out->_val = _z_string_null();
-    _z_string_copy(&str_out->_val, &link->_group);
 }
 void z_link_auth_identifier(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
     str_out->_val = _z_string_null();
-    _z_string_copy(&str_out->_val, &link->_auth_identifier);
 }
 void z_link_interfaces(const z_loaned_link_t *link, z_owned_string_array_t *interfaces_out) {
+    (void)link;
     interfaces_out->_val = _z_string_svec_null();
-    _z_string_svec_copy(&interfaces_out->_val, &link->_interfaces, true);
 }
 bool z_link_priorities(const z_loaned_link_t *link, uint8_t *min_out, uint8_t *max_out) {
-    if (link->_has_priorities) {
-        *min_out = link->_priority_min;
-        *max_out = link->_priority_max;
-        return true;
-    }
+    (void)link;
+    (void)min_out;
+    (void)max_out;
     return false;
 }
 bool z_link_reliability(const z_loaned_link_t *link, z_reliability_t *reliability_out) {
-    if (link->_has_reliability) {
-        *reliability_out = link->_reliability;
-        return true;
-    }
+    (void)link;
+    (void)reliability_out;
     return false;
 }
 

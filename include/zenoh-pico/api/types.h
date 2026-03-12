@@ -621,17 +621,9 @@ typedef struct _z_info_link_t {
     z_id_t _zid;
     _z_string_t _src;
     _z_string_t _dst;
-    _z_string_t _group;
-    _z_string_t _auth_identifier;
-    _z_string_svec_t _interfaces;
     uint16_t _mtu;
-    uint8_t _priority_min;
-    uint8_t _priority_max;
-    z_reliability_t _reliability;
     bool _is_streamed;
     bool _is_reliable;
-    bool _has_priorities;
-    bool _has_reliability;
 } _z_info_link_t;
 _Z_OWNED_TYPE_VALUE(_z_info_link_t, link)
 
