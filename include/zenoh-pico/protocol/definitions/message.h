@@ -107,7 +107,7 @@ typedef struct {
     _z_value_t _ext_value;
     z_consolidation_mode_t _consolidation;
     _z_bytes_t _ext_attachment;
-    bool _anyke;
+    bool _anyke;  // implicit _anyke parameter (i.e it is not listed in _parameters, but is still present)
 } _z_msg_query_t;
 typedef struct {
     bool info;

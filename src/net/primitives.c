@@ -563,6 +563,11 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     _z_transport_common_t *common = _z_transport_get_common(&zn->_tp);
     bool remote_possible = allow_remote && (common != NULL && common->_link != NULL);
 
+    bool _anyke_in_parameters = _z_parameters_has_anyke(parameters, parameters_len);
+    bool _anyke_option = accept_replies == Z_REPLY_KEYEXPR_ANY;
+    // encode extra _anyke parameter only if it's not already there
+    bool encode_anyke = _anyke_option && !_anyke_in_parameters;
+
     // Add the pending query to the current session
     _z_zint_t qid;
     z_result_t ret = _Z_RES_OK;
@@ -581,7 +586,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_key = ke_query;
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anyke = accept_replies == Z_REPLY_KEYEXPR_ANY || _z_parameters_has_anyke(parameters, parameters_len);
+    pq->_anyke = _anyke_in_parameters || _anyke_option;
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;
@@ -610,13 +615,13 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, &wireexpr, &params, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
-                            timeout_ms, attachment, qos, source_info, pq->_anyke);
+                            timeout_ms, attachment, qos, source_info, encode_anyke);
         ret = _z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL);
     }
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (ret == _Z_RES_OK && allow_local) {
         ret = _z_session_deliver_query_locally(zn, &keyexpr->_inner, &params, consolidation, payload, encoding,
-                                               attachment, source_info, qid, timeout_ms, qos, pq->_anyke);
+                                               attachment, source_info, qid, timeout_ms, qos, encode_anyke);
     }
 #endif
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_unregister_pending_query(zn, qid));

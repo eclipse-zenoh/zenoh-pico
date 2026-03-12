@@ -1423,10 +1423,12 @@ void query_message_anyke(void) {
                 // SAFETY: only use null-terminated parameters in tests.
                 // Flawfinder: ignore [CWE-126]
                 size_t params_len = params[i] == NULL ? 0 : strlen(params[i]);
-                assert(decoded._anyke);
+                assert(!decoded._anyke);
                 assert(_z_parameters_has_anyke((const char *)decoded._parameters.start, decoded._parameters.len));
                 assert(params_len <= decoded._parameters.len);
-                assert(strncmp(params[i], (const char *)decoded._parameters.start, params_len) == 0);
+                if (params_len > 0) {
+                    assert(strncmp(params[i], (const char *)decoded._parameters.start, params_len) == 0);
+                }
             } else {
                 assert_eq_query(&expected, &decoded);
             }

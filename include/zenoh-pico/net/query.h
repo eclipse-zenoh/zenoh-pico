@@ -22,6 +22,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/keyexpr.h"
+#include "zenoh-pico/utils/query_params.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -105,7 +106,7 @@ static inline z_result_t _z_query_move_data(_z_query_t *dst, _z_value_t *value, 
     _Z_CLEAN_RETURN_IF_ERR(_z_slice_move(&dst->_parameters._slice, parameters), _z_query_clear(dst));
     dst->_request_id = request_id;
     dst->_zn = _z_session_weak_clone(zn);
-    dst->_anyke = anyke;
+    dst->_anyke = anyke || _z_parameters_has_anyke((const char *)parameters->start, parameters->len);
     dst->_source_info = *source_info;
     return _Z_RES_OK;
 }

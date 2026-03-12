@@ -474,7 +474,7 @@ typedef struct {
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  *   z_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
- *   z_reply_keyexpr_t reply_keyexpr: The accepted replies for the query.
+ *   z_reply_keyexpr_t accept_replies: The type of accepted replies for the query.
  */
 typedef struct {
     z_moved_bytes_t *payload;

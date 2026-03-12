@@ -319,9 +319,9 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     timeout_ms: The timeout value of this query.
  *     attachment: An optional attachment to this query.
  *     qos: QoS to apply when routing this query.
- *     allowed_destination: Locality restrictions for delivery.
  *     source_info: Querier source info.
  *     accept_replies: The accepted replies for this query.
+ *     allowed_destination: Locality restrictions for delivery.
  *     opt_cancellation_token: Optional cancellation token to cancel the query, can be null.
  *
  */
