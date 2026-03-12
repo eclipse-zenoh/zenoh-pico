@@ -257,11 +257,24 @@ typedef enum {
 #define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
 
 /**
- * Key expressions types to which Queryable should reply to.
+ * The kinds of accepted query replies.
+ *
+ * The queryable may serve glob-like key expressions.
+ * E.g., the queryable may be declared with the key expression `foo/ *`.
+ * At the same time, it may send replies with more specific key expressions, e.g., `foo/bar` or `foo/baz`.
+ * This may cause a situation when the queryable receives a query with the key expression `foo/bar`
+ * and replies to it with the key expression `foo/baz`.
+ * By default, this behavior is not allowed. Calling `z_query_reply` value on a query for `foo/bar` with key expression
+ * `foo/baz` will result in an error on the sending side. But if the query is sent with the `accept_replies` flag set to
+ * `Z_REPLY_KEYEXPR_ANY` in either `z_get_options_t` or `z_querier_options_t`, then the reply with a disjoint key
+ * expression will be accepted for this query.
+ *
+ * The queryable may check wether disjoint replies are allowed for a query with `z_query_accepts_replies` function.
  *
  * Enumerators:
- *   Z_REPLY_KEYEXPR_ANY: Replies to any key expression queries.
- *   Z_REPLY_KEYEXPR_MATCHING_QUERY: Replies only to queries with intersecting key expressions.
+ *   Z_REPLY_KEYEXPR_ANY: Accept replies on any key expression.
+ *   Z_REPLY_KEYEXPR_MATCHING_QUERY: Accept replies only to intersecting key expressions intersecting with query's own
+ * key expression.
  */
 typedef enum z_reply_keyexpr_t {
     Z_REPLY_KEYEXPR_ANY = 0,
