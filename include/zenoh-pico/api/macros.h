@@ -1093,11 +1093,17 @@ inline z_moved_transport_t* z_move(z_owned_transport_t& x) { return z_transport_
 inline z_moved_link_t* z_move(z_owned_link_t& x) { return z_link_move(&x); }
 inline z_moved_transport_event_t* z_move(z_owned_transport_event_t& x) { return z_transport_event_move(&x); }
 inline z_moved_link_event_t* z_move(z_owned_link_event_t& x) { return z_link_event_move(&x); }
-inline z_moved_transport_events_listener_t* z_move(z_owned_transport_events_listener_t& x) { return z_transport_events_listener_move(&x); }
-inline z_moved_link_events_listener_t* z_move(z_owned_link_events_listener_t& x) { return z_link_events_listener_move(&x); }
+inline z_moved_transport_events_listener_t* z_move(z_owned_transport_events_listener_t& x) {
+    return z_transport_events_listener_move(&x);
+}
+inline z_moved_link_events_listener_t* z_move(z_owned_link_events_listener_t& x) {
+    return z_link_events_listener_move(&x);
+}
 inline z_moved_closure_transport_t* z_move(z_owned_closure_transport_t& x) { return z_closure_transport_move(&x); }
 inline z_moved_closure_link_t* z_move(z_owned_closure_link_t& x) { return z_closure_link_move(&x); }
-inline z_moved_closure_transport_event_t* z_move(z_owned_closure_transport_event_t& x) { return z_closure_transport_event_move(&x); }
+inline z_moved_closure_transport_event_t* z_move(z_owned_closure_transport_event_t& x) {
+    return z_closure_transport_event_move(&x);
+}
 inline z_moved_closure_link_event_t* z_move(z_owned_closure_link_event_t& x) { return z_closure_link_event_move(&x); }
 #endif
 
@@ -1173,12 +1179,22 @@ inline void z_take(z_owned_transport_t* this_, z_moved_transport_t* v) { z_trans
 inline void z_take(z_owned_link_t* this_, z_moved_link_t* v) { z_link_take(this_, v); }
 inline void z_take(z_owned_transport_event_t* this_, z_moved_transport_event_t* v) { z_transport_event_take(this_, v); }
 inline void z_take(z_owned_link_event_t* this_, z_moved_link_event_t* v) { z_link_event_take(this_, v); }
-inline void z_take(z_owned_transport_events_listener_t* this_, z_moved_transport_events_listener_t* v) { z_transport_events_listener_take(this_, v); }
-inline void z_take(z_owned_link_events_listener_t* this_, z_moved_link_events_listener_t* v) { z_link_events_listener_take(this_, v); }
-inline void z_take(z_owned_closure_transport_t* this_, z_moved_closure_transport_t* v) { z_closure_transport_take(this_, v); }
+inline void z_take(z_owned_transport_events_listener_t* this_, z_moved_transport_events_listener_t* v) {
+    z_transport_events_listener_take(this_, v);
+}
+inline void z_take(z_owned_link_events_listener_t* this_, z_moved_link_events_listener_t* v) {
+    z_link_events_listener_take(this_, v);
+}
+inline void z_take(z_owned_closure_transport_t* this_, z_moved_closure_transport_t* v) {
+    z_closure_transport_take(this_, v);
+}
 inline void z_take(z_owned_closure_link_t* this_, z_moved_closure_link_t* v) { z_closure_link_take(this_, v); }
-inline void z_take(z_owned_closure_transport_event_t* this_, z_moved_closure_transport_event_t* v) { z_closure_transport_event_take(this_, v); }
-inline void z_take(z_owned_closure_link_event_t* this_, z_moved_closure_link_event_t* v) { z_closure_link_event_take(this_, v); }
+inline void z_take(z_owned_closure_transport_event_t* this_, z_moved_closure_transport_event_t* v) {
+    z_closure_transport_event_take(this_, v);
+}
+inline void z_take(z_owned_closure_link_event_t* this_, z_moved_closure_link_event_t* v) {
+    z_closure_link_event_take(this_, v);
+}
 #endif
 
 // z_clone definition
@@ -1203,10 +1219,16 @@ inline z_result_t z_clone(z_owned_string_array_t* dst, const z_loaned_string_arr
 }
 inline z_result_t z_clone(z_owned_hello_t* dst, const z_loaned_hello_t* this_) { return z_hello_clone(dst, this_); }
 #if Z_FEATURE_CONNECTIVITY == 1
-inline z_result_t z_clone(z_owned_transport_t* dst, const z_loaned_transport_t* this_) { return z_transport_clone(dst, this_); }
+inline z_result_t z_clone(z_owned_transport_t* dst, const z_loaned_transport_t* this_) {
+    return z_transport_clone(dst, this_);
+}
 inline z_result_t z_clone(z_owned_link_t* dst, const z_loaned_link_t* this_) { return z_link_clone(dst, this_); }
-inline z_result_t z_clone(z_owned_transport_event_t* dst, const z_loaned_transport_event_t* this_) { return z_transport_event_clone(dst, this_); }
-inline z_result_t z_clone(z_owned_link_event_t* dst, const z_loaned_link_event_t* this_) { return z_link_event_clone(dst, this_); }
+inline z_result_t z_clone(z_owned_transport_event_t* dst, const z_loaned_transport_event_t* this_) {
+    return z_transport_event_clone(dst, this_);
+}
+inline z_result_t z_clone(z_owned_link_event_t* dst, const z_loaned_link_event_t* this_) {
+    return z_link_event_clone(dst, this_);
+}
 #endif
 
 // z_take_from_loaned definition

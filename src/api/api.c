@@ -646,7 +646,8 @@ z_result_t _z_info_link_copy(_z_info_link_t *dst, const _z_info_link_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_auth_identifier, &src->_auth_identifier),
                            (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group)));
     _Z_CLEAN_RETURN_IF_ERR(_z_string_svec_copy(&dst->_interfaces, &src->_interfaces, true),
-                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group), _z_string_clear(&dst->_auth_identifier)));
+                           (_z_string_clear(&dst->_src), _z_string_clear(&dst->_dst), _z_string_clear(&dst->_group),
+                            _z_string_clear(&dst->_auth_identifier)));
     return _Z_RES_OK;
 }
 z_result_t _z_info_link_move(_z_info_link_t *dst, _z_info_link_t *src) {

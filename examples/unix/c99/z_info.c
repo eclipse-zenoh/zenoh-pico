@@ -84,8 +84,7 @@ static void print_link(z_loaned_link_t *link, void *ctx) {
         printf(", group=%.*s", (int)z_string_len(z_string_loan(&group)), z_string_data(z_string_loan(&group)));
     }
     if (z_string_len(z_string_loan(&auth_id)) > 0) {
-        printf(", auth_id=%.*s", (int)z_string_len(z_string_loan(&auth_id)),
-               z_string_data(z_string_loan(&auth_id)));
+        printf(", auth_id=%.*s", (int)z_string_len(z_string_loan(&auth_id)), z_string_data(z_string_loan(&auth_id)));
     }
     printf(", interfaces=[");
     size_t iface_len = z_string_array_len(z_string_array_loan(&interfaces));
@@ -250,8 +249,8 @@ int main(int argc, char **argv) {
     z_link_events_listener_options_default(&le_opts);
     le_opts.history = false;
     z_owned_link_events_listener_t le_listener;
-    if (z_declare_link_events_listener(z_session_loan(&s), &le_listener, z_closure_link_event_move(&le_cb),
-                                       &le_opts) < 0) {
+    if (z_declare_link_events_listener(z_session_loan(&s), &le_listener, z_closure_link_event_move(&le_cb), &le_opts) <
+        0) {
         printf("Unable to declare link events listener\n");
         z_session_drop(z_session_move(&s));
         return -1;
