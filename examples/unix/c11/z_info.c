@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <ctype.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,6 +113,29 @@ static void print_link(z_loaned_link_t *link, void *ctx) {
     z_drop(z_move(auth_id));
     z_drop(z_move(interfaces));
 }
+
+static volatile bool running = true;
+
+static void handle_signal(int signo) {
+    (void)signo;
+    running = false;
+}
+
+static void transport_event_handler(z_loaned_transport_event_t *event, void *ctx) {
+    (void)ctx;
+    z_sample_kind_t kind = z_transport_event_kind(event);
+    const z_loaned_transport_t *transport = z_transport_event_transport(event);
+    printf(">> [Transport Event] %s:\n", (kind == Z_SAMPLE_KIND_PUT) ? "Opened" : "Closed");
+    print_transport((z_loaned_transport_t *)transport, NULL);
+}
+
+static void link_event_handler(z_loaned_link_event_t *event, void *ctx) {
+    (void)ctx;
+    z_sample_kind_t kind = z_link_event_kind(event);
+    const z_loaned_link_t *link = z_link_event_link(event);
+    printf(">> [Link Event] %s:\n", (kind == Z_SAMPLE_KIND_PUT) ? "Opened" : "Closed");
+    print_link((z_loaned_link_t *)link, NULL);
+}
 #endif
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config);
@@ -173,6 +197,43 @@ int main(int argc, char **argv) {
         z_drop(z_move(s));
         return -1;
     }
+
+    // Register transport event listener (background, no history to avoid duplicating already-printed items)
+    printf("Declaring transport events listener...\n");
+    z_owned_closure_transport_event_t te_cb;
+    z_closure(&te_cb, transport_event_handler, NULL, NULL);
+    z_transport_events_listener_options_t te_opts;
+    z_transport_events_listener_options_default(&te_opts);
+    te_opts.history = false;
+    if (z_declare_background_transport_events_listener(z_loan(s), z_move(te_cb), &te_opts) < 0) {
+        printf("Unable to declare transport events listener\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+
+    // Register link event listener (non-background so we can undeclare it)
+    printf("Declaring link events listener...\n");
+    z_owned_closure_link_event_t le_cb;
+    z_closure(&le_cb, link_event_handler, NULL, NULL);
+    z_link_events_listener_options_t le_opts;
+    z_link_events_listener_options_default(&le_opts);
+    le_opts.history = false;
+    z_owned_link_events_listener_t le_listener;
+    if (z_declare_link_events_listener(z_loan(s), &le_listener, z_move(le_cb), &le_opts) < 0) {
+        printf("Unable to declare link events listener\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
+
+    printf("Press CTRL-C to quit...\n");
+    while (running) {
+        z_sleep_s(1);
+    }
+
+    z_drop(z_move(le_listener));
 #endif
 
     z_drop(z_move(s));
