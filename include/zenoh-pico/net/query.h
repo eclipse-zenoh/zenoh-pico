@@ -100,13 +100,13 @@ static inline z_result_t _z_query_move_data(_z_query_t *dst, _z_value_t *value, 
                                             _z_slice_t *parameters, const _z_session_weak_t *zn, uint32_t request_id,
                                             _z_bytes_t *attachment, bool anyke, const _z_source_info_t *source_info) {
     *dst = _z_query_null();
+    dst->_anyke = anyke || _z_parameters_has_anyke((const char *)parameters->start, parameters->len);
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_move(&dst->_key._inner, key), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_value_move(&dst->_value, value), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->_attachment, attachment), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_slice_move(&dst->_parameters._slice, parameters), _z_query_clear(dst));
     dst->_request_id = request_id;
     dst->_zn = _z_session_weak_clone(zn);
-    dst->_anyke = anyke || _z_parameters_has_anyke((const char *)parameters->start, parameters->len);
     dst->_source_info = *source_info;
     return _Z_RES_OK;
 }
