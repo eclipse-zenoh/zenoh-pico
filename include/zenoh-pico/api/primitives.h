@@ -2009,6 +2009,73 @@ bool z_link_is_streamed(const z_loaned_link_t *link);
 bool z_link_is_reliable(const z_loaned_link_t *link);
 
 /**
+ * Gets a link group string.
+ *
+ * Parameters:
+ *   link: Pointer to a :c:type:`z_loaned_link_t`.
+ *   str_out: Pointer to an uninitialized :c:type:`z_owned_string_t` to store the result.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_link_group(const z_loaned_link_t *link, z_owned_string_t *str_out);
+
+/**
+ * Gets a link auth identifier string.
+ *
+ * Parameters:
+ *   link: Pointer to a :c:type:`z_loaned_link_t`.
+ *   str_out: Pointer to an uninitialized :c:type:`z_owned_string_t` to store the result.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_link_auth_identifier(const z_loaned_link_t *link, z_owned_string_t *str_out);
+
+/**
+ * Gets link interfaces.
+ *
+ * Parameters:
+ *   link: Pointer to a :c:type:`z_loaned_link_t`.
+ *   interfaces_out: Pointer to an uninitialized :c:type:`z_owned_string_array_t` to store the result.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_link_interfaces(const z_loaned_link_t *link, z_owned_string_array_t *interfaces_out);
+
+/**
+ * Gets link priority range.
+ *
+ * Parameters:
+ *   link: Pointer to a :c:type:`z_loaned_link_t`.
+ *   min_out: Pointer to store the minimum priority value.
+ *   max_out: Pointer to store the maximum priority value.
+ *
+ * Return:
+ *   ``true`` if link has priority information, ``false`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_link_priorities(const z_loaned_link_t *link, uint8_t *min_out, uint8_t *max_out);
+
+/**
+ * Gets link reliability.
+ *
+ * Parameters:
+ *   link: Pointer to a :c:type:`z_loaned_link_t`.
+ *   reliability_out: Pointer to store the reliability value.
+ *
+ * Return:
+ *   ``true`` if link has reliability information, ``false`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_link_reliability(const z_loaned_link_t *link, z_reliability_t *reliability_out);
+
+/**
  * Gets transport event kind.
  *
  * Returns ``Z_SAMPLE_KIND_PUT`` when a transport is connected and ``Z_SAMPLE_KIND_DELETE`` when disconnected.
