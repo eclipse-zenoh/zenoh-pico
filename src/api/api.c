@@ -641,19 +641,13 @@ z_result_t _z_info_link_move(_z_info_link_t *dst, _z_info_link_t *src) {
     dst->_is_reliable = src->_is_reliable;
     _Z_RETURN_IF_ERR(_z_string_move(&dst->_src, &src->_src));
     _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_dst, &src->_dst), _z_string_clear(&dst->_src));
-    src->_zid = (_z_id_t){0};
-    src->_mtu = 0;
-    src->_is_streamed = false;
-    src->_is_reliable = false;
+    *src = _z_info_link_null();
     return _Z_RES_OK;
 }
 void _z_info_link_clear(_z_info_link_t *link) {
     _z_string_clear(&link->_src);
     _z_string_clear(&link->_dst);
-    link->_zid = (_z_id_t){0};
-    link->_mtu = 0;
-    link->_is_streamed = false;
-    link->_is_reliable = false;
+    *link = _z_info_link_null();
 }
 
 bool _z_info_transport_event_check(const _z_info_transport_event_t *event) {
@@ -1218,6 +1212,30 @@ z_result_t z_link_dst(const z_loaned_link_t *link, z_owned_string_t *str_out) {
 uint16_t z_link_mtu(const z_loaned_link_t *link) { return link->_mtu; }
 bool z_link_is_streamed(const z_loaned_link_t *link) { return link->_is_streamed; }
 bool z_link_is_reliable(const z_loaned_link_t *link) { return link->_is_reliable; }
+
+void z_link_group(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
+    str_out->_val = _z_string_null();
+}
+void z_link_auth_identifier(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
+    str_out->_val = _z_string_null();
+}
+void z_link_interfaces(const z_loaned_link_t *link, z_owned_string_array_t *interfaces_out) {
+    (void)link;
+    interfaces_out->_val = _z_string_svec_null();
+}
+bool z_link_priorities(const z_loaned_link_t *link, uint8_t *min_out, uint8_t *max_out) {
+    (void)link;
+    (void)min_out;
+    (void)max_out;
+    return false;
+}
+bool z_link_reliability(const z_loaned_link_t *link, z_reliability_t *reliability_out) {
+    (void)link;
+    (void)reliability_out;
+    return false;
+}
 
 z_sample_kind_t z_transport_event_kind(const z_loaned_transport_event_t *event) { return event->kind; }
 const z_loaned_transport_t *z_transport_event_transport(const z_loaned_transport_event_t *event) {

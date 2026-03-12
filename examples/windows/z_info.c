@@ -19,11 +19,10 @@
 
 void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
-    printf(" ");
-    for (int i = 15; i >= 0; i--) {
-        printf("%02X", id->id[i]);
-    }
-    printf("\n");
+    z_owned_string_t id_str;
+    z_id_to_string(id, &id_str);
+    printf(" %.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
+    z_drop(z_move(id_str));
 }
 
 int main(int argc, char **argv) {
