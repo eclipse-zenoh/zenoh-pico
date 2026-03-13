@@ -177,3 +177,21 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result) {
     *result = value;
     return true;
 }
+
+void *_z_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len) {
+    if (haystack == NULL || needle == NULL || haystack_len < needle_len) {
+        return NULL;
+    }
+
+    const uint8_t *h = haystack;
+    const uint8_t *h_end = h + haystack_len;
+    const uint8_t *n = needle;
+
+    while (h <= h_end - needle_len) {
+        if (memcmp(h, n, needle_len) == 0) {
+            return (void *)h;
+        }
+        h++;
+    }
+    return NULL;
+}

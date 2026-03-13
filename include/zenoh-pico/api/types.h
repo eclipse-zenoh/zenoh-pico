@@ -261,6 +261,7 @@ typedef struct {
  *   z_priority_t priority: The priority of the querier queries.
  *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 corresponds to default get request
  *     timeout.
+ *   z_reply_keyexpr_t accept_replies: The accepted replies for the querier queries.
  */
 typedef struct z_querier_options_t {
     z_moved_encoding_t *encoding;
@@ -273,6 +274,7 @@ typedef struct z_querier_options_t {
 #endif
     z_priority_t priority;
     uint64_t timeout_ms;
+    z_reply_keyexpr_t accept_replies;
 } z_querier_options_t;
 
 /**
@@ -472,6 +474,7 @@ typedef struct {
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  *   z_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
+ *   z_reply_keyexpr_t accept_replies: The type of accepted replies for the query.
  */
 typedef struct {
     z_moved_bytes_t *payload;
@@ -490,6 +493,7 @@ typedef struct {
     z_source_info_t *source_info;
     z_moved_cancellation_token_t *cancellation_token;
 #endif
+    z_reply_keyexpr_t accept_replies;
 } z_get_options_t;
 
 /**

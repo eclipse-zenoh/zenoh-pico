@@ -198,7 +198,7 @@ struct _z_pending_query_t {
     _z_pending_reply_slist_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
-    bool _anykey;
+    bool _anyke;
 #ifdef Z_FEATURE_UNSTABLE_API
     _z_pending_query_cancellation_data_t _cancellation_data;
 #endif

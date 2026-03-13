@@ -161,8 +161,11 @@ typedef enum {
  *   Z_SAMPLE_KIND_PUT: The Sample was issued by a ``put`` operation.
  *   Z_SAMPLE_KIND_DELETE: The Sample was issued by a ``delete`` operation.
  */
-typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t;
-#define Z_SAMPLE_KIND_DEFAULT Z_SAMPLE_KIND_PUT
+typedef enum {
+    Z_SAMPLE_KIND_PUT = 0,
+    Z_SAMPLE_KIND_DELETE = 1,
+    Z_SAMPLE_KIND_DEFAULT = Z_SAMPLE_KIND_PUT
+} z_sample_kind_t;
 
 /**
  * Consolidation mode values.
@@ -182,8 +185,8 @@ typedef enum {
     Z_CONSOLIDATION_MODE_NONE = 0,
     Z_CONSOLIDATION_MODE_MONOTONIC = 1,
     Z_CONSOLIDATION_MODE_LATEST = 2,
+    Z_CONSOLIDATION_MODE_DEFAULT = Z_CONSOLIDATION_MODE_AUTO
 } z_consolidation_mode_t;
-#define Z_CONSOLIDATION_MODE_DEFAULT Z_CONSOLIDATION_MODE_AUTO
 
 /**
  * Reliability values.
@@ -194,8 +197,11 @@ typedef enum {
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
-typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
-#define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
+typedef enum {
+    Z_RELIABILITY_BEST_EFFORT = 1,
+    Z_RELIABILITY_RELIABLE = 0,
+    Z_RELIABILITY_DEFAULT = Z_RELIABILITY_RELIABLE
+} z_reliability_t;
 
 /**
  * Congestion control values.
@@ -206,8 +212,11 @@ typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_rel
  *   Z_CONGESTION_CONTROL_DROP: Defines congestion control as ``DROP``. Messages are dropped in case
  *     of congestion control.
  */
-typedef enum { Z_CONGESTION_CONTROL_BLOCK = 1, Z_CONGESTION_CONTROL_DROP = 0 } z_congestion_control_t;
-#define Z_CONGESTION_CONTROL_DEFAULT Z_CONGESTION_CONTROL_DROP
+typedef enum {
+    Z_CONGESTION_CONTROL_BLOCK = 1,
+    Z_CONGESTION_CONTROL_DROP = 0,
+    Z_CONGESTION_CONTROL_DEFAULT = Z_CONGESTION_CONTROL_DROP
+} z_congestion_control_t;
 
 static inline z_congestion_control_t z_internal_congestion_control_default_push(void) {
     return Z_CONGESTION_CONTROL_DROP;
@@ -237,9 +246,9 @@ typedef enum {
     Z_PRIORITY_DATA_HIGH = 4,
     Z_PRIORITY_DATA = 5,
     Z_PRIORITY_DATA_LOW = 6,
-    Z_PRIORITY_BACKGROUND = 7
+    Z_PRIORITY_BACKGROUND = 7,
+    Z_PRIORITY_DEFAULT = Z_PRIORITY_DATA
 } z_priority_t;
-#define Z_PRIORITY_DEFAULT Z_PRIORITY_DATA
 
 /**
  * Query target values.
@@ -252,9 +261,35 @@ typedef enum {
 typedef enum {
     Z_QUERY_TARGET_BEST_MATCHING = 0,
     Z_QUERY_TARGET_ALL = 1,
-    Z_QUERY_TARGET_ALL_COMPLETE = 2
+    Z_QUERY_TARGET_ALL_COMPLETE = 2,
+    Z_QUERY_TARGET_DEFAULT = Z_QUERY_TARGET_BEST_MATCHING
 } z_query_target_t;
-#define Z_QUERY_TARGET_DEFAULT Z_QUERY_TARGET_BEST_MATCHING
+
+/**
+ * The kinds of accepted query replies.
+ *
+ * The queryable may serve glob-like key expressions.
+ * E.g., the queryable may be declared with the key expression `foo/b$*`.
+ * At the same time, it may send replies with more specific key expressions, e.g., `foo/bar` or `foo/baz`.
+ * This may cause a situation when the queryable receives a query with the key expression `foo/bar`
+ * and replies to it with the key expression `foo/baz`.
+ * By default, this behavior is not allowed. Calling `z_query_reply` value on a query for `foo/bar` with key expression
+ * `foo/baz` will result in an error on the sending side. But if the query is sent with the `accept_replies` flag set to
+ * `Z_REPLY_KEYEXPR_ANY` in either `z_get_options_t` or `z_querier_options_t`, then the reply with a disjoint key
+ * expression will be accepted for this query.
+ *
+ * The queryable may check whether disjoint replies are allowed for a query with `z_query_accepts_replies` function.
+ *
+ * Enumerators:
+ *   Z_REPLY_KEYEXPR_ANY: Accept replies on any key expression.
+ *   Z_REPLY_KEYEXPR_MATCHING_QUERY: Accept replies only to intersecting key expressions intersecting with query's own
+ * key expression.
+ */
+typedef enum z_reply_keyexpr_t {
+    Z_REPLY_KEYEXPR_ANY = 0,
+    Z_REPLY_KEYEXPR_MATCHING_QUERY = 1,
+    Z_REPLY_KEYEXPR_DEFAULT = Z_REPLY_KEYEXPR_MATCHING_QUERY
+} z_reply_keyexpr_t;
 
 #ifdef __cplusplus
 }

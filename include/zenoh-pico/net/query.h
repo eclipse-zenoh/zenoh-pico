@@ -22,6 +22,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/keyexpr.h"
+#include "zenoh-pico/utils/query_params.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,6 +71,7 @@ typedef struct _z_querier_t {
     z_priority_t _priority;
     z_reliability_t reliability;
     bool _is_express;
+    z_reply_keyexpr_t _accept_replies;
     uint64_t _timeout_ms;
     z_locality_t _allowed_destination;
     _z_write_filter_t _filter;
@@ -96,15 +98,16 @@ static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0
 static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
 static inline z_result_t _z_query_move_data(_z_query_t *dst, _z_value_t *value, _z_keyexpr_t *key,
                                             _z_slice_t *parameters, const _z_session_weak_t *zn, uint32_t request_id,
-                                            _z_bytes_t *attachment, bool anyke, const _z_source_info_t *source_info) {
+                                            _z_bytes_t *attachment, bool implicit_anyke,
+                                            const _z_source_info_t *source_info) {
     *dst = _z_query_null();
+    dst->_anyke = implicit_anyke || _z_parameters_has_anyke((const char *)parameters->start, parameters->len);
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_move(&dst->_key._inner, key), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_value_move(&dst->_value, value), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->_attachment, attachment), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_slice_move(&dst->_parameters._slice, parameters), _z_query_clear(dst));
     dst->_request_id = request_id;
     dst->_zn = _z_session_weak_clone(zn);
-    dst->_anyke = anyke;
     dst->_source_info = *source_info;
     return _Z_RES_OK;
 }

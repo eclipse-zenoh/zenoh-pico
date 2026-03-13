@@ -42,3 +42,30 @@ _z_query_param_t _z_query_params_next(_z_str_se_t *str) {
     }
     return result;
 }
+
+bool _z_parameters_has_anyke(const char *parameters, size_t parameters_len) {
+    if (parameters == NULL || parameters_len == 0) {
+        return false;
+    }
+    const char *start = (const char *)parameters;
+    const char *end = start + parameters_len;
+    while (true) {
+        size_t len = (size_t)(end - start);
+        const char *pos = _z_memmem(start, len, _Z_QUERY_PARAMS_KEY_ANYKE, _Z_QUERY_PARAMS_KEY_ANYKE_LEN);
+        if (pos == NULL) {
+            break;
+        }
+        // Check left boundary: must be start of string or preceded by ';'
+        bool left_ok = (pos == parameters) || (*(pos - 1) == _Z_QUERY_PARAMS_LIST_SEPARATOR[0]);
+        // Check right boundary: must be end of string or followed by ';'
+        bool right_ok = (pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN == end) ||
+                        (*(pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN) == _Z_QUERY_PARAMS_LIST_SEPARATOR[0]);
+        if (left_ok && right_ok) {
+            return true;
+        }
+
+        start = pos + _Z_QUERY_PARAMS_KEY_ANYKE_LEN + 1;
+        if (start > end) break;
+    }
+    return false;
+}

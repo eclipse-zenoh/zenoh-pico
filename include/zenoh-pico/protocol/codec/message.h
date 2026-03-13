@@ -27,7 +27,6 @@ z_result_t _z_push_body_decode(_z_push_body_t *body, _z_zbuf_t *zbf, uint8_t hea
 
 z_result_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *query);
 z_result_t _z_query_decode(_z_msg_query_t *query, _z_zbuf_t *zbf, uint8_t header);
-
 z_result_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply);
 z_result_t _z_reply_decode(_z_msg_reply_t *reply, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs);
 

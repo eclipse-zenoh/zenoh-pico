@@ -1489,6 +1489,7 @@ Functions
 .. autocfunction:: primitives.h::z_query_reply_err
 .. autocfunction:: primitives.h::z_query_reply_del
 .. autocfunction:: primitives.h::z_query_source_info
+.. autocfunction:: primitives.h::z_query_accepts_replies
 
 Ownership Functions
 -------------------
@@ -1522,6 +1523,7 @@ Option Types
 .. autoctype:: types.h::z_get_options_t
 .. autocenum:: constants.h::z_query_target_t
 .. autocenum:: constants.h::z_consolidation_mode_t
+.. autocenum:: constants.h::z_reply_keyexpr_t
 .. autoctype:: types.h::z_query_consolidation_t
 
 Functions
@@ -1537,6 +1539,7 @@ Functions
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_latest
 .. autocfunction:: primitives.h::z_query_target_default
+.. autocfunction:: primitives.h::z_reply_keyexpr_default
 
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
