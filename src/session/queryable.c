@@ -255,9 +255,9 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     z_result_t ret = _Z_RC_IS_NULL(&query) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;
     // Note: _z_query_move_data will make copies of all aliased fields, since query is under ref count
     // and thus it is impossible to detect when user moves it out of callback
-    _Z_SET_IF_OK(ret,
-                 _z_query_move_data(_Z_RC_IN_VAL(&query), &msgq->_ext_value, &qle_infos.ke, &msgq->_parameters,
-                                    &transport->_session, qid, &msgq->_ext_attachment, msgq->_anyke, &msgq->_ext_info));
+    _Z_SET_IF_OK(ret, _z_query_move_data(_Z_RC_IN_VAL(&query), &msgq->_ext_value, &qle_infos.ke, &msgq->_parameters,
+                                         &transport->_session, qid, &msgq->_ext_attachment, msgq->_implicit_anyke,
+                                         &msgq->_ext_info));
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_wireexpr_clear(q_key); _z_msg_query_clear(msgq);
                            _z_queryable_cache_data_clear(&qle_infos); _z_query_rc_drop(&query))
 

@@ -1376,7 +1376,7 @@ _z_msg_query_t gen_query_anyke(const char *parameters, bool _anyke) {
             // SAFETY: only use null-terminated parameters in tests.
             // Flawfinder: ignore [CWE-126]
             (const uint8_t *)parameters, parameters == NULL ? 0 : strlen(parameters), _z_delete_context_static()),
-        ._anyke = _anyke,
+        ._implicit_anyke = _anyke,
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
     };
 }
@@ -1423,7 +1423,8 @@ void query_message_anyke(void) {
                 // SAFETY: only use null-terminated parameters in tests.
                 // Flawfinder: ignore [CWE-126]
                 size_t params_len = params[i] == NULL ? 0 : strlen(params[i]);
-                assert(!decoded._anyke);
+                assert(!decoded._implicit_anyke);  // implicit _anyke is always false upon decoding, since _anyke should
+                                                   // be explicitly present in parameters
                 assert(_z_parameters_has_anyke((const char *)decoded._parameters.start, decoded._parameters.len));
                 assert(params_len <= decoded._parameters.len);
                 if (params_len > 0) {

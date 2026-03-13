@@ -182,14 +182,14 @@ void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declarati
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
                          z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                          const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
-                         _z_n_qos_t qos, const _z_source_info_t *source_info, bool anyke) {
+                         _z_n_qos_t qos, const _z_source_info_t *source_info, bool implicit_anyke) {
     msg->_tag = _Z_N_REQUEST;
     msg->_reliability = reliability;
     msg->_body._request._tag = _Z_REQUEST_QUERY;
     msg->_body._request._rid = qid;
     msg->_body._request._key = *key;
     msg->_body._request._body._query._parameters = *parameters;
-    msg->_body._request._body._query._anyke = anyke;
+    msg->_body._request._body._query._implicit_anyke = implicit_anyke;
     msg->_body._request._body._query._consolidation = consolidation;
     msg->_body._request._body._query._ext_value.payload = (payload == NULL) ? _z_bytes_null() : *payload;
     msg->_body._request._body._query._ext_value.encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
