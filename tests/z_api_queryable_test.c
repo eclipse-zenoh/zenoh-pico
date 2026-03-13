@@ -395,7 +395,7 @@ void test_querier_accept_replies(bool local) {
         querier_opts2.accept_replies = Z_REPLY_KEYEXPR_MATCHING_QUERY;
 
         z_owned_querier_t querier2;
-        z_declare_querier(z_loan(s), &querier2, z_loan(querier_ke2), &querier_opts2);
+        z_declare_querier(z_loan(s2), &querier2, z_loan(querier_ke2), &querier_opts2);
         assert(z_internal_check(querier2));
         z_sleep_s(1);
 
