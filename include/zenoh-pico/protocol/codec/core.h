@@ -87,6 +87,7 @@ static inline z_result_t _z_slice_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
 static inline z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val_decode_na(bs, zbf); }
 static inline z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 z_result_t _z_slice_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
+z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_slices);
 
 z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs);
 z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);

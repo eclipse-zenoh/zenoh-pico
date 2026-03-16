@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
@@ -50,6 +51,10 @@ typedef struct {
     z_whatami_t _remote_whatami;
     volatile bool _received;
     _z_resource_slist_t *_remote_resources;
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_string_t _link_src;
+    _z_string_t _link_dst;
+#endif
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
     uint8_t _state_reliable;
@@ -61,9 +66,26 @@ typedef struct {
 #endif
 } _z_transport_peer_common_t;
 
+#if Z_FEATURE_CONNECTIVITY == 1
+typedef struct {
+    _z_id_t _remote_zid;
+    z_whatami_t _remote_whatami;
+    _z_string_t _link_src;
+    _z_string_t _link_dst;
+    bool _owns_endpoints;
+} _z_connectivity_peer_event_data_t;
+#endif
+
 void _z_transport_peer_common_clear(_z_transport_peer_common_t *src);
 void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src);
 bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right);
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_connectivity_peer_event_data_clear(_z_connectivity_peer_event_data_t *event_data);
+void _z_connectivity_peer_event_data_copy_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                      const _z_transport_peer_common_t *src);
+void _z_connectivity_peer_event_data_alias_from_common(_z_connectivity_peer_event_data_t *dst,
+                                                       const _z_transport_peer_common_t *src);
+#endif
 
 typedef struct {
     _z_transport_peer_common_t common;
@@ -169,6 +191,13 @@ typedef struct _z_transport_multicast_t {
     _zp_f_send_tmsg _send_f;
 } _z_transport_multicast_t;
 
+typedef enum {
+    _Z_TRANSPORT_UNICAST_TYPE,
+    _Z_TRANSPORT_MULTICAST_TYPE,
+    _Z_TRANSPORT_RAWETH_TYPE,
+    _Z_TRANSPORT_NONE
+} _z_transport_type_t;
+
 typedef struct {
     union {
         _z_transport_unicast_t _unicast;
@@ -176,7 +205,7 @@ typedef struct {
         _z_transport_multicast_t _raweth;
     } _transport;
 
-    enum { _Z_TRANSPORT_UNICAST_TYPE, _Z_TRANSPORT_MULTICAST_TYPE, _Z_TRANSPORT_RAWETH_TYPE, _Z_TRANSPORT_NONE } _type;
+    _z_transport_type_t _type;
 } _z_transport_t;
 
 typedef struct {
@@ -205,8 +234,20 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
-void _z_transport_clear(_z_transport_t *zt);
+void _z_transport_clear(_z_transport_t *zt, bool detach_tasks);
 void _z_transport_free(_z_transport_t **zt);
+
+static inline void _z_transport_get_link_properties(const _z_transport_common_t *transport, uint16_t *mtu,
+                                                    bool *is_streamed, bool *is_reliable) {
+    *mtu = 0;
+    *is_streamed = false;
+    *is_reliable = false;
+    if (transport != NULL && transport->_link != NULL) {
+        *mtu = transport->_link->_mtu;
+        *is_streamed = transport->_link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
+        *is_reliable = transport->_link->_cap._is_reliable;
+    }
+}
 
 #if Z_FEATURE_BATCHING == 1
 bool _z_transport_start_batching(_z_transport_t *zt);

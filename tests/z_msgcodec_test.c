@@ -18,6 +18,7 @@
 #include "zenoh-pico/protocol/codec/serial.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/utils/query_params.h"
 #define ZENOH_PICO_TEST_H
 
 #include <stdbool.h>
@@ -1367,6 +1368,19 @@ _z_msg_query_t gen_query(void) {
     };
 }
 
+_z_msg_query_t gen_query_anyke(const char *parameters, bool _anyke) {
+    return (_z_msg_query_t){
+        ._consolidation = (gen_uint8() % 4) - 1,
+        ._ext_info = gen_source_info(),
+        ._parameters = _z_slice_from_buf_custom_deleter(
+            // SAFETY: only use null-terminated parameters in tests.
+            // Flawfinder: ignore [CWE-126]
+            (const uint8_t *)parameters, parameters == NULL ? 0 : strlen(parameters), _z_delete_context_static()),
+        ._implicit_anyke = _anyke,
+        ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
+    };
+}
+
 void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
     assert(left->_consolidation == right->_consolidation);
     assert_eq_source_info(&left->_ext_info, &right->_ext_info);
@@ -1389,6 +1403,42 @@ void query_message(void) {
     _z_msg_query_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+}
+
+void query_message_anyke(void) {
+    printf("\n>> Query message _anyke\n");
+    const char *params[] = {NULL, "", "param1", "param2;_anyke", "param3;_anyke;param4", "_anyke;param5"};
+    for (size_t i = 0; i < sizeof(params) / sizeof(char *); i++) {
+        for (size_t j = 0; j < 2; j++) {
+            _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+            bool anyke = j == 0;
+            _z_msg_query_t expected = gen_query_anyke(params[i], anyke);
+            assert(_z_query_encode(&wbf, &expected) == _Z_RES_OK);
+            _z_msg_query_t decoded = {0};
+            _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+            uint8_t header = _z_zbuf_read(&zbf);
+            z_result_t res = _z_query_decode(&decoded, &zbf, header);
+            assert(_Z_RES_OK == res);
+            if (anyke) {
+                // SAFETY: only use null-terminated parameters in tests.
+                // Flawfinder: ignore [CWE-126]
+                size_t params_len = params[i] == NULL ? 0 : strlen(params[i]);
+                assert(!decoded._implicit_anyke);  // implicit _anyke is always false upon decoding, since _anyke should
+                                                   // be explicitly present in parameters
+                assert(_z_parameters_has_anyke((const char *)decoded._parameters.start, decoded._parameters.len));
+                assert(params_len <= decoded._parameters.len);
+                if (params_len > 0) {
+                    assert(strncmp(params[i], (const char *)decoded._parameters.start, params_len) == 0);
+                }
+            } else {
+                assert_eq_query(&expected, &decoded);
+            }
+            _z_msg_query_clear(&decoded);
+            _z_msg_query_clear(&expected);
+            _z_zbuf_clear(&zbf);
+            _z_wbuf_clear(&wbf);
+        }
+    }
 }
 
 _z_msg_err_t gen_err(void) {
@@ -2289,6 +2339,7 @@ int main(void) {
         declare_message();
         push_body_message();
         query_message();
+        query_message_anyke();
         err_message();
         reply_message();
         interest_message();

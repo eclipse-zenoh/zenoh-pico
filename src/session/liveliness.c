@@ -40,7 +40,7 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
     _z_keyexpr_t ke;
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, false));
     z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
 
     const _z_keyexpr_t *pkeyexpr = _z_keyexpr_intmap_get(&zn->_remote_tokens, id);
     if (pkeyexpr != NULL) {
@@ -78,7 +78,7 @@ z_result_t _z_liveliness_process_remote_token_undeclare(_z_session_t *zn, uint32
     z_result_t ret = _Z_RES_OK;
 
     _z_keyexpr_t key = _z_keyexpr_null();
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_keyexpr_t *keyexpr = (_z_keyexpr_t *)_z_keyexpr_intmap_get(&zn->_remote_tokens, id);
     if (keyexpr != NULL) {
         key = _z_keyexpr_steal(keyexpr);
@@ -99,7 +99,7 @@ z_result_t _z_liveliness_process_remote_token_undeclare(_z_session_t *zn, uint32
 z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn) {
     z_result_t ret = _Z_RES_OK;
 
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     // NOTE: it is safe to just move the data, since remote tokens store full copies of ke.
     _z_keyexpr_intmap_t token_list = zn->_remote_tokens;
     _z_keyexpr_intmap_init(&zn->_remote_tokens);
@@ -158,7 +158,7 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, true));
     z_result_t ret = _Z_RES_OK;
 
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
 
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);

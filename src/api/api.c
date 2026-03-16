@@ -27,6 +27,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
@@ -45,6 +46,7 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/endianness.h"
@@ -439,6 +441,8 @@ z_entity_global_id_t z_source_info_id(const z_source_info_t *info) { return info
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
+z_reply_keyexpr_t z_reply_keyexpr_default(void) { return Z_REPLY_KEYEXPR_DEFAULT; }
+
 z_query_consolidation_t z_query_consolidation_auto(void) {
     return (z_query_consolidation_t){.mode = Z_CONSOLIDATION_MODE_AUTO};
 }
@@ -459,6 +463,10 @@ z_query_consolidation_t z_query_consolidation_default(void) { return z_query_con
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
     parameters->_val = _z_string_alias(_Z_RC_IN_VAL(query)->_parameters);
+}
+
+z_reply_keyexpr_t z_query_accepts_replies(const z_loaned_query_t *query) {
+    return _Z_RC_IN_VAL(query)->_anyke ? Z_REPLY_KEYEXPR_ANY : Z_REPLY_KEYEXPR_MATCHING_QUERY;
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_attachment; }
@@ -505,6 +513,33 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
         (closure->call)(id, closure->context);
     }
 }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+void z_closure_transport_call(const z_loaned_closure_transport_t *closure, z_loaned_transport_t *transport) {
+    if (closure->call != NULL) {
+        (closure->call)(transport, closure->context);
+    }
+}
+
+void z_closure_link_call(const z_loaned_closure_link_t *closure, z_loaned_link_t *link) {
+    if (closure->call != NULL) {
+        (closure->call)(link, closure->context);
+    }
+}
+
+void z_closure_transport_event_call(const z_loaned_closure_transport_event_t *closure,
+                                    z_loaned_transport_event_t *event) {
+    if (closure->call != NULL) {
+        (closure->call)(event, closure->context);
+    }
+}
+
+void z_closure_link_event_call(const z_loaned_closure_link_event_t *closure, z_loaned_link_event_t *event) {
+    if (closure->call != NULL) {
+        (closure->call)(event, closure->context);
+    }
+}
+#endif
 
 void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *closure,
                                     const z_matching_status_t *status) {
@@ -571,7 +606,110 @@ static inline _z_encoding_t *_z_encoding_from_moved(z_moved_encoding_t *encoding
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_move,
                               _z_sample_clear)
-_Z_OWNED_FUNCTIONS_RC_IMPL(session)
+_Z_OWNED_FUNCTIONS_RC_IMPL_NO_DROP_CLONE(session)
+
+#if Z_FEATURE_CONNECTIVITY == 1
+bool _z_info_transport_check(const _z_info_transport_t *transport) { return _z_id_check(transport->_zid); }
+_z_info_transport_t _z_info_transport_null(void) { return (_z_info_transport_t){0}; }
+z_result_t _z_info_transport_copy(_z_info_transport_t *dst, const _z_info_transport_t *src) {
+    *dst = *src;
+    return _Z_RES_OK;
+}
+z_result_t _z_info_transport_move(_z_info_transport_t *dst, _z_info_transport_t *src) {
+    *dst = *src;
+    *src = _z_info_transport_null();
+    return _Z_RES_OK;
+}
+void _z_info_transport_clear(_z_info_transport_t *transport) { *transport = _z_info_transport_null(); }
+
+bool _z_info_link_check(const _z_info_link_t *link) { return _z_id_check(link->_zid); }
+_z_info_link_t _z_info_link_null(void) {
+    _z_info_link_t link = {0};
+    link._src = _z_string_null();
+    link._dst = _z_string_null();
+    return link;
+}
+z_result_t _z_info_link_copy(_z_info_link_t *dst, const _z_info_link_t *src) {
+    *dst = _z_info_link_null();
+    dst->_zid = src->_zid;
+    dst->_mtu = src->_mtu;
+    dst->_is_streamed = src->_is_streamed;
+    dst->_is_reliable = src->_is_reliable;
+    _Z_RETURN_IF_ERR(_z_string_copy(&dst->_src, &src->_src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_dst, &src->_dst), _z_string_clear(&dst->_src));
+    return _Z_RES_OK;
+}
+z_result_t _z_info_link_move(_z_info_link_t *dst, _z_info_link_t *src) {
+    *dst = _z_info_link_null();
+    dst->_zid = src->_zid;
+    dst->_mtu = src->_mtu;
+    dst->_is_streamed = src->_is_streamed;
+    dst->_is_reliable = src->_is_reliable;
+    _Z_RETURN_IF_ERR(_z_string_move(&dst->_src, &src->_src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_dst, &src->_dst), _z_string_clear(&dst->_src));
+    *src = _z_info_link_null();
+    return _Z_RES_OK;
+}
+void _z_info_link_clear(_z_info_link_t *link) {
+    _z_string_clear(&link->_src);
+    _z_string_clear(&link->_dst);
+    *link = _z_info_link_null();
+}
+
+bool _z_info_transport_event_check(const _z_info_transport_event_t *event) {
+    return _z_info_transport_check(&event->transport);
+}
+_z_info_transport_event_t _z_info_transport_event_null(void) {
+    _z_info_transport_event_t event = {0};
+    event.kind = Z_SAMPLE_KIND_DEFAULT;
+    event.transport = _z_info_transport_null();
+    return event;
+}
+z_result_t _z_info_transport_event_copy(_z_info_transport_event_t *dst, const _z_info_transport_event_t *src) {
+    *dst = *src;
+    return _Z_RES_OK;
+}
+z_result_t _z_info_transport_event_move(_z_info_transport_event_t *dst, _z_info_transport_event_t *src) {
+    *dst = *src;
+    *src = _z_info_transport_event_null();
+    return _Z_RES_OK;
+}
+void _z_info_transport_event_clear(_z_info_transport_event_t *event) { *event = _z_info_transport_event_null(); }
+
+bool _z_info_link_event_check(const _z_info_link_event_t *event) { return _z_info_link_check(&event->link); }
+_z_info_link_event_t _z_info_link_event_null(void) {
+    _z_info_link_event_t event = {0};
+    event.kind = Z_SAMPLE_KIND_DEFAULT;
+    event.link = _z_info_link_null();
+    return event;
+}
+z_result_t _z_info_link_event_copy(_z_info_link_event_t *dst, const _z_info_link_event_t *src) {
+    *dst = _z_info_link_event_null();
+    dst->kind = src->kind;
+    return _z_info_link_copy(&dst->link, &src->link);
+}
+z_result_t _z_info_link_event_move(_z_info_link_event_t *dst, _z_info_link_event_t *src) {
+    *dst = _z_info_link_event_null();
+    dst->kind = src->kind;
+    _Z_RETURN_IF_ERR(_z_info_link_move(&dst->link, &src->link));
+    src->kind = Z_SAMPLE_KIND_DEFAULT;
+    return _Z_RES_OK;
+}
+void _z_info_link_event_clear(_z_info_link_event_t *event) {
+    _z_info_link_clear(&event->link);
+    event->kind = Z_SAMPLE_KIND_DEFAULT;
+}
+
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_info_transport_t, transport, _z_info_transport_check, _z_info_transport_null,
+                              _z_info_transport_copy, _z_info_transport_move, _z_info_transport_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_info_link_t, link, _z_info_link_check, _z_info_link_null, _z_info_link_copy,
+                              _z_info_link_move, _z_info_link_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_info_transport_event_t, transport_event, _z_info_transport_event_check,
+                              _z_info_transport_event_null, _z_info_transport_event_copy, _z_info_transport_event_move,
+                              _z_info_transport_event_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_info_link_event_t, link_event, _z_info_link_event_check, _z_info_link_event_null,
+                              _z_info_link_event_copy, _z_info_link_event_move, _z_info_link_event_clear)
+#endif
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_closure_sample_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_closure_query_callback_t, z_closure_drop_callback_t)
@@ -581,6 +719,13 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_status_callback_t,
                                 z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
+#if Z_FEATURE_CONNECTIVITY == 1
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_transport, z_closure_transport_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_link, z_closure_link_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_transport_event, z_closure_transport_event_callback_t,
+                                z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_link_event, z_closure_link_event_callback_t, z_closure_drop_callback_t)
+#endif
 
 /************* Primitives **************/
 #if Z_FEATURE_SCOUTING == 1
@@ -824,12 +969,20 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
 
 void z_close_options_default(z_close_options_t *options) { options->__dummy = 0; }
 
+void z_session_drop(z_moved_session_t *zs) {
+    if (!_Z_RC_IS_NULL(&zs->_this._rc)) {
+        // force closing of the session (since it might not do it automatically due to temporary pending rc copies)
+        z_close(&zs->_this._rc, NULL);
+        _z_session_rc_drop(&zs->_this._rc);
+    }
+}
+
 z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
     _ZP_UNUSED(options);
     if (_Z_RC_IS_NULL(zs)) {
         return _Z_RES_OK;
     }
-    _z_session_clear(_Z_RC_IN_VAL(zs));
+    _z_session_close(_Z_RC_IN_VAL(zs));
     return _Z_RES_OK;
 }
 
@@ -860,14 +1013,7 @@ z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t 
         default:
             break;
     }
-    // Note and clear context
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    // Drop if needed
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_zid_null(&callback->_this);
+    z_closure_zid_drop(callback);
     return _Z_RES_OK;
 }
 
@@ -883,18 +1029,230 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
         default:
             break;
     }
-    // Note and clear context
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    // Drop if needed
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_zid_null(&callback->_this);
+    z_closure_zid_drop(callback);
     return _Z_RES_OK;
 }
 
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_info_transport_from_peer(_z_info_transport_t *out, const _z_transport_peer_common_t *peer, bool is_multicast) {
+    *out = _z_info_transport_null();
+    out->_zid = peer->_remote_zid;
+    out->_whatami = peer->_remote_whatami;
+    out->_is_qos = false;
+    out->_is_multicast = is_multicast;
+    out->_is_shm = false;
+}
+
+bool _z_info_transport_filter_match(const _z_info_transport_t *transport, const _z_info_transport_t *filter) {
+    return _z_id_eq(&transport->_zid, &filter->_zid) && transport->_is_multicast == filter->_is_multicast;
+}
+
+static z_result_t _z_info_link_make(_z_info_link_t *link, const _z_transport_peer_common_t *peer,
+                                    const _z_transport_common_t *transport_common) {
+    *link = _z_info_link_null();
+    link->_zid = peer->_remote_zid;
+    if (transport_common != NULL && transport_common->_link != NULL) {
+        link->_mtu = transport_common->_link->_mtu;
+        link->_is_streamed = transport_common->_link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
+        link->_is_reliable = transport_common->_link->_cap._is_reliable;
+    }
+    _Z_RETURN_IF_ERR(_z_string_copy(&link->_src, &peer->_link_src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&link->_dst, &peer->_link_dst), _z_string_clear(&link->_src));
+    return _Z_RES_OK;
+}
+
+void z_info_links_options_default(z_info_links_options_t *options) { options->transport = NULL; }
+
+z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_transport_t *callback) {
+    z_result_t ret = _Z_RES_OK;
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    _z_transport_t *transport = &session->_tp;
+    _z_session_transport_mutex_lock(session);
+    _z_transport_common_t *transport_common = _z_transport_get_common(transport);
+    if (transport_common != NULL) {
+        _z_transport_peer_mutex_lock(transport_common);
+    }
+
+    switch (transport->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE: {
+            _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
+                _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, false);
+                z_closure_transport_call(&callback->_this._val, &info_transport);
+            }
+            break;
+        }
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+        case _Z_TRANSPORT_RAWETH_TYPE: {
+            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
+                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, true);
+                z_closure_transport_call(&callback->_this._val, &info_transport);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (transport_common != NULL) {
+        _z_transport_peer_mutex_unlock(transport_common);
+    }
+    _z_session_transport_mutex_unlock(session);
+
+    z_closure_transport_drop(callback);
+    return ret;
+}
+
+z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *callback,
+                        z_info_links_options_t *options) {
+    z_result_t ret = _Z_RES_OK;
+    z_info_links_options_t opt;
+    z_info_links_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+
+    _z_info_transport_t transport_filter = _z_info_transport_null();
+    bool has_transport_filter = false;
+    if (opt.transport != NULL) {
+        if (!z_internal_transport_check(&opt.transport->_this)) {
+            ret = _Z_ERR_INVALID;
+        } else {
+            transport_filter = *z_transport_loan(&opt.transport->_this);
+            has_transport_filter = true;
+        }
+    }
+
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    _z_transport_t *transport = &session->_tp;
+    if (ret != _Z_RES_OK) {
+        goto out;
+    }
+
+    _z_session_transport_mutex_lock(session);
+    _z_transport_common_t *transport_common = _z_transport_get_common(transport);
+    if (transport_common != NULL) {
+        _z_transport_peer_mutex_lock(transport_common);
+    }
+
+    switch (transport->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE: {
+            _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
+                _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, false);
+                if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
+                    continue;
+                }
+
+                _z_info_link_t info_link;
+                ret = _z_info_link_make(&info_link, &peer->common, transport_common);
+                if (ret != _Z_RES_OK) {
+                    break;
+                }
+                z_closure_link_call(&callback->_this._val, &info_link);
+                _z_info_link_clear(&info_link);
+            }
+            break;
+        }
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+        case _Z_TRANSPORT_RAWETH_TYPE: {
+            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
+                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, true);
+                if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
+                    continue;
+                }
+
+                _z_info_link_t info_link;
+                ret = _z_info_link_make(&info_link, &peer->common, transport_common);
+                if (ret != _Z_RES_OK) {
+                    break;
+                }
+                z_closure_link_call(&callback->_this._val, &info_link);
+                _z_info_link_clear(&info_link);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (transport_common != NULL) {
+        _z_transport_peer_mutex_unlock(transport_common);
+    }
+    _z_session_transport_mutex_unlock(session);
+
+out:
+    z_transport_drop(opt.transport);
+
+    z_closure_link_drop(callback);
+    return ret;
+}
+
+z_id_t z_transport_zid(const z_loaned_transport_t *transport) { return transport->_zid; }
+z_whatami_t z_transport_whatami(const z_loaned_transport_t *transport) { return transport->_whatami; }
+bool z_transport_is_qos(const z_loaned_transport_t *transport) { return transport->_is_qos; }
+bool z_transport_is_multicast(const z_loaned_transport_t *transport) { return transport->_is_multicast; }
+bool z_transport_is_shm(const z_loaned_transport_t *transport) { return transport->_is_shm; }
+
+z_id_t z_link_zid(const z_loaned_link_t *link) { return link->_zid; }
+z_result_t z_link_src(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    str_out->_val = _z_string_null();
+    return _z_string_copy(&str_out->_val, &link->_src);
+}
+z_result_t z_link_dst(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    str_out->_val = _z_string_null();
+    return _z_string_copy(&str_out->_val, &link->_dst);
+}
+uint16_t z_link_mtu(const z_loaned_link_t *link) { return link->_mtu; }
+bool z_link_is_streamed(const z_loaned_link_t *link) { return link->_is_streamed; }
+bool z_link_is_reliable(const z_loaned_link_t *link) { return link->_is_reliable; }
+
+void z_link_group(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
+    str_out->_val = _z_string_null();
+}
+void z_link_auth_identifier(const z_loaned_link_t *link, z_owned_string_t *str_out) {
+    (void)link;
+    str_out->_val = _z_string_null();
+}
+void z_link_interfaces(const z_loaned_link_t *link, z_owned_string_array_t *interfaces_out) {
+    (void)link;
+    interfaces_out->_val = _z_string_svec_null();
+}
+bool z_link_priorities(const z_loaned_link_t *link, uint8_t *min_out, uint8_t *max_out) {
+    (void)link;
+    (void)min_out;
+    (void)max_out;
+    return false;
+}
+bool z_link_reliability(const z_loaned_link_t *link, z_reliability_t *reliability_out) {
+    (void)link;
+    (void)reliability_out;
+    return false;
+}
+
+z_sample_kind_t z_transport_event_kind(const z_loaned_transport_event_t *event) { return event->kind; }
+const z_loaned_transport_t *z_transport_event_transport(const z_loaned_transport_event_t *event) {
+    return &event->transport;
+}
+z_loaned_transport_t *z_transport_event_transport_mut(z_loaned_transport_event_t *event) { return &event->transport; }
+
+z_sample_kind_t z_link_event_kind(const z_loaned_link_event_t *event) { return event->kind; }
+const z_loaned_link_t *z_link_event_link(const z_loaned_link_event_t *event) { return &event->link; }
+z_loaned_link_t *z_link_event_link_mut(z_loaned_link_event_t *event) { return &event->link; }
+#endif
 
 z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str) {
     str->_val = _z_id_to_string(id);
@@ -1406,6 +1764,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->source_info = NULL;
     options->cancellation_token = NULL;
 #endif
+    options->accept_replies = z_reply_keyexpr_default();
 }
 
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
@@ -1445,7 +1804,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     ret = _z_query(zs, _z_optional_id_make_none(), keyexpr, parameters, parameters_len, opt.target,
                    opt.consolidation.mode, _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding),
                    closure.call, closure.drop, closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment),
-                   qos, source_info, allowed_destination, cancellation_token);
+                   qos, source_info, opt.accept_replies, allowed_destination, cancellation_token);
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
     z_cancellation_token_drop(opt.cancellation_token);
@@ -1481,6 +1840,7 @@ void z_querier_options_default(z_querier_options_t *options) {
     options->allowed_destination = z_locality_default();
 #endif
     options->timeout_ms = 0;
+    options->accept_replies = z_reply_keyexpr_default();
 }
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
@@ -1503,10 +1863,10 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     allowed_destination = opt.allowed_destination;
 #endif
 
-    z_result_t res =
-        _z_declare_querier(&querier->_val, zs, keyexpr, opt.consolidation.mode, opt.congestion_control, opt.target,
-                           opt.priority, opt.is_express, opt.timeout_ms,
-                           opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability, allowed_destination);
+    z_result_t res = _z_declare_querier(&querier->_val, zs, keyexpr, opt.consolidation.mode, opt.congestion_control,
+                                        opt.target, opt.priority, opt.is_express, opt.timeout_ms,
+                                        opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability,
+                                        allowed_destination, opt.accept_replies);
     _Z_SET_IF_OK(res,
                  _z_write_filter_create(zs, &querier->_val._filter, &querier->_val._key, _Z_INTEREST_FLAG_QUERYABLES,
                                         querier->_val._target == Z_QUERY_TARGET_ALL_COMPLETE, allowed_destination));
@@ -1569,8 +1929,8 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         ret = _z_query(&sess_rc, _z_optional_id_make_some(querier->_id), &querier->_key, parameters, parameters_len,
                        querier->_target, querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
                        closure.call, closure.drop, closure.context, querier->_timeout_ms,
-                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_allowed_destination,
-                       cancellation_token);
+                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_accept_replies,
+                       querier->_allowed_destination, cancellation_token);
     } else if (closure.drop != NULL) {
         closure.drop(closure.context);
     }
@@ -1757,7 +2117,13 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
 #else
     _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
 #endif
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for queryable keyexpr retrieval - session may be closing");
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
+        return ret;
+    }
     _z_session_queryable_rc_slist_t *node = zn->_local_queryable;
     while (node != NULL) {
         _z_session_queryable_rc_t *val = _z_session_queryable_rc_slist_value(node);
@@ -1776,7 +2142,7 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
-    options->congestion_control = z_internal_congestion_control_default_response();
+    options->congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1804,10 +2170,9 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 #ifdef Z_FEATURE_UNSTABLE_API
     source_info = opts.source_info;
 #endif
-    z_result_t ret =
-        _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr, _z_bytes_from_moved(payload),
-                      _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
-                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment), source_info);
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr, _z_bytes_from_moved(payload),
+                                   _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.is_express,
+                                   opts.timestamp, _z_bytes_from_moved(opts.attachment), source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1831,16 +2196,16 @@ z_result_t _z_query_reply_sample(const z_loaned_query_t *query, z_loaned_sample_
         opts = *options;
     }
 
-    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &sample->keyexpr, &sample->payload, &sample->encoding,
-                                   sample->kind, opts.congestion_control, opts.priority, opts.is_express,
-                                   &sample->timestamp, &sample->attachment, &sample->source_info);
+    z_result_t ret =
+        _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &sample->keyexpr, &sample->payload, &sample->encoding,
+                      sample->kind, opts.is_express, &sample->timestamp, &sample->attachment, &sample->source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     return ret;
 }
 
 void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
-    options->congestion_control = z_internal_congestion_control_default_response();
+    options->congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1868,8 +2233,7 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     source_info = opts.source_info;
 #endif
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr, NULL, NULL, Z_SAMPLE_KIND_DELETE,
-                                   opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
-                                   _z_bytes_from_moved(opts.attachment), source_info);
+                                   opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment), source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);
@@ -2049,7 +2413,13 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
 #else
     _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
 #endif
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for subscriber keyexpr retrieval - session may be closing");
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
+        return ret;
+    }
     _z_subscription_rc_slist_t *node = zn->_subscriptions;
     while (node != NULL) {
         _z_subscription_rc_t *val = _z_subscription_rc_slist_value(node);

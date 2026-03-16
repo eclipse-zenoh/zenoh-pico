@@ -39,12 +39,11 @@
 static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *decl,
                                           _z_transport_peer_common_t *peer) {
     switch (decl->_decl._tag) {
-        case _Z_DECL_KEXPR:
-            if (_z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr, decl->_decl._body._decl_kexpr._id,
-                                     peer) == 0) {
-                _Z_ERROR_RETURN(_Z_ERR_ENTITY_DECLARATION_FAILED);
-            }
-            break;
+        case _Z_DECL_KEXPR: {
+            uint16_t _res_id;
+            return _z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr, decl->_decl._body._decl_kexpr._id,
+                                        peer, &_res_id);
+        }
 
         case _Z_UNDECL_KEXPR:
             _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, peer);
@@ -102,7 +101,8 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
         case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
+            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, req->_ext_qos,
+                                         peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             _z_n_msg_request_clear(req);

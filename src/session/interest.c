@@ -34,7 +34,7 @@
 
 static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t interest_id, void *peer,
                                                  const _z_keyexpr_t *restr_key) {
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_resource_slist_t *res_list = _z_resource_slist_clone(zn->_local_resources);
     _z_session_mutex_unlock(zn);
     _z_resource_slist_t *xs = res_list;
@@ -63,7 +63,7 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
 #if Z_FEATURE_SUBSCRIPTION == 1
 static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t interest_id, void *peer,
                                                    const _z_keyexpr_t *restr_key) {
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_subscription_rc_slist_t *sub_list = _z_subscription_rc_slist_clone(zn->_subscriptions);
     _z_session_mutex_unlock(zn);
     _z_subscription_rc_slist_t *xs = sub_list;
@@ -102,7 +102,7 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
 #if Z_FEATURE_QUERYABLE == 1
 static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interest_id, void *peer,
                                                   const _z_keyexpr_t *restr_key) {
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_session_queryable_rc_slist_t *qle_list = _z_session_queryable_rc_slist_clone(zn->_local_queryable);
     _z_session_mutex_unlock(zn);
     _z_session_queryable_rc_slist_t *xs = qle_list;
@@ -142,7 +142,7 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
 #if Z_FEATURE_LIVELINESS == 1
 static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id, void *peer,
                                               const _z_keyexpr_t *restr_key) {
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_declared_keyexpr_intmap_t token_list = _z_declared_keyexpr_intmap_clone(&zn->_local_tokens);
     _z_session_mutex_unlock(zn);
     _z_declared_keyexpr_intmap_iterator_t iter = _z_declared_keyexpr_intmap_iterator_make(&token_list);
@@ -319,7 +319,11 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
              _z_string_data(&intr->_key._keyexpr));
     _z_session_interest_rc_t *ret = NULL;
 
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        _Z_WARN("Failed to acquire session mutex for registering interest for (%.*s) - session is closed",
+                (int)_z_string_len(&intr->_key._keyexpr), _z_string_data(&intr->_key._keyexpr));
+        return ret;
+    }
     zn->_local_interests = _z_session_interest_rc_slist_push_empty(zn->_local_interests);
     ret = _z_session_interest_rc_slist_value(zn->_local_interests);
     *ret = _z_session_interest_rc_new_from_val(intr);
@@ -397,7 +401,7 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare
     if (_z_get_keyexpr_from_wireexpr(zn, &key, decl_key, peer, true) != _Z_RES_OK) {
         _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
     }
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&key));
     msg.key = &key;
     // NOTE: it is possible that it is a redeclare of an existing entity - so we might need to update it
     _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
@@ -453,7 +457,7 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
         default:
             _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
     }
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     // Retrieve declare data
     _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
     if (prev_decl == NULL) {
@@ -504,7 +508,7 @@ void _z_flush_interest(_z_session_t *zn) {
 z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id, _z_transport_peer_common_t *peer) {
     _z_interest_msg_t msg = {.type = _Z_INTEREST_MSG_TYPE_FINAL, .id = id};
     // Retrieve interest
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
     _z_session_mutex_unlock(zn);
     if (intr == NULL) {
@@ -566,7 +570,9 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
 
 void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t *peer) {
     // Clone session interest list
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        return;
+    }
     _z_session_interest_rc_slist_t *intrs = _z_session_interest_rc_slist_clone(zn->_local_interests);
     _z_session_mutex_unlock(zn);
 
@@ -585,7 +591,9 @@ void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t 
 }
 
 void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest) {
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        return;
+    }
     _z_declare_data_slist_t *res_list = _z_declare_data_slist_clone(zn->_remote_declares);
     _z_session_mutex_unlock(zn);
 

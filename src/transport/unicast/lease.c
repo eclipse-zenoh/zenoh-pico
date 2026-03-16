@@ -17,6 +17,7 @@
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/transport.h"
@@ -43,12 +44,67 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
+static bool _zp_unicast_peer_is_expired(const _z_transport_peer_unicast_t *target,
+                                        const _z_transport_peer_unicast_t *peer) {
+    _ZP_UNUSED(target);
+    return !peer->common._received;
+}
+
+static void _zp_unicast_report_disconnected_peers(_z_transport_unicast_t *ztu,
+                                                  _z_transport_peer_unicast_slist_t **dropped_peers) {
+    if (dropped_peers == NULL || *dropped_peers == NULL) {
+        return;
+    }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    uint16_t mtu = 0;
+    bool is_streamed = false;
+    bool is_reliable = false;
+    _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
+#endif
+
+    _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+    _z_transport_peer_unicast_slist_t *it = *dropped_peers;
+    while (it != NULL) {
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(it);
+        _Z_INFO("Deleting peer because it has expired after %zums", ztu->_common._lease);
+        _z_interest_peer_disconnected(zs, &peer->common);
+#if Z_FEATURE_CONNECTIVITY == 1
+        _z_connectivity_peer_event_data_t disconnected_peer = {0};
+        _z_connectivity_peer_event_data_alias_from_common(&disconnected_peer, &peer->common);
+        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
+#endif
+        it = _z_transport_peer_unicast_slist_next(it);
+    }
+    _z_transport_peer_unicast_slist_free(dropped_peers);
+}
+
 static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
+    _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztu->_common));
+    _z_liveliness_subscription_undeclare_all(zs);
+#endif
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_connectivity_peer_event_data_t disconnected_peer = {0};
+    uint16_t mtu = 0;
+    bool is_streamed = false;
+    bool is_reliable = false;
+    bool has_disconnected_peer = false;
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
+        _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
+        has_disconnected_peer = true;
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+    if (has_disconnected_peer) {
+        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
+        _z_connectivity_peer_event_data_clear(&disconnected_peer);
+    }
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_t zs = _z_session_weak_upgrade(&ztu->_common._session);
+    _z_session_rc_t zs_rc = _z_session_weak_upgrade(&ztu->_common._session);
 #endif
     if (ztu->_common._read_task != NULL) {
         ztu->_common._read_task_running = false;
@@ -58,11 +114,13 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     ztu->_common._lease_task_running = false;
 
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
-    _z_unicast_transport_clear(ztu, true);
+    _z_session_transport_mutex_lock(zs);
+    _z_transport_clear(&zs->_tp, true);
+    _z_session_transport_mutex_unlock(zs);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    z_result_t ret = _z_reopen(&zs);
-    _z_session_rc_drop(&zs);
+    z_result_t ret = _z_reopen(&zs_rc);
+    _z_session_rc_drop(&zs_rc);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Reopen failed: %i", ret);
     }
@@ -120,35 +178,18 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 #if Z_FEATURE_UNICAST_PEER == 1
         else {  // Peer lease
             if (next_lease <= 0) {
-                _z_transport_peer_unicast_slist_t *prev = NULL;
-                _z_transport_peer_unicast_slist_t *prev_drop = NULL;
+                _z_transport_peer_unicast_slist_t *dropped_peers = _z_transport_peer_unicast_slist_new();
                 _z_transport_peer_mutex_lock(&ztu->_common);
+                ztu->_peers = _z_transport_peer_unicast_slist_extract_all_filter(ztu->_peers, &dropped_peers,
+                                                                                 _zp_unicast_peer_is_expired, NULL);
                 _z_transport_peer_unicast_slist_t *curr_list = ztu->_peers;
                 while (curr_list != NULL) {
-                    bool drop_peer = false;
                     curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-                    // Check if peer received data
-                    if (curr_peer->common._received) {
-                        curr_peer->common._received = false;
-                    } else {
-                        _Z_INFO("Deleting peer because it has expired after %zums", ztu->_common._lease);
-                        drop_peer = true;
-                        prev_drop = prev;
-                    }
-                    // Update previous only if current node is not dropped
-                    if (!drop_peer) {
-                        prev = curr_list;
-                    }
-                    // Progress list
+                    curr_peer->common._received = false;
                     curr_list = _z_transport_peer_unicast_slist_next(curr_list);
-                    // Drop if needed
-                    if (drop_peer) {
-                        _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
-                        _z_interest_peer_disconnected(zs, &curr_peer->common);
-                        ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
-                    }
                 }
                 _z_transport_peer_mutex_unlock(&ztu->_common);
+                _zp_unicast_report_disconnected_peers(ztu, &dropped_peers);
                 next_lease = (int)ztu->_common._lease;
             }
             if (next_keep_alive <= 0) {

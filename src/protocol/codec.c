@@ -249,6 +249,18 @@ z_result_t _z_slice_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
     return _z_slice_val_encode(wbf, bs);
 }
 
+z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_slices) {
+    size_t total_len = 0;
+    for (size_t i = 0; i < num_slices; ++i) {
+        total_len += bs[i].len;
+    }
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
+    for (size_t i = 0; i < num_slices; ++i) {
+        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &bs[i]));
+    }
+    return _Z_RES_OK;
+}
+
 z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
     // Decode slice
     _z_slice_t s;

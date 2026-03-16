@@ -808,6 +808,245 @@ void test_liveliness_get_callback_drop_on_undeclare(void) {
 
 #endif
 
+void test_no_declare_after_session_close(void) {
+#if Z_FEATURE_SUBSCRIPTION == 1
+    {
+        printf("Test: No subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(z_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                    z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
+    {
+        printf("Test: No queryable can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_queryable_t queryable;
+        z_view_keyexpr_t ke;
+        z_owned_closure_query_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/queryable") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_query(&closure, on_receive_z_loaned_query_t_handler, on_drop_z_loaned_query_t_handler, (void*)&arg);
+        assert(z_declare_queryable(z_session_loan(&session), &queryable, z_view_keyexpr_loan(&ke),
+                                   z_closure_query_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_LIVELINESS == 1
+#if Z_FEATURE_SUBSCRIPTION == 1
+    {
+        printf("Test: No liveliness subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(z_liveliness_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                               z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERY == 1
+    {
+        printf("Test: No z_liveliness_get can be issued after session close\n");
+        z_owned_session_t session;
+        z_view_keyexpr_t ke;
+        z_owned_closure_reply_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_get") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
+        assert(z_liveliness_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), z_closure_reply_move(&closure),
+                                NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+    {
+        printf("Test: No liveliness token can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_liveliness_token_t token;
+        z_view_keyexpr_t ke;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_token") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        assert(z_liveliness_declare_token(z_session_loan(&session), &token, z_view_keyexpr_loan(&ke), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERY == 1
+    {
+        printf("Test: No z_get can be issued after session close\n");
+        z_owned_session_t session;
+        z_view_keyexpr_t ke;
+        z_owned_closure_reply_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/get") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
+        assert(z_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&closure), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
+    {
+        printf("Test: No advanced subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        ze_owned_advanced_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/advanced_subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(ze_declare_advanced_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                              z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+}
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+DECLARE_ON_RECEIVE_HANDLER(z_loaned_transport_event_t, _ZP_NOTHING)
+void test_transport_events_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1;
+    callback_arg_t arg;
+    z_owned_closure_transport_event_t callback;
+    z_transport_events_listener_options_t options;
+
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Transport events callback drop on undeclare: background = %d\n", background);
+    assert(open_session(&session1) == Z_OK);
+    z_closure_transport_event(&callback, on_receive_z_loaned_transport_event_t_handler,
+                              on_drop_z_loaned_transport_event_t_handler, (void*)&arg);
+    z_transport_events_listener_options_default(&options);
+    options.history = true;
+
+    if (!background) {
+        z_owned_transport_events_listener_t listener;
+        assert(z_declare_transport_events_listener(z_session_loan(&session1), &listener,
+                                                   z_closure_transport_event_move(&callback), &options) == Z_OK);
+        assert(z_undeclare_transport_events_listener(z_transport_events_listener_move(&listener)) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    } else {
+        assert(z_declare_background_transport_events_listener(
+                   z_session_loan(&session1), z_closure_transport_event_move(&callback), &options) == Z_OK);
+        assert(z_close(z_session_loan_mut(&session1), NULL) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    }
+}
+
+DECLARE_ON_RECEIVE_HANDLER(z_loaned_link_event_t, _ZP_NOTHING)
+void test_link_events_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1;
+    callback_arg_t arg;
+    z_owned_closure_link_event_t callback;
+    z_link_events_listener_options_t options;
+
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Link events callback drop on undeclare: background = %d\n", background);
+    assert(open_session(&session1) == Z_OK);
+    z_closure_link_event(&callback, on_receive_z_loaned_link_event_t_handler, on_drop_z_loaned_link_event_t_handler,
+                         (void*)&arg);
+    z_link_events_listener_options_default(&options);
+    options.history = true;
+
+    if (!background) {
+        z_owned_link_events_listener_t listener;
+        assert(z_declare_link_events_listener(z_session_loan(&session1), &listener,
+                                              z_closure_link_event_move(&callback), &options) == Z_OK);
+        assert(z_undeclare_link_events_listener(z_link_events_listener_move(&listener)) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    } else {
+        assert(z_declare_background_link_events_listener(z_session_loan(&session1),
+                                                         z_closure_link_event_move(&callback), &options) == Z_OK);
+        assert(z_close(z_session_loan_mut(&session1), NULL) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    }
+}
+#endif
 int main(void) {
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
     test_subscriber_callback_drop_on_undeclare(false);
@@ -840,5 +1079,12 @@ int main(void) {
     test_advanced_sample_miss_callback_drop_on_undeclare(true);
 #endif
 #endif
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+    test_transport_events_callback_drop_on_undeclare(false);
+    test_transport_events_callback_drop_on_undeclare(true);
+    test_link_events_callback_drop_on_undeclare(false);
+    test_link_events_callback_drop_on_undeclare(true);
+#endif
+    test_no_declare_after_session_close();
     return 0;
 }

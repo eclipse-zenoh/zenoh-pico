@@ -129,7 +129,6 @@ void test_intersects(void) {
     TEST_FALSE_INTERSECT("@a", "@a/b")
     TEST_FALSE_INTERSECT("@a", "@a/*")
     TEST_FALSE_INTERSECT("@a", "@a/*/**")
-    TEST_FALSE_INTERSECT("@a", "@a$*/**")
     TEST_TRUE_INTERSECT("@a", "@a/**")
     TEST_FALSE_INTERSECT("**/xyz$*xyz", "@a/b/xyzdefxyz")
     TEST_TRUE_INTERSECT("@a/**/c/**/e", "@a/b/b/b/c/d/d/d/e")
@@ -146,6 +145,13 @@ void test_intersects(void) {
     TEST_TRUE_INTERSECT("@a/@b/**", "@a/@b")
     TEST_TRUE_INTERSECT("@a/**/@c/@b", "@a/**/@c/**/@b")
     TEST_TRUE_INTERSECT("@a/**/@c/**/@b", "@a/**/@c/@b")
+    TEST_TRUE_INTERSECT("a", "$*a");
+    TEST_TRUE_INTERSECT("$*a", "a");
+    TEST_FALSE_INTERSECT("a/**/$*b", "a/@b")
+    TEST_TRUE_INTERSECT("**/@a/b/c/**", "@a/b/c");
+    TEST_FALSE_INTERSECT("**/@a/b/c/**", "@b/b/c");
+    TEST_TRUE_INTERSECT("**/@a/@b/@c/**", "@a/@b/@c");
+    TEST_FALSE_INTERSECT("**/@a/@b/@c/**", "@a/@a/@c");
 }
 
 void test_includes(void) {
@@ -189,7 +195,6 @@ void test_includes(void) {
     TEST_FALSE_INCLUDE("@a", "@a/b")
     TEST_FALSE_INCLUDE("@a", "@a/*")
     TEST_FALSE_INCLUDE("@a", "@a/*/**")
-    TEST_FALSE_INCLUDE("@a$*/**", "@a")
     TEST_FALSE_INCLUDE("@a", "@a/**")
     TEST_TRUE_INCLUDE("@a/**", "@a")
     TEST_FALSE_INCLUDE("**/xyz$*xyz", "@a/b/xyzdefxyz")
@@ -198,6 +203,11 @@ void test_includes(void) {
     TEST_FALSE_INCLUDE("@a/**", "@a/@b")
     TEST_TRUE_INCLUDE("@a/**/@b", "@a/@b")
     TEST_TRUE_INCLUDE("@a/@b/**", "@a/@b")
+    TEST_FALSE_INCLUDE("a/**/$*b", "a/@b")
+    TEST_TRUE_INCLUDE("**/@a/b/c/**", "@a/b/c");
+    TEST_FALSE_INCLUDE("**/@a/b/c/**", "@b/b/c");
+    TEST_TRUE_INCLUDE("**/@a/@b/@c/**", "@a/@b/@c");
+    TEST_FALSE_INCLUDE("**/@a/@b/@c/**", "@a/@a/@c");
 }
 
 void test_canonize(void) {

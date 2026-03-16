@@ -44,6 +44,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -92,21 +93,19 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 #endif
 
 /*------------------ Resource Declaration ------------------*/
-uint16_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key) {
-    uint16_t ret = Z_RESOURCE_ID_NONE;
+z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id) {
     _z_wireexpr_t expr = _z_wireexpr_null();
     expr._id = Z_RESOURCE_ID_NONE;
     expr._suffix = _z_string_alias(*key);
-    uint16_t id = _z_register_resource(zn, &expr, Z_RESOURCE_ID_NONE, NULL);
-    if (id != 0) {
+    z_result_t ret = _z_register_resource(zn, &expr, Z_RESOURCE_ID_NONE, NULL, out_id);
+    if (ret == _Z_RES_OK) {
         // Build the declare message to send on the wire
-        _z_declaration_t declaration = _z_make_decl_keyexpr(id, &expr);
+        _z_declaration_t declaration = _z_make_decl_keyexpr(*out_id, &expr);
         _z_network_message_t n_msg;
         _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-        if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
-            ret = id;
-        } else {
-            _z_unregister_resource(zn, id, NULL);
+        ret = _z_send_declare(zn, &n_msg);
+        if (ret != _Z_RES_OK) {
+            _z_unregister_resource(zn, *out_id, NULL);
         }
         _z_n_msg_clear(&n_msg);
     }
@@ -217,13 +216,16 @@ z_result_t _z_register_subscriber(uint32_t *sub_id, const _z_session_rc_t *zn, c
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
-    z_result_t ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
-    if (callback_drop_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_drop_sync_group, &s._subscriber_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr),
+                           _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier),
+        _z_subscription_clear(&s));
+    if (callback_drop_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_drop_sync_group, &s._subscriber_callback_drop_notifier),
+            _z_subscription_clear(&s));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_subscription_clear(&s));
 
     _z_subscription_rc_t sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (_Z_RC_IS_NULL(&sp_s)) {
@@ -326,13 +328,16 @@ z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *
     q._dropper = dropper;
     q._arg = arg;
     q._allowed_origin = allowed_origin;
-    z_result_t ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &q._session_callback_drop_notifier);
-    if (callback_drop_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_drop_sync_group, &q._queryable_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr),
+                           _z_session_queryable_clear(&q));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &q._session_callback_drop_notifier),
+        _z_session_queryable_clear(&q));
+    if (callback_drop_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_drop_sync_group, &q._queryable_callback_drop_notifier),
+            _z_session_queryable_clear(&q));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_session_queryable_clear(&q));
 
     // Create session_queryable entry, stored at session-level, do not drop it by the end of this function.
     _z_session_queryable_rc_t sp_q = _z_register_session_queryable(_Z_RC_IN_VAL(zn), &q);
@@ -425,8 +430,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
 }
 
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_declared_keyexpr_t *keyexpr,
-                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
-                         const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
+                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind, bool is_express,
                          const _z_timestamp_t *timestamp, _z_bytes_t *att, _z_source_info_t *source_info) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _Z_DEBUG("send_reply: rid=%jd kind=%d", (intmax_t)query->_request_id, (int)kind);
@@ -435,7 +439,8 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
         _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_NOT_MATCH);
     }
     // Build the reply context decorator. This is NOT the final reply.
-    _z_n_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
+    _z_n_qos_t qos =
+        _z_n_qos_create(is_express, _z_n_qos_get_congestion_control(query->_qos), _z_n_qos_get_priority(query->_qos));
     if (query->_is_local) {
         return _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos, timestamp, att,
                                                 source_info);
@@ -493,7 +498,8 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
-                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination) {
+                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination,
+                              z_reply_keyexpr_t accept_replies) {
     *querier = _z_querier_null();
     querier->_encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     querier->reliability = reliability;
@@ -503,6 +509,7 @@ z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, 
     querier->_target = target;
     querier->_priority = priority;
     querier->_is_express = is_express;
+    querier->_accept_replies = accept_replies;
     querier->_timeout_ms = timeout_ms;
     querier->_allowed_destination = allowed_destination;
     querier->_zn = _z_session_rc_clone_as_weak(zn);
@@ -534,14 +541,15 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
                     z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
                     _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
                     _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
-                    z_locality_t allowed_destination, _z_cancellation_token_rc_t *opt_cancellation_token) {
+                    z_reply_keyexpr_t accept_replies, z_locality_t allowed_destination,
+                    _z_cancellation_token_rc_t *opt_cancellation_token) {
     _z_session_t *zn = _Z_RC_IN_VAL(session);
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
         return Z_EINVAL;
     }
     _z_keyexpr_t ke_query;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
     if (consolidation == Z_CONSOLIDATION_MODE_AUTO) {
         if (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_TIME) != NULL) {
@@ -555,14 +563,21 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     _z_transport_common_t *common = _z_transport_get_common(&zn->_tp);
     bool remote_possible = allow_remote && (common != NULL && common->_link != NULL);
 
+    bool _anyke_in_parameters = _z_parameters_has_anyke(parameters, parameters_len);
+    bool _anyke_option = accept_replies == Z_REPLY_KEYEXPR_ANY;
+    // extra _anyke parameter only if it's not already in the parameters list
+    bool implicit_anyke = _anyke_option && !_anyke_in_parameters;
+
     // Add the pending query to the current session
     _z_zint_t qid;
     z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke_query);
+                           _z_drop_handler_execute(dropper, arg));
     _z_pending_query_t *pq = _z_unsafe_register_pending_query(zn);
     if (pq == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&ke_query);
+        _z_drop_handler_execute(dropper, arg);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill the pending query object
@@ -571,8 +586,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_key = ke_query;
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anykey =
-        (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_QUERY_MATCH) != NULL);
+    pq->_anyke = _anyke_in_parameters || _anyke_option;
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;
@@ -601,13 +615,13 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, &wireexpr, &params, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
-                            timeout_ms, attachment, qos, source_info);
+                            timeout_ms, attachment, qos, source_info, implicit_anyke);
         ret = _z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL);
     }
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (ret == _Z_RES_OK && allow_local) {
         ret = _z_session_deliver_query_locally(zn, &keyexpr->_inner, &params, consolidation, payload, encoding,
-                                               attachment, source_info, qid, timeout_ms, qos);
+                                               attachment, source_info, qid, timeout_ms, qos, implicit_anyke);
     }
 #endif
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_unregister_pending_query(zn, qid));
