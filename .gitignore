@@ -68,3 +68,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 .cache
+include/zenoh-pico.h
+library.json
+zenohpico.pc
