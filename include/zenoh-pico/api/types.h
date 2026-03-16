@@ -176,6 +176,34 @@ typedef struct {
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
  *
  * Members:
+ *   uint32_t connect_timeout_ms:
+ *     Maximum time (in milliseconds) spent attempting to establish outbound
+ *     connections to configured `connect` endpoints during ``z_open()``.
+ *
+ *     Semantics:
+ *       - `0`  : No waiting. Each configured `connect` endpoint is attempted
+ *                once.
+ *       - `>0` : Connection attempts are retried until either the success
+ *                condition is met or the timeout expires.
+ *
+ *     Negative values are not supported.
+ *
+ *   bool connect_wait_for_all:
+ *     If `true`, ``z_open()`` will attempt to establish all configured
+ *     `connect` endpoints and may wait up to `connect_timeout_ms`.
+ *
+ *     If the timeout expires before all endpoints are connected,
+ *     ``z_open()`` may still succeed provided the minimum connectivity
+ *     condition is satisfied.
+ *
+ *     If `false`, ``z_open()`` succeeds as soon as the minimum
+ *     connectivity condition is satisfied.
+ *
+ *   Minimum connectivity condition:
+ *     - If at least one `listen` endpoint is successfully bound, OR
+ *     - If at least one `connect` endpoint is successfully established
+ *       (in connect-only mode).
+ *
  *   bool auto_start_read_task: auto-start read task after ``z_open()`` (default true; only multi-thread builds).
  *   bool auto_start_lease_task: auto-start lease task after ``z_open()`` (default true; only multi-thread builds).
  *   bool auto_start_periodic_task: auto-start periodic scheduler after ``z_open()`` (default false; only
@@ -184,6 +212,8 @@ typedef struct {
  *     feature is enabled).
  */
 typedef struct {
+    uint32_t connect_timeout_ms;
+    bool connect_wait_for_all;
 #if Z_FEATURE_MULTI_THREAD == 1
     bool auto_start_read_task;
     bool auto_start_lease_task;
@@ -193,9 +223,6 @@ typedef struct {
 #endif
 #if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
     bool auto_start_admin_space;
-#endif
-#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
-    uint8_t __dummy;  // avoid empty struct
 #endif
 } z_open_options_t;
 

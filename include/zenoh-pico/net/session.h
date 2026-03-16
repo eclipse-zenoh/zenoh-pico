@@ -232,12 +232,13 @@ typedef struct _z_session_t {
  * Parameters:
  *     zn: A pointer of A :c:type:`_z_session_rc_t` used as a return value.
  *     config: A set of properties. The caller keeps its ownership.
+ *     timeout_ms: Max time (ms) to attempt outbound connections during open. `0` = no wait.
  *     zid: A pointer to Zenoh ID.
  *
  * Returns:
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  */
-z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, uint32_t timeout_ms, const _z_id_t *zid);
 
 /**
  * Reopen a disconnected zenoh-net session
