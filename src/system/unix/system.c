@@ -204,8 +204,13 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 z_result_t z_sleep_us(size_t time) { _Z_CHECK_SYS_ERR(usleep((unsigned int)time)); }
 
 z_result_t z_sleep_ms(size_t time) {
+#if Z_FEATURE_EFFICIENT_SLEEP
+    z_result_t ret = z_sleep_us(time * 1000);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+#else
     z_time_t start = z_time_now();
-
     // Most sleep APIs promise to sleep at least whatever you asked them to.
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
@@ -215,7 +220,7 @@ z_result_t z_sleep_ms(size_t time) {
             return ret;
         }
     }
-
+#endif
     return _Z_RES_OK;
 }
 
