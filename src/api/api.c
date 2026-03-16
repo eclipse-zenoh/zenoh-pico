@@ -882,16 +882,12 @@ static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
 
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
     z_internal_session_null(zs);
-#if Z_FEATURE_MULTI_THREAD == 1
     z_open_options_t opts;
     if (options == NULL) {
         z_open_options_default(&opts);
     } else {
         opts = *options;
     }
-#else
-    _ZP_UNUSED(options);
-#endif  // Z_FEATURE_MULTI_THREAD
 
     if (config == NULL) {
         _Z_ERROR("A valid config is missing.");

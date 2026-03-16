@@ -127,16 +127,17 @@ static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *l
     }
     return _z_config_get_all(config, connect_locators, Z_CONFIG_CONNECT_KEY);
 #else
-    if ((listen != NULL) && (connect != NULL)) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-}
+    if ((listen != NULL) && (connect != NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
 
-if (listen != NULL) {
-    _Z_RETURN_IF_ERR(_z_config_get_all(config, listen_locators, Z_CONFIG_LISTEN_KEY));
-    _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-    return _Z_BATCHING_ACTIVE
-} else {
-    return _z_config_get_all(config, connect_locators, Z_CONFIG_CONNECT_KEY);
-}
+    if (listen != NULL) {
+        _Z_RETURN_IF_ERR(_z_config_get_all(config, listen_locators, Z_CONFIG_LISTEN_KEY));
+        _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+        return _Z_RES_OK;
+    } else {
+        return _z_config_get_all(config, connect_locators, Z_CONFIG_CONNECT_KEY);
+    }
 #endif
 }
 
@@ -252,6 +253,9 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
             }
         }
     }
+#else
+    _ZP_UNUSED(mode);
+    _ZP_UNUSED(opened_connect_idx);
 #endif
 
     return ret;
