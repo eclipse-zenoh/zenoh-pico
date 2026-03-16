@@ -31,12 +31,12 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LINK_TCP == 1
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = lwip_fcntl(sock->_socket, F_GETFL, 0);
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (lwip_fcntl(sock->_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (lwip_fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
@@ -305,8 +305,9 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
     return send(sock._socket, ptr, len, 0);
 }
 #else
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
+    _ZP_UNUSED(blocking);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }

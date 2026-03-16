@@ -26,8 +26,8 @@
 
 WSADATA wsaData;
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
-    u_long mode = 1;  // 1 for non-blocking mode
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
+    u_long mode = blocking ? 0 : 1;  // 0 for blocking mode, 1 for non-blocking mode
     if (ioctlsocket(sock->_sock._fd, FIONBIO, &mode) != 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }

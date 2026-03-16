@@ -25,8 +25,8 @@
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
-    TickType_t option_value = 0;  // Non-blocking mode
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
+    TickType_t option_value = blocking ? pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT) : 0;
     BaseType_t result;
 
     result = FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_RCVTIMEO, &option_value, sizeof(option_value));

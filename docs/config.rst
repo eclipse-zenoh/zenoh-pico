@@ -126,6 +126,8 @@ All the generated options must be changed in zenoh-pico's CMake (beware of CMake
 * `Z_BATCH_MULTICAST_SIZE`: Size of the multicast packet buffers, in bytes. Any packet bigger than this will be fragmented if possible.
 * `Z_CONFIG_SOCKET_TIMEOUT`: Timeout for socket options, if applicable, in milliseconds.
 * `Z_TRANSPORT_LEASE`: Maximum time without receiving messages from a connection before closing it, in milliseconds.
+* `Z_TRANSPORT_ACCEPT`: Link accept timeout in P2P mode in milliseconds (maximum amount of time the listening peer would wait to receive a response).
+* `Z_TRANSPORT_CONNECT`: Link connect timeout in milliseconds (maximum amount of time the connecting peer would wait to receive a response).
 * `Z_FEATURE_TCP_NODELAY`: (DEFAULT: ON) Toggle the `TCP_NODELAY` socket option that disables Nagle's algorithm as it can cause latency spikes.
 * `Z_FEATURE_AUTO_RECONNECT`: (DEFAULT: ON) Toggle the auto reconnection feature.
 * `Z_FEATURE_MULTICAST_DECLARATIONS`: (DEFAULT: OFF) Toggle multicast declarations. It lets nodes declare key expressions and activate write filtering but requires each node to send all the declarations every time a new node join the network. 

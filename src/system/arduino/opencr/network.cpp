@@ -26,8 +26,9 @@ extern "C" {
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
+    _ZP_UNUSED(blocking);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }

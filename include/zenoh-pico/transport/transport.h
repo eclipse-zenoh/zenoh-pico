@@ -140,7 +140,8 @@ typedef struct {
 
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
-    bool *_accept_task_running;
+    _z_task_t *_accept_task;
+    volatile bool _accept_task_running;
     volatile bool _read_task_running;
     volatile bool _lease_task_running;
 #endif

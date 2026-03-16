@@ -34,26 +34,27 @@ static void *_zp_unicast_accept_task(void *ctx) {
     }
     _z_sys_net_socket_t listen_socket = *socket_ptr;
     _z_sys_net_socket_t con_socket = {0};
-    bool *accept_task_is_running = ztu->_common._accept_task_running;
-
-    while (*accept_task_is_running) {
+    _z_socket_set_blocking(&listen_socket, false);
+    while (ztu->_common._accept_task_running) {
         // Accept connection
         z_result_t ret = _z_socket_accept(&listen_socket, &con_socket);
         if (ret != _Z_RES_OK) {
             if (ret == _Z_ERR_INVALID) {
                 _Z_INFO("Accept socket was closed");
                 break;
-            } else {
-                _Z_INFO("Connection accept failed");
+            } else {  // wait for a while before retry
+                z_sleep_ms(1000);
                 continue;
             }
         }
         if (_z_transport_peer_unicast_slist_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
+            // TODO: Send a connection refusal message before closing the socket
             _Z_INFO("Refusing connection as max connections currently reached");
             _z_socket_close(&con_socket);
             continue;
         }
 
+        ret = _z_socket_set_blocking(&con_socket, true);
 #if Z_FEATURE_LINK_TLS == 1
         // Perform TLS handshake if this is a TLS link
         if (ztu->_common._link->_type == _Z_LINK_TYPE_TLS) {
@@ -67,7 +68,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
 #endif
 
         _z_transport_unicast_establish_param_t param = {0};
-        // Start handshake
+        // Start handshake in blocking mode
         ret = _z_unicast_handshake_listen(&param, ztu->_common._link,
                                           &_z_transport_common_get_session(&ztu->_common)->_local_zid, Z_WHATAMI_PEER,
                                           &con_socket);
@@ -77,7 +78,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
             continue;
         }
         // Set socket as non blocking
-        if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
+        if (_z_socket_set_blocking(&con_socket, false) != _Z_RES_OK) {
             _Z_INFO("Failed to set socket non blocking");
             _z_socket_close(&con_socket);
             continue;
@@ -89,32 +90,27 @@ static void *_zp_unicast_accept_task(void *ctx) {
             _z_interest_push_declarations_to_peer(_z_transport_common_get_session(&ztu->_common), (void *)new_peer);
         }
     }
-    z_free(accept_task_is_running);
     return NULL;
 }
 
 z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     // Init memory
-    _z_task_t task = {0};
-    ztu->_common._accept_task_running = (bool *)z_malloc(sizeof(bool));
-    if (ztu->_common._accept_task_running == NULL) {
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    if (task == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    *ztu->_common._accept_task_running = true;  // Init first for concurrency issues
     // Init task
-    if (_z_task_init(&task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
+    if (_z_task_init(task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
+        z_free(task);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
     }
-    // Detach the thread
-    _z_task_detach(&task);
+    ztu->_common._accept_task = task;
+    ztu->_common._accept_task_running = true;
+
     return _Z_RES_OK;
 }
 
-void _zp_unicast_stop_accept_task(_z_transport_common_t *ztc) {
-    if (ztc->_accept_task_running != NULL) {
-        *ztc->_accept_task_running = false;
-    }
-}
+void _zp_unicast_stop_accept_task(_z_transport_common_t *ztc) { ztc->_accept_task_running = false; }
 
 #else
 

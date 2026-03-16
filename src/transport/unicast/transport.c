@@ -44,10 +44,11 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
 
     // Tasks
-    ztu->_common._accept_task_running = NULL;
+    ztu->_common._accept_task_running = false;
     ztu->_common._read_task_running = false;
     ztu->_common._read_task = NULL;
     ztu->_common._lease_task_running = false;
+    ztu->_common._accept_task = NULL;
     ztu->_common._lease_task = NULL;
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -103,6 +104,9 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                             const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
+    z_clock_t recv_deadline = z_clock_now();
+    z_clock_advance_ms(&recv_deadline, Z_TRANSPORT_CONNECT_TIMEOUT);
+
     _z_transport_message_t ism = _z_t_msg_make_init_syn(mode, *local_zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
     param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
@@ -117,7 +121,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     }
     // Try to receive response
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, recv_deadline));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
@@ -189,7 +193,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     }
     // Try to receive response
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, recv_deadline));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
         _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
@@ -207,10 +211,12 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
 
 z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                        const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
+    z_clock_t recv_deadline = z_clock_now();
+    z_clock_advance_ms(&recv_deadline, Z_TRANSPORT_ACCEPT_TIMEOUT);
     assert(mode == Z_WHATAMI_PEER);
     // Read t message from link
     _z_transport_message_t tmsg = {0};
-    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket);
+    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket, recv_deadline);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -259,7 +265,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
         return ret;
     }
     // Read t message from link
-    ret = _z_link_recv_t_msg(&tmsg, zl, socket);
+    ret = _z_link_recv_t_msg(&tmsg, zl, socket, recv_deadline);
     if (ret != _Z_RES_OK) {
         return ret;
     }

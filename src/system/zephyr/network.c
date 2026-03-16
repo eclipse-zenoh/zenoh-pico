@@ -39,12 +39,12 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;

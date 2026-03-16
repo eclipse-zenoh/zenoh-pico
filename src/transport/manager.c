@@ -108,7 +108,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
             ret = _z_unicast_transport_create(zt, zl, &tp_param);
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
-                    ret = _z_socket_set_non_blocking(_z_link_get_socket(zl));
+                    ret = _z_socket_set_blocking(_z_link_get_socket(zl), false);
                     if (ret == _Z_RES_OK) {
                         _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
                                                       false, NULL);
@@ -170,7 +170,7 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
                 _z_socket_close(&socket);
                 return ret;
             }
-            ret = _z_socket_set_non_blocking(&socket);
+            ret = _z_socket_set_blocking(&socket, false);
             if (ret != _Z_RES_OK) {
                 _z_socket_close(&socket);
                 return ret;

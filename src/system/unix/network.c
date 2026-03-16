@@ -39,12 +39,12 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
@@ -186,7 +186,6 @@ void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp);
 /*------------------ TCP sockets ------------------*/
 z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     z_result_t ret = _Z_RES_OK;
-
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
         z_time_t tv;
@@ -224,15 +223,19 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         setsockopt(sock->_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&nosigpipe_val, sizeof(int));
 #endif
         struct addrinfo *it = NULL;
-        for (it = rep._iptcp; it != NULL; it = it->ai_next) {
-            if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
-                if (it->ai_next == NULL) {
-                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                    ret = _Z_ERR_GENERIC;
+        if (ret == _Z_RES_OK) {
+            for (it = rep._iptcp; it != NULL; it = it->ai_next) {
+                int connect_result = connect(sock->_fd, it->ai_addr, it->ai_addrlen);
+                if (connect_result < 0) {
+                    printf("Trying to connect to TCP endpoint: %s\n", strerror(errno));
+                    if (it->ai_next == NULL) {
+                        _Z_ERROR_LOG(_Z_ERR_GENERIC);
+                        ret = _Z_ERR_GENERIC;
+                        break;
+                    }
+                } else {
                     break;
                 }
-            } else {
-                break;
             }
         }
 

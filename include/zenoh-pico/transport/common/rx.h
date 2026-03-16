@@ -16,6 +16,7 @@
 #define ZENOH_PICO_TRANSPORT_RX_H
 
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
@@ -24,7 +25,8 @@ extern "C" {
 
 /*------------------ Transmission and Reception helpers ------------------*/
 size_t _z_read_stream_size(_z_zbuf_t *zbuf);
-z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket);
+z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket,
+                              z_clock_t recv_deadline);
 
 #ifdef __cplusplus
 }

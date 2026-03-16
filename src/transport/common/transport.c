@@ -43,7 +43,16 @@ void _z_transport_common_stop_tasks(_z_transport_common_t *ztc, bool detach_task
         _z_task_free(&ztc->_lease_task);
         ztc->_lease_task = NULL;
     }
-    _zp_unicast_stop_accept_task(ztc);
+    if (ztc->_accept_task != NULL) {
+        ztc->_accept_task_running = false;
+        if (detach_tasks) {
+            _z_task_detach(ztc->_accept_task);
+        } else {
+            _z_task_join(ztc->_accept_task);
+        }
+        _z_task_free(&ztc->_accept_task);
+        ztc->_accept_task = NULL;
+    }
 #else
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(detach_tasks);

@@ -506,7 +506,7 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t);
 
 /*------------------ P2p unicast internal functions ------------------*/
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock);
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking);
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
 void _z_socket_close(_z_sys_net_socket_t *sock);
 z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex);
