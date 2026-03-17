@@ -26,15 +26,11 @@
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/matching.h"
 #include "zenoh-pico/session/queryable.h"
+#include "zenoh-pico/session/runtime.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/scheduler.h"
-#if Z_FEATURE_MULTI_THREAD == 1
-#include "zenoh-pico/collections/background_executor.h"
-#else
-#include "zenoh-pico/collections/executor.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -229,11 +225,7 @@ typedef struct _z_session_t {
 #endif
     _z_sync_group_t _callback_drop_sync_group;
     _z_atomic_bool_t _is_closed;
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_background_executor_t _executor;
-#else
-    _z_executor_t _executor;
-#endif
+    _z_runtime_t _runtime;
 } _z_session_t;
 
 /**

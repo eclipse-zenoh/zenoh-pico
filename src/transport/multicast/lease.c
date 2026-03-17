@@ -162,23 +162,17 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
     unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
     _zp_multicast_report_disconnected_events(ztm, &dropped_peers);
-    _z_fut_fn_result_t ret = {0};
-    ret._status = _Z_FUT_STATUS_SLEEPING;
-    ret._wake_up_time = z_clock_now();
-    z_clock_advance_ms(&ret._wake_up_time, min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
-    return ret;
+    return _z_fut_fn_result_wake_up_after(min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
 }
 
 _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-    _z_fut_fn_result_t ret = {0};
 
     if (ztm->_common._transmitted == false) {
         if (_zp_multicast_send_keep_alive(ztm) < 0) {
             _Z_INFO("Send keep alive failed.");
             //_zp_multicast_failed(ztm);
-            ret._status = _Z_FUT_STATUS_READY;
-            return ret;
+            return _z_fut_fn_result_ready();
         }
     }
     ztm->_common._transmitted = false;
@@ -186,26 +180,18 @@ _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t
     unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
 
-    ret._status = _Z_FUT_STATUS_SLEEPING;
-    ret._wake_up_time = z_clock_now();
-    z_clock_advance_ms(&ret._wake_up_time, min_lease);
-    return ret;
+    return _z_fut_fn_result_wake_up_after(min_lease);
 }
 
 _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-    _z_fut_fn_result_t ret = {0};
-
     if (_zp_multicast_send_join(ztm) < 0) {
         _Z_INFO("Send join failed.");
         //_zp_multicast_failed(ztm);
-        ret._status = _Z_FUT_STATUS_READY;
+        return _z_fut_fn_result_ready();
     } else {
-        ret._status = _Z_FUT_STATUS_SLEEPING;
-        ret._wake_up_time = z_clock_now();
-        z_clock_advance_ms(&ret._wake_up_time, Z_JOIN_INTERVAL);
+        return _z_fut_fn_result_wake_up_after(Z_JOIN_INTERVAL);
     }
-    return ret;
 }
 
 void *_zp_multicast_lease_task(void *ztm_arg) {

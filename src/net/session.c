@@ -164,7 +164,7 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zs);
 
-    ret = _z_new_transport(&zn->_tp, zid, locator, zn->_mode, peer_op, config);
+    ret = _z_new_transport(&zn->_tp, zid, locator, zn->_mode, peer_op, config, &_Z_RC_IN_VAL(zs)->_runtime);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -502,7 +502,7 @@ z_result_t _zp_start_initial_tasks(_z_session_t *zn) {
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._unicast;
                 f._fut_fn = tasks[i];
-                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
                     _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
                     return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
                 }
@@ -517,7 +517,7 @@ z_result_t _zp_start_initial_tasks(_z_session_t *zn) {
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._multicast;
                 f._fut_fn = tasks[i];
-                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
                     _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
                     return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
                 }
@@ -533,7 +533,7 @@ z_result_t _zp_start_initial_tasks(_z_session_t *zn) {
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._raweth;
                 f._fut_fn = tasks[i];
-                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
                     _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
                     return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
                 }

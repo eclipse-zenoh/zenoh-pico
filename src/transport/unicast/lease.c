@@ -73,9 +73,6 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
-    _z_fut_fn_result_t ret = {0};
-    ret._status = _Z_FUT_STATUS_READY;
-
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
@@ -84,14 +81,12 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
         if (curr_peer->common._received) {
             // Reset the lease parameters
             curr_peer->common._received = false;
-            ret._wake_up_time = z_clock_now();
-            z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE);
-            ret._status = _Z_FUT_STATUS_SLEEPING;
+            return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE);
         } else {
             // THIS LOG STRING USED IN TEST, change with caution
             _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
             // _zp_unicast_failed(ztu);
-            ret._status = _Z_FUT_STATUS_READY;
+            return _z_fut_fn_result_ready();
         }
     }
 // TODO: Should we have a task per peer ?
@@ -109,19 +104,14 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
         }
         _z_transport_peer_mutex_unlock(&ztu->_common);
         _zp_unicast_report_disconnected_peers(ztu, &dropped_peers);
-        ret._wake_up_time = z_clock_now();
-        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE);
-        ret._status = _Z_FUT_STATUS_SLEEPING;
+        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE);
     }
 #endif
-    return ret;
+    return _z_fut_fn_result_ready();
 }
 
 _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
-
-    _z_fut_fn_result_t ret = {0};
-    ret._status = _Z_FUT_STATUS_READY;
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     if (mode == Z_WHATAMI_CLIENT) {
@@ -132,13 +122,11 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
                 // THIS LOG STRING USED IN TEST, change with caution
                 _Z_INFO("Send keep alive failed.");
                 // _zp_unicast_failed(ztu);
-                return ret;
+                return _z_fut_fn_result_ready();
             }
         }
         ztu->_common._transmitted = false;
-        ret._wake_up_time = z_clock_now();
-        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
-        ret._status = _Z_FUT_STATUS_SLEEPING;
+        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     }
 // TODO: Should we have a task per peer ?
 #if Z_FEATURE_UNICAST_PEER == 1
@@ -157,12 +145,10 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
             _z_transport_peer_mutex_unlock(&ztu->_common);
         }
         ztu->_common._transmitted = false;
-        ret._wake_up_time = z_clock_now();
-        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
-        ret._status = _Z_FUT_STATUS_SLEEPING;
+        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     }
 #endif
-    return ret;
+    return _z_fut_fn_result_ready();
 }
 
 #else

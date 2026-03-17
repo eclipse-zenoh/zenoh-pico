@@ -48,6 +48,26 @@ typedef struct _z_fut_fn_result_t {
     z_clock_t _wake_up_time;
 } _z_fut_fn_result_t;
 
+static inline _z_fut_fn_result_t _z_fut_fn_result_ready(void) {
+    _z_fut_fn_result_t result = {0};
+    result._status = _Z_FUT_STATUS_READY;
+    return result;
+}
+
+static inline _z_fut_fn_result_t _z_fut_fn_result_continue(void) {
+    _z_fut_fn_result_t result = {0};
+    result._status = _Z_FUT_STATUS_RUNNING;
+    return result;
+}
+
+static inline _z_fut_fn_result_t _z_fut_fn_result_wake_up_after(unsigned long wake_up_time_ms) {
+    _z_fut_fn_result_t result;
+    result._status = _Z_FUT_STATUS_SLEEPING;
+    result._wake_up_time = z_clock_now();
+    z_clock_advance_ms(&result._wake_up_time, wake_up_time_ms);
+    return result;
+}
+
 typedef struct _z_executor_t _z_executor_t;
 typedef _z_fut_fn_result_t (*_z_fut_fn_t)(void *arg, _z_executor_t *executor);
 typedef void (*_z_fut_destroy_fn_t)(void *arg);

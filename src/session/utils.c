@@ -53,36 +53,11 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     return ret;
 }
 
-void _z_session_null_executor(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_background_executor_null(&zn->_executor);
-#else
-    _z_executor_null(&zn->_executor);
-#endif
-}
-
-z_result_t _z_session_init_executor(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    _Z_RETURN_IF_ERR(_z_background_executor_init(&zn->_executor));
-#else
-    _z_executor_init(&zn->_executor);
-    return _Z_RES_OK;
-#endif
-}
-
-void _z_session_clear_executor(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_background_executor_destroy(&zn->_executor._inner);
-#else
-    _z_executor_destroy(&zn->_executor);
-#endif
-}
-
 /*------------------ Init/Free/Close session ------------------*/
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
     _z_atomic_bool_init(&zn->_is_closed, true);
-    _z_session_null_executor(zn);
+    _z_runtime_null(&zn->_runtime);
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&zn->_mutex_inner));
     ret = _z_mutex_rec_init(&zn->_mutex_transport);
@@ -173,7 +148,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     zn->_callback_drop_sync_group = _z_sync_group_null();
     _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
-    _Z_SET_IF_OK(ret, _z_session_init_executor(zn));
+    _Z_SET_IF_OK(ret, _z_runtime_init(&zn->_runtime));
     if (ret != _Z_RES_OK) {
 #if Z_FEATURE_MULTI_THREAD == 1
 #if Z_FEATURE_ADMIN_SPACE == 1
@@ -183,7 +158,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         _z_mutex_drop(&zn->_mutex_inner);
 #endif
         _z_sync_group_drop(&zn->_callback_drop_sync_group);
-        _z_session_clear_executor(zn);
+        _z_runtime_clear(&zn->_runtime);
         _Z_ERROR_RETURN(ret);
     }
 
@@ -239,7 +214,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_session_admin_space_mutex_unlock(zn);
 #endif
 #endif
-    _z_session_clear_executor(zn);
+    _z_runtime_clear(&zn->_runtime);
     _z_sync_group_wait(&zn->_callback_drop_sync_group);
     return _Z_RES_OK;
 }
