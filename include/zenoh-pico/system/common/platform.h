@@ -517,7 +517,6 @@ z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local,
                                    size_t remote_len);
 void _z_socket_close(_z_sys_net_socket_t *sock);
 z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex);
-
 #ifdef __cplusplus
 }
 #endif

@@ -44,7 +44,7 @@ typedef struct timeval z_time_t;
 typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1 || \
-    Z_FEATURE_RAWETH_TRANSPORT == 1
+    Z_FEATURE_RAWETH_TRANSPORT == 1 || Z_FEATURE_LINK_SERIAL == 1
         int _fd;
 #endif
     };
