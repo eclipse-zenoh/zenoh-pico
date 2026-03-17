@@ -30,6 +30,11 @@
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/scheduler.h"
+#if Z_FEATURE_MULTI_THREAD == 1
+#include "zenoh-pico/collections/background_executor.h"
+#else
+#include "zenoh-pico/collections/executor.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -224,6 +229,11 @@ typedef struct _z_session_t {
 #endif
     _z_sync_group_t _callback_drop_sync_group;
     _z_atomic_bool_t _is_closed;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_background_executor_t _executor;
+#else
+    _z_executor_t _executor;
+#endif
 } _z_session_t;
 
 /**
@@ -404,6 +414,8 @@ z_result_t _zp_stop_read_task(_z_session_t *z);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
+
+z_result_t _zp_start_initial_tasks(_z_session_t *z);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending

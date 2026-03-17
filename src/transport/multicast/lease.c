@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
@@ -144,6 +145,67 @@ static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *z
         it = _z_transport_peer_multicast_slist_next(it);
     }
     _z_transport_peer_multicast_slist_free(dropped_peers);
+}
+
+_z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+
+    _z_transport_peer_multicast_slist_t *dropped_peers = _z_transport_peer_multicast_slist_new();
+    _z_transport_peer_mutex_lock(&ztm->_common);
+    ztm->_peers = _z_transport_peer_multicast_slist_extract_all_filter(ztm->_peers, &dropped_peers,
+                                                                       _zp_multicast_peer_is_expired, NULL);
+    _z_transport_peer_multicast_slist_t *curr_list = ztm->_peers;
+    while (curr_list != NULL) {
+        _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_slist_value(curr_list);
+        curr_peer->common._received = false;
+    }
+    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
+    _z_transport_peer_mutex_unlock(&ztm->_common);
+    _zp_multicast_report_disconnected_events(ztm, &dropped_peers);
+    _z_fut_fn_result_t ret = {0};
+    ret._status = _Z_FUT_STATUS_SLEEPING;
+    ret._wake_up_time = z_clock_now();
+    z_clock_advance_ms(&ret._wake_up_time, min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+    return ret;
+}
+
+_z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+    _z_fut_fn_result_t ret = {0};
+
+    if (ztm->_common._transmitted == false) {
+        if (_zp_multicast_send_keep_alive(ztm) < 0) {
+            _Z_INFO("Send keep alive failed.");
+            //_zp_multicast_failed(ztm);
+            ret._status = _Z_FUT_STATUS_READY;
+            return ret;
+        }
+    }
+    ztm->_common._transmitted = false;
+    _z_transport_peer_mutex_lock(&ztm->_common);
+    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
+    _z_transport_peer_mutex_unlock(&ztm->_common);
+
+    ret._status = _Z_FUT_STATUS_SLEEPING;
+    ret._wake_up_time = z_clock_now();
+    z_clock_advance_ms(&ret._wake_up_time, min_lease);
+    return ret;
+}
+
+_z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+    _z_fut_fn_result_t ret = {0};
+
+    if (_zp_multicast_send_join(ztm) < 0) {
+        _Z_INFO("Send join failed.");
+        //_zp_multicast_failed(ztm);
+        ret._status = _Z_FUT_STATUS_READY;
+    } else {
+        ret._status = _Z_FUT_STATUS_SLEEPING;
+        ret._wake_up_time = z_clock_now();
+        z_clock_advance_ms(&ret._wake_up_time, Z_JOIN_INTERVAL);
+    }
+    return ret;
 }
 
 void *_zp_multicast_lease_task(void *ztm_arg) {

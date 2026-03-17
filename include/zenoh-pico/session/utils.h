@@ -22,6 +22,12 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#if Z_FEATURE_MULTI_THREAD == 1
+#include "zenoh-pico/collections/background_executor.h"
+#else
+#include "zenoh-pico/collections/executor.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,6 +44,11 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
                                      _z_transport_peer_common_t *peer);
 
 #if Z_FEATURE_MULTI_THREAD == 1
+static inline _z_fut_handle_t _z_session_spawn_task(_z_session_t *zn, _z_fut_t *fut) {
+    _z_fut_handle_t handle;
+    _z_background_executor_spawn(&zn->_executor, fut, &handle);
+    return handle;
+}
 static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) { return _z_mutex_lock(&zn->_mutex_inner); }
 static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&zn->_mutex_inner));
@@ -62,6 +73,9 @@ static inline void _z_session_admin_space_mutex_lock(_z_session_t *zn) { _ZP_UNU
 static inline void _z_session_admin_space_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif
 #else
+static inline _z_fut_handle_t _z_session_spawn_task(_z_session_t *zn, _z_fut_t *fut) {
+    return _z_executor_spawn(&zn->_executor, fut);
+}
 static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) {
     _ZP_UNUSED(zn);
     return _Z_RES_OK;

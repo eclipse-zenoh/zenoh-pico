@@ -122,11 +122,11 @@ static void destroy_fn(void *arg) {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-// _z_background_executor_new + _z_background_executor_destroy with no tasks.
+// _z_background_executor_init + _z_background_executor_destroy with no tasks.
 static void test_new_destroy_no_tasks(void) {
     printf("Test: new and destroy with no tasks\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
     assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
 }
 
@@ -134,7 +134,7 @@ static void test_new_destroy_no_tasks(void) {
 static void test_spawn_runs_task(void) {
     printf("Test: spawn runs task on background thread and calls destroy_fn\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);
@@ -156,7 +156,7 @@ static void test_spawn_runs_task(void) {
 static void test_cancel_before_execution(void) {
     printf("Test: cancel before execution prevents body; destroy_fn still called\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);
@@ -190,7 +190,7 @@ static void test_cancel_before_execution(void) {
 static void test_timed_reschedule_runs_twice(void) {
     printf("Test: timed reschedule runs task body exactly twice\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);
@@ -214,7 +214,7 @@ static void test_timed_reschedule_runs_twice(void) {
 static void test_suspend_blocks_execution(void) {
     printf("Test: tasks do not run while suspended; run after resume\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);
@@ -245,7 +245,7 @@ static void test_suspend_blocks_execution(void) {
 static void test_nested_suspend_resume(void) {
     printf("Test: nested suspend/resume — task runs only after all resumes\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);
@@ -283,7 +283,7 @@ static void test_nested_suspend_resume(void) {
 static void test_multiple_tasks_all_complete(void) {
     printf("Test: multiple concurrent tasks all complete\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     const int N = 8;
     test_arg_t args[8];
@@ -317,7 +317,7 @@ static void test_multiple_tasks_all_complete(void) {
 static void test_destroy_with_pending_tasks(void) {
     printf("Test: destroy calls destroy_fn on all pending tasks\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     const int N = 4;
     test_arg_t args[4];
@@ -346,7 +346,7 @@ static void test_destroy_with_pending_tasks(void) {
 static void test_handle_status_transitions(void) {
     printf("Test: handle status transitions PENDING -> READY\n");
     _z_background_executor_t be;
-    assert(_z_background_executor_new(&be) == _Z_RES_OK);
+    assert(_z_background_executor_init(&be) == _Z_RES_OK);
 
     test_arg_t arg;
     test_arg_init(&arg);

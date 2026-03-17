@@ -20,9 +20,8 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     fut_data._status = _Z_FUT_STATUS_RUNNING;
     _z_fut_data_hmap_node_t *fut_node_ptr =
         _z_fut_data_hmap_insert(&executor->_tasks, &executor->_next_fut_id, &fut_data);
-    _z_fut_handle_t handle;
+    _z_fut_handle_t handle = _z_fut_handle_null();
     if (fut_node_ptr == NULL) {
-        handle.is_valid = false;
         return handle;
     }
     handle._id = executor->_next_fut_id;

@@ -33,7 +33,10 @@ typedef struct _z_background_executor_t {
     _z_task_t _task;
 } _z_background_executor_t;
 
-z_result_t _z_background_executor_new(_z_background_executor_t *be);
+z_result_t _z_background_executor_init(_z_background_executor_t *be);
+static inline void _z_background_executor_null(_z_background_executor_t *be) {
+    be->_inner = _z_background_executor_inner_rc_null();
+}
 // Spawns a future to be executed in the background.
 // The caller can optionally receive a handle to the future, which can be used to check the future's status or cancel
 // it. If the caller does not care about the future's status, they can pass NULL as handle_out.

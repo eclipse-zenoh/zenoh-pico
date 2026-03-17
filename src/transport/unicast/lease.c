@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/transport/unicast/lease.h"
 
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
@@ -25,25 +26,6 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
-
-z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
-    z_result_t ret = _Z_RES_OK;
-
-    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    ret = _z_transport_tx_send_t_msg(&ztu->_common, &t_msg, NULL);
-
-    return ret;
-}
-#else
-
-z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
-    _ZP_UNUSED(ztu);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
-
 static bool _zp_unicast_peer_is_expired(const _z_transport_peer_unicast_t *target,
                                         const _z_transport_peer_unicast_t *peer) {
     _ZP_UNUSED(target);
@@ -78,6 +60,120 @@ static void _zp_unicast_report_disconnected_peers(_z_transport_unicast_t *ztu,
     }
     _z_transport_peer_unicast_slist_free(dropped_peers);
 }
+
+z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+    z_result_t ret = _Z_RES_OK;
+
+    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
+    ret = _z_transport_tx_send_t_msg(&ztu->_common, &t_msg, NULL);
+
+    return ret;
+}
+
+_z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *executor) {
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+
+    _z_fut_fn_result_t ret = {0};
+    ret._status = _Z_FUT_STATUS_READY;
+
+    z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
+    _z_transport_peer_unicast_t *curr_peer = NULL;
+    if (mode == Z_WHATAMI_CLIENT) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        assert(curr_peer != NULL);
+        if (curr_peer->common._received) {
+            // Reset the lease parameters
+            curr_peer->common._received = false;
+            ret._wake_up_time = z_clock_now();
+            z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE);
+            ret._status = _Z_FUT_STATUS_SLEEPING;
+        } else {
+            // THIS LOG STRING USED IN TEST, change with caution
+            _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
+            // _zp_unicast_failed(ztu);
+            ret._status = _Z_FUT_STATUS_READY;
+        }
+    }
+// TODO: Should we have a task per peer ?
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (mode == Z_WHATAMI_PEER) {
+        _z_transport_peer_unicast_slist_t *dropped_peers = _z_transport_peer_unicast_slist_new();
+        _z_transport_peer_mutex_lock(&ztu->_common);
+        ztu->_peers = _z_transport_peer_unicast_slist_extract_all_filter(ztu->_peers, &dropped_peers,
+                                                                         _zp_unicast_peer_is_expired, NULL);
+        _z_transport_peer_unicast_slist_t *curr_list = ztu->_peers;
+        while (curr_list != NULL) {
+            _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
+            curr_peer->common._received = false;
+            curr_list = _z_transport_peer_unicast_slist_next(curr_list);
+        }
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        _zp_unicast_report_disconnected_peers(ztu, &dropped_peers);
+        ret._wake_up_time = z_clock_now();
+        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE);
+        ret._status = _Z_FUT_STATUS_SLEEPING;
+    }
+#endif
+    return ret;
+}
+
+_z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *executor) {
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+
+    _z_fut_fn_result_t ret = {0};
+    ret._status = _Z_FUT_STATUS_READY;
+
+    z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
+    if (mode == Z_WHATAMI_CLIENT) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        assert(curr_peer != NULL);
+        if (!ztu->_common._transmitted) {
+            if (_zp_unicast_send_keep_alive(ztu) < 0) {
+                // THIS LOG STRING USED IN TEST, change with caution
+                _Z_INFO("Send keep alive failed.");
+                // _zp_unicast_failed(ztu);
+                return ret;
+            }
+        }
+        ztu->_common._transmitted = false;
+        ret._wake_up_time = z_clock_now();
+        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+        ret._status = _Z_FUT_STATUS_SLEEPING;
+    }
+// TODO: Should we have a task per peer ?
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (mode == Z_WHATAMI_PEER) {
+        if (!ztu->_common._transmitted) {
+            _Z_DEBUG("Sending keep alive");
+            // Send keep alive to all peers
+            _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
+            _z_transport_peer_mutex_lock(&ztu->_common);
+            if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
+                if (_z_transport_tx_send_t_msg(&ztu->_common, &t_msg, ztu->_peers) != _Z_RES_OK) {
+                    _Z_INFO("Send keep alive failed.");
+                    // TODO: report failed peers and close them ?
+                }
+            }
+            _z_transport_peer_mutex_unlock(&ztu->_common);
+        }
+        ztu->_common._transmitted = false;
+        ret._wake_up_time = z_clock_now();
+        z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+        ret._status = _Z_FUT_STATUS_SLEEPING;
+    }
+#endif
+    return ret;
+}
+
+#else
+
+z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+    _ZP_UNUSED(ztu);
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+}
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+
+#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
 static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);

@@ -914,38 +914,12 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     }
 
     ret = _z_open(&zs->_rc, cfg, &zid);
+    _Z_SET_IF_OK(ret, _zp_start_initial_tasks(_Z_RC_IN_VAL(&zs->_rc)));
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
         z_config_drop(config);
         return ret;
     }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_session_t *session = _Z_RC_IN_VAL(&zs->_rc);
-    z_result_t task_ret = _Z_RES_OK;
-
-    if (opts.auto_start_lease_task) {
-        _Z_SET_IF_OK(task_ret, _zp_start_lease_task(session, NULL));
-    }
-
-    if (opts.auto_start_read_task) {
-        _Z_SET_IF_OK(task_ret, _zp_start_read_task(session, NULL));
-    }
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-    if (opts.auto_start_periodic_task) {
-        _Z_SET_IF_OK(task_ret, _zp_start_periodic_scheduler_task(session, NULL));
-    }
-#endif
-#endif
-
-    if (task_ret != _Z_RES_OK) {
-        z_session_drop(z_session_move(zs));
-        z_config_drop(config);
-        return task_ret;
-    }
-#endif  // Z_FEATURE_MULTI_THREAD
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADMIN_SPACE == 1

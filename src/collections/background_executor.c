@@ -8,16 +8,14 @@ typedef struct _z_background_executor_inner_t {
     _z_condvar_t _condvar;
     _z_atomic_size_t _waiters;
     bool _stop_requested;
-    bool _running;
 } _z_background_executor_inner_t;
 
-z_result_t _z_background_executor_inner_new(_z_background_executor_inner_t *be) {
+z_result_t _z_background_executor_inner_init(_z_background_executor_inner_t *be) {
     _Z_RETURN_IF_ERR(_z_mutex_init(&be->_mutex));
     _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&be->_condvar), _z_mutex_drop(&be->_mutex));
-    be->_executor = _z_executor_new();
+    _z_executor_init(&be->_executor);
     _z_atomic_size_init(&be->_waiters, 0);
     be->_stop_requested = false;
-    be->_running = false;
     return _Z_RES_OK;
 }
 
@@ -44,7 +42,6 @@ z_result_t _z_background_executor_inner_resume(_z_background_executor_inner_t *b
 
 z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner_t *be) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
-    be->_running = true;
     while (!be->_stop_requested) {
         while (_z_atomic_size_load(&be->_waiters, _z_memory_order_acquire) >
                0) {  // if there are waiters, sleep until they are resumed
@@ -64,8 +61,8 @@ z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner
             }
         }
     }
-    be->_running = false;
-    _z_condvar_signal_all(&be->_condvar);  // wake up all waiters so that they can see the stop requested flag and exit
+    _z_condvar_signal_all(
+        &be->_condvar);  // wake up all waiters so that they can see that executor is no longer running and exit
     return _z_mutex_unlock(&be->_mutex);
 }
 
@@ -73,16 +70,6 @@ z_result_t _z_background_executor_inner_signal_stop(_z_background_executor_inner
     _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
     be->_stop_requested = true;
     return _z_background_executor_inner_unlock_and_resume(be);
-}
-
-z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
-    be->_stop_requested = true;
-    _z_atomic_size_fetch_sub(&be->_waiters, 1, _z_memory_order_acq_rel);
-    while (be->_running) {
-        _Z_CLEAN_RETURN_IF_ERR(_z_condvar_wait(&be->_condvar, &be->_mutex), _z_mutex_unlock(&be->_mutex));
-    }
-    return _z_mutex_unlock(&be->_mutex);
 }
 
 z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut,
@@ -105,14 +92,14 @@ void *_z_background_executor_task_fn(void *arg) {
     return NULL;
 }
 
-z_result_t _z_background_executor_new(_z_background_executor_t *be) {
+z_result_t _z_background_executor_init(_z_background_executor_t *be) {
     be->_inner = _z_background_executor_inner_rc_null();
     _z_background_executor_inner_t *inner =
         (_z_background_executor_inner_t *)z_malloc(sizeof(_z_background_executor_inner_t));
     if (!inner) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    if (_z_background_executor_inner_new(inner) != _Z_RES_OK) {
+    if (_z_background_executor_inner_init(inner) != _Z_RES_OK) {
         z_free(inner);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -132,6 +119,9 @@ z_result_t _z_background_executor_new(_z_background_executor_t *be) {
 
 z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *handle_out) {
     if (_Z_RC_IS_NULL(&be->_inner)) {
+        if (handle_out != NULL) {
+            *handle_out = _z_fut_handle_null();
+        }
         return _Z_ERR_INVALID;
     }
     if (handle_out != NULL) {

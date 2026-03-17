@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec/transport.h"
@@ -392,6 +393,45 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     }
     _z_mutex_unlock(&ztu->_common._mutex_rx);
     return NULL;
+}
+
+_z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *executor) {
+    _z_fut_fn_result_t ret = {0};
+    ret._status = _Z_FUT_STATUS_RUNNING;
+
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+    z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
+    if (mode == Z_WHAT_CLIENT) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        assert(curr_peer != NULL);
+        size_t to_read = 0;
+        // Retrieve data
+        if (_z_unicast_client_read(ztu, curr_peer, &to_read) &&
+            _z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+            // Close transport on error
+            ret._status = _Z_FUT_STATUS_READY;
+        }
+    }
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (mode == Z_WHATAMI_PEER) {
+        _z_transport_peer_mutex_lock(&ztu->_common);
+        bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        if (!has_peers) {
+            ret._status = _Z_FUT_STATUS_SLEEPING;
+            ret._wake_up_time = z_clock_now();
+            z_clock_advance_ms(&ret._wake_up_time, Z_TRANSPORT_LEASE);
+        } else {
+            if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) == _Z_RES_OK &&
+                _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+                // TODO: Close transport on error. Probably we should just close the failed peer and
+                // initiate reconnection task
+                ret._status = _Z_FUT_STATUS_READY;
+            }
+        }
+    }
+#endif
+    return ret;
 }
 
 z_result_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {

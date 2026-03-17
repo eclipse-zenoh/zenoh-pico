@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -107,6 +108,22 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
         return _zp_multicast_process_messages(ztm, &addr);
     }
 }
+
+_z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+    _z_fut_fn_result_t ret = {0};
+
+    uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
+    _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
+    if (_zp_multicast_process_messages(ztm, &addr) < _Z_RES_OK) {
+        ret._status = _Z_FUT_STATUS_READY;
+        // TODO: report failure
+    } else {
+        ret._status = _Z_FUT_STATUS_RUNNING;
+    }
+    return ret;
+}
+
 #else
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
     _ZP_UNUSED(ztm);

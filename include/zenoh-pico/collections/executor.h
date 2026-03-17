@@ -36,6 +36,13 @@ typedef struct _z_fut_handle_t {
     bool is_valid;
 } _z_fut_handle_t;
 
+static inline _z_fut_handle_t _z_fut_handle_null(void) {
+    _z_fut_handle_t handle;
+    handle._id = 0;
+    handle.is_valid = false;
+    return handle;
+}
+
 typedef struct _z_fut_fn_result_t {
     _z_fut_status_t _status;
     z_clock_t _wake_up_time;
@@ -151,15 +158,24 @@ typedef struct _z_executor_t {
     size_t _next_fut_id;
 } _z_executor_t;
 
+static inline void _z_executor_null(_z_executor_t *executor) {
+    executor->_ready_tasks = _z_fut_data_hmap_node_ptr_deque_new();
+    executor->_sleeping_tasks = _z_sleeping_fut_data_ptr_pqueue_new();
+    executor->_tasks = _z_fut_data_hmap_new();
+    executor->_next_fut_id = 0;
+}
+
+static inline void _z_executor_init(_z_executor_t *executor) {
+    _z_executor_null(executor);
+    executor->_epoch = z_clock_now();
+}
+
 static inline _z_executor_t _z_executor_new(void) {
     _z_executor_t executor;
-    executor._ready_tasks = _z_fut_data_hmap_node_ptr_deque_new();
-    executor._sleeping_tasks = _z_sleeping_fut_data_ptr_pqueue_new();
-    executor._tasks = _z_fut_data_hmap_new();
-    executor._epoch = z_clock_now();
-    executor._next_fut_id = 0;
+    _z_executor_init(&executor);
     return executor;
 }
+
 static inline void _z_executor_destroy(_z_executor_t *executor) {
     _z_fut_data_hmap_node_ptr_deque_destroy(&executor->_ready_tasks);
     _z_sleeping_fut_data_ptr_pqueue_destroy(&executor->_sleeping_tasks);

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
@@ -489,6 +490,64 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
 #endif
     zn->_read_task_should_run = true;
     return ret;
+}
+
+z_result_t _zp_start_initial_tasks(_z_session_t *zn) {
+    z_result_t ret = _Z_RES_OK;
+
+    switch (zn->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE: {
+            _z_fut_fn_t tasks[] = {_zp_unicast_keep_alive_task_fn, _zp_unicast_lease_task_fn, _zp_unicast_read_task_fn};
+            for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                _z_fut_t f = _z_fut_null();
+                f._fut_arg = &zn->_tp._transport._unicast;
+                f._fut_fn = tasks[i];
+                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
+                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                }
+            }
+            break;
+        }
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
+        case _Z_TRANSPORT_MULTICAST_TYPE: {
+            _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
+                                   _zp_multicast_send_join_task_fn, _zp_multicast_read_task_fn};
+            for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                _z_fut_t f = _z_fut_null();
+                f._fut_arg = &zn->_tp._transport._multicast;
+                f._fut_fn = tasks[i];
+                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
+                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                }
+            }
+            break;
+        }
+#endif
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+        case _Z_TRANSPORT_RAWETH_TYPE: {
+            _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
+                                   _zp_multicast_join_task_fn, _zp_raweth_read_task_fn};
+            for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                _z_fut_t f = _z_fut_null();
+                f._fut_arg = &zn->_tp._transport._raweth;
+                f._fut_fn = tasks[i];
+                if (!_z_session_spawn_task(zn, &f).is_valid) {
+                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
+                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                }
+            }
+            break;
+        }
+#endif
+        default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+            return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+            break;
+    }
+    return _Z_RES_OK;
+    ;
 }
 
 z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {

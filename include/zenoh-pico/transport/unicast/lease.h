@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_UNICAST_LEASE_H
 #define ZENOH_PICO_UNICAST_LEASE_H
 
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
@@ -24,6 +25,8 @@ extern "C" {
 z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu);
 z_result_t _zp_unicast_stop_lease_task(_z_transport_t *zt);
 void *_zp_unicast_lease_task(void *ztu_arg);  // The argument is void* to avoid incompatible pointer types in tasks
+_z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *executor);
+_z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *executor);
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 z_result_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task);
