@@ -1,0 +1,5 @@
+zp_platform_add_definition(ZENOH_FREERTOS_LWIP)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/freertos/lwip/*.c")
+zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/freertos/system.c")
+zp_platform_set_stream_backend(tcp_lwip)
+zp_platform_set_datagram_backend(udp_lwip)

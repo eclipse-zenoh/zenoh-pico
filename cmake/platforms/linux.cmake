@@ -1,0 +1,6 @@
+zp_platform_add_definition(ZENOH_LINUX)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/unix/*.c")
+zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/link/backend/datagram/raweth_unix.c")
+zp_platform_set_stream_backend(tcp_posix)
+zp_platform_set_datagram_backend(udp_posix)
+zp_platform_set_rawio_backend(tty_posix)

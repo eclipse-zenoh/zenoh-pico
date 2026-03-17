@@ -1,0 +1,6 @@
+zp_platform_add_definition(ZENOH_ESPIDF)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/espidf/*.c")
+set(CHECK_THREADS OFF)
+zp_platform_set_stream_backend(tcp_esp32)
+zp_platform_set_datagram_backend(udp_esp32)
+zp_platform_set_rawio_backend(uart_espidf)

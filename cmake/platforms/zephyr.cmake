@@ -1,0 +1,5 @@
+zp_platform_add_definition(ZENOH_ZEPHYR)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/zephyr/*.c")
+zp_platform_set_stream_backend(tcp_zephyr)
+zp_platform_set_datagram_backend(udp_zephyr)
+zp_platform_set_rawio_backend(uart_zephyr)
