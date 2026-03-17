@@ -908,7 +908,7 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         return ret;
     }
 
-    ret = _z_open(&zs->_rc, cfg, opts.connect_timeout_ms, &zid);
+    ret = _z_open(&zs->_rc, cfg, opts.connect_timeout_ms, opts.connect_wait_for_all, &zid);
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
         z_config_drop(config);

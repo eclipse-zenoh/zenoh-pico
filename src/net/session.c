@@ -177,9 +177,98 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     return ret;
 }
 
+static bool _z_backoff_sleep(z_clock_t *start, uint32_t timeout_ms, uint32_t *sleep_ms) {
+    unsigned long elapsed = z_clock_elapsed_ms(start);
+    if (elapsed >= timeout_ms) {
+        return false;  // timeout reached
+    }
+    uint32_t remaining_ms = timeout_ms - (uint32_t)elapsed;
+
+    uint32_t current_sleep_ms = *sleep_ms;
+    if (current_sleep_ms > remaining_ms) {
+        current_sleep_ms = remaining_ms;
+    }
+
+    z_sleep_ms(current_sleep_ms);
+
+    if (*sleep_ms < _Z_OPEN_BACKOFF_MAX_MS) {
+        *sleep_ms <<= 1;
+        if (*sleep_ms > _Z_OPEN_BACKOFF_MAX_MS) {
+            *sleep_ms = _Z_OPEN_BACKOFF_MAX_MS;
+        }
+    }
+
+    return true;
+}
+
+#if Z_FEATURE_UNICAST_PEER == 1
+static z_result_t _z_add_remaining_peers(_z_session_rc_t *zn, const _z_string_svec_t *locators, size_t opened_idx,
+                                         _z_config_t *config, z_clock_t *start, uint32_t timeout_ms,
+                                         bool wait_for_all) {
+    size_t len = _z_string_svec_len(locators);
+
+    if (len == 0) {
+        return _Z_RES_OK;
+    }
+
+    if (len > 32) {
+        _Z_ERROR("Too many connect locators configured: %zu (max supported is 32)", len);
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    uint32_t pending_mask = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (i != opened_idx) {
+            pending_mask |= (1u << i);
+        }
+    }
+
+    uint32_t sleep_ms = _Z_OPEN_BACKOFF_MIN_MS;
+
+    while (pending_mask != 0u) {
+        for (size_t i = 0; i < len; i++) {
+            if ((pending_mask & (1u << i)) == 0u) {
+                continue;
+            }
+
+            _z_string_t *locator = _z_string_svec_get(locators, i);
+            z_result_t peer_ret = _z_new_peer(&_Z_RC_IN_VAL(zn)->_tp, &_Z_RC_IN_VAL(zn)->_local_zid, locator, config);
+
+            if (peer_ret == _Z_RES_OK) {
+                pending_mask &= ~(1u << i);
+                _Z_DEBUG("Successfully added peer locator [%zu]: %.*s", i, (int)_z_string_len(locator),
+                         _z_string_data(locator));
+            } else {
+                _Z_DEBUG("Could not add peer locator [%zu]: %.*s (%i)", i, (int)_z_string_len(locator),
+                         _z_string_data(locator), peer_ret);
+            }
+        }
+
+        if ((pending_mask == 0u) || (wait_for_all == false)) {
+            break;
+        }
+
+        if (!_z_backoff_sleep(start, timeout_ms, &sleep_ms)) {
+            _Z_WARN("Timed out before all peer locators could be added");
+            for (size_t i = 0; i < len; i++) {
+                if ((pending_mask & (1u << i)) == 0u) {
+                    continue;
+                }
+
+                _z_string_t *locator = _z_string_svec_get(locators, i);
+                _Z_WARN("Peer locator not added [%zu]: %.*s", i, (int)_z_string_len(locator), _z_string_data(locator));
+            }
+            break;
+        }
+    }
+
+    return _Z_RES_OK;
+}
+#endif
+
 z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_locators,
                             const _z_string_svec_t *connect_locators, const _z_id_t *zid, _z_config_t *config,
-                            z_whatami_t mode, uint32_t timeout_ms) {
+                            z_whatami_t mode, uint32_t timeout_ms, bool wait_for_all) {
     size_t listen_len = _z_string_svec_len(listen_locators);
     size_t connect_len = _z_string_svec_len(connect_locators);
 
@@ -216,52 +305,26 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
             }
         }
 
-        if (ret != _Z_RES_OK) {
-            unsigned long elapsed = z_clock_elapsed_ms(&now);
-            if (elapsed >= timeout_ms) {
-                break;
-            }
-
-            uint32_t remaining_ms = timeout_ms - (uint32_t)elapsed;
-            uint32_t current_sleep_ms = sleep_ms;
-            if (current_sleep_ms > remaining_ms) {
-                current_sleep_ms = remaining_ms;
-            }
-
-            z_sleep_ms(current_sleep_ms);
-
-            if (sleep_ms < _Z_OPEN_BACKOFF_MAX_MS) {
-                sleep_ms <<= 1;
-                if (sleep_ms > _Z_OPEN_BACKOFF_MAX_MS) {
-                    sleep_ms = _Z_OPEN_BACKOFF_MAX_MS;
-                }
-            }
+        if ((ret != _Z_RES_OK) && !_z_backoff_sleep(&now, timeout_ms, &sleep_ms)) {
+            break;
         }
     }
 
 #if Z_FEATURE_UNICAST_PEER == 1
     if ((ret == _Z_RES_OK) && (mode == Z_WHATAMI_PEER)) {
-        for (size_t i = 0; i < connect_len; i++) {
-            if (i == opened_connect_idx) {
-                continue;
-            }
-
-            _z_string_t *locator = _z_string_svec_get(connect_locators, i);
-            z_result_t peer_ret = _z_new_peer(&_Z_RC_IN_VAL(zn)->_tp, &_Z_RC_IN_VAL(zn)->_local_zid, locator, config);
-            if (peer_ret != _Z_RES_OK) {
-                _Z_WARN("Failed to add peer locator %zu", i);
-            }
-        }
+        ret = _z_add_remaining_peers(zn, connect_locators, opened_connect_idx, config, &now, timeout_ms, wait_for_all);
     }
 #else
     _ZP_UNUSED(mode);
     _ZP_UNUSED(opened_connect_idx);
+    _ZP_UNUSED(wait_for_all);
 #endif
 
     return ret;
 }
 
-z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, uint32_t timeout_ms, const _z_id_t *zid) {
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, uint32_t timeout_ms, bool wait_for_all,
+                   const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
     _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
 
@@ -276,14 +339,16 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, uint32_t timeout_ms
             _Z_RC_IN_VAL(zn)->_mode = mode;
 
             if ((_z_string_svec_len(&listen_locators) > 0) || (_z_string_svec_len(&connect_locators) > 0)) {
-                ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, timeout_ms);
+                ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, timeout_ms,
+                                       wait_for_all);
             } else {
                 ret = _z_locators_by_scout(config, zid, &connect_locators);
                 if (ret == _Z_RES_OK) {
                     if (_z_string_svec_len(&connect_locators) == 0) {
                         ret = _Z_ERR_SCOUT_NO_RESULTS;
                     } else {
-                        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, timeout_ms);
+                        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, timeout_ms,
+                                               wait_for_all);
                     }
                 }
             }
@@ -306,7 +371,7 @@ z_result_t _z_reopen(_z_session_rc_t *zn) {
 
     do {
         _z_session_transport_mutex_lock(zs);
-        ret = _z_open(zn, &zs->_config, 0, &zs->_local_zid);
+        ret = _z_open(zn, &zs->_config, 0, false, &zs->_local_zid);
         _z_session_transport_mutex_unlock(zs);
         if (ret != _Z_RES_OK) {
             if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
