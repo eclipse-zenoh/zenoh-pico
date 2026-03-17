@@ -12,19 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/backend/tls_stream.h"
+#endif
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
-#if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/system/link/tls.h"
-#endif
-#include "zenoh-pico/runtime/runtime.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
 #if Z_FEATURE_CONNECTIVITY == 1

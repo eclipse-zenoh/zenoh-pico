@@ -43,7 +43,12 @@ if FRAMEWORK == 'zephyr':
         "-<system/flipper/>",
         "-<system/windows/>",
     ]
-    CPPDEFINES = ["ZENOH_ZEPHYR"]
+    CPPDEFINES = [
+        "ZENOH_ZEPHYR",
+        "ZP_DEFAULT_STREAM_OPS=_z_tcp_zephyr_stream_ops",
+        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_zephyr_datagram_ops",
+        "ZP_DEFAULT_RAWIO_OPS=_z_uart_zephyr_rawio_ops",
+    ]
 
 elif FRAMEWORK == 'arduino':
     PLATFORM = env.get("PIOPLATFORM")
@@ -63,7 +68,14 @@ elif FRAMEWORK == 'arduino':
             "-<system/windows/>",
             "-<system/zephyr/>",
         ]
-        CPPDEFINES = ["ZENOH_ARDUINO_ESP32", "ZENOH_COMPILER_GCC", "ZENOH_C_STANDARD=99"]
+        CPPDEFINES = [
+            "ZENOH_ARDUINO_ESP32",
+            "ZENOH_COMPILER_GCC",
+            "ZENOH_C_STANDARD=99",
+            "ZP_DEFAULT_STREAM_OPS=_z_tcp_esp32_stream_ops",
+            "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_esp32_datagram_ops",
+            "ZP_DEFAULT_RAWIO_OPS=_z_uart_arduino_esp32_rawio_ops",
+        ]
     if PLATFORM == 'ststm32':
         BOARD = env.get("PIOENV")
         if BOARD == 'opencr':
@@ -82,7 +94,13 @@ elif FRAMEWORK == 'arduino':
                 "-<system/windows/>",
                 "-<system/zephyr/>",
             ]
-            CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
+            CPPDEFINES = [
+                "ZENOH_ARDUINO_OPENCR",
+                "ZENOH_C_STANDARD=99",
+                "Z_FEATURE_MULTI_THREAD=0",
+                "ZP_DEFAULT_STREAM_OPS=_z_tcp_opencr_stream_ops",
+                "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_opencr_datagram_ops",
+            ]
 
 elif FRAMEWORK == 'espidf':
     SRC_FILTER = [
@@ -99,7 +117,12 @@ elif FRAMEWORK == 'espidf':
         "-<system/windows/>",
         "-<system/zephyr/>",
     ]
-    CPPDEFINES = ["ZENOH_ESPIDF"]
+    CPPDEFINES = [
+        "ZENOH_ESPIDF",
+        "ZP_DEFAULT_STREAM_OPS=_z_tcp_esp32_stream_ops",
+        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_esp32_datagram_ops",
+        "ZP_DEFAULT_RAWIO_OPS=_z_uart_espidf_rawio_ops",
+    ]
 
 elif FRAMEWORK == 'mbed':
     SRC_FILTER = [
@@ -116,7 +139,13 @@ elif FRAMEWORK == 'mbed':
         "-<system/windows/>",
         "-<system/zephyr/>",
     ]
-    CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
+    CPPDEFINES = [
+        "ZENOH_MBED",
+        "ZENOH_C_STANDARD=99",
+        "ZP_DEFAULT_STREAM_OPS=_z_tcp_mbed_stream_ops",
+        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_mbed_datagram_ops",
+        "ZP_DEFAULT_RAWIO_OPS=_z_uart_mbed_rawio_ops",
+    ]
 elif FRAMEWORK == 'generic':
     SRC_FILTER = ["+<*>", "-<tests/>", "-<example/>", "-<system/*>", "+<system/common>"]
     CPPDEFINES = ["ZENOH_GENERIC"]
