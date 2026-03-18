@@ -234,8 +234,9 @@ typedef struct _z_session_t {
  *     config: A set of properties. The caller keeps its ownership.
  *     timeout_ms: Maximum time (in milliseconds) to establish the primary transport
  *                 and (optionally) additional peer connections. `0` means no waiting.
- *     wait_for_all: If true, attempt to connect all peer locators within the timeout.
- *                   If false, perform a single attempt per peer locator without retrying.
+ *     wait_for_all: If true, continue attempting to add all remaining peer locators
+ *                   until either all are connected or the timeout budget is exhausted.
+ *                   If false, attempt to add remaining peer locators only once.
  *     zid: A pointer to Zenoh ID.
  *
  * Returns:

@@ -180,6 +180,8 @@ typedef struct {
  *     Maximum time (in milliseconds) spent attempting to establish outbound
  *     connections to configured `connect` endpoints during ``z_open()``.
  *
+ *     Default: `0`
+ *
  *     Semantics:
  *       - `0`  : No waiting. Each configured `connect` endpoint is attempted
  *                once.
@@ -189,20 +191,21 @@ typedef struct {
  *     Negative values are not supported.
  *
  *   bool connect_wait_for_all:
- *     If `true`, ``z_open()`` will attempt to establish all configured
- *     `connect` endpoints and may wait up to `connect_timeout_ms`.
+ *     If `true`, ``z_open()`` will require full connectivity to all configured
+ *     `connect` endpoints associated with unicast peers, and may wait up to
+ *     `connect_timeout_ms`.
  *
- *     If the timeout expires before all endpoints are connected,
- *     ``z_open()`` may still succeed provided the minimum connectivity
- *     condition is satisfied.
+ *     If the timeout expires before all endpoints are connected, but at least
+ *     one connection was established, ``z_open()`` returns
+ *     ``_Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY``.
  *
- *     If `false`, ``z_open()`` succeeds as soon as the minimum
- *     connectivity condition is satisfied.
+ *     If `false`, ``z_open()`` retries connection attempts until at least one
+ *     connection is established or the timeout expires. After a connection is
+ *     established, remaining endpoints are attempted once without retry.
  *
- *   Minimum connectivity condition:
- *     - If at least one `listen` endpoint is successfully bound, OR
- *     - If at least one `connect` endpoint is successfully established
- *       (in connect-only mode).
+ *     Default: `true`.
+ *
+ *     This option applies only when unicast peer support is enabled.
  *
  *   bool auto_start_read_task: auto-start read task after ``z_open()`` (default true; only multi-thread builds).
  *   bool auto_start_lease_task: auto-start lease task after ``z_open()`` (default true; only multi-thread builds).

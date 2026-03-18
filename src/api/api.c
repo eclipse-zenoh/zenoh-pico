@@ -831,7 +831,7 @@ z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, 
 
 void z_open_options_default(z_open_options_t *options) {
     options->connect_timeout_ms = 0;
-    options->connect_wait_for_all = false;
+    options->connect_wait_for_all = true;
 #if Z_FEATURE_MULTI_THREAD == 1
     options->auto_start_read_task = true;
     options->auto_start_lease_task = true;
