@@ -173,20 +173,18 @@ typedef struct {
 } z_subscriber_options_t;
 
 /**
- * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
+ * Represents the configuration used to configure a zenoh session upon opening :c:func:`z_open`.
  *
  * Members:
  *   uint32_t connect_timeout_ms:
  *     Maximum time (in milliseconds) spent attempting to establish outbound
- *     connections to configured `connect` endpoints during ``z_open()``.
+ *     connections to configured endpoints during ``z_open()``.
  *
  *     Default: `0`
  *
  *     Semantics:
- *       - `0`  : No waiting. Each configured `connect` endpoint is attempted
- *                once.
- *       - `>0` : Connection attempts are retried until either the success
- *                condition is met or the timeout expires.
+ *       - `0`  : No waiting. Each configured endpoint is attempted once.
+ *       - `>0` : Connection attempts are retried until either the success condition is met or the timeout expires.
  *
  *     Negative values are not supported.
  *
