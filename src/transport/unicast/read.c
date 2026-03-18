@@ -415,7 +415,8 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
         _z_transport_peer_mutex_unlock(&ztu->_common);
         if (!has_peers) {
-            return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE);
+            // TODO: suspend or finish the task and restart it when a new connection is established.
+            return _z_fut_fn_result_wake_up_after(100);
         } else {
             if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) == _Z_RES_OK &&
                 _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {

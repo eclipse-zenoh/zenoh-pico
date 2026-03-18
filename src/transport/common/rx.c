@@ -75,7 +75,6 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
     _z_zbuf_reset(&zbf);
-    const unsigned long SLEEP_TIME_MS = 100;
 
     z_result_t ret = Z_ETIMEDOUT;
     while (ret == Z_ETIMEDOUT) {
@@ -95,8 +94,6 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
             z_clock_t now = z_clock_now();
             if (zp_clock_elapsed_ms_since(&recv_deadline, &now) == 0) {
                 ret = _Z_ERR_TRANSPORT_RX_DURATION_EXPIRED;
-            } else {
-                z_sleep_ms(SLEEP_TIME_MS);
             }
         }
     }

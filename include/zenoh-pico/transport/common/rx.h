@@ -25,6 +25,7 @@ extern "C" {
 
 /*------------------ Transmission and Reception helpers ------------------*/
 size_t _z_read_stream_size(_z_zbuf_t *zbuf);
+// Socket is assumed to be in blocking mode with a finite timeout.
 z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket,
                               z_clock_t recv_deadline);
 
