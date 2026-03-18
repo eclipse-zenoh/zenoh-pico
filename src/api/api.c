@@ -830,6 +830,8 @@ z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, 
 #endif
 
 void z_open_options_default(z_open_options_t *options) {
+    options->connect_timeout_ms = 0;
+    options->connect_wait_for_all = true;
 #if Z_FEATURE_MULTI_THREAD == 1
     options->auto_start_read_task = true;
     options->auto_start_lease_task = true;
@@ -839,9 +841,6 @@ void z_open_options_default(z_open_options_t *options) {
 #endif
 #if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
     options->auto_start_admin_space = false;
-#endif
-#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
-    options->__dummy = 0;
 #endif
 }
 
@@ -883,16 +882,12 @@ static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
 
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
     z_internal_session_null(zs);
-#if Z_FEATURE_MULTI_THREAD == 1
     z_open_options_t opts;
     if (options == NULL) {
         z_open_options_default(&opts);
     } else {
         opts = *options;
     }
-#else
-    _ZP_UNUSED(options);
-#endif  // Z_FEATURE_MULTI_THREAD
 
     if (config == NULL) {
         _Z_ERROR("A valid config is missing.");
@@ -913,7 +908,7 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         return ret;
     }
 
-    ret = _z_open(&zs->_rc, cfg, &zid);
+    ret = _z_open(&zs->_rc, cfg, opts.connect_timeout_ms, opts.connect_wait_for_all, &zid);
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
         z_config_drop(config);

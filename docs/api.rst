@@ -1101,7 +1101,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_moved_session_t
 
 .. c:type:: z_id_t
-.. c:type:: z_open_options_t
+.. autoctype:: types.h::z_open_options_t
 
 Functions
 ^^^^^^^^^
