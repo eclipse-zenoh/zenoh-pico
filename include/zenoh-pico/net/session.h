@@ -19,6 +19,7 @@
 
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
@@ -232,7 +233,7 @@ typedef struct _z_session_t {
  * Open a zenoh-net session
  *
  * Parameters:
- *     zn: A pointer of A :c:type:`_z_session_rc_t` used as a return value.
+ *     zn: A pointer of A :c:type:`_z_session_t` used as a return value.
  *     config: A set of properties. The caller keeps its ownership.
  *     zid: A pointer to Zenoh ID.
  *
@@ -241,16 +242,9 @@ typedef struct _z_session_t {
  */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
 
-/**
- * Reopen a disconnected zenoh-net session
- *
- * Parameters:
- *     zn: Existing zenoh-net session.
- *
- * Returns:
- *     ``0`` in case of success, or a ``negative value`` in case of failure.
- */
-z_result_t _z_reopen(_z_session_rc_t *zn);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+_z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);
+#endif
 
 /**
  * Store declaration network message to cache for resend it after session restore
@@ -407,8 +401,6 @@ z_result_t _zp_stop_read_task(_z_session_t *z);
  */
 z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
 
-z_result_t _zp_start_initial_tasks(_z_session_t *z);
-
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending
  * on the target platform.
@@ -449,6 +441,7 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 #endif  // Z_FEATURE_UNSTABLE_API
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+z_result_t _zp_start_transport_tasks(_z_session_t *z);
 #if Z_FEATURE_CONNECTIVITY == 1
 void _z_connectivity_peer_connected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
                                     bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);

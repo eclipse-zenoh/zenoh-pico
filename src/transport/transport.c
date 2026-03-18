@@ -71,6 +71,7 @@ void _z_transport_clear(_z_transport_t *zt, bool detach_tasks) {
         default:
             break;
     }
+    _z_transport_get_common(zt)->_state = _Z_TRANSPORT_STATE_CLOSED;
     zt->_type = _Z_TRANSPORT_NONE;
 }
 

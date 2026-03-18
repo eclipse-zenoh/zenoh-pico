@@ -24,6 +24,7 @@
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -397,6 +398,12 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
 _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
+
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     if (mode == Z_WHAT_CLIENT) {
         _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
@@ -405,8 +412,8 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         // Retrieve data
         if (_z_unicast_client_read(ztu, curr_peer, &to_read) &&
             _z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
-            // Close transport on error
-            return _z_fut_fn_result_ready();
+            _Z_INFO("Read task failed, closing session\n");
+            return _zp_unicast_failed_result(ztu, executor);
         }
     }
 #if Z_FEATURE_UNICAST_PEER == 1

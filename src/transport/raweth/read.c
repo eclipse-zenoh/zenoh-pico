@@ -102,10 +102,15 @@ void *_zp_raweth_read_task(void *ztm_arg) {
 
 _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+
+    if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
+
     _z_transport_message_t t_msg;
     _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
-    _z_fut_fn_result_t ret = {0};
-    ret._status = _Z_FUT_STATUS_RUNNING;
 
     // Read message from link
     z_result_t ret = _z_raweth_recv_t_msg(ztm, &t_msg, &addr);
@@ -113,20 +118,20 @@ _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executo
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         if (ret != _Z_RES_OK) {
             _Z_ERROR("Connection closed due to message processing error: %d", ret);
-            ret._status = _Z_FUT_STATUS_READY;
+            return _z_fut_fn_result_ready();
         } else {
             _z_t_msg_clear(&t_msg);
             if (_z_raweth_update_rx_buff(ztm) != _Z_RES_OK) {
                 _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-                ret._status = _Z_FUT_STATUS_READY;
+                return _z_fut_fn_result_ready();
             }
         }
     } else if (ret != _Z_ERR_TRANSPORT_RX_FAILED) {
         _Z_ERROR("Connection closed due to malformed message: %d", ret);
-        ret._status = _Z_FUT_STATUS_READY;
+        return _z_fut_fn_result_ready();
     }
     _z_slice_clear(&addr);
-    return ret;
+    return _z_fut_fn_result_ready();
 }
 
 z_result_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {

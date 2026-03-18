@@ -70,8 +70,60 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     return ret;
 }
 
+_z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_executor_t *executor) {
+    _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+#if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
+    _z_liveliness_subscription_undeclare_all(zs);
+#endif
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_connectivity_peer_event_data_t disconnected_peer = {0};
+    uint16_t mtu = 0;
+    bool is_streamed = false;
+    bool is_reliable = false;
+    bool has_disconnected_peer = false;
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
+        _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
+        has_disconnected_peer = true;
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+    if (has_disconnected_peer) {
+        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
+        _z_connectivity_peer_event_data_clear(&disconnected_peer);
+    }
+#endif
+    _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
+    _z_session_transport_mutex_lock(zs);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    // Store weak session to reuse for reconnection.
+    _z_session_weak_t weak_session_clone = _z_session_weak_clone(&ztu->_common._session);
+#endif
+    _z_transport_clear(&zs->_tp, true);
+    _z_session_transport_mutex_unlock(zs);
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    ztu->_common._state = _Z_TRANSPORT_STATE_RECONNECTING;
+    ztu->_common._session = weak_session_clone;
+    _z_fut_t f = _z_fut_null();
+    f._fut_arg = &ztu->_common;
+    f._fut_fn = _z_client_reopen_task_fn;
+    _z_executor_spawn(executor, &f);
+    // TODO: suspend the task instead of sleeping
+    return _z_fut_fn_result_wake_up_after(1000);
+#else
+    return _z_fut_fn_result_ready();
+#endif
+}
+
 _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
@@ -85,8 +137,7 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
         } else {
             // THIS LOG STRING USED IN TEST, change with caution
             _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
-            // _zp_unicast_failed(ztu);
-            return _z_fut_fn_result_ready();
+            return _zp_unicast_failed_result(ztu, executor);
         }
     }
 // TODO: Should we have a task per peer ?
@@ -112,6 +163,11 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
 
 _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     if (mode == Z_WHATAMI_CLIENT) {
@@ -121,8 +177,7 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
             if (_zp_unicast_send_keep_alive(ztu) < 0) {
                 // THIS LOG STRING USED IN TEST, change with caution
                 _Z_INFO("Send keep alive failed.");
-                // _zp_unicast_failed(ztu);
-                return _z_fut_fn_result_ready();
+                return _zp_unicast_failed_result(ztu, executor);
             }
         }
         ztu->_common._transmitted = false;
@@ -161,56 +216,6 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
-static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
-    _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
-#if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(zs);
-#endif
-#if Z_FEATURE_CONNECTIVITY == 1
-    _z_connectivity_peer_event_data_t disconnected_peer = {0};
-    uint16_t mtu = 0;
-    bool is_streamed = false;
-    bool is_reliable = false;
-    bool has_disconnected_peer = false;
-    _z_transport_peer_mutex_lock(&ztu->_common);
-    if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
-        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-        _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
-        _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
-        has_disconnected_peer = true;
-    }
-    _z_transport_peer_mutex_unlock(&ztu->_common);
-    if (has_disconnected_peer) {
-        _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
-        _z_connectivity_peer_event_data_clear(&disconnected_peer);
-    }
-#endif
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_t zs_rc = _z_session_weak_upgrade(&ztu->_common._session);
-#endif
-    if (ztu->_common._read_task != NULL) {
-        ztu->_common._read_task_running = false;
-        _z_task_join(ztu->_common._read_task);
-        _z_task_free(&ztu->_common._read_task);
-    }
-    ztu->_common._lease_task_running = false;
-
-    _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
-    _z_session_transport_mutex_lock(zs);
-    _z_transport_clear(&zs->_tp, true);
-    _z_session_transport_mutex_unlock(zs);
-
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    z_result_t ret = _z_reopen(&zs_rc);
-    _z_session_rc_drop(&zs_rc);
-    if (ret != _Z_RES_OK) {
-        _Z_ERROR("Reopen failed: %i", ret);
-    }
-#endif
-
-    _z_task_exit();
-}
-
 void *_zp_unicast_lease_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
     ztu->_common._transmitted = false;
@@ -235,7 +240,6 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 } else {
                     // THIS LOG STRING USED IN TEST, change with caution
                     _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
-                    _zp_unicast_failed(ztu);
                     return 0;
                 }
                 next_lease = (int)ztu->_common._lease;
@@ -248,7 +252,6 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     if (_zp_unicast_send_keep_alive(ztu) < 0) {
                         // THIS LOG STRING USED IN TEST, change with caution
                         _Z_INFO("Send keep alive failed.");
-                        _zp_unicast_failed(ztu);
                         return 0;
                     }
                 }

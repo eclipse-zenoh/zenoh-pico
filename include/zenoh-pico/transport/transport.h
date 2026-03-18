@@ -142,6 +142,12 @@ _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
+typedef enum _z_transport_state_t {
+    _Z_TRANSPORT_STATE_CLOSED = 0,
+    _Z_TRANSPORT_STATE_RECONNECTING = 1,
+    _Z_TRANSPORT_STATE_OPEN = 2,
+} _z_transport_state_t;
+
 typedef struct {
     _z_session_weak_t _session;
     _z_link_t *_link;
@@ -172,6 +178,9 @@ typedef struct {
     uint8_t _batch_state;
     size_t _batch_count;
 #endif
+    // Here we assume the value is set only by the session _z_open
+    // and after it only read by the transport tasks, so we don't need to make it atomic or protect it with mutexes.
+    _z_transport_state_t _state;
 } _z_transport_common_t;
 
 // Send function prototype

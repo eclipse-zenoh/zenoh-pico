@@ -29,7 +29,7 @@ void *_zp_multicast_lease_task(void *ztm_arg);  // The argument is void* to avoi
 _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t *executor);
 _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *executor);
 _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t *executor);
-
+_z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z_executor_t *executor);
 #if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
 z_result_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_attr_t *attr, _z_task_t *task);
 #else

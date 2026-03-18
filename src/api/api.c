@@ -914,7 +914,7 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     }
 
     ret = _z_open(&zs->_rc, cfg, &zid);
-    _Z_SET_IF_OK(ret, _zp_start_initial_tasks(_Z_RC_IN_VAL(&zs->_rc)));
+    _Z_SET_IF_OK(ret, _zp_start_transport_tasks(_Z_RC_IN_VAL(&zs->_rc)));
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
         z_config_drop(config);

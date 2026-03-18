@@ -59,22 +59,32 @@ z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
 
-static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
+_z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z_executor_t *executor) {
     _z_session_t *session = _z_transport_common_get_session(&ztm->_common);
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
     _z_liveliness_subscription_undeclare_all(session);
 #endif
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_t zs = _z_session_weak_upgrade(&ztm->_common._session);
-#endif
     _z_session_transport_mutex_lock(session);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    // Store weak session, to reuse for reconnection
+    _z_session_weak_t zs = _z_session_weak_clone(&ztm->_common._session);
+#endif
     _z_transport_clear(&session->_tp, true);
     _z_session_transport_mutex_unlock(session);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_reopen(&zs);
-    _z_session_rc_drop(&zs);
+    // Store weak session, to reuse for reconnection
+    ztm->_common._state = _Z_TRANSPORT_STATE_RECONNECTING;
+    ztm->_common._session = zs;
+    _z_fut_t f = _z_fut_null();
+    f._fut_arg = &ztm->_common;
+    f._fut_fn = _z_client_reopen_task_fn;
+    _z_executor_spawn(executor, &f);
+    // TODO: suspend the task instead of sleeping
+    return _z_fut_fn_result_wake_up_after(1000);
+#else
+    return _z_fut_fn_result_ready();
 #endif
 }
 
@@ -150,6 +160,12 @@ static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *z
 _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
+    if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
+
     _z_transport_peer_multicast_slist_t *dropped_peers = _z_transport_peer_multicast_slist_new();
     _z_transport_peer_mutex_lock(&ztm->_common);
     ztm->_peers = _z_transport_peer_multicast_slist_extract_all_filter(ztm->_peers, &dropped_peers,
@@ -168,11 +184,16 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
 _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
+    if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
+
     if (ztm->_common._transmitted == false) {
         if (_zp_multicast_send_keep_alive(ztm) < 0) {
             _Z_INFO("Send keep alive failed.");
-            //_zp_multicast_failed(ztm);
-            return _z_fut_fn_result_ready();
+            return _zp_multicast_failed_result(ztm, executor);
         }
     }
     ztm->_common._transmitted = false;
@@ -185,10 +206,16 @@ _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t
 
 _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
+
+    if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_wake_up_after(1000);
+    }
+
     if (_zp_multicast_send_join(ztm) < 0) {
         _Z_INFO("Send join failed.");
-        //_zp_multicast_failed(ztm);
-        return _z_fut_fn_result_ready();
+        return _zp_multicast_failed_result(ztm, executor);
     } else {
         return _z_fut_fn_result_wake_up_after(Z_JOIN_INTERVAL);
     }
@@ -233,7 +260,6 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
             if (ztm->_common._transmitted == false) {
                 if (_zp_multicast_send_keep_alive(ztm) < 0) {
                     _Z_INFO("Send keep alive failed.");
-                    _zp_multicast_failed(ztm);
                 }
             }
             // Reset the keep alive parameters

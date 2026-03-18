@@ -169,6 +169,7 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
         return ret;
     }
     _z_transport_get_common(&zn->_tp)->_session = _z_session_rc_clone_as_weak(zs);
+    _z_transport_get_common(&zn->_tp)->_state = _Z_TRANSPORT_STATE_OPEN;
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
     if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_interest_pull_resource_from_peers(zn);
@@ -233,70 +234,55 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 }
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
+_z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor) {
+    _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
+    _z_session_weak_t weak_session = tc->_session;
+    _z_session_rc_t zs = _z_session_weak_upgrade(&weak_session);  // should not fail
+    _z_session_t *s = _Z_RC_IN_VAL(&zs);
+    _z_session_weak_drop(&weak_session);
 
-z_result_t _z_reopen(_z_session_rc_t *zn) {
-    z_result_t ret = _Z_RES_OK;
-    _z_session_t *zs = _Z_RC_IN_VAL(zn);
-    if (_z_config_is_empty(&zs->_config)) {
-        return ret;
+    if (_z_config_is_empty(&s->_config)) {
+        _z_session_rc_drop(&zs);
+        return _z_fut_fn_result_ready();
     }
-
-    do {
-        _z_session_transport_mutex_lock(zs);
-        ret = _z_open(zn, &zs->_config, &zs->_local_zid);
-        _z_session_transport_mutex_unlock(zs);
-        if (ret != _Z_RES_OK) {
-            if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
-                ret == _Z_ERR_TRANSPORT_TX_FAILED || ret == _Z_ERR_TRANSPORT_RX_FAILED) {
-                _Z_DEBUG("Reopen failed, next try in 1s");
-                z_sleep_s(1);
-                continue;
-            } else {
-                return ret;
-            }
+    _z_session_transport_mutex_lock(s);
+    z_result_t ret = _z_open(&zs, &s->_config, &s->_local_zid);
+    _z_session_transport_mutex_unlock(s);
+    if (ret != _Z_RES_OK) {
+        if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
+            ret == _Z_ERR_TRANSPORT_TX_FAILED || ret == _Z_ERR_TRANSPORT_RX_FAILED) {
+            _Z_DEBUG("Reopen failed, next try in 1s");
+            tc->_session = _z_session_rc_clone_as_weak(&zs);
+            tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+            _z_session_rc_drop(&zs);
+            return _z_fut_fn_result_wake_up_after(1000);
+        } else {
+            _Z_ERROR("Reopen failed, will not retry");
+            tc->_state = _Z_TRANSPORT_STATE_CLOSED;
+            _z_session_rc_drop(&zs);
+            return _z_fut_fn_result_ready();
         }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-        if (zs->_lease_task_should_run) {
-            ret = _zp_start_lease_task(zs, zs->_lease_task_attr);
+    }
+    if (!_z_network_message_slist_is_empty(s->_declaration_cache)) {
+        _z_network_message_slist_t *iter = s->_declaration_cache;
+        while (iter != NULL) {
+            _z_network_message_t *n_msg = _z_network_message_slist_value(iter);
+            ret = _z_send_n_msg(s, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
             if (ret != _Z_RES_OK) {
-                return ret;
+                _Z_DEBUG("Send message during reopen failed: %i", ret);
+                _z_transport_clear(&s->_tp, false);
+                tc->_session = _z_session_rc_clone_as_weak(&zs);
+                tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+                _z_session_rc_drop(&zs);
+                return _z_fut_fn_result_continue();
             }
-        }
-        if (zs->_read_task_should_run) {
-            ret = _zp_start_read_task(zs, zs->_read_task_attr);
-            if (ret != _Z_RES_OK) {
-                return ret;
-            }
-        }
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-        if (zs->_periodic_task_should_run) {
-            ret = _zp_start_periodic_scheduler_task(zs, zs->_periodic_scheduler_task_attr);
-            if (ret != _Z_RES_OK) {
-                return ret;
-            }
-        }
-#endif
-#endif
-#endif  // Z_FEATURE_MULTI_THREAD == 1
 
-        if (ret == _Z_RES_OK && !_z_network_message_slist_is_empty(zs->_declaration_cache)) {
-            _z_network_message_slist_t *iter = zs->_declaration_cache;
-            while (iter != NULL) {
-                _z_network_message_t *n_msg = _z_network_message_slist_value(iter);
-                ret = _z_send_n_msg(zs, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
-                if (ret != _Z_RES_OK) {
-                    _Z_DEBUG("Send message during reopen failed: %i", ret);
-                    continue;
-                }
-
-                iter = _z_network_message_slist_next(iter);
-            }
+            iter = _z_network_message_slist_next(iter);
         }
-    } while (ret != _Z_RES_OK);
-
-    return ret;
+    }
+    _z_session_rc_drop(&zs);
+    _Z_DEBUG("Reconnected successfully");
+    return _z_fut_fn_result_ready();
 }
 
 void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
@@ -492,7 +478,7 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     return ret;
 }
 
-z_result_t _zp_start_initial_tasks(_z_session_t *zn) {
+z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
     z_result_t ret = _Z_RES_OK;
 
     switch (zn->_tp._type) {
