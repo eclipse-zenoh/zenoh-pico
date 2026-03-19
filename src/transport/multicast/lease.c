@@ -70,7 +70,7 @@ _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z
     // Store weak session, to reuse for reconnection
     _z_session_weak_t zs = _z_session_weak_clone(&ztm->_common._session);
 #endif
-    _z_transport_clear(&session->_tp, true);
+    _z_transport_clear(&session->_tp);
     _z_session_transport_mutex_unlock(session);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
@@ -84,6 +84,7 @@ _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z
     // TODO: suspend the task instead of sleeping
     return _z_fut_fn_result_wake_up_after(1000);
 #else
+    _ZP_UNUSED(executor);
     return _z_fut_fn_result_ready();
 #endif
 }
@@ -158,6 +159,7 @@ static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *z
 }
 
 _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {

@@ -120,6 +120,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                 }
             }
 #else
+            _ZP_UNUSED(runtime);
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
 #endif

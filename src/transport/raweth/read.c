@@ -101,6 +101,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
 }
 
 _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {

@@ -49,13 +49,13 @@ typedef struct _z_fut_fn_result_t {
 } _z_fut_fn_result_t;
 
 static inline _z_fut_fn_result_t _z_fut_fn_result_ready(void) {
-    _z_fut_fn_result_t result = {0};
+    _z_fut_fn_result_t result;
     result._status = _Z_FUT_STATUS_READY;
     return result;
 }
 
 static inline _z_fut_fn_result_t _z_fut_fn_result_continue(void) {
-    _z_fut_fn_result_t result = {0};
+    _z_fut_fn_result_t result;
     result._status = _Z_FUT_STATUS_RUNNING;
     return result;
 }

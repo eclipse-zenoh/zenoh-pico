@@ -235,6 +235,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
     _z_session_weak_t weak_session = tc->_session;
     _z_session_rc_t zs = _z_session_weak_upgrade(&weak_session);  // should not fail
@@ -270,7 +271,7 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
             ret = _z_send_n_msg(s, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
             if (ret != _Z_RES_OK) {
                 _Z_DEBUG("Send message during reopen failed: %i", ret);
-                _z_transport_clear(&s->_tp, false);
+                _z_transport_clear(&s->_tp);
                 tc->_session = _z_session_rc_clone_as_weak(&zs);
                 tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
                 _z_session_rc_drop(&zs);
@@ -479,8 +480,6 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
 }
 
 z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
-    z_result_t ret = _Z_RES_OK;
-
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
             _z_fut_fn_t tasks[] = {_zp_unicast_keep_alive_task_fn, _zp_unicast_lease_task_fn, _zp_unicast_read_task_fn};
@@ -512,7 +511,7 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
         case _Z_TRANSPORT_RAWETH_TYPE: {
             _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
-                                   _zp_multicast_join_task_fn, _zp_raweth_read_task_fn};
+                                   _zp_multicast_send_join_task_fn, _zp_raweth_read_task_fn};
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._raweth;
@@ -530,7 +529,6 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
             break;
     }
     return _Z_RES_OK;
-    ;
 }
 
 z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {

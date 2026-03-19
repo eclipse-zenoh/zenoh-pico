@@ -987,6 +987,7 @@ void _ze_advanced_subscriber_periodic_query_ctx_free(_ze_advanced_subscriber_per
 }
 
 static _z_fut_fn_result_t _ze_advanced_subscriber_periodic_query_handler(void *ctx, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _ze_advanced_subscriber_periodic_query_ctx_t *query_ctx = (_ze_advanced_subscriber_periodic_query_ctx_t *)ctx;
     if (_Z_RC_IS_NULL(&query_ctx->_statesref)) {
         return _z_fut_fn_result_ready();

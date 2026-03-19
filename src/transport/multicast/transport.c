@@ -187,8 +187,7 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     return _z_multicast_send_close(ztm, reason, false);
 }
 
-void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
-    _z_transport_common_stop_tasks(&ztm->_common, detach_tasks);
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm) {
     _z_transport_peer_multicast_slist_free(&ztm->_peers);
     _z_transport_common_clear(
         &ztm->_common);  // free common in the very end, as peers might access the link data in common while being freed
@@ -233,8 +232,5 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
-void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
-    _ZP_UNUSED(ztm);
-    _ZP_UNUSED(detach_tasks);
-}
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1

@@ -133,6 +133,7 @@ typedef void *_z_mutex_t;
 typedef void *_z_mutex_rec_t;
 typedef void *_z_condvar_t;
 typedef void *z_task_attr_t;
+typedef void *_z_task_id_t;
 #endif
 
 /*------------------ Thread ------------------*/

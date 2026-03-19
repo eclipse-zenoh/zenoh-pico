@@ -220,7 +220,7 @@ void _z_session_clear(_z_session_t *zn) {
     _z_config_clear(&zn->_config);
 #endif
     _z_session_transport_mutex_lock(zn);
-    _z_transport_clear(&zn->_tp, false);
+    _z_transport_clear(&zn->_tp);
     _z_session_transport_mutex_unlock(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1

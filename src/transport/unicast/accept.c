@@ -62,6 +62,7 @@ static void _zp_unicast_dispatch_connected_event(_z_transport_unicast_t *ztu, co
 #endif
 
 _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
     const _z_sys_net_socket_t *socket_ptr = _z_link_get_socket(ztu->_common._link);
     if (socket_ptr == NULL) {

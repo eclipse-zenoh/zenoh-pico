@@ -334,7 +334,7 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
     return _z_unicast_send_close(ztu, reason, false);
 }
 
-void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
+void _z_unicast_transport_clear(_z_transport_unicast_t *ztu) {
     _z_transport_peer_unicast_slist_free(&ztu->_peers);
     _z_transport_common_clear(
         &ztu->_common);  // free common in the very end, as peers might access the link data in common while being freed
@@ -381,9 +381,6 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
-void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
-    _ZP_UNUSED(ztu);
-    _ZP_UNUSED(detach_tasks);
-}
+void _z_unicast_transport_clear(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
 
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

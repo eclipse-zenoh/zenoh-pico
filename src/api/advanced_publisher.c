@@ -167,6 +167,7 @@ static z_result_t _ze_advanced_publisher_ke_suffix(z_owned_keyexpr_t *suffix, co
 }
 
 static _z_fut_fn_result_t _ze_advanced_publisher_heartbeat_handler(void *ctx, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _ze_advanced_publisher_state_weak_t *state_weak_rc = (_ze_advanced_publisher_state_weak_t *)ctx;
     _ze_advanced_publisher_state_rc_t state_rc = _ze_advanced_publisher_state_weak_upgrade(state_weak_rc);
 

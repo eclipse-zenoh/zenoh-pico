@@ -100,7 +100,7 @@ _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_exe
     // Store weak session to reuse for reconnection.
     _z_session_weak_t weak_session_clone = _z_session_weak_clone(&ztu->_common._session);
 #endif
-    _z_transport_clear(&zs->_tp, true);
+    _z_transport_clear(&zs->_tp);
     _z_session_transport_mutex_unlock(zs);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
@@ -126,7 +126,7 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
     }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
-    _z_transport_peer_unicast_t *curr_peer = NULL;
+
     if (mode == Z_WHATAMI_CLIENT) {
         _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
         assert(curr_peer != NULL);
