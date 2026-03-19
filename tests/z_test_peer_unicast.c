@@ -73,12 +73,6 @@ void *node_task(void *ptr) {
         printf("Unable to open session!\n");
         return NULL;
     }
-    // Start read and lease tasks
-    if (zp_start_read_task(z_loan_mut(s), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(s), NULL) != Z_OK) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        return NULL;
-    }
     // Create keyexprs
     z_view_keyexpr_t sub_qybl_ke;
     if (z_view_keyexpr_from_str(&sub_qybl_ke, keyexpr_in) != Z_OK) {
@@ -234,11 +228,6 @@ static bool test_peer_connection(void) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) != Z_OK) {
         printf("Unable to open main session!\n");
-        return false;
-    }
-    if (zp_start_read_task(z_loan_mut(s), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(s), NULL) != Z_OK) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
         return false;
     }
     z_owned_session_t sess_array[Z_LISTEN_MAX_CONNECTION_NB + 1];

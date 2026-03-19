@@ -142,10 +142,6 @@ int main(int argc, char **argv) {
     printf("Session 1 with PID: %.*s\n", (int)_z_string_len(&zid1), _z_string_data(&zid1));
     _z_string_clear(&zid1);
 
-    // Start the read session session lease loops
-    zp_start_read_task(z_loan_mut(s1), NULL);
-    zp_start_lease_task(z_loan_mut(s1), NULL);
-
     z_sleep_s(SLEEP);
 
     z_config_default(&config);
@@ -157,10 +153,6 @@ int main(int argc, char **argv) {
     _z_string_t zid2 = _z_id_to_string(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
     printf("Session 2 with PID: %.*s\n", (int)_z_string_len(&zid2), _z_string_data(&zid2));
     _z_string_clear(&zid2);
-
-    // Start the read session session lease loops
-    zp_start_read_task(z_loan_mut(s2), NULL);
-    zp_start_lease_task(z_loan_mut(s2), NULL);
 
     z_sleep_s(SLEEP);
 
@@ -397,13 +389,6 @@ int main(int argc, char **argv) {
     }
 
     z_sleep_s(SLEEP);
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s1));
-
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s2));
 
     // Close both sessions
     printf("Closing session 1\n");

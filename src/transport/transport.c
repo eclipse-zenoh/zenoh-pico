@@ -69,7 +69,7 @@ void _z_transport_clear(_z_transport_t *zt) {
             _z_multicast_transport_clear(&zt->_transport._multicast);
             break;
         default:
-            break;
+            return;
     }
     _z_transport_get_common(zt)->_state = _Z_TRANSPORT_STATE_CLOSED;
     zt->_type = _Z_TRANSPORT_NONE;

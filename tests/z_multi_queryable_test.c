@@ -126,11 +126,6 @@ static void test_multi_queryables(int num_q) {
     ASSERT_OK(z_open(&s_q, z_config_move(&c_q), NULL));
     ASSERT_OK(z_open(&s_cli, z_config_move(&c_cli), NULL));
 
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s_q), NULL));
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s_cli), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s_q), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s_cli), NULL));
-
     // Declare N queryables, each on its own keyexpr: BASE_EXPR/<qid>
     z_owned_queryable_t *qs = (z_owned_queryable_t *)z_malloc((size_t)num_q * sizeof(z_owned_queryable_t));
     qstate_t *states = (qstate_t *)z_malloc((size_t)num_q * sizeof(qstate_t));
@@ -204,11 +199,6 @@ static void test_multi_queryables(int num_q) {
     }
     z_free(states);
     z_free(qs);
-
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s_q)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s_cli)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s_q)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s_cli)));
 
     z_session_drop(z_session_move(&s_q));
     z_session_drop(z_session_move(&s_cli));
