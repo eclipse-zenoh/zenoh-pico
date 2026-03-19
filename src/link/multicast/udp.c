@@ -133,7 +133,7 @@ z_result_t _z_f_link_open_udp_multicast(_z_link_t *self) {
     }
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    ret = _z_open_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, &self->_socket._udp._lep, tout,
+    ret = _z_open_udp_multicast(&self->_socket._udp._msock, self->_socket._udp._rep, &self->_socket._udp._lep, tout,
                                 iface);
 
     return ret;
@@ -144,7 +144,7 @@ z_result_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
     const char *join = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_JOIN_KEY);
-    ret = _z_listen_udp_multicast(&self->_socket._udp._sock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface,
+    ret = _z_listen_udp_multicast(&self->_socket._udp._msock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface,
                                   join);
     ret |= _z_open_udp_multicast(&self->_socket._udp._msock, self->_socket._udp._rep, &self->_socket._udp._lep,
                                  Z_CONFIG_SOCKET_TIMEOUT, iface);
@@ -153,7 +153,7 @@ z_result_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
 }
 
 void _z_f_link_close_udp_multicast(_z_link_t *self) {
-    _z_close_udp_multicast(&self->_socket._udp._sock, &self->_socket._udp._msock, self->_socket._udp._rep,
+    _z_close_udp_multicast(&self->_socket._udp._msock, &self->_socket._udp._msock, self->_socket._udp._rep,
                            self->_socket._udp._lep);
 }
 
@@ -179,7 +179,7 @@ size_t _z_f_link_read_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t 
 size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
                                           _z_sys_net_socket_t *socket) {
     _ZP_UNUSED(socket);
-    return _z_read_exact_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
+    return _z_read_exact_udp_multicast(self->_socket._udp._msock, ptr, len, self->_socket._udp._lep, addr);
 }
 
 uint16_t _z_get_link_mtu_udp_multicast(void) {
