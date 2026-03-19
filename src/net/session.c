@@ -489,8 +489,7 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
                 f._fut_arg = &zn->_tp._transport._unicast;
                 f._fut_fn = tasks[i];
                 if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
-                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
-                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                    _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
             }
             break;
@@ -504,8 +503,7 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
                 f._fut_arg = &zn->_tp._transport._multicast;
                 f._fut_fn = tasks[i];
                 if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
-                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
-                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                    _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
             }
             break;
@@ -520,8 +518,7 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
                 f._fut_arg = &zn->_tp._transport._raweth;
                 f._fut_fn = tasks[i];
                 if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
-                    _Z_ERROR_LOG(_Z_ERR_FAILED_TO_SPAWN_A_TASK);
-                    return _Z_ERR_FAILED_TO_SPAWN_A_TASK;
+                    _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
             }
             break;

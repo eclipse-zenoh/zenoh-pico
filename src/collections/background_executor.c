@@ -73,10 +73,14 @@ z_result_t _z_background_executor_inner_signal_stop(_z_background_executor_inner
 }
 
 z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut,
-                                              _z_fut_handle_t *handle) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
-    *handle = _z_executor_spawn(&be->_executor, fut);
-    _z_background_executor_inner_unlock_and_resume(be);
+                                              _z_fut_handle_t *handle, bool is_inner_call) {
+    if (is_inner_call) {
+        *handle = _z_executor_spawn(&be->_executor, fut);
+    } else {
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+        *handle = _z_executor_spawn(&be->_executor, fut);
+        _z_background_executor_inner_unlock_and_resume(be);
+    }
     return handle->is_valid ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
 
@@ -117,19 +121,22 @@ z_result_t _z_background_executor_init(_z_background_executor_t *be) {
     return ret;
 }
 
+static inline bool _is_called_from_executor(const _z_background_executor_t *be) {
+    _z_task_id_t current_task_id = _z_task_current_id();
+    _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
+    return _z_task_id_equal(&current_task_id, &executor_task_id);
+}
+
 z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *handle_out) {
+    _z_fut_handle_t dummy_handle;
+    if (handle_out == NULL) {
+        handle_out = &dummy_handle;
+    }
+    *handle_out = _z_fut_handle_null();
     if (_Z_RC_IS_NULL(&be->_inner)) {
-        if (handle_out != NULL) {
-            *handle_out = _z_fut_handle_null();
-        }
         return _Z_ERR_INVALID;
     }
-    if (handle_out != NULL) {
-        return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut, handle_out);
-    } else {
-        _z_fut_handle_t dummy_handle;
-        return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut, &dummy_handle);
-    }
+    return _z_background_executor_inner_spawn(_Z_RC_IN_VAL(&be->_inner), fut, handle_out, _is_called_from_executor(be));
 }
 
 z_result_t _z_background_executor_suspend(_z_background_executor_t *be) {
@@ -165,18 +172,27 @@ z_result_t _z_background_executor_get_fut_status(_z_background_executor_t *be, c
     if (_Z_RC_IS_NULL(&be->_inner)) {
         return _Z_ERR_INVALID;
     }
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
-    *status_out = _z_executor_get_fut_status(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
-    return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
+    if (_is_called_from_executor(be)) {
+        *status_out = _z_executor_get_fut_status(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
+        return _Z_RES_OK;
+    } else {
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
+        *status_out = _z_executor_get_fut_status(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
+        return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
+    }
 }
 
 z_result_t _z_background_executor_cancel_fut(_z_background_executor_t *be, const _z_fut_handle_t *handle) {
     if (_Z_RC_IS_NULL(&be->_inner)) {
         return _Z_ERR_INVALID;
     }
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
-    _z_executor_cancel_fut(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
-    return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
+    if (_is_called_from_executor(be)) {
+        return _z_executor_cancel_fut(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle) ? _Z_RES_OK : _Z_ERR_INVALID;
+    } else {
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(_Z_RC_IN_VAL(&be->_inner)));
+        _z_executor_cancel_fut(&_Z_RC_IN_VAL(&be->_inner)->_executor, handle);
+        return _z_background_executor_inner_unlock_and_resume(_Z_RC_IN_VAL(&be->_inner));
+    }
 }
 #else
 // to prevent "empty compilation unit" warning when multi-threading is disabled

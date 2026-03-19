@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/advanced_cache.h"
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/seqnumber.h"
+#include "zenoh-pico/session/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +59,8 @@ typedef struct _ze_advanced_publisher_state_t {
     ze_advanced_publisher_heartbeat_mode_t _heartbeat_mode;
     _z_session_weak_t _zn;
     z_owned_publisher_t _publisher;
-    uint32_t _state_publisher_task_id;
+    _z_fut_handle_t _state_publisher_task_handle;
+    uint64_t _heartbeat_period_ms;
     uint32_t _last_published_sn;
 } _ze_advanced_publisher_state_t;
 

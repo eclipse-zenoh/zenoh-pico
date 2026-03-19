@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_SESSION_QUERY_H
 #define ZENOH_PICO_SESSION_QUERY_H
 
+#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
@@ -23,6 +24,7 @@ extern "C" {
 #endif
 
 void _z_pending_query_process_timeout(_z_session_t *zn);
+_z_fut_fn_result_t _z_pending_query_process_timeout_task_fn(void *session_arg, _z_executor_t *executor);
 
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/

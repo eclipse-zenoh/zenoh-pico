@@ -22,12 +22,6 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
-#if Z_FEATURE_MULTI_THREAD == 1
-#include "zenoh-pico/collections/background_executor.h"
-#else
-#include "zenoh-pico/collections/executor.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -61,6 +61,13 @@ void _z_pending_query_process_timeout(_z_session_t *zn) {
     _z_session_mutex_unlock(zn);
 }
 
+_z_fut_fn_result_t _z_pending_query_process_timeout_task_fn(void *session_arg, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
+    _z_session_t *zn = (_z_session_t *)session_arg;
+    _z_pending_query_process_timeout(zn);
+    return _z_fut_fn_result_wake_up_after(1000);
+}
+
 /*------------------ Query ------------------*/
 /**
  * This function is unsafe because it operates in potentially concurrent data.

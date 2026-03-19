@@ -105,13 +105,6 @@ static void test_advanced_history(bool p2p) {
     ASSERT_OK(z_open(&s1, z_config_move(&c1), NULL));
     ASSERT_OK(z_open(&s2, z_config_move(&c2), NULL));
 
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s1), NULL));
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s2), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s1), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s2), NULL));
-    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(s1), NULL));
-    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(s2), NULL));
-
     ze_owned_advanced_publisher_t pub;
     ze_advanced_publisher_options_t pub_opts;
     ze_advanced_publisher_options_default(&pub_opts);
@@ -149,13 +142,6 @@ static void test_advanced_history(bool p2p) {
     ze_advanced_publisher_drop(z_move(pub));
     z_fifo_handler_sample_drop(z_move(handler));
 
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
-
     z_session_drop(z_session_move(&s1));
     z_session_drop(z_session_move(&s2));
 }
@@ -187,13 +173,6 @@ static void setup_two_peers_with_proxy(z_owned_session_t *s1, z_owned_session_t 
 
     ASSERT_OK(z_open(s1, z_config_move(&c1), NULL));
     ASSERT_OK(z_open(s2, z_config_move(&c2), NULL));
-
-    ASSERT_OK(zp_start_read_task(z_loan_mut(*s1), NULL));
-    ASSERT_OK(zp_start_read_task(z_loan_mut(*s2), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(*s1), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(*s2), NULL));
-    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(*s1), NULL));
-    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(*s2), NULL));
 }
 
 static void test_advanced_retransmission(void) {
@@ -257,13 +236,6 @@ static void test_advanced_retransmission(void) {
     z_drop(z_move(sub));
     z_drop(z_move(pub));
     z_drop(z_move(handler));
-
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
 
     z_drop(z_move(s1));
     z_drop(z_move(s2));
@@ -336,13 +308,6 @@ static void test_advanced_retransmission_periodic(void) {
     z_drop(z_move(pub));
     z_drop(z_move(handler));
 
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
-
     z_drop(z_move(s1));
     z_drop(z_move(s2));
 
@@ -410,13 +375,6 @@ static void test_advanced_retransmission_heartbeat(void) {
     z_drop(z_move(sub));
     z_drop(z_move(pub));
     z_drop(z_move(handler));
-
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
 
     z_drop(z_move(s1));
     z_drop(z_move(s2));
@@ -561,13 +519,6 @@ static void test_advanced_sample_miss(void) {
     z_drop(z_move(pub));
     z_drop(z_move(handler));
 
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
-
     z_drop(z_move(s1));
     z_drop(z_move(s2));
 
@@ -644,13 +595,6 @@ static void test_advanced_retransmission_sample_miss(void) {
     z_drop(z_move(pub));
     z_drop(z_move(handler));
 
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
-
     z_drop(z_move(s1));
     z_drop(z_move(s2));
 
@@ -716,13 +660,6 @@ static void test_advanced_late_joiner(void) {
     z_drop(z_move(pub));
     z_drop(z_move(handler));
 
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s2)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s1)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s2)));
-
     z_drop(z_move(s1));
     z_drop(z_move(s2));
 
@@ -745,10 +682,6 @@ static void test_advanced_local_pubsub(void) {
     ASSERT_OK(z_view_keyexpr_from_str(&k, expr));
 
     ASSERT_OK(z_open(&s, z_config_move(&c), NULL));
-
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s), NULL));
-    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(s), NULL));
 
     ze_owned_advanced_publisher_t pub;
     ze_advanced_publisher_options_t pub_opts;
@@ -781,10 +714,6 @@ static void test_advanced_local_pubsub(void) {
     ze_advanced_subscriber_drop(z_move(sub));
     ze_advanced_publisher_drop(z_move(pub));
     z_fifo_handler_sample_drop(z_move(handler));
-
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s)));
-    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s)));
 
     z_session_drop(z_session_move(&s));
 }

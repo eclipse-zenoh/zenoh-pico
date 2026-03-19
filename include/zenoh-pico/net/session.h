@@ -19,7 +19,6 @@
 
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
