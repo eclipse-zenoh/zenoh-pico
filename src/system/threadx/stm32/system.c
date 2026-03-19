@@ -105,6 +105,10 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
+_z_task_id_t _z_task_get_id(const _z_task_t *task) { return (TX_THREAD *)&(task->threadx_thread); }
+_z_task_id_t _z_task_current_id(void) { return tx_thread_identify(); }
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r) { return *l == *r; }
+
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) {
     UINT status = tx_mutex_create(m, TX_NULL, TX_INHERIT);

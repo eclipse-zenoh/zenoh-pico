@@ -145,6 +145,9 @@ z_result_t _z_task_detach(_z_task_t *task);
 z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_exit(void);
 void _z_task_free(_z_task_t **task);
+_z_task_id_t _z_task_get_id(const _z_task_t *task);
+_z_task_id_t _z_task_current_id(void);
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r);
 
 /**
  * Constructs a new task.

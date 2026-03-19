@@ -51,6 +51,7 @@ typedef struct {
     SemaphoreHandle_t sem;
     int waiters;
 } _z_condvar_t;
+typedef TaskHandle_t _z_task_id_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

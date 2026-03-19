@@ -124,6 +124,10 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
+_z_task_id_t _z_task_get_id(const _z_task_t *task) { return *task; }
+_z_task_id_t _z_task_current_id(void) { return pthread_self(); }
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r) { return pthread_equal(*l, *r) != 0; }
+
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, NULL)); }
 
