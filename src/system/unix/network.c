@@ -263,22 +263,17 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 #endif
         struct addrinfo *it = NULL;
         if (ret == _Z_RES_OK) {
+            ret = _Z_ERR_GENERIC;
             for (it = rep._iptcp; it != NULL; it = it->ai_next) {
-                int connect_result = connect(sock->_fd, it->ai_addr, it->ai_addrlen);
-                if (connect_result < 0) {
-                    printf("Trying to connect to TCP endpoint: %s\n", strerror(errno));
-                    if (it->ai_next == NULL) {
-                        _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                        ret = _Z_ERR_GENERIC;
-                        break;
-                    }
-                } else {
+                if (connect(sock->_fd, it->ai_addr, it->ai_addrlen) >= 0) {
+                    ret = _Z_RES_OK;
                     break;
                 }
             }
         }
 
         if (ret != _Z_RES_OK) {
+            _Z_ERROR_LOG(ret);
             close(sock->_fd);
             sock->_fd = -1;
         }
