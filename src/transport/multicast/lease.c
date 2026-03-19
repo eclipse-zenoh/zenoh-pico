@@ -176,6 +176,7 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
     while (curr_list != NULL) {
         _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_slist_value(curr_list);
         curr_peer->common._received = false;
+        curr_list = _z_transport_peer_multicast_slist_next(curr_list);
     }
     unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
@@ -214,11 +215,11 @@ _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t 
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
         return _z_fut_fn_result_wake_up_after(1000);
     }
-
     if (_zp_multicast_send_join(ztm) < 0) {
         _Z_INFO("Send join failed.");
         return _zp_multicast_failed_result(ztm, executor);
     } else {
+        ztm->_common._transmitted = true;
         return _z_fut_fn_result_wake_up_after(Z_JOIN_INTERVAL);
     }
 }

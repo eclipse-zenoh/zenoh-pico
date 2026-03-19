@@ -108,9 +108,6 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
     z_owned_session_t s1;
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
 
-    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
-
     z_owned_session_t s2;
     const z_loaned_session_t *sub_session = z_loan(s1);
     if (!local_subscriber) {
@@ -118,9 +115,6 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_config_default(&c2);
 
         assert_ok(z_open(&s2, z_config_move(&c2), NULL));
-
-        assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
-        assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
 
         sub_session = z_loan(s2);
     }
@@ -237,15 +231,9 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_drop(z_move(handler));
     }
 
-    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
-    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
-
     z_session_drop(z_session_move(&s1));
 
     if (!local_subscriber) {
-        assert_ok(zp_stop_read_task(z_loan_mut(s2)));
-        assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
-
         z_session_drop(z_session_move(&s2));
     }
 }
@@ -269,18 +257,12 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
     z_owned_session_t s1;
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
 
-    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
-
     z_owned_session_t s2 = s1;
     if (!local_queryable) {
         z_owned_config_t c2;
         z_config_default(&c2);
 
         assert_ok(z_open(&s2, z_config_move(&c2), NULL));
-
-        assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
-        assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
     }
 
     z_view_keyexpr_t ke;
