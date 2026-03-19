@@ -75,10 +75,6 @@ int main(int argc, char **argv) {
     }
     printf("OK\n");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan_mut(s), NULL);
-    zp_start_lease_task(z_loan_mut(s), NULL);
-
     while (1) {
         sleep(5);
         printf("Sending Query '%s'...\n", KEYEXPR);

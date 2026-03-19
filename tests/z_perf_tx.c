@@ -101,10 +101,6 @@ int main(int argc, char **argv) {
 
     z_publisher_put(z_loan(pub), z_move(payload), NULL);
 
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
-
     // Clean up
     z_drop(z_move(pub));
     z_drop(z_move(s));

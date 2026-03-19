@@ -44,19 +44,6 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    if (zp_start_read_task(z_loan_mut(session), NULL) < 0) {
-        printf("Unable to start read tasks\n");
-        z_drop(z_move(session));
-        return -1;
-    }
-    if (argc <= 1) {
-        if (zp_start_lease_task(z_loan_mut(session), NULL) < 0) {
-            printf("Unable to start lease tasks\n");
-            z_drop(z_move(session));
-            return -1;
-        }
-    }
-
     z_view_keyexpr_t pong;
     z_view_keyexpr_from_str_unchecked(&pong, "test/pong");
     z_owned_publisher_t pub;
