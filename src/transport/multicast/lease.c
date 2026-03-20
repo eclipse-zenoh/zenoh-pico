@@ -92,23 +92,6 @@ static _z_zint_t _z_get_minimum_lease(_z_transport_peer_multicast_slist_t *peers
     return ret;
 }
 
-static _z_zint_t _z_get_next_lease(_z_transport_peer_multicast_slist_t *peers) {
-    _z_zint_t ret = SIZE_MAX;
-
-    _z_transport_peer_multicast_slist_t *it = peers;
-    while (it != NULL) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(it);
-        _z_zint_t next_lease = val->_next_lease;
-        if (next_lease < ret) {
-            ret = next_lease;
-        }
-
-        it = _z_transport_peer_multicast_slist_next(it);
-    }
-
-    return ret;
-}
-
 static bool _zp_multicast_peer_is_expired(const _z_transport_peer_multicast_t *target,
                                           const _z_transport_peer_multicast_t *peer) {
     _ZP_UNUSED(target);
