@@ -18,6 +18,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 static inline z_result_t _z_mutex_rec_mt_lock(_z_mutex_rec_t *m) { return _z_mutex_rec_lock(m); }
 static inline z_result_t _z_mutex_rec_mt_unlock(_z_mutex_rec_t *m) { return _z_mutex_rec_unlock(m); }
@@ -31,4 +35,9 @@ static inline z_result_t _z_mutex_rec_mt_unlock(_z_mutex_rec_t *m) {
     return _Z_RES_OK;
 }
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

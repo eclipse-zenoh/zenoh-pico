@@ -66,7 +66,7 @@ z_result_t _z_link_recv_t_msg_cap_flow_datagram(const _z_link_t *zl, _z_zbuf_t *
     if (_z_link_recv_zbuf(zl, zbf, NULL) == SIZE_MAX) {
         return Z_ETIMEDOUT;
     } else {
-        return _Z_ERR_TRANSPORT_RX_FAILED;
+        return _Z_RES_OK;
     }
 }
 

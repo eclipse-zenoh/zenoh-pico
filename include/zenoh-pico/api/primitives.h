@@ -3306,10 +3306,7 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
  * Spins zenoh executor once, executing a single pending task (such as read, accept, connect, etc...) if any.
  *
  * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
- *
- * Return:
- *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to spin executor for.
  */
 #if Z_FEATURE_MULTI_THREAD == 0
 void zp_spin_once(const z_loaned_session_t *zs);
