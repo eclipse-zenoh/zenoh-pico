@@ -20,45 +20,6 @@
 #include "zenoh-pico/transport/unicast/accept.h"
 #include "zenoh-pico/utils/result.h"
 
-void _z_transport_common_stop_tasks(_z_transport_common_t *ztc, bool detach_tasks) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Clean up tasks
-    if (ztc->_read_task != NULL) {
-        ztc->_read_task_running = false;
-        if (detach_tasks) {
-            _z_task_detach(ztc->_read_task);
-        } else {
-            _z_task_join(ztc->_read_task);
-        }
-        _z_task_free(&ztc->_read_task);
-        ztc->_read_task = NULL;
-    }
-    if (ztc->_lease_task != NULL) {
-        ztc->_lease_task_running = false;
-        if (detach_tasks) {
-            _z_task_detach(ztc->_lease_task);
-        } else {
-            _z_task_join(ztc->_lease_task);
-        }
-        _z_task_free(&ztc->_lease_task);
-        ztc->_lease_task = NULL;
-    }
-    if (ztc->_accept_task != NULL) {
-        ztc->_accept_task_running = false;
-        if (detach_tasks) {
-            _z_task_detach(ztc->_accept_task);
-        } else {
-            _z_task_join(ztc->_accept_task);
-        }
-        _z_task_free(&ztc->_accept_task);
-        ztc->_accept_task = NULL;
-    }
-#else
-    _ZP_UNUSED(ztc);
-    _ZP_UNUSED(detach_tasks);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-}
-
 void _z_transport_common_clear(_z_transport_common_t *ztc) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up the mutexes

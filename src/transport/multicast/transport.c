@@ -106,15 +106,6 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         // Initialize peer list
         ztm->_peers = _z_transport_peer_multicast_slist_new();
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        // Tasks
-        ztm->_common._accept_task_running = false;
-        ztm->_common._read_task_running = false;
-        ztm->_common._read_task = NULL;
-        ztm->_common._lease_task_running = false;
-        ztm->_common._lease_task = NULL;
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
         ztm->_common._lease = Z_TRANSPORT_LEASE;
 
         // Notifiers
