@@ -379,7 +379,6 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
         // Update lease time (set as ms during)
         entry->_lease = msg->_lease;
-        entry->_next_lease = entry->_lease;
         entry->common._remote_zid = msg->_zid;
         entry->common._remote_whatami = msg->_whatami;
         entry->common._received = true;

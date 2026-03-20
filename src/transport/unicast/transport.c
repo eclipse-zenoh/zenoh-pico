@@ -42,15 +42,6 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_rx));
     _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
-
-    // Tasks
-    ztu->_common._accept_task_running = false;
-    ztu->_common._read_task_running = false;
-    ztu->_common._read_task = NULL;
-    ztu->_common._lease_task_running = false;
-    ztu->_common._accept_task = NULL;
-    ztu->_common._lease_task = NULL;
-
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers

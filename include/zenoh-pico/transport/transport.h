@@ -94,7 +94,6 @@ typedef struct {
     // SN numbers
     _z_zint_t _sn_res;
     volatile _z_zint_t _lease;
-    volatile _z_zint_t _next_lease;
 } _z_transport_peer_multicast_t;
 
 size_t _z_transport_peer_multicast_size(const _z_transport_peer_multicast_t *src);
@@ -165,13 +164,6 @@ typedef struct {
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
     _z_mutex_rec_t _mutex_peer;
-
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
-    _z_task_t *_accept_task;
-    volatile bool _accept_task_running;
-    volatile bool _read_task_running;
-    volatile bool _lease_task_running;
 #endif
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
