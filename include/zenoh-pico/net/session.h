@@ -147,8 +147,6 @@ typedef struct _z_session_t {
     // Information for session restoring
     _z_config_t _config;
     _z_network_message_slist_t *_declaration_cache;
-    z_task_attr_t *_lease_task_attr;
-    z_task_attr_t *_read_task_attr;
 #endif
 
     // Session subscriptions
