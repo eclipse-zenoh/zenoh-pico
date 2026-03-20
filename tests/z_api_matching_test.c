@@ -107,10 +107,8 @@ static bool _context_wait_none(context_t *c, unsigned long timeout_s) {
 static bool _context_wait_none(context_t *c, unsigned long timeout_s) {
     unsigned long tm = timeout_s * 1000;
     while (c->state == NONE && tm > 0) {
-        zp_read(c->s1, NULL);
-        zp_send_keep_alive(c->s1, NULL);
-        zp_read(c->s2, NULL);
-        zp_send_keep_alive(c->s2, NULL);
+        zp_spin_once(c->s1);
+        zp_spin_once(c->s2);
         z_sleep_ms(100);
         tm -= 100;
     }
@@ -124,10 +122,8 @@ static bool _context_wait_none(context_t *c, unsigned long timeout_s) {
 static bool _context_wait(context_t *c, context_state_t state, unsigned long timeout_s) {
     unsigned long tm = timeout_s * 1000;
     while (c->state == NONE && tm > 0) {
-        zp_read(c->s1, NULL);
-        zp_send_keep_alive(c->s1, NULL);
-        zp_read(c->s2, NULL);
-        zp_send_keep_alive(c->s2, NULL);
+        zp_spin_once(c->s1);
+        zp_spin_once(c->s2);
         z_sleep_ms(100);
         tm -= 100;
     }
@@ -385,10 +381,8 @@ static bool _check_publisher_status(z_owned_publisher_t *pub, z_loaned_session_t
         (void)s1;
         (void)s2;
 #else
-        zp_read(s1, NULL);
-        zp_send_keep_alive(s1, NULL);
-        zp_read(s2, NULL);
-        zp_send_keep_alive(s2, NULL);
+        zp_spin_once(s1);
+        zp_spin_once(s2);
 #endif
     }
     if (status.matching != expected) {
@@ -524,10 +518,8 @@ static bool _check_querier_status(z_owned_querier_t *querier, z_loaned_session_t
         (void)s1;
         (void)s2;
 #else
-        zp_read(s1, NULL);
-        zp_send_keep_alive(s1, NULL);
-        zp_read(s2, NULL);
-        zp_send_keep_alive(s2, NULL);
+        zp_spin_once(s1);
+        zp_spin_once(s2);
 #endif
         z_sleep_ms(100);
     }

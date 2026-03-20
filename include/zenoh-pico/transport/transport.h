@@ -160,8 +160,6 @@ typedef struct {
     volatile _z_zint_t _lease;
     volatile bool _transmitted;
 #if Z_FEATURE_MULTI_THREAD == 1
-    // TX and RX mutexes
-    _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
     _z_mutex_rec_t _mutex_peer;
 #endif
@@ -281,8 +279,6 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
     }
 }
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
-static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _z_mutex_lock(&ztc->_mutex_rx); }
-static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_rx); }
 static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) {
     (void)_z_mutex_rec_lock(&ztc->_mutex_peer);
 }
@@ -296,8 +292,6 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
     return _Z_RES_OK;
 }
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
-static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
-static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1

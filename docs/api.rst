@@ -1836,7 +1836,7 @@ Functions
 .. autocfunction:: primitives.h::zp_send_join_options_default
 .. autocfunction:: primitives.h::zp_send_join
   
-.. autocfunction:: primitives.h::zp_process_periodic_tasks
+.. autocfunction:: primitives.h::zp_spin_once
 
 Logging
 =======

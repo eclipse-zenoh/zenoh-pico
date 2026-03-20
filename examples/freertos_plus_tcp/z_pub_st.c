@@ -16,7 +16,7 @@
 
 #include "FreeRTOS.h"
 
-#if Z_FEATURE_PUBLICATION == 1
+#if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_MULTI_THREAD == 0
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
@@ -59,8 +59,6 @@ void app_main(void) {
         printf("Unable to declare publisher for key expression!\n");
         return;
     }
-    // Read received declaration
-    zp_read(z_loan(s), NULL);
 
     char *buf = (char *)pvPortMalloc(256);
     z_clock_t now = z_clock_now();
@@ -78,10 +76,8 @@ void app_main(void) {
 
             now = z_clock_now();
         }
-
-        zp_read(z_loan(s), NULL);
-        zp_send_keep_alive(z_loan(s), NULL);
-        zp_send_join(z_loan(s), NULL);
+        z_sleep_ms(50);
+        zp_spin_once(z_loan(s));
     }
 
     z_drop(z_move(pub));
@@ -90,6 +86,8 @@ void app_main(void) {
 }
 #else
 void app_main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_PUBLICATION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
 }
 #endif

@@ -58,14 +58,8 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     // Initialize the mutexes
     ret = _z_mutex_init(&ztm->_common._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztm->_common._mutex_rx);
-        if (ret == _Z_RES_OK) {
-            ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
-            if (ret != _Z_RES_OK) {
-                _z_mutex_drop(&ztm->_common._mutex_tx);
-                _z_mutex_drop(&ztm->_common._mutex_rx);
-            }
-        } else {
+        ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
+        if (ret != _Z_RES_OK) {
             _z_mutex_drop(&ztm->_common._mutex_tx);
         }
     }
@@ -86,7 +80,6 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 #if Z_FEATURE_MULTI_THREAD == 1
             _z_mutex_drop(&ztm->_common._mutex_tx);
-            _z_mutex_drop(&ztm->_common._mutex_rx);
             _z_mutex_rec_drop(&ztm->_common._mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

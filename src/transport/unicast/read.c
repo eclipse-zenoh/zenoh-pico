@@ -366,8 +366,12 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
             // TODO: suspend or finish the task and restart it when a new connection is established.
             return _z_fut_fn_result_wake_up_after(100);
         } else {
-            if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) == _Z_RES_OK &&
-                _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer);
+#else
+            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, NULL);
+#endif
+            if (wait_res == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
                 // TODO: Close transport on error. Probably we should just close the failed peer and
                 // initiate reconnection task
                 return _z_fut_fn_result_ready();

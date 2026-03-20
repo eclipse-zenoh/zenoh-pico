@@ -51,6 +51,7 @@ static inline z_result_t _z_runtime_cancel_fut(_z_runtime_t *runtime, _z_fut_han
     _z_executor_cancel_fut(runtime, handle);
     return _Z_RES_OK;
 }
+static inline void _z_runtime_spin_once(_z_runtime_t *runtime) { _z_executor_spin(runtime); }
 #endif
 
 #endif

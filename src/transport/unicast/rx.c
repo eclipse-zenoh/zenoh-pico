@@ -32,7 +32,6 @@
 z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
-    _z_transport_rx_mutex_lock(&ztu->_common);
     size_t to_read = 0;
     _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     do {
@@ -86,7 +85,6 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
             peer->common._received = true;
         }
     }
-    _z_transport_rx_mutex_unlock(&ztu->_common);
     return ret;
 }
 

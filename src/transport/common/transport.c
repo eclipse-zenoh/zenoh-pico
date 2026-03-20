@@ -24,7 +24,6 @@ void _z_transport_common_clear(_z_transport_common_t *ztc) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up the mutexes
     _z_mutex_drop(&ztc->_mutex_tx);
-    _z_mutex_drop(&ztc->_mutex_rx);
     _z_mutex_rec_drop(&ztc->_mutex_peer);
 #endif
     // Clean up the buffers

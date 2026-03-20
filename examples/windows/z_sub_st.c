@@ -21,7 +21,7 @@
 #define N 2147483647  // max int value by default
 int msg_nb = 0;
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_MULTI_THREAD == 0
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_view_string_t keystr;
@@ -71,9 +71,8 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (msg_nb < N) {
-        zp_read(z_loan(s), NULL);
-        zp_send_keep_alive(z_loan(s), NULL);
-        zp_send_join(z_loan(s), NULL);
+        z_sleep_ms(50);
+        zp_spin_once(z_loan(s));
     }
 
     z_drop(z_move(sub));
@@ -84,7 +83,9 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_SUBSCRIPTION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
     return -2;
 }
 #endif

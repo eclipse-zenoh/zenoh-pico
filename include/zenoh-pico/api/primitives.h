@@ -3302,22 +3302,20 @@ void zp_send_join_options_default(zp_send_join_options_t *options);
  */
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-
 /**
- * Process outstanding periodic tasks.
+ * Spins zenoh executor once, executing a single pending task (such as read, accept, connect, etc...) if any.
  *
  * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to process tasks for.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
  *
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
-z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs);
+#if Z_FEATURE_MULTI_THREAD == 0
+void zp_spin_once(const z_loaned_session_t *zs);
 #endif
+
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  * Gets the default reliability value (unstable).
  *

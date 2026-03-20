@@ -2554,6 +2554,10 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
 
+#if Z_FEATURE_MULTI_THREAD == 0
+void zp_spin_once(const z_loaned_session_t *zs) { _z_runtime_spin_once(&_Z_RC_IN_VAL(zs)->_runtime); }
+#endif
+
 #ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_reliability_default(void) { return Z_RELIABILITY_DEFAULT; }
 #endif
