@@ -397,6 +397,7 @@ z_result_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
     switch (zn->_tp._type) {
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
         case _Z_TRANSPORT_UNICAST_TYPE: {
             _z_fut_fn_t tasks[] = {_zp_unicast_keep_alive_task_fn, _zp_unicast_lease_task_fn, _zp_unicast_read_task_fn};
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
@@ -409,6 +410,7 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
             }
             break;
         }
+#endif
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
         case _Z_TRANSPORT_MULTICAST_TYPE: {
             _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
