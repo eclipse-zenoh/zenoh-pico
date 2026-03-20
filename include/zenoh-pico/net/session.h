@@ -30,7 +30,6 @@
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
-#include "zenoh-pico/utils/scheduler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -132,11 +131,6 @@ typedef struct _z_session_t {
     z_whatami_t _mode;
     _z_transport_t _tp;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    bool _read_task_should_run;
-    bool _lease_task_should_run;
-#endif
-
     // Zenoh PID
     _z_id_t _local_zid;
 
@@ -193,17 +187,6 @@ typedef struct _z_session_t {
     struct _z_write_filter_registration_t *_write_filters;
 #endif
 
-#if Z_FEATURE_PERIODIC_TASKS == 1 || Z_FEATURE_ADMIN_SPACE == 1 || Z_FEATURE_CONNECTIVITY == 1
-    // Periodic task scheduler
-#if Z_FEATURE_PERIODIC_TASKS == 1
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_task_t *_periodic_scheduler_task;
-    bool _periodic_task_should_run;
-    z_task_attr_t *_periodic_scheduler_task_attr;
-#endif
-    _zp_periodic_scheduler_t _periodic_scheduler;
-#endif
-
 #if Z_FEATURE_ADMIN_SPACE == 1
     // entity Id for admin space queryable (0 if not started)
     uint32_t _admin_space_queryable_id;
@@ -221,7 +204,6 @@ typedef struct _z_session_t {
     size_t _connectivity_next_listener_id;
     _z_connectivity_transport_listener_intmap_t _connectivity_transport_event_listeners;
     _z_connectivity_link_listener_intmap_t _connectivity_link_event_listeners;
-#endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;
     _z_atomic_bool_t _is_closed;
@@ -320,125 +302,6 @@ z_result_t _zp_send_keep_alive(_z_session_t *z);
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 z_result_t _zp_send_join(_z_session_t *z);
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-/**
- * Process periodic tasks.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_process_periodic_tasks(_z_session_t *z);
-
-/*
- * Register a periodic task with the sessions task scheduler.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- *     closure: The task to run periodically.
- *     period_ms: The period of the task in ms.
- *     id: Placeholder which will contain the ID of the task if successfully scheduled.
- * Returns:
- *     ``0`` in case of success, ``negative`` in case of failure.
- */
-z_result_t _zp_periodic_task_add(_z_session_t *z, _zp_closure_periodic_task_t *closure, uint64_t period_ms,
-                                 uint32_t *id);
-
-/*
- * Unregisters a periodic task with the sessions task scheduler.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- *     id: The ID of the task to unregister.
- * Returns:
- *     ``0`` in case of success, ``negative`` in case of failure.
- */
-z_result_t _zp_periodic_task_remove(_z_session_t *z, uint32_t id);
-#endif  // Z_FEATURE_PERIODIC_TASKS == 1
-#endif  // Z_FEATURE_UNSTABLE_API
-
-#if Z_FEATURE_MULTI_THREAD == 1
-/**
- * Start a separate task to read from the network and process the messages
- * as soon as they are received. Note that the task can be implemented in
- * form of thread, process, etc. and its implementation is platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the read task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_read_task(_z_session_t *z);
-
-/**
- * Start a separate task to handle the session lease. This task will send ``KeepAlive``
- * messages when needed and will close the session when the lease is expired. Note that
- * the task can be implemented in form of thread, process, etc. and its implementation
- * is platform-dependent.
- *
- * In case of a multicast transport, this task will also send periodic ``Join``
- * messages.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the lease task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_lease_task(_z_session_t *z);
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-
-/**
- * Start a separate task to handle periodic tasks. Note that the task can be
- * implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_periodic_scheduler_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the task to handle periodic tasks. This may result in stopping a thread
- * or a process depending on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
-#endif  // Z_FEATURE_PERIODIC_TASKS == 1
-#endif  // Z_FEATURE_UNSTABLE_API
-#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 z_result_t _zp_start_transport_tasks(_z_session_t *z);
 #if Z_FEATURE_CONNECTIVITY == 1

@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 z_result_t _z_read(_z_transport_t *zt, bool single_read);
-void *_zp_read_task(void *zt_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #ifdef __cplusplus
 }

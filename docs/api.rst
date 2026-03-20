@@ -1828,11 +1828,6 @@ Functions
 .. autocfunction:: primitives.h::zp_stop_lease_task
 .. autocfunction:: primitives.h::zp_lease_task_is_running
 
-.. autocfunction:: primitives.h::zp_task_periodic_scheduler_options_default
-.. autocfunction:: primitives.h::zp_start_periodic_scheduler_task
-.. autocfunction:: primitives.h::zp_stop_periodic_scheduler_task
-.. autocfunction:: primitives.h::zp_periodic_scheduler_task_is_running
-
 .. autocfunction:: primitives.h::zp_read_options_default
 .. autocfunction:: primitives.h::zp_read
 
