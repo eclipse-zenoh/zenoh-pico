@@ -102,9 +102,9 @@ void _z_task_free(_z_task_t** task) {
     *task = NULL;
 }
 
-_z_task_id_t _z_task_get_id(const _z_task_t* task) { return NULL; }
-_z_task_id_t _z_task_current_id(void) { return NULL; }
-bool _z_task_id_equal(const _z_task_id_t* l, const _z_task_id_t* r) { return true; }
+_z_task_id_t _z_task_get_id(const _z_task_t* task) { return furi_thread_get_id(*task); }
+_z_task_id_t _z_task_current_id(void) { return furi_thread_get_current_id(); }
+bool _z_task_id_equal(const _z_task_id_t* l, const _z_task_id_t* r) { return *l == *r; }
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t* m) {
     if (m == NULL) {
