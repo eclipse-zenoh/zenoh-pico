@@ -17,13 +17,14 @@ static z_result_t _z_tcp_lwip_endpoint_init(_z_sys_net_endpoint_t *ep, const cha
     z_result_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
+    ep->_iptcp = NULL;
     (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) != 0) {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     } else if (ep->_iptcp != NULL && ep->_iptcp->ai_addr != NULL) {
