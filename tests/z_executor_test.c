@@ -76,6 +76,25 @@ static void destroy_fn(void *arg) {
     a->destroyed = true;
 }
 
+// Suspends on first call; caller must resume it externally; finishes on second call.
+static _z_fut_fn_result_t fn_suspend_once(void *arg, _z_executor_t *ex) {
+    (void)ex;
+    test_arg_t *a = (test_arg_t *)arg;
+    a->call_count++;
+    if (a->call_count == 1) {
+        return _z_fut_fn_result_suspend();
+    }
+    return _z_fut_fn_result_ready();
+}
+
+// Suspends indefinitely (never returns READY on its own).
+static _z_fut_fn_result_t fn_suspend_forever(void *arg, _z_executor_t *ex) {
+    (void)ex;
+    test_arg_t *a = (test_arg_t *)arg;
+    a->call_count++;
+    return _z_fut_fn_result_suspend();
+}
+
 // Drain the executor until NO_TASKS or max_spins reached; return number of spins
 static int drain(_z_executor_t *ex, int max_spins) {
     int spins = 0;
@@ -289,6 +308,139 @@ static void test_destroy_drains_pending(void) {
     }
 }
 
+// ─── Tests: suspend / resume ─────────────────────────────────────────────────
+
+// A task returning SUSPENDED is not run again until explicitly resumed.
+static void test_suspend_and_resume(void) {
+    printf("Test: suspended task is skipped until resumed\n");
+    _z_executor_t ex = _z_executor_new();
+    test_arg_t arg = {0};
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_suspend_once, destroy_fn);
+    _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
+    assert(h.is_valid);
+
+    // First spin: task runs and suspends — counts as EXECUTED_TASK.
+    _z_executor_spin_result_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    assert(arg.call_count == 1);
+    assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_SUSPENDED);
+
+    // Additional spins do nothing — task is still suspended.
+    r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(arg.call_count == 1);  // body must not have run again
+
+    // Resume: task becomes runnable again.
+    assert(_z_executor_resume_suspended_fut(&ex, &h));
+    assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
+
+    // Next spin: task runs and finishes.
+    r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    assert(arg.call_count == 2);
+    assert(arg.destroyed == true);
+    assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
+
+    r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+
+    _z_executor_destroy(&ex);
+}
+
+// Resuming a task that is not suspended is a safe no-op.
+static void test_resume_non_suspended_is_noop(void) {
+    printf("Test: resume on non-suspended task is a no-op\n");
+    _z_executor_t ex = _z_executor_new();
+    test_arg_t arg = {0};
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
+    assert(h.is_valid);
+
+    // Task is RUNNING (not yet executed), resume must be a no-op.
+    assert(!_z_executor_resume_suspended_fut(&ex, &h));
+
+    drain(&ex, 10);
+    assert(arg.call_count == 1);
+
+    // Task is now gone (READY); resume must be a no-op.
+    assert(!_z_executor_resume_suspended_fut(&ex, &h));
+
+    _z_executor_destroy(&ex);
+}
+
+// A suspended task can be cancelled; its destroy_fn is still called.
+static void test_cancel_suspended(void) {
+    printf("Test: cancel on suspended task calls destroy_fn\n");
+    _z_executor_t ex = _z_executor_new();
+    test_arg_t arg = {0};
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_suspend_forever, destroy_fn);
+    _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
+    assert(h.is_valid);
+
+    // Run once: task suspends.
+    _z_executor_spin(&ex);
+    assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_SUSPENDED);
+    assert(arg.destroyed == false);
+
+    // Cancel while suspended.
+    assert(_z_executor_cancel_fut(&ex, &h));
+    assert(arg.destroyed == true);
+    assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
+
+    // Executor is now empty.
+    _z_executor_spin_result_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+
+    _z_executor_destroy(&ex);
+}
+
+// Suspend does not starve other ready tasks: they run while one task is suspended.
+static void test_other_tasks_run_while_suspended(void) {
+    printf("Test: other tasks run while one task is suspended\n");
+    _z_executor_t ex = _z_executor_new();
+    test_arg_t suspended_arg = {0};
+    test_arg_t other_arg = {0};
+
+    _z_fut_t suspended_fut = _z_fut_new(&suspended_arg, fn_suspend_once, NULL);
+    _z_fut_handle_t suspended_h = _z_executor_spawn(&ex, &suspended_fut);
+
+    _z_fut_t other_fut = _z_fut_new(&other_arg, fn_finish, destroy_fn);
+    _z_executor_spawn(&ex, &other_fut);
+
+    // Spin until suspended task suspends: the other task should also get a turn.
+    drain(&ex, 10);
+
+    assert(suspended_arg.call_count == 1);
+    assert(_z_executor_get_fut_status(&ex, &suspended_h) == _Z_FUT_STATUS_SUSPENDED);
+    assert(other_arg.call_count == 1);  // other_fut must have run
+    assert(other_arg.destroyed == true);
+
+    _z_executor_resume_suspended_fut(&ex, &suspended_h);
+    drain(&ex, 10);
+    assert(suspended_arg.call_count == 2);
+
+    _z_executor_destroy(&ex);
+}
+
+// destroy is called for suspended tasks that are still pending when executor is torn down.
+static void test_destroy_cleans_up_suspended(void) {
+    printf("Test: _z_executor_destroy calls destroy_fn on suspended futures\n");
+    _z_executor_t ex = _z_executor_new();
+    test_arg_t arg = {0};
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_suspend_forever, destroy_fn);
+    _z_executor_spawn(&ex, &fut);
+
+    _z_executor_spin(&ex);  // task suspends
+    assert(arg.destroyed == false);
+
+    _z_executor_destroy(&ex);
+    assert(arg.destroyed == true);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -301,6 +453,11 @@ int main(void) {
     test_task_spawns_child();
     test_multiple_tasks();
     test_destroy_drains_pending();
+    test_suspend_and_resume();
+    test_resume_non_suspended_is_noop();
+    test_cancel_suspended();
+    test_other_tasks_run_while_suspended();
+    test_destroy_cleans_up_suspended();
     printf("All executor tests passed.\n");
     return 0;
 }

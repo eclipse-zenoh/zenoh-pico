@@ -30,6 +30,7 @@ typedef enum _z_fut_status_t {
     _Z_FUT_STATUS_RUNNING = 0,
     _Z_FUT_STATUS_READY = 1,
     _Z_FUT_STATUS_SLEEPING = 2,
+    _Z_FUT_STATUS_SUSPENDED = 3,
 } _z_fut_status_t;
 
 typedef struct _z_fut_handle_t {
@@ -58,6 +59,12 @@ static inline _z_fut_fn_result_t _z_fut_fn_result_ready(void) {
 static inline _z_fut_fn_result_t _z_fut_fn_result_continue(void) {
     _z_fut_fn_result_t result;
     result._status = _Z_FUT_STATUS_RUNNING;
+    return result;
+}
+
+static inline _z_fut_fn_result_t _z_fut_fn_result_suspend(void) {
+    _z_fut_fn_result_t result;
+    result._status = _Z_FUT_STATUS_SUSPENDED;
     return result;
 }
 
@@ -131,6 +138,7 @@ static inline _z_fut_schedule_t _z_fut_schedule_ready(void) { return (uint64_t)_
 static inline _z_fut_schedule_t _z_fut_schedule_sleeping(uint64_t wake_up_time_ms) {
     return (uint64_t)_Z_FUT_STATUS_SLEEPING | (wake_up_time_ms << _Z_FUT_SCHEDULE_TIME_SHIFT);
 }
+static inline _z_fut_schedule_t _z_fut_schedule_suspended(void) { return (uint64_t)_Z_FUT_STATUS_SUSPENDED; }
 
 typedef struct _z_fut_data_t {
     _z_fut_t _fut;
@@ -242,6 +250,7 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor);
 
 _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const _z_fut_handle_t *handle);
 bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *handle);
+bool _z_executor_resume_suspended_fut(_z_executor_t *executor, const _z_fut_handle_t *handle);
 
 #ifdef __cplusplus
 }

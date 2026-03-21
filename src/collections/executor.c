@@ -89,8 +89,9 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
         if (fut_data->_fut._fut_fn == NULL) {  // idle task, just skip it and check the next task.
             _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL);  // Remove the idle task from the task pool
             continue;
+        } else if (_z_fut_schedule_get_status(fut_data->_schedule) != _Z_FUT_STATUS_SUSPENDED) {
+            break;
         }
-        break;
     }
 
     _z_fut_fn_result_t fn_result = fut_data->_fut._fut_fn(fut_data->_fut._fut_arg, executor);
@@ -105,9 +106,13 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
             _z_fut_schedule_sleeping((uint64_t)zp_clock_elapsed_ms_since(&fn_result._wake_up_time, &executor->_epoch));
         // can't fail since we have enough capacity for all tasks in the hashmap
         _z_sleeping_fut_pqueue_push(&executor->_sleeping_tasks, &fut_idx);
-    } else {
+    } else if (fn_result._status == _Z_FUT_STATUS_READY) {
         // The task is ready, we should destroy it to free the resource.
         _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL);
+    } else if (fn_result._status == _Z_FUT_STATUS_SUSPENDED) {
+        // The task is suspended, we should keep it in the task pool with the suspended status, and it will be skipped
+        // in the next spin until it's resumed by external events.
+        fut_data->_schedule = _z_fut_schedule_suspended();
     }
     return result;
 }
@@ -135,6 +140,26 @@ bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *hand
     // We leave the cancelled task in the NULL state, to let executor remove it while spinning,
     // since we don't want to break the sleeping/ready task queue order by removing the cancelled task immediately.
     _z_fut_data_destroy(fut);
+
+    return true;
+}
+
+bool _z_executor_resume_suspended_fut(_z_executor_t *executor, const _z_fut_handle_t *handle) {
+    if (!handle->is_valid) {
+        return false;
+    }
+    _z_fut_data_hmap_index_t fut_idx = _z_fut_data_hmap_get_idx(&executor->_tasks, &handle->_id);
+    if (!_z_fut_data_hmap_index_valid(fut_idx)) {
+        return false;
+    }
+    _z_fut_data_t *fut = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;
+    if (_z_fut_schedule_get_status(fut->_schedule) != _Z_FUT_STATUS_SUSPENDED) {
+        return false;
+    }
+    // Mark the suspended task as ready, and re-enqueue it to the ready task queue.
+    fut->_schedule = _z_fut_schedule_ready();
+    // can't fail since we have enough capacity for all tasks in the hashmap
+    _z_fut_data_hmap_index_deque_push_back(&executor->_ready_tasks, &fut_idx);
 
     return true;
 }

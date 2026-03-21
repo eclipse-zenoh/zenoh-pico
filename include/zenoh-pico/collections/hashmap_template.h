@@ -196,21 +196,34 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_HASHMAP_TEM
     map->_free_head = idx;
 }
 
-// ── get ───────────────────────────────────────────────────────────────────────
-// Returns a pointer to the value for key, or NULL if not found.
+// ── get_idx ──────────────────────────────────────────────────────────────────
+// Returns an index of the node for key, or INDEX_NONE if not found.
 
-static inline _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
-                                                     get)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
-                                                          const _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+static inline _ZP_HASHMAP_TEMPLATE_INDEX_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
+                                                      get_idx)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
+                                                               const _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key) {
     _ZP_HASHMAP_TEMPLATE_INDEX_TYPE b = (_ZP_HASHMAP_TEMPLATE_INDEX_TYPE)(_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) %
                                                                           _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT);
     _ZP_HASHMAP_TEMPLATE_INDEX_TYPE idx = map->_buckets[b];
     while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
         if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
-            return &n->val;
+            return idx;
         }
         idx = map->_next[idx];
+    }
+    return _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
+}
+
+// ── get ───────────────────────────────────────────────────────────────────────
+// Returns a pointer to the value for key, or NULL if not found.
+
+static inline _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
+                                                     get)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
+                                                          const _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+    _ZP_HASHMAP_TEMPLATE_INDEX_TYPE idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_idx)(map, key);
+    if (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
+        return &map->_pool[idx].val;
     }
     return NULL;
 }
@@ -232,15 +245,14 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, is_empty)(const _ZP_HASHMA
     return map->_size == 0;
 }
 
-// ── index_valid / node_at ─────────────────────────────────────────────────────
+// ── index_valid ──────────────────────────────────────────────────────────────
 // index_valid: returns true when idx is a live node index (not the sentinel).
-// node_at:     converts a valid index to a pointer to its node.
-//              Behaviour is undefined if idx is INDEX_NONE.
-
 static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, index_valid)(_ZP_HASHMAP_TEMPLATE_INDEX_TYPE idx) {
     return idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
 }
-
+// ── node_at ──────────────────────────────────────────────────────────────────
+// Converts a valid index to a pointer to its node.
+// Behaviour is undefined if idx is INDEX_NONE.
 static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
                                                       node_at)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
                                                                _ZP_HASHMAP_TEMPLATE_INDEX_TYPE idx) {
