@@ -131,7 +131,7 @@ static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
 #define _ZP_EXECUTOR_MAX_NUM_FUTURES 16
-#define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT 24  // 0.75 load factor with 16 elements
+#define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT (_ZP_EXECUTOR_MAX_NUM_FUTURES * 3 / 2)  // 0.66 load factor
 
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE size_t
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
@@ -143,18 +143,17 @@ static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key
 #define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME _z_fut_data_move
 #include "zenoh-pico/collections/hashmap_template.h"
 
-#define _ZP_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_node_t *
-#define _ZP_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_node_ptr_deque
+#define _ZP_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
 #define _ZP_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
 #include "zenoh-pico/collections/deque_template.h"
 
-typedef struct _z_sleeping_fut_data_ptr_t {
-    _z_fut_data_hmap_node_t *_fut;
+typedef struct _z_sleeping_fut_data_t {
+    _z_fut_data_hmap_index_t _fut_idx;
     unsigned long _wake_up_time_ms;
-} _z_sleeping_fut_data_ptr_t;
+} _z_sleeping_fut_data_t;
 
-static inline int _z_sleeping_fut_data_ptr_cmp(const _z_sleeping_fut_data_ptr_t *a,
-                                               const _z_sleeping_fut_data_ptr_t *b) {
+static inline int _z_sleeping_fut_data_cmp(const _z_sleeping_fut_data_t *a, const _z_sleeping_fut_data_t *b) {
     if (a->_wake_up_time_ms < b->_wake_up_time_ms) {
         return -1;
     } else if (a->_wake_up_time_ms > b->_wake_up_time_ms) {
@@ -164,23 +163,23 @@ static inline int _z_sleeping_fut_data_ptr_cmp(const _z_sleeping_fut_data_ptr_t 
     }
 }
 
-#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_sleeping_fut_data_ptr_t
-#define _ZP_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_data_ptr_pqueue
-#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_data_ptr_cmp
+#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_sleeping_fut_data_t
+#define _ZP_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_data_pqueue
+#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_data_cmp
 #define _ZP_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
 #include "zenoh-pico/collections/pqueue_template.h"
 
 typedef struct _z_executor_t {
-    _z_fut_data_hmap_node_ptr_deque_t _ready_tasks;
-    _z_sleeping_fut_data_ptr_pqueue_t _sleeping_tasks;
+    _z_fut_data_hmap_index_deque_t _ready_tasks;
+    _z_sleeping_fut_data_pqueue_t _sleeping_tasks;
     _z_fut_data_hmap_t _tasks;
     z_clock_t _epoch;
     size_t _next_fut_id;
 } _z_executor_t;
 
 static inline void _z_executor_null(_z_executor_t *executor) {
-    executor->_ready_tasks = _z_fut_data_hmap_node_ptr_deque_new();
-    executor->_sleeping_tasks = _z_sleeping_fut_data_ptr_pqueue_new();
+    executor->_ready_tasks = _z_fut_data_hmap_index_deque_new();
+    executor->_sleeping_tasks = _z_sleeping_fut_data_pqueue_new();
     executor->_tasks = _z_fut_data_hmap_new();
     executor->_next_fut_id = 0;
 }
@@ -197,8 +196,8 @@ static inline _z_executor_t _z_executor_new(void) {
 }
 
 static inline void _z_executor_destroy(_z_executor_t *executor) {
-    _z_fut_data_hmap_node_ptr_deque_destroy(&executor->_ready_tasks);
-    _z_sleeping_fut_data_ptr_pqueue_destroy(&executor->_sleeping_tasks);
+    _z_fut_data_hmap_index_deque_destroy(&executor->_ready_tasks);
+    _z_sleeping_fut_data_pqueue_destroy(&executor->_sleeping_tasks);
     _z_fut_data_hmap_destroy(&executor->_tasks);
 }
 
