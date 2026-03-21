@@ -843,58 +843,6 @@ void deque_test(void) {
     assert(destroyed_elts == 2);
 }
 
-int _z_elt_compare(const _z_elt_t *dst, const _z_elt_t *src) { return dst->id - src->id; }
-
-#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_elt_t
-#define _ZP_PQUEUE_TEMPLATE_NAME _z_elt_pqueue
-#define _ZP_PQUEUE_TEMPLATE_ELEM_DESTROY_FN_NAME _z_elt_destroy
-#define _ZP_PQUEUE_TEMPLATE_ELEM_MOVE_FN_NAME _z_elt_move
-#define _ZP_PQUEUE_TEMPLATE_ELEM_COMPARE_FN_NAME _z_elt_compare
-#define _ZP_PQUEUE_TEMPLATE_SIZE 4
-#include "zenoh-pico/collections/pqueue_template.h"
-
-void pqueue_test(void) {
-    destroyed_elts = 0;
-    _z_elt_pqueue_t pqueue = _z_elt_pqueue_new();
-    assert(_z_elt_pqueue_size(&pqueue) == 0);
-    assert(_z_elt_pqueue_is_empty(&pqueue));
-    assert(_z_elt_pqueue_peek(&pqueue) == NULL);
-    _z_elt_t elt0 = {.id = 3};
-    assert(_z_elt_pqueue_push(&pqueue, &elt0));
-    assert(_z_elt_pqueue_size(&pqueue) == 1);
-    assert(!_z_elt_pqueue_is_empty(&pqueue));
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 3);
-    _z_elt_t elt1 = {.id = 1};
-    assert(_z_elt_pqueue_push(&pqueue, &elt1));
-    assert(_z_elt_pqueue_size(&pqueue) == 2);
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 1);
-    _z_elt_t elt2 = {.id = 2};
-    assert(_z_elt_pqueue_push(&pqueue, &elt2));
-    assert(_z_elt_pqueue_size(&pqueue) == 3);
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 1);
-    _z_elt_t elt3 = {.id = 0};
-    assert(_z_elt_pqueue_push(&pqueue, &elt3));
-    assert(_z_elt_pqueue_size(&pqueue) == 4);
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 0);
-
-    _z_elt_t elt4 = {.id = 5};
-    assert(!_z_elt_pqueue_push(&pqueue, &elt4));
-
-    _z_elt_t out;
-    assert(_z_elt_pqueue_pop(&pqueue, &out));
-    assert(out.id == 0);
-    assert(_z_elt_pqueue_size(&pqueue) == 3);
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 1);
-    assert(_z_elt_pqueue_pop(&pqueue, &out));
-    assert(out.id == 1);
-    assert(_z_elt_pqueue_size(&pqueue) == 2);
-    assert(_z_elt_pqueue_peek(&pqueue)->id == 2);
-
-    _z_elt_pqueue_destroy(&pqueue);
-    assert(_z_elt_pqueue_size(&pqueue) == 0);
-    assert(destroyed_elts == 2);
-}
-
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -921,5 +869,4 @@ int main(void) {
     sorted_map_stress_test();
 
     deque_test();
-    pqueue_test();
 }

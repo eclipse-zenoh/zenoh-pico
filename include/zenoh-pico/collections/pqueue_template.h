@@ -22,6 +22,14 @@
 // (elem_a, elem_b) -> int
 //   should return <0 if a has higher priority than b, 0 if equal, >0 if b has higher priority than a
 //   (i.e. min-priority queue by default: smallest element is at the top)
+//
+// Optional context support:
+//   _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE: the type of an optional context passed to the compare function.
+//       When defined, the compare macro signature becomes (elem_a, elem_b, ctx_ptr) where ctx_ptr is of type
+//       _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE *.  The context is stored inside the queue struct and supplied to every
+//       sift_up / sift_down call automatically.  Use new_with_ctx(ctx) to initialise it; new() zero-initialises it.
+//       When not defined (the default), the compare macro keeps its original (elem_a, elem_b) signature and no
+//       context is stored.
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -50,16 +58,52 @@
     _ZP_PQUEUE_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
 #endif
 
+// ── Context support ───────────────────────────────────────────────────────────
+// Internally the template always calls _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(a, b, ctx_ptr).
+// When _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE is defined the user-supplied CMP_FN receives the pointer;
+// otherwise we define the internal macro to call the 2-argument CMP_FN and ignore ctx.
+
+#ifdef _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE
+// Context-aware path: user compare macro is (elem_a, elem_b, ctx_ptr)
+#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(a, b, pqueue) \
+    _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME((a), (b), (pqueue->_cmp_ctx))
+#else
+// Context-free path: user compare macro is (elem_a, elem_b); ctx ignored
+#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(a, b, pqueue) _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME((a), (b))
+#endif
+
 #define _ZP_PQUEUE_TEMPLATE_TYPE _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, t)
 typedef struct _ZP_PQUEUE_TEMPLATE_TYPE {
     _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _buffer[_ZP_PQUEUE_TEMPLATE_SIZE];
     size_t _size;
+#ifdef _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE
+    _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE *_cmp_ctx;
+#endif
 } _ZP_PQUEUE_TEMPLATE_TYPE;
 
 static inline _ZP_PQUEUE_TEMPLATE_TYPE _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, new)(void) {
     _ZP_PQUEUE_TEMPLATE_TYPE pqueue = {0};
     return pqueue;
 }
+
+#ifdef _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE
+// new_with_ctx: initialise the queue and store a context pointer for comparisons.
+static inline _ZP_PQUEUE_TEMPLATE_TYPE _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME,
+                                               new_with_ctx)(_ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE *ctx) {
+    _ZP_PQUEUE_TEMPLATE_TYPE pqueue = {0};
+    pqueue._cmp_ctx = ctx;
+    return pqueue;
+}
+// set_ctx: overwrite the context pointer in an existing queue.
+// This is useful if the context needs to be updated after the queue is created (for example in case of move of
+// self-referencing structs), or if new() was used to create a zero-initialised queue and the context pointer needs to
+// be set later.
+static inline void _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, set_ctx)(_ZP_PQUEUE_TEMPLATE_TYPE *pqueue,
+                                                              _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE *ctx) {
+    pqueue->_cmp_ctx = ctx;
+}
+#endif
+
 static inline void _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, destroy)(_ZP_PQUEUE_TEMPLATE_TYPE *pqueue) {
     for (size_t i = 0; i < pqueue->_size; i++) {
         _ZP_PQUEUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&pqueue->_buffer[i]);
@@ -81,7 +125,7 @@ static inline _ZP_PQUEUE_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, p
 static inline void _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, sift_up)(_ZP_PQUEUE_TEMPLATE_TYPE *pqueue, size_t i) {
     while (i > 0) {
         size_t parent = (i - 1) / 2;
-        if (_ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME(&pqueue->_buffer[i], &pqueue->_buffer[parent]) < 0) {
+        if (_ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(&pqueue->_buffer[i], &pqueue->_buffer[parent], pqueue) < 0) {
             _ZP_PQUEUE_TEMPLATE_ELEM_TYPE tmp;
             _ZP_PQUEUE_TEMPLATE_ELEM_MOVE_FN_NAME(&tmp, &pqueue->_buffer[parent]);
             _ZP_PQUEUE_TEMPLATE_ELEM_MOVE_FN_NAME(&pqueue->_buffer[parent], &pqueue->_buffer[i]);
@@ -98,11 +142,11 @@ static inline void _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, sift_down)(_ZP_PQUEUE_TEMPL
         size_t right = 2 * i + 2;
         size_t best = i;
         if (left < pqueue->_size &&
-            _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME(&pqueue->_buffer[left], &pqueue->_buffer[best]) < 0) {
+            _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(&pqueue->_buffer[left], &pqueue->_buffer[best], pqueue) < 0) {
             best = left;
         }
         if (right < pqueue->_size &&
-            _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME(&pqueue->_buffer[right], &pqueue->_buffer[best]) < 0) {
+            _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL(&pqueue->_buffer[right], &pqueue->_buffer[best], pqueue) < 0) {
             best = right;
         }
         if (best == i) {
@@ -146,3 +190,7 @@ static inline bool _ZP_CAT(_ZP_PQUEUE_TEMPLATE_NAME, pop)(_ZP_PQUEUE_TEMPLATE_TY
 #undef _ZP_PQUEUE_TEMPLATE_ELEM_MOVE_FN_NAME
 #undef _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME
 #undef _ZP_PQUEUE_TEMPLATE_TYPE
+#ifdef _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE
+#undef _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE
+#endif
+#undef _ZP_PQUEUE_TEMPLATE_ELEM_CMP_INTERNAL
