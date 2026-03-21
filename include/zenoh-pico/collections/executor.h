@@ -16,6 +16,7 @@
 #define ZENOH_PICO_COLLECTIONS_EXECUTOR_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/refcount.h"
@@ -110,27 +111,46 @@ static inline _z_fut_t _z_fut_null(void) { return _z_fut_new(NULL, NULL, NULL); 
 
 static inline bool _z_fut_is_null(const _z_fut_t *fut) { return fut->_fut_fn == NULL; }
 
+// _z_fut_schedule_t packs status (bits [7:0]) and wake-up time in ms (bits [63:8]) into a single uint64_t.
+// The wake-up time is only meaningful when status == _Z_FUT_STATUS_SLEEPING.
+// This gives a maximum schedulable wake-up offset of 2^56 ms (~2.28 billion years) from the executor epoch.
+typedef uint64_t _z_fut_schedule_t;
+
+#define _Z_FUT_SCHEDULE_STATUS_MASK ((uint64_t)0xFFu)
+#define _Z_FUT_SCHEDULE_TIME_SHIFT 8u
+
+static inline _z_fut_status_t _z_fut_schedule_get_status(const _z_fut_schedule_t s) {
+    return (_z_fut_status_t)(s & _Z_FUT_SCHEDULE_STATUS_MASK);
+}
+static inline uint64_t _z_fut_schedule_get_wake_up_time_ms(const _z_fut_schedule_t s) {
+    return s >> _Z_FUT_SCHEDULE_TIME_SHIFT;
+}
+
+static inline _z_fut_schedule_t _z_fut_schedule_running(void) { return (uint64_t)_Z_FUT_STATUS_RUNNING; }
+static inline _z_fut_schedule_t _z_fut_schedule_ready(void) { return (uint64_t)_Z_FUT_STATUS_READY; }
+static inline _z_fut_schedule_t _z_fut_schedule_sleeping(uint64_t wake_up_time_ms) {
+    return (uint64_t)_Z_FUT_STATUS_SLEEPING | (wake_up_time_ms << _Z_FUT_SCHEDULE_TIME_SHIFT);
+}
+
 typedef struct _z_fut_data_t {
     _z_fut_t _fut;
-    _z_fut_status_t _status;
+    _z_fut_schedule_t _schedule;
 } _z_fut_data_t;
 
 static inline void _z_fut_data_destroy(_z_fut_data_t *data) {
     _z_fut_destroy(&data->_fut);
-    data->_status = _Z_FUT_STATUS_READY;  // Reset status to ready after destroy
+    data->_schedule = _z_fut_schedule_ready();  // Reset status to ready after destroy
 }
 
 static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
     _z_fut_move(&dst->_fut, &src->_fut);
-    dst->_status = src->_status;
-
-    // Clear source
-    src->_status = _Z_FUT_STATUS_READY;
+    dst->_schedule = src->_schedule;
+    src->_schedule = _z_fut_schedule_ready();
 }
 
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
-#define _ZP_EXECUTOR_MAX_NUM_FUTURES 16
+#define _ZP_EXECUTOR_MAX_NUM_FUTURES 64
 #define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT (_ZP_EXECUTOR_MAX_NUM_FUTURES * 3 / 2)  // 0.66 load factor
 
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE size_t
@@ -148,30 +168,29 @@ static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key
 #define _ZP_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
 #include "zenoh-pico/collections/deque_template.h"
 
-typedef struct _z_sleeping_fut_data_t {
-    _z_fut_data_hmap_index_t _fut_idx;
-    unsigned long _wake_up_time_ms;
-} _z_sleeping_fut_data_t;
-
-static inline int _z_sleeping_fut_data_cmp(const _z_sleeping_fut_data_t *a, const _z_sleeping_fut_data_t *b) {
-    if (a->_wake_up_time_ms < b->_wake_up_time_ms) {
-        return -1;
-    } else if (a->_wake_up_time_ms > b->_wake_up_time_ms) {
-        return 1;
-    } else {
-        return 0;
-    }
+// Compare two sleeping-task indices by their wake-up time stored in the hashmap.
+// The context is a pointer to the task hashmap, which provides the wake-up times.
+static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_index_t *a, const _z_fut_data_hmap_index_t *b,
+                                          const _z_fut_data_hmap_t *tasks) {
+    uint64_t ta =
+        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_node_at((_z_fut_data_hmap_t *)tasks, *a)->val._schedule);
+    uint64_t tb =
+        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_node_at((_z_fut_data_hmap_t *)tasks, *b)->val._schedule);
+    if (ta < tb) return -1;
+    if (ta > tb) return 1;
+    return 0;
 }
 
-#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_sleeping_fut_data_t
-#define _ZP_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_data_pqueue
-#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_data_cmp
+#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
+#define _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
+#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_idx_cmp
 #define _ZP_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
 #include "zenoh-pico/collections/pqueue_template.h"
 
 typedef struct _z_executor_t {
     _z_fut_data_hmap_index_deque_t _ready_tasks;
-    _z_sleeping_fut_data_pqueue_t _sleeping_tasks;
+    _z_sleeping_fut_pqueue_t _sleeping_tasks;
     _z_fut_data_hmap_t _tasks;
     z_clock_t _epoch;
     size_t _next_fut_id;
@@ -179,9 +198,11 @@ typedef struct _z_executor_t {
 
 static inline void _z_executor_null(_z_executor_t *executor) {
     executor->_ready_tasks = _z_fut_data_hmap_index_deque_new();
-    executor->_sleeping_tasks = _z_sleeping_fut_data_pqueue_new();
+    executor->_sleeping_tasks = _z_sleeping_fut_pqueue_new();
     executor->_tasks = _z_fut_data_hmap_new();
     executor->_next_fut_id = 0;
+    // Set context after _tasks is initialised so the pointer is valid.
+    _z_sleeping_fut_pqueue_set_ctx(&executor->_sleeping_tasks, &executor->_tasks);
 }
 
 static inline void _z_executor_init(_z_executor_t *executor) {
@@ -197,7 +218,7 @@ static inline _z_executor_t _z_executor_new(void) {
 
 static inline void _z_executor_destroy(_z_executor_t *executor) {
     _z_fut_data_hmap_index_deque_destroy(&executor->_ready_tasks);
-    _z_sleeping_fut_data_pqueue_destroy(&executor->_sleeping_tasks);
+    _z_sleeping_fut_pqueue_destroy(&executor->_sleeping_tasks);
     _z_fut_data_hmap_destroy(&executor->_tasks);
 }
 
