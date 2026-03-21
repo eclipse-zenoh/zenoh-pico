@@ -1,0 +1,5 @@
+zp_platform_add_definition(ZENOH_WINDOWS)
+zp_platform_add_definition(_CRT_SECURE_NO_WARNINGS)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/windows/*.c")
+zp_platform_set_stream_backend(tcp_windows)
+zp_platform_set_datagram_backend(udp_windows)

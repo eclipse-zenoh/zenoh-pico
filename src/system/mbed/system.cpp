@@ -12,6 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
+#if defined(ZENOH_MBED)
+
 #include <mbed.h>
 #include <randLIB.h>
 #include <stddef.h>
@@ -335,3 +339,5 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
 }
 
 }  // extern "C"
+
+#endif /* defined(ZENOH_MBED) */

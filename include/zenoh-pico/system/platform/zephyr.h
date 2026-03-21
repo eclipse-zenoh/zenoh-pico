@@ -45,6 +45,10 @@ typedef pthread_cond_t _z_condvar_t;
 typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+struct zsock_addrinfo;
+#endif
+
 typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
@@ -59,7 +63,7 @@ typedef struct {
 typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
-        struct addrinfo *_iptcp;
+        struct zsock_addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
