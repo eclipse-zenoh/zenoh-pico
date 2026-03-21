@@ -87,7 +87,8 @@ int main(int argc, char **argv) {
     }
     if (z_liveliness_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), &sub_opt) < 0) {
         printf("Unable to declare liveliness subscriber.\n");
-        exit(-1);
+        z_drop(z_move(s));
+        return -1;
     }
 
     printf("Press CTRL-C to quit...\n");
