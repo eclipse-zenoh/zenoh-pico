@@ -41,13 +41,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_drop(z_move(s));
-        return -1;
-    }
-
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
@@ -76,8 +69,6 @@ int main(int argc, char **argv) {
 
     // Clean-up
     z_drop(z_move(pub));
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
     z_drop(z_move(s));
     free(buf);
     return 0;

@@ -47,6 +47,7 @@ typedef struct {
 typedef pthread_mutex_t _z_mutex_t;
 typedef pthread_mutex_t _z_mutex_rec_t;
 typedef pthread_cond_t _z_condvar_t;
+typedef TaskHandle_t _z_task_id_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

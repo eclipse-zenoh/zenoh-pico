@@ -29,7 +29,7 @@ z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *pa
                                     const _z_id_t *local_zid);
 z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only);
 z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
-void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks);
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm);
 
 #ifdef __cplusplus
 }

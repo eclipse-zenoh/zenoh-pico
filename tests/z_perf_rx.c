@@ -95,12 +95,6 @@ int main(int argc, char **argv) {
         printf("Unable to open session!\n");
         exit(-1);
     }
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        exit(-1);
-    }
     // Declare Subscriber/resource
     z_owned_closure_sample_t callback;
     z_closure(&callback, on_sample, NULL, (void *)&test_stats);

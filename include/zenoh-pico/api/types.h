@@ -188,13 +188,10 @@ typedef struct {
     bool auto_start_read_task;
     bool auto_start_lease_task;
 #endif
-#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_PERIODIC_TASKS == 1)
-    bool auto_start_periodic_task;
-#endif
-#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
+#if (Z_FEATURE_ADMIN_SPACE == 1)
     bool auto_start_admin_space;
 #endif
-#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
+#if Z_FEATURE_ADMIN_SPACE == 0 && (Z_FEATURE_MULTI_THREAD == 0)
     uint8_t __dummy;  // avoid empty struct
 #endif
 } z_open_options_t;
@@ -517,20 +514,6 @@ typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif
 } zp_task_lease_options_t;
-
-#if Z_FEATURE_PERIODIC_TASKS == 1
-/**
- * Represents the configuration used to configure a periodic scheduler task started via
- * :c:func:`zp_start_periodic_scheduler_task`.
- */
-typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
-} zp_task_periodic_scheduler_options_t;
-#endif
 
 /**
  * Represents the configuration used to configure a read operation started via :c:func:`zp_read`.

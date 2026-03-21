@@ -94,17 +94,6 @@ void test_liveliness_sub(bool multicast, bool history) {
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
     assert_ok(z_open(&s2, z_config_move(&c2), NULL));
 
-    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
-
-    // Make sure sessions got a join
-    if (multicast) {
-        zp_send_join(z_loan(s1), NULL);
-        zp_send_join(z_loan(s2), NULL);
-    }
-
     z_owned_liveliness_token_t t1, t2;
     // In history mode we can declare token before subscribing
     if (history) {
@@ -148,11 +137,6 @@ void test_liveliness_sub(bool multicast, bool history) {
     z_closure_sample_drop(z_closure_sample_move(&closure));
     z_subscriber_drop(z_subscriber_move(&sub));
 
-    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
-    assert_ok(zp_stop_read_task(z_loan_mut(s2)));
-    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
-    assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
-
     z_session_drop(z_session_move(&s1));
     z_session_drop(z_session_move(&s2));
 }
@@ -170,11 +154,6 @@ void test_liveliness_get(void) {
 
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
     assert_ok(z_open(&s2, z_config_move(&c2), NULL));
-
-    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
-    assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
 
     z_sleep_s(1);
     z_owned_liveliness_token_t t1;
@@ -209,11 +188,6 @@ void test_liveliness_get(void) {
 
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&handler));
     z_closure_reply_drop(z_closure_reply_move(&cb));
-
-    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
-    assert_ok(zp_stop_read_task(z_loan_mut(s2)));
-    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
-    assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
 
     z_session_drop(z_session_move(&s1));
     z_session_drop(z_session_move(&s2));

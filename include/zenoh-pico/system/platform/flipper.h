@@ -36,6 +36,7 @@ typedef uint32_t z_task_attr_t;
 typedef FuriMutex* _z_mutex_t;
 typedef void* _z_mutex_t;
 typedef void* _z_condvar_t;
+typedef FuriThreadId _z_task_id_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

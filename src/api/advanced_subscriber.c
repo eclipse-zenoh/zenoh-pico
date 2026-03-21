@@ -22,6 +22,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/serialization.h"
 #include "zenoh-pico/collections/seqnumber.h"
+#include "zenoh-pico/session/runtime.h"
 #include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/string.h"
 #include "zenoh-pico/utils/time_range.h"
@@ -95,7 +96,7 @@ static z_result_t _ze_advanced_subscriber_sequenced_state_init(_ze_advanced_subs
     state->_has_last_delivered = false;
     state->_last_delivered = 0;
     state->_pending_queries = 0;
-    state->_periodic_query_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
+    state->_periodic_query_handle = _z_fut_handle_null();
     _z_uint32__z_sample_sortedmap_init(&state->_pending_samples);
 
     z_id_t zid = z_entity_global_id_zid(id);
@@ -130,14 +131,14 @@ void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_seque
     state->_last_delivered = 0;
     state->_pending_queries = 0;
 
-    if (state->_periodic_query_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
+    if (state->_periodic_query_handle.is_valid) {
         _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
         if (!_Z_RC_IS_NULL(&sess_rc)) {
-            z_result_t res = _zp_periodic_task_remove(_Z_RC_IN_VAL(&sess_rc), state->_periodic_query_id);
+            z_result_t res = _z_runtime_cancel_fut(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &state->_periodic_query_handle);
             if (res != _Z_RES_OK) {
-                _Z_WARN("Failed to remove periodic task - id: %u, res: %d", state->_periodic_query_id, res);
+                _Z_WARN("Failed to remove periodic task, res: %d", res);
             }
-            state->_periodic_query_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
+            state->_periodic_query_handle = _z_fut_handle_null();
             _z_session_rc_drop(&sess_rc);
         }
     }
@@ -808,7 +809,7 @@ void __unsafe_ze_advanced_subscriber_initial_query_drop_handler(_ze_advanced_sub
             __unsafe_ze_advanced_subscriber_flush_sequenced_source(sequenced_state, states->_callback, states->_ctx,
                                                                    source_id, &states->_miss_handlers);
 
-            if (sequenced_state->_periodic_query_id == _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
+            if (!sequenced_state->_periodic_query_handle.is_valid) {
                 __unsafe_ze_advanced_subscriber_spawn_periodic_query(sequenced_state, rc_states, source_id);
             }
         }
@@ -985,24 +986,24 @@ void _ze_advanced_subscriber_periodic_query_ctx_free(_ze_advanced_subscriber_per
     *ctx = NULL;
 }
 
-static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
+static _z_fut_fn_result_t _ze_advanced_subscriber_periodic_query_handler(void *ctx, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _ze_advanced_subscriber_periodic_query_ctx_t *query_ctx = (_ze_advanced_subscriber_periodic_query_ctx_t *)ctx;
-
     if (_Z_RC_IS_NULL(&query_ctx->_statesref)) {
-        return;
+        return _z_fut_fn_result_ready();
     }
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
 
     z_result_t res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
     if (res != _Z_RES_OK) {
         _Z_WARN("Failed to lock mutex when running periodic query: %d", res);
-        return;
+        return _z_fut_fn_result_ready();
     }
 
     // Global history still running? Don’t schedule a per-source query yet.
     if (states->_global_pending_queries != 0) {
         _ze_advanced_subscriber_state_unlock_mutex(states);
-        return;
+        return _z_fut_fn_result_wake_up_after(states->_period_ms);
     }
 
     _ze_advanced_subscriber_sequenced_state_t *state =
@@ -1010,14 +1011,14 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
                                                                                 &query_ctx->source_id);
     if (state == NULL) {
         _ze_advanced_subscriber_state_unlock_mutex(states);
-        return;
+        return _z_fut_fn_result_wake_up_after(states->_period_ms);
     }
 
     // Don’t pile up queries; wait until the previous one finishes.
     if (state->_pending_queries != 0) {
         // Nothing to do this tick.
         _ze_advanced_subscriber_state_unlock_mutex(states);
-        return;
+        return _z_fut_fn_result_wake_up_after(states->_period_ms);
     }
 
     char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
@@ -1030,7 +1031,7 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
     if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
         _ze_advanced_subscriber_state_unlock_mutex(states);
         _Z_WARN("Failed to prepare periodic query");
-        return;
+        return _z_fut_fn_result_ready();
     }
 
     state->_pending_queries++;
@@ -1043,7 +1044,7 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
         if (res != _Z_RES_OK) {
             _Z_WARN("Failed to lock mutex for periodic query failure (%d)", res);
-            return;
+            return _z_fut_fn_result_ready();
         }
         state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                         &query_ctx->source_id);
@@ -1052,6 +1053,7 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         }
         _ze_advanced_subscriber_state_unlock_mutex(states);
     }
+    return _z_fut_fn_result_wake_up_after(states->_period_ms);
 }
 
 static void _ze_advanced_subscriber_periodic_query_dropper(void *ctx) {
@@ -1070,7 +1072,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
 
     // Don’t schedule while already running or while a global history query is pending.
-    if (state->_periodic_query_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID || states->_global_pending_queries != 0) {
+    if (state->_periodic_query_handle.is_valid || states->_global_pending_queries != 0) {
         return _Z_RES_OK;
     }
 
@@ -1106,16 +1108,14 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
 
-    _zp_closure_periodic_task_t closure = {.call = _ze_advanced_subscriber_periodic_query_handler,
-                                           .drop = _ze_advanced_subscriber_periodic_query_dropper,
-                                           .context = ctx};
-
-    z_result_t res =
-        _zp_periodic_task_add(_Z_RC_IN_VAL(&sess_rc), &closure, states->_period_ms, &state->_periodic_query_id);
-
+    _z_fut_t fut = _z_fut_null();
+    fut._fut_arg = ctx;
+    fut._fut_fn = _ze_advanced_subscriber_periodic_query_handler;
+    fut._destroy_fn = _ze_advanced_subscriber_periodic_query_dropper;
+    state->_periodic_query_handle = _z_runtime_spawn(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &fut);
     _z_session_rc_drop(&sess_rc);
-    if (res != _Z_RES_OK) {
-        _Z_ERROR_RETURN(res);
+    if (!state->_periodic_query_handle.is_valid) {
+        _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
     }
     return _Z_RES_OK;
 }

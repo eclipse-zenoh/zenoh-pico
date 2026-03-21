@@ -138,8 +138,6 @@ static void open_listener_session(z_owned_session_t *session, const char *listen
     assert_ok(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
     assert_ok(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_LISTEN_KEY, listen_locator));
     assert_ok(z_open(session, z_config_move(&cfg), NULL));
-    assert_ok(zp_start_read_task(z_session_loan_mut(session), NULL));
-    assert_ok(zp_start_lease_task(z_session_loan_mut(session), NULL));
 }
 
 static void open_connector_session(z_owned_session_t *session, const char *connect_locator) {
@@ -148,15 +146,9 @@ static void open_connector_session(z_owned_session_t *session, const char *conne
     assert_ok(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
     assert_ok(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_CONNECT_KEY, connect_locator));
     assert_ok(z_open(session, z_config_move(&cfg), NULL));
-    assert_ok(zp_start_read_task(z_session_loan_mut(session), NULL));
-    assert_ok(zp_start_lease_task(z_session_loan_mut(session), NULL));
 }
 
-static void close_session_with_tasks(z_owned_session_t *session) {
-    assert_ok(zp_stop_read_task(z_session_loan_mut(session)));
-    assert_ok(zp_stop_lease_task(z_session_loan_mut(session)));
-    z_session_drop(z_session_move(session));
-}
+static void close_session_with_tasks(z_owned_session_t *session) { z_session_drop(z_session_move(session)); }
 
 static void on_transport_event(z_loaned_transport_event_t *event, void *arg) {
     transport_events_ctx_t *ctx = (transport_events_ctx_t *)arg;

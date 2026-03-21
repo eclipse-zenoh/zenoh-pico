@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_PUBLICATION == 1
+#if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_MULTI_THREAD == 0
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n);
 
@@ -55,30 +55,27 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
-    // Read received declaration
-    zp_read(z_loan(s), NULL);
+
     // Main loop
     printf("Press CTRL-C to quit...\n");
     char buf[256];
-    z_clock_t pulse_time = z_clock_now();
-    for (int idx = 0; idx < n; idx++) {
-        z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+    z_clock_t now = z_clock_now();
+    for (int idx = 0; idx < n;) {
+        if (z_clock_elapsed_ms(&now) > 1000) {
+            snprintf(buf, 256, "[%4d] %s", idx, value);
+            printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
-        // Create payload
-        z_owned_bytes_t payload;
-        z_bytes_copy_from_str(&payload, buf);
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_copy_from_str(&payload, buf);
 
-        z_publisher_put(z_loan(pub), z_move(payload), NULL);
+            z_publisher_put(z_loan(pub), z_move(payload), NULL);
+            ++idx;
 
-        zp_read(z_loan(s), NULL);
-        unsigned long elapsed_ms = z_clock_elapsed_ms(&pulse_time);
-        if (elapsed_ms >= (Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR)) {
-            pulse_time = z_clock_now();
-            zp_send_keep_alive(z_loan(s), NULL);
-            zp_send_join(z_loan(s), NULL);
+            now = z_clock_now();
         }
+        z_sleep_ms(50);
+        zp_spin_once(z_session_loan(&s));
     }
     z_drop(z_move(pub));
     z_drop(z_move(s));
@@ -126,7 +123,9 @@ static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke
 
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_PUBLICATION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
     return -2;
 }
 #endif

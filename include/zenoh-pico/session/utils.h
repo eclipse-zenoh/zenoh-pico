@@ -21,6 +21,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/system/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
