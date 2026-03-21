@@ -46,6 +46,8 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     if (ret != _Z_RES_OK) {
         delete sock->_udp;
         sock->_udp = NULL;
+        delete lep->_iptcp._addr;
+        lep->_iptcp._addr = NULL;
     }
 
     return ret;
@@ -83,7 +85,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         sockrecv->_udp = NULL;
     }
 
-    if (socksend_udp != NULL) {
+    if (socksend->_udp != NULL) {
         socksend->_udp->stop();
         delete socksend->_udp;
         socksend->_udp = NULL;

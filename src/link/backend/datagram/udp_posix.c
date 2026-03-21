@@ -16,13 +16,14 @@ static z_result_t _z_udp_posix_endpoint_init(_z_sys_net_endpoint_t *ep, const ch
     z_result_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
+    ep->_iptcp = NULL;
     (void)memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0;
     hints.ai_protocol = IPPROTO_UDP;
 
-    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) != 0) {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
@@ -94,8 +95,8 @@ static size_t _z_udp_posix_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, si
             break;
         }
 
-        n = n + rb;
-        pos = _z_ptr_u8_offset(pos, (ptrdiff_t)n);
+        n += rb;
+        pos = _z_ptr_u8_offset(pos, (ptrdiff_t)rb);
     } while (n != len);
 
     return n;
