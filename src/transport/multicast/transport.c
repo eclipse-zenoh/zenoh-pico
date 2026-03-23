@@ -28,6 +28,8 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
+#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
+
 z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
                                          _z_transport_multicast_establish_param_t *param) {
     z_result_t ret = _Z_RES_OK;
@@ -47,6 +49,9 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         default:
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
+
+    // Initialize persistent address buffer
+    ztm->_zbuf_addr = _z_slice_make(_Z_MULTICAST_ADDR_BUFF_SIZE);
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
@@ -192,6 +197,7 @@ void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tas
     _z_transport_peer_multicast_slist_free(&ztm->_peers);
     _z_transport_common_clear(
         &ztm->_common);  // free common in the very end, as peers might access the link data in common while being freed
+    _z_slice_clear(&ztm->_zbuf_addr);
 }
 
 #else
