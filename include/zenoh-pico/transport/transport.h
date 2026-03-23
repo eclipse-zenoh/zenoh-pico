@@ -202,6 +202,9 @@ typedef struct {
 
 typedef struct _z_transport_multicast_t {
     _z_transport_common_t _common;
+    // Persistent source address associated with the current contents of _zbuf.
+    // Required because datagram data may remain buffered across reads.
+    _z_slice_t _zbuf_addr;
     // Known valid peers
     _z_transport_peer_multicast_slist_t *_peers;
     // T message send function

@@ -78,11 +78,20 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode");
-        ret = _z_transport_message_decode(t_msg, &ztu->_common._zbuf);
 
-        // Mark the session that we have received data
+        // Wrap the main buffer to_read bytes
+        _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
+        ret = _z_transport_message_decode(t_msg, &zbuf);
+
         if (ret == _Z_RES_OK) {
+            // Mark the session that we have received data
             peer->common._received = true;
+
+            // Update the actual buffer pointers
+            _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) + _z_zbuf_get_rpos(&zbuf));
+        } else {
+            _Z_ERROR("Malformed transport message: %d", ret);
+            _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) + to_read);
         }
     }
     return ret;

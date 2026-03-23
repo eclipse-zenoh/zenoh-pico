@@ -492,8 +492,25 @@ z_result_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t
     return ret;
 }
 
+#if defined Z_TEST_HOOKS
+static _z_transport_message_encode_override_fn _z_transport_message_encode_override = NULL;
+
+void _z_transport_set_message_encode_override(_z_transport_message_encode_override_fn fn) {
+    _z_transport_message_encode_override = fn;
+}
+#endif
+
 /*------------------ Transport Message ------------------*/
 z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg) {
+#if defined(Z_TEST_HOOKS)
+    if (_z_transport_message_encode_override != NULL) {
+        bool handled = false;
+        z_result_t override_ret = _z_transport_message_encode_override(wbf, msg, &handled);
+        if (handled) {
+            return override_ret;
+        }
+    }
+#endif
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_T_FRAME: {
