@@ -3,6 +3,10 @@
 
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_RPI_PICO)
 
 static inline int _z_lwip_socket_get(_z_sys_net_socket_t sock) {
@@ -22,5 +26,9 @@ static inline void _z_lwip_socket_set(_z_sys_net_socket_t *sock, int fd) {
 }
 
 #endif /* defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_RPI_PICO) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_LINK_BACKEND_LWIP_SOCKET_H */
