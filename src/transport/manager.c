@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/session/runtime.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/unicast/accept.h"

@@ -239,7 +239,7 @@ set(BATCH_MULTICAST_SIZE 2048 CACHE STRING "Use this to override the maximum mul
 set(Z_CONFIG_SOCKET_TIMEOUT 100 CACHE STRING "Default socket timeout in milliseconds")
 set(Z_TRANSPORT_LEASE 10000 CACHE STRING "Link lease duration in milliseconds to announce to other zenoh nodes")
 set(Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3 CACHE STRING "Default session lease expire factor.")
-set(ZP_PERIODIC_SCHEDULER_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in the periodic scheduler")
+set(Z_RUNTIME_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in zenoh-pico's runtime")
 set(Z_TRANSPORT_ACCEPT_TIMEOUT 1000 CACHE STRING "Link accept timeout in P2P mode in milliseconds")
 set(Z_TRANSPORT_CONNECT_TIMEOUT 10000 CACHE STRING "Link connect timeout in P2P mode inmilliseconds")
 
@@ -481,6 +481,7 @@ file(GLOB_RECURSE Sources
   "src/link/*.c"
   "src/net/*.c"
   "src/protocol/*.c"
+  "src/runtime/*.c"
   "src/session/*.c"
   "src/transport/*.c"
   "src/utils/*.c"

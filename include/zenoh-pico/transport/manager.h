@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/session/runtime.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus

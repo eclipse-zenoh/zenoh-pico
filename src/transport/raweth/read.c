@@ -16,10 +16,10 @@
 
 #include <stddef.h>
 
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/raweth/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"

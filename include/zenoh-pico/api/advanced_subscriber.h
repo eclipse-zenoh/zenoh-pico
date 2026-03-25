@@ -20,7 +20,7 @@
 #include "zenoh-pico/collections/hashmap.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/sortedmap.h"
-#include "zenoh-pico/session/runtime.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {

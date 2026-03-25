@@ -1,4 +1,4 @@
-#include "zenoh-pico/collections/background_executor.h"
+#include "zenoh-pico/runtime/background_executor.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
 

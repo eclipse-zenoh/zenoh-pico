@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_MULTICAST_LEASE_H
 #define ZENOH_PICO_MULTICAST_LEASE_H
 
-#include "zenoh-pico/collections/executor.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus

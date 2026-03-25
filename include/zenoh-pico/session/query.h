@@ -15,9 +15,9 @@
 #ifndef ZENOH_PICO_SESSION_QUERY_H
 #define ZENOH_PICO_SESSION_QUERY_H
 
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {

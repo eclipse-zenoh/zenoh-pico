@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "zenoh-pico/collections/executor.h"
+#include "zenoh-pico/runtime/executor.h"
 #include "zenoh-pico/system/platform.h"
 
 #undef NDEBUG

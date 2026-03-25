@@ -12,16 +12,22 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SESSION_RUNTIME_H
-#define ZENOH_PICO_SESSION_RUNTIME_H
+#ifndef ZENOH_PICO_RUNTIME_RUNTIME_H
+#define ZENOH_PICO_RUNTIME_RUNTIME_H
 
 #include "zenoh-pico/config.h"
+
+#define _ZP_EXECUTOR_MAX_NUM_FUTURES Z_RUNTIME_MAX_TASKS
 #if Z_FEATURE_MULTI_THREAD == 1
-#include "zenoh-pico/collections/background_executor.h"
+#include "zenoh-pico/runtime/background_executor.h"
 #else
-#include "zenoh-pico/collections/executor.h"
+#include "zenoh-pico/runtime/executor.h"
 #endif
 #include "zenoh-pico/utils/result.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef _z_background_executor_t _z_runtime_t;
@@ -52,6 +58,10 @@ static inline z_result_t _z_runtime_cancel_fut(_z_runtime_t *runtime, _z_fut_han
     return _Z_RES_OK;
 }
 static inline void _z_runtime_spin_once(_z_runtime_t *runtime) { _z_executor_spin(runtime); }
+#endif
+
+#ifdef __cplusplus
+}  // extern "C"
 #endif
 
 #endif

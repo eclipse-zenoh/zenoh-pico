@@ -24,7 +24,7 @@
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/system/link/tls.h"
 #endif
-#include "zenoh-pico/collections/executor.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
 #if Z_FEATURE_CONNECTIVITY == 1

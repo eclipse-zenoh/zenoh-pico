@@ -19,9 +19,13 @@
 #if Z_FEATURE_MULTI_THREAD == 1
 #include <stddef.h>
 
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/runtime/executor.h"
 #include "zenoh-pico/system/platform.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _z_background_executor_inner_t _z_background_executor_inner_t;
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be);
@@ -39,7 +43,7 @@ static inline void _z_background_executor_null(_z_background_executor_t *be) {
 }
 // Spawns a future to be executed in the background.
 // The caller can optionally receive a handle to the future, which can be used to check the future's status or cancel
-// it. If the caller does not care about the future's status, they can pass NULL as handle_out.
+// it. If the caller does not care about the future's status, they can pass NULL as opt_handle_out.
 z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *opt_handle_out);
 z_result_t _z_background_executor_suspend(_z_background_executor_t *be);
 z_result_t _z_background_executor_resume(_z_background_executor_t *be);
@@ -55,4 +59,9 @@ extern "C" {
 }
 #endif
 #endif /* Z_FEATURE_MULTI_THREAD */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

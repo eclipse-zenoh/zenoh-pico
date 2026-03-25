@@ -16,8 +16,8 @@
 
 #include <stddef.h>
 
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"

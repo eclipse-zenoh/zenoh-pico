@@ -17,10 +17,10 @@
 #include <stddef.h>
 
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/executor.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/transport.h"

@@ -22,7 +22,7 @@
 #include "zenoh-pico/collections/advanced_cache.h"
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/seqnumber.h"
-#include "zenoh-pico/session/runtime.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {

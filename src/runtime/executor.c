@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/collections/executor.h"
+#include "zenoh-pico/runtime/executor.h"
 
 _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     _z_fut_data_t fut_data;

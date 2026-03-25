@@ -22,7 +22,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/serialization.h"
 #include "zenoh-pico/collections/seqnumber.h"
-#include "zenoh-pico/session/runtime.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/string.h"
 #include "zenoh-pico/utils/time_range.h"
