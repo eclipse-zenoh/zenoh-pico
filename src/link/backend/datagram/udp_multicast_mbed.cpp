@@ -161,14 +161,14 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 }
 
 const _z_udp_multicast_ops_t _z_udp_multicast_ops = {
-    .endpoint_init_from_address = _z_udp_multicast_default_endpoint_init_from_address,
-    .endpoint_clear = _z_udp_multicast_default_endpoint_clear,
-    .open = _z_open_udp_multicast,
-    .listen = _z_listen_udp_multicast,
-    .close = _z_close_udp_multicast,
-    .read_exact = _z_read_exact_udp_multicast,
-    .read = _z_read_udp_multicast,
-    .write = _z_send_udp_multicast,
+    _z_udp_multicast_default_endpoint_init_from_address,
+    _z_udp_multicast_default_endpoint_clear,
+    _z_open_udp_multicast,
+    _z_listen_udp_multicast,
+    _z_close_udp_multicast,
+    _z_read_exact_udp_multicast,
+    _z_read_udp_multicast,
+    _z_send_udp_multicast,
 };
 
 }  // extern "C"
