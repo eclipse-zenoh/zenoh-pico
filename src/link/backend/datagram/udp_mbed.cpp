@@ -121,14 +121,14 @@ static size_t _z_udp_mbed_write(_z_sys_net_socket_t sock, const uint8_t *ptr, si
 }
 
 extern const _z_datagram_ops_t _z_udp_mbed_datagram_ops = {
-    .endpoint_init = _z_udp_mbed_endpoint_init,
-    .endpoint_clear = _z_udp_mbed_endpoint_clear,
-    .open = _z_udp_mbed_open,
-    .listen = _z_udp_mbed_listen,
-    .close = _z_udp_mbed_close,
-    .read = _z_udp_mbed_read,
-    .read_exact = _z_udp_mbed_read_exact,
-    .write = _z_udp_mbed_write,
+    _z_udp_mbed_endpoint_init,
+    _z_udp_mbed_endpoint_clear,
+    _z_udp_mbed_open,
+    _z_udp_mbed_listen,
+    _z_udp_mbed_close,
+    _z_udp_mbed_read,
+    _z_udp_mbed_read_exact,
+    _z_udp_mbed_write,
 };
 }  // extern "C"
 

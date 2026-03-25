@@ -81,13 +81,13 @@ static size_t _z_uart_mbed_write(_z_sys_net_socket_t sock, const uint8_t *ptr, s
 }
 
 extern const _z_rawio_ops_t _z_uart_mbed_rawio_ops = {
-    .open_from_pins = _z_uart_mbed_open_from_pins,
-    .open_from_dev = _z_uart_mbed_open_from_dev,
-    .listen_from_pins = _z_uart_mbed_listen_from_pins,
-    .listen_from_dev = _z_uart_mbed_listen_from_dev,
-    .close = _z_uart_mbed_close,
-    .read = _z_uart_mbed_read,
-    .write = _z_uart_mbed_write,
+    _z_uart_mbed_open_from_pins,
+    _z_uart_mbed_open_from_dev,
+    _z_uart_mbed_listen_from_pins,
+    _z_uart_mbed_listen_from_dev,
+    _z_uart_mbed_close,
+    _z_uart_mbed_read,
+    _z_uart_mbed_write,
 };
 }  // extern "C"
 
