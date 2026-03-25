@@ -342,7 +342,7 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
     if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;

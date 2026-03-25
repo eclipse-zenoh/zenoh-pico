@@ -167,7 +167,7 @@ static void test_cancel_before_execution(void) {
     _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
     _z_fut_handle_t h;
     assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // Cancel while executor is suspended
     assert(_z_background_executor_cancel_fut(&be, &h) == _Z_RES_OK);

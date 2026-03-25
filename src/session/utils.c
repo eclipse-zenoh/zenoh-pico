@@ -141,7 +141,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         _z_fut_t fut = _z_fut_null();
         fut._fut_fn = _z_pending_query_process_timeout_task_fn;
         fut._fut_arg = zn;
-        ret = _z_runtime_spawn(&zn->_runtime, &fut)._id == 0 ? _Z_RES_OK : _Z_ERR_FAILED_TO_SPAWN_TASK;
+        ret = _z_fut_handle_is_null(_z_runtime_spawn(&zn->_runtime, &fut)) ? _Z_ERR_FAILED_TO_SPAWN_TASK : _Z_RES_OK;
     }
 #endif
     if (ret != _Z_RES_OK) {

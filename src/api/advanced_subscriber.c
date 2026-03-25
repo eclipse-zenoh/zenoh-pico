@@ -131,7 +131,7 @@ void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_seque
     state->_last_delivered = 0;
     state->_pending_queries = 0;
 
-    if (state->_periodic_query_handle.is_valid) {
+    if (!_z_fut_handle_is_null(state->_periodic_query_handle)) {
         _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
         if (!_Z_RC_IS_NULL(&sess_rc)) {
             z_result_t res = _z_runtime_cancel_fut(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &state->_periodic_query_handle);
@@ -809,7 +809,7 @@ void __unsafe_ze_advanced_subscriber_initial_query_drop_handler(_ze_advanced_sub
             __unsafe_ze_advanced_subscriber_flush_sequenced_source(sequenced_state, states->_callback, states->_ctx,
                                                                    source_id, &states->_miss_handlers);
 
-            if (!sequenced_state->_periodic_query_handle.is_valid) {
+            if (_z_fut_handle_is_null(sequenced_state->_periodic_query_handle)) {
                 __unsafe_ze_advanced_subscriber_spawn_periodic_query(sequenced_state, rc_states, source_id);
             }
         }
@@ -1072,7 +1072,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
 
     // Don’t schedule while already running or while a global history query is pending.
-    if (state->_periodic_query_handle.is_valid || states->_global_pending_queries != 0) {
+    if (!_z_fut_handle_is_null(state->_periodic_query_handle) || states->_global_pending_queries != 0) {
         return _Z_RES_OK;
     }
 
@@ -1114,7 +1114,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     fut._destroy_fn = _ze_advanced_subscriber_periodic_query_dropper;
     state->_periodic_query_handle = _z_runtime_spawn(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &fut);
     _z_session_rc_drop(&sess_rc);
-    if (!state->_periodic_query_handle.is_valid) {
+    if (_z_fut_handle_is_null(state->_periodic_query_handle)) {
         _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
     }
     return _Z_RES_OK;

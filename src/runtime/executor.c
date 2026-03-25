@@ -18,13 +18,15 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     _z_fut_data_t fut_data;
     _z_fut_move(&fut_data._fut, fut);
     fut_data._schedule = _z_fut_schedule_running();
+    if (executor->_next_fut_id == 0) {
+        executor->_next_fut_id++;  // Skip 0 since it's reserved for null handle
+    }
     _z_fut_data_hmap_index_t idx = _z_fut_data_hmap_insert(&executor->_tasks, &executor->_next_fut_id, &fut_data);
     _z_fut_handle_t handle = _z_fut_handle_null();
     if (!_z_fut_data_hmap_index_valid(idx)) {
         return handle;
     }
     handle._id = executor->_next_fut_id;
-    handle.is_valid = true;
     executor->_next_fut_id++;
     // can't fail since we have enough capacity for all tasks in the hashmap
     _z_fut_data_hmap_index_deque_push_back(&executor->_ready_tasks, &idx);
@@ -118,7 +120,7 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
 }
 
 _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const _z_fut_handle_t *handle) {
-    if (!handle->is_valid) {
+    if (_z_fut_handle_is_null(*handle)) {
         return _Z_FUT_STATUS_READY;  // Invalid handle is considered as ready (i.e., not running or sleeping)
     }
     _z_fut_data_t *fut_data = _z_fut_data_hmap_get((_z_fut_data_hmap_t *)&executor->_tasks, &handle->_id);
@@ -130,7 +132,7 @@ _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const 
 }
 
 bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *handle) {
-    if (!handle->is_valid) {
+    if (_z_fut_handle_is_null(*handle)) {
         return false;
     }
     _z_fut_data_t *fut = _z_fut_data_hmap_get(&executor->_tasks, &handle->_id);
@@ -145,7 +147,7 @@ bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *hand
 }
 
 bool _z_executor_resume_suspended_fut(_z_executor_t *executor, const _z_fut_handle_t *handle) {
-    if (!handle->is_valid) {
+    if (_z_fut_handle_is_null(*handle)) {
         return false;
     }
     _z_fut_data_hmap_index_t fut_idx = _z_fut_data_hmap_get_idx(&executor->_tasks, &handle->_id);

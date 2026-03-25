@@ -53,7 +53,7 @@ _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executo
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     _z_transport_message_t t_msg;

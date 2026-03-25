@@ -26,6 +26,7 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/weak_session.h"
 
 #ifdef __cplusplus
@@ -147,6 +148,20 @@ typedef enum _z_transport_state_t {
     _Z_TRANSPORT_STATE_OPEN = 2,
 } _z_transport_state_t;
 
+// Handles to the transport tasks, stored at predefined positions.
+// Used by the reconnect task to resume them after a successful reconnection.
+// Index via _Z_TRANSPORT_TASK_* constants defined below.
+#define _Z_TRANSPORT_TASK_KEEP_ALIVE 0
+#define _Z_TRANSPORT_TASK_LEASE 1
+#define _Z_TRANSPORT_TASK_READ 2
+#define _Z_TRANSPORT_TASK_SEND_JOIN 3  // multicast / raweth only
+#define _Z_TRANSPORT_TASK_COUNT 4
+#if Z_FEATURE_AUTO_RECONNECT == 1
+typedef struct _z_transport_tasks_t {
+    _z_fut_handle_t _task_handles[_Z_TRANSPORT_TASK_COUNT];
+} _z_transport_tasks_t;
+#endif
+
 typedef struct {
     _z_session_weak_t _session;
     _z_link_t *_link;
@@ -171,6 +186,9 @@ typedef struct {
     // Here we assume the value is set only by the session _z_open
     // and after it only read by the transport tasks, so we don't need to make it atomic or protect it with mutexes.
     _z_transport_state_t _state;
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_transport_tasks_t _tasks;
+#endif
 } _z_transport_common_t;
 
 // Send function prototype

@@ -67,8 +67,7 @@ _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z
     f._fut_arg = &ztm->_common;
     f._fut_fn = _z_client_reopen_task_fn;
     _z_executor_spawn(executor, &f);
-    // TODO: suspend the task instead of sleeping
-    return _z_fut_fn_result_wake_up_after(1000);
+    return _z_fut_fn_result_suspend();
 #else
     _ZP_UNUSED(executor);
     return _z_fut_fn_result_ready();
@@ -134,7 +133,7 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     _z_transport_peer_multicast_slist_t *dropped_peers = _z_transport_peer_multicast_slist_new();
@@ -159,7 +158,7 @@ _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     if (ztm->_common._transmitted == false) {
@@ -182,7 +181,7 @@ _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t 
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
     if (_zp_multicast_send_join(ztm) < 0) {
         _Z_INFO("Send join failed.");

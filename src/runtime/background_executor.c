@@ -81,7 +81,7 @@ z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be
         *handle = _z_executor_spawn(&be->_executor, fut);
         _z_background_executor_inner_unlock_and_resume(be);
     }
-    return handle->is_valid ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return _z_fut_handle_is_null(*handle) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;
 }
 
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {

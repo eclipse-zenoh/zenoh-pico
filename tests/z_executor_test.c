@@ -125,7 +125,7 @@ static void test_spawn_with_handle_status_transitions(void) {
     _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
 
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_RUNNING);
 
     drain(&ex, 10);
@@ -144,7 +144,7 @@ static void test_timed_reschedule(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_reschedule_timed, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // First spin: task runs once, reschedules with immediate wake_up_time
     _z_executor_spin_result_t r = _z_executor_spin(&ex);
@@ -183,7 +183,7 @@ static void test_deque_reschedule(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_reschedule_deque, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // First spin: task runs, returns not-ready, pushed back to deque
     _z_executor_spin_result_t r = _z_executor_spin(&ex);
@@ -212,7 +212,7 @@ static void test_cancel_before_spin(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
     _z_executor_cancel_fut(&ex, &h);
     assert(_z_executor_get_fut_status(&ex, &h) ==
            _Z_FUT_STATUS_READY);  // cancelled tasks are considered ready (not pending or running)
@@ -232,7 +232,7 @@ static void test_cancel_after_finish(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     drain(&ex, 10);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
@@ -251,7 +251,7 @@ static void test_task_spawns_child(void) {
     test_arg_t child_arg = {0};
 
     _z_fut_t parent = _z_fut_new(&child_arg, fn_spawn_child, NULL);
-    assert(_z_executor_spawn(&ex, &parent).is_valid);
+    assert(!_z_fut_handle_is_null(_z_executor_spawn(&ex, &parent)));
 
     // First spin: parent runs, spawns child into executor
     _z_executor_spin(&ex);
@@ -273,7 +273,7 @@ static void test_multiple_tasks(void) {
     for (int i = 0; i < N; i++) {
         args[i] = (test_arg_t){0};
         _z_fut_t fut = _z_fut_new(&args[i], fn_finish, destroy_fn);
-        assert(_z_executor_spawn(&ex, &fut).is_valid);
+        assert(!_z_fut_handle_is_null(_z_executor_spawn(&ex, &fut)));
     }
 
     drain(&ex, N * 4);
@@ -296,7 +296,7 @@ static void test_destroy_drains_pending(void) {
     for (int i = 0; i < N; i++) {
         args[i] = (test_arg_t){0};
         _z_fut_t fut = _z_fut_new(&args[i], fn_finish, destroy_fn);
-        assert(_z_executor_spawn(&ex, &fut).is_valid);
+        assert(!_z_fut_handle_is_null(_z_executor_spawn(&ex, &fut)));
     }
 
     // Destroy without any spinning
@@ -318,7 +318,7 @@ static void test_suspend_and_resume(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_suspend_once, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // First spin: task runs and suspends — counts as EXECUTED_TASK.
     _z_executor_spin_result_t r = _z_executor_spin(&ex);
@@ -356,7 +356,7 @@ static void test_resume_non_suspended_is_noop(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // Task is RUNNING (not yet executed), resume must be a no-op.
     assert(!_z_executor_resume_suspended_fut(&ex, &h));
@@ -378,7 +378,7 @@ static void test_cancel_suspended(void) {
 
     _z_fut_t fut = _z_fut_new(&arg, fn_suspend_forever, destroy_fn);
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
-    assert(h.is_valid);
+    assert(!_z_fut_handle_is_null(h));
 
     // Run once: task suspends.
     _z_executor_spin(&ex);

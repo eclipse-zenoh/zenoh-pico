@@ -211,9 +211,9 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor) {
-    _ZP_UNUSED(executor);
     _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
     _z_session_weak_t weak_session = tc->_session;
+    _z_transport_tasks_t tasks_handles = tc->_tasks;
     _z_session_rc_t zs = _z_session_weak_upgrade(&weak_session);  // should not fail
     _z_session_t *s = _Z_RC_IN_VAL(&zs);
     _z_session_weak_drop(&weak_session);
@@ -231,6 +231,7 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
             _Z_DEBUG("Reopen failed, next try in 1s");
             tc->_session = _z_session_rc_clone_as_weak(&zs);
             tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+            tc->_tasks = tasks_handles;
             _z_session_rc_drop(&zs);
             return _z_fut_fn_result_wake_up_after(1000);
         } else {
@@ -240,6 +241,8 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
             return _z_fut_fn_result_ready();
         }
     }
+
+    tc->_tasks = tasks_handles;
     if (!_z_network_message_slist_is_empty(s->_declaration_cache)) {
         _z_network_message_slist_t *iter = s->_declaration_cache;
         while (iter != NULL) {
@@ -259,6 +262,10 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
     }
     _z_session_rc_drop(&zs);
     _Z_DEBUG("Reconnected successfully");
+    // Resume all sibling tasks that suspended themselves while waiting for reconnection.
+    for (size_t i = 0; i < _Z_TRANSPORT_TASK_COUNT; i++) {
+        _z_executor_resume_suspended_fut(executor, &tc->_tasks._task_handles[i]);
+    }
     return _z_fut_fn_result_ready();
 }
 
@@ -399,44 +406,77 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
     switch (zn->_tp._type) {
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
         case _Z_TRANSPORT_UNICAST_TYPE: {
-            _z_fut_fn_t tasks[] = {_zp_unicast_keep_alive_task_fn, _zp_unicast_lease_task_fn, _zp_unicast_read_task_fn};
+            _z_transport_common_t *tc = &zn->_tp._transport._unicast._common;
+            // Order must match _Z_TRANSPORT_TASK_* index constants.
+            _z_fut_fn_t tasks[_Z_TRANSPORT_TASK_COUNT] = {0};
+            tasks[_Z_TRANSPORT_TASK_KEEP_ALIVE] = _zp_unicast_keep_alive_task_fn;
+            tasks[_Z_TRANSPORT_TASK_LEASE] = _zp_unicast_lease_task_fn;
+            tasks[_Z_TRANSPORT_TASK_READ] = _zp_unicast_read_task_fn;
+
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                if (tasks[i] == NULL) continue;
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._unicast;
                 f._fut_fn = tasks[i];
-                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
+                _z_fut_handle_t h = _z_runtime_spawn(&zn->_runtime, &f);
+                if (_z_fut_handle_is_null(h)) {
                     _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
+#if Z_FEATURE_AUTO_RECONNECT == 1
+                tc->_tasks._task_handles[i] = h;
+#endif
             }
             break;
         }
 #endif
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
         case _Z_TRANSPORT_MULTICAST_TYPE: {
-            _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
-                                   _zp_multicast_send_join_task_fn, _zp_multicast_read_task_fn};
+            _z_transport_common_t *tc = &zn->_tp._transport._multicast._common;
+            // Order must match _Z_TRANSPORT_TASK_* index constants.
+            _z_fut_fn_t tasks[_Z_TRANSPORT_TASK_COUNT] = {0};
+            tasks[_Z_TRANSPORT_TASK_KEEP_ALIVE] = _zp_multicast_keep_alive_task_fn;
+            tasks[_Z_TRANSPORT_TASK_LEASE] = _zp_multicast_lease_task_fn;
+            tasks[_Z_TRANSPORT_TASK_READ] = _zp_multicast_read_task_fn;
+            tasks[_Z_TRANSPORT_TASK_SEND_JOIN] = _zp_multicast_send_join_task_fn;
+
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                if (tasks[i] == NULL) continue;
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._multicast;
                 f._fut_fn = tasks[i];
-                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
+                _z_fut_handle_t h = _z_runtime_spawn(&zn->_runtime, &f);
+                if (_z_fut_handle_is_null(h)) {
                     _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
+#if Z_FEATURE_AUTO_RECONNECT == 1
+                tc->_tasks._task_handles[i] = h;
+#endif
             }
             break;
         }
 #endif
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
         case _Z_TRANSPORT_RAWETH_TYPE: {
-            _z_fut_fn_t tasks[] = {_zp_multicast_keep_alive_task_fn, _zp_multicast_lease_task_fn,
-                                   _zp_multicast_send_join_task_fn, _zp_raweth_read_task_fn};
+            _z_transport_common_t *tc = &zn->_tp._transport._raweth._common;
+            // Order must match _Z_TRANSPORT_TASK_* index constants.
+            _z_fut_fn_t tasks[_Z_TRANSPORT_TASK_COUNT] = {0};
+            tasks[_Z_TRANSPORT_TASK_KEEP_ALIVE] = _zp_multicast_keep_alive_task_fn;
+            tasks[_Z_TRANSPORT_TASK_LEASE] = _zp_multicast_lease_task_fn;
+            tasks[_Z_TRANSPORT_TASK_READ] = _zp_raweth_read_task_fn;
+            tasks[_Z_TRANSPORT_TASK_SEND_JOIN] = _zp_multicast_send_join_task_fn;
+
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
+                if (tasks[i] == NULL) continue;
                 _z_fut_t f = _z_fut_null();
                 f._fut_arg = &zn->_tp._transport._raweth;
                 f._fut_fn = tasks[i];
-                if (!_z_runtime_spawn(&zn->_runtime, &f).is_valid) {
+                _z_fut_handle_t h = _z_runtime_spawn(&zn->_runtime, &f);
+                if (_z_fut_handle_is_null(h)) {
                     _Z_ERROR_RETURN(_Z_ERR_FAILED_TO_SPAWN_TASK);
                 }
+#if Z_FEATURE_AUTO_RECONNECT == 1
+                tc->_tasks._task_handles[i] = h;
+#endif
             }
             break;
         }

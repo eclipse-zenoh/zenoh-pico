@@ -43,7 +43,7 @@ static bool _ze_advanced_publisher_state_check(const _ze_advanced_publisher_stat
 
 void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state) {
     if (state->_heartbeat_mode != ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE &&
-        state->_state_publisher_task_handle.is_valid) {
+        !_z_fut_handle_is_null(state->_state_publisher_task_handle)) {
         _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
         if (!_Z_RC_IS_NULL(&sess_rc)) {
             _z_runtime_cancel_fut(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &state->_state_publisher_task_handle);
@@ -340,7 +340,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
             f._fut_arg = ctx;
 
             state->_state_publisher_task_handle = _z_runtime_spawn(&_Z_RC_IN_VAL(zs)->_runtime, &f);
-            if (!state->_state_publisher_task_handle.is_valid) {
+            if (_z_fut_handle_is_null(state->_state_publisher_task_handle)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke));
                 _ze_advanced_publisher_state_rc_drop(&pub->_val._state);
                 z_publisher_drop(z_publisher_move(&pub->_val._publisher));

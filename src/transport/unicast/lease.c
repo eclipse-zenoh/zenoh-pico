@@ -112,8 +112,7 @@ _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_exe
     f._fut_arg = &ztu->_common;
     f._fut_fn = _z_client_reopen_task_fn;
     _z_executor_spawn(executor, &f);
-    // TODO: suspend the task instead of sleeping
-    return _z_fut_fn_result_wake_up_after(1000);
+    return _z_fut_fn_result_suspend();
 #else
     return _z_fut_fn_result_ready();
 #endif
@@ -124,7 +123,7 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
     if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
@@ -168,7 +167,7 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
     if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
     } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_suspend();
     }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;

@@ -35,15 +35,15 @@ typedef enum _z_fut_status_t {
 
 typedef struct _z_fut_handle_t {
     size_t _id;
-    bool is_valid;
 } _z_fut_handle_t;
 
 static inline _z_fut_handle_t _z_fut_handle_null(void) {
     _z_fut_handle_t handle;
     handle._id = 0;
-    handle.is_valid = false;
     return handle;
 }
+
+static inline bool _z_fut_handle_is_null(_z_fut_handle_t handle) { return handle._id == 0; }
 
 typedef struct _z_fut_fn_result_t {
     _z_fut_status_t _status;
