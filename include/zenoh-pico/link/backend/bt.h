@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_LINK_BACKEND_BT_H
 #define ZENOH_PICO_LINK_BACKEND_BT_H
