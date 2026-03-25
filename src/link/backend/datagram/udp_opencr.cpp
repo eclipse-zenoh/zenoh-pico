@@ -135,14 +135,14 @@ static size_t _z_udp_opencr_write(_z_sys_net_socket_t sock, const uint8_t *ptr, 
 }
 
 extern const _z_datagram_ops_t _z_udp_opencr_datagram_ops = {
-    .endpoint_init = _z_udp_opencr_endpoint_init,
-    .endpoint_clear = _z_udp_opencr_endpoint_clear,
-    .open = _z_udp_opencr_open,
-    .listen = _z_udp_opencr_listen,
-    .close = _z_udp_opencr_close,
-    .read = _z_udp_opencr_read,
-    .read_exact = _z_udp_opencr_read_exact,
-    .write = _z_udp_opencr_write,
+    _z_udp_opencr_endpoint_init,
+    _z_udp_opencr_endpoint_clear,
+    _z_udp_opencr_open,
+    _z_udp_opencr_listen,
+    _z_udp_opencr_close,
+    _z_udp_opencr_read,
+    _z_udp_opencr_read_exact,
+    _z_udp_opencr_write,
 };
 }  // extern "C"
 
