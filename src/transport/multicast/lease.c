@@ -66,8 +66,14 @@ _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z
     _z_fut_t f = _z_fut_null();
     f._fut_arg = &ztm->_common;
     f._fut_fn = _z_client_reopen_task_fn;
-    _z_executor_spawn(executor, &f);
-    return _z_fut_fn_result_suspend();
+    if (_z_fut_handle_is_null(_z_executor_spawn(executor, &f))) {
+        _Z_ERROR("Failed to spawn client reopen task after transport failure.");
+        ztm->_common._state = _Z_TRANSPORT_STATE_CLOSED;
+        _z_session_weak_drop(&ztm->_common._session);
+        return _z_fut_fn_result_ready();
+    } else {
+        return _z_fut_fn_result_suspend();
+    }
 #else
     _ZP_UNUSED(executor);
     return _z_fut_fn_result_ready();
@@ -149,7 +155,7 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
     unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
     _zp_multicast_report_disconnected_events(ztm, &dropped_peers);
-    return _z_fut_fn_result_wake_up_after(min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+    return _z_fut_fn_result_wake_up_after(min_lease);
 }
 
 _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t *executor) {
@@ -171,8 +177,7 @@ _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t
     _z_transport_peer_mutex_lock(&ztm->_common);
     unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
-
-    return _z_fut_fn_result_wake_up_after(min_lease);
+    return _z_fut_fn_result_wake_up_after(min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
 }
 
 _z_fut_fn_result_t _zp_multicast_send_join_task_fn(void *ztm_arg, _z_executor_t *executor) {
