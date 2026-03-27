@@ -65,5 +65,14 @@ config ZENOH_PICO_LINK_WS
 	help
 	  WS Link
 
-endif
+config ZENOH_PICO_THREADS_NUM
+	int "Number of preallocated pthread stacks"
+	depends on ZENOH_PICO_MULTI_THREAD
+	default 4
+	range 1 64
+	help
+	  Number of preallocated pthread stacks used when no explicit thread
+	  attributes are provided (attr == NULL), therefore limiting the maximum number
+	  of threads.
 
+endif
