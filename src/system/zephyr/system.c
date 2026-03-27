@@ -12,6 +12,10 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
+#if defined(ZENOH_ZEPHYR)
+
 #include <version.h>
 
 #if KERNEL_VERSION_MAJOR == 2
@@ -295,3 +299,5 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     t->nanos = now.tv_usec * 1000;
     return 0;
 }
+
+#endif /* defined(ZENOH_ZEPHYR) */

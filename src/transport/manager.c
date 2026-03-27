@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/multicast/transport.h"

@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/codec/network.h"

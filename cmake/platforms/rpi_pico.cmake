@@ -1,0 +1,6 @@
+zp_platform_add_definition(ZENOH_RPI_PICO)
+set(CHECK_THREADS OFF)
+zp_platform_glob_sources("${PROJECT_SOURCE_DIR}/src/system/rpi_pico/*.c")
+zp_platform_set_stream_backend(tcp_lwip)
+zp_platform_set_datagram_backend(udp_rpi_pico)
+zp_platform_set_rawio_backend(uart_rpi_pico)
