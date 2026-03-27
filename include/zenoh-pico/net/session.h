@@ -232,12 +232,18 @@ typedef struct _z_session_t {
  * Parameters:
  *     zn: A pointer of A :c:type:`_z_session_rc_t` used as a return value.
  *     config: A set of properties. The caller keeps its ownership.
+ *     timeout_ms: Maximum time (in milliseconds) to establish the primary transport
+ *                 and (optionally) additional peer connections. `0` means no waiting.
+ *     wait_for_all: If true, continue attempting to add all remaining peer locators
+ *                   until either all are connected or the timeout budget is exhausted.
+ *                   If false, attempt to add remaining peer locators only once.
  *     zid: A pointer to Zenoh ID.
  *
  * Returns:
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  */
-z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, uint32_t timeout_ms, bool wait_for_all,
+                   const _z_id_t *zid);
 
 /**
  * Reopen a disconnected zenoh-net session
