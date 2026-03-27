@@ -141,13 +141,6 @@ void app_main() {
     }
     printf("OK\n");
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        exit(-1);
-    }
-
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
     z_owned_closure_sample_t closure;
     z_owned_ring_handler_sample_t handler;

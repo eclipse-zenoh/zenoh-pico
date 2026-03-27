@@ -116,12 +116,6 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     ASSERT_OK(z_open(&s_pub, z_config_move(&c_pub), NULL));
     ASSERT_OK(z_open(&s_sub, z_config_move(&c_sub), NULL));
 
-    // Start tasks on both sessions
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s_pub), NULL));
-    ASSERT_OK(zp_start_read_task(z_loan_mut(s_sub), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s_pub), NULL));
-    ASSERT_OK(zp_start_lease_task(z_loan_mut(s_sub), NULL));
-
     // Declare N publishers on s_pub
     z_owned_publisher_t *pubs = (z_owned_publisher_t *)z_malloc((size_t)num_pubs * sizeof(z_owned_publisher_t));
     ASSERT_NOT_NULL(pubs);
@@ -200,11 +194,6 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     z_free(handlers);
     z_free(subs);
     z_free(pubs);
-
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s_pub)));
-    ASSERT_OK(zp_stop_read_task(z_loan_mut(s_sub)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s_pub)));
-    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s_sub)));
 
     z_session_drop(z_session_move(&s_pub));
     z_session_drop(z_session_move(&s_sub));

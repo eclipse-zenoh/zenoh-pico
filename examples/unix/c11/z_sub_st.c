@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_MULTI_THREAD == 0
 
 static int msg_nb = 0;
 
@@ -71,16 +71,9 @@ int main(int argc, char **argv) {
     }
 
     printf("Press CTRL-C to quit...\n");
-    z_clock_t pulse_time = z_clock_now();
     while (msg_nb < n) {
         z_sleep_ms(50);
-        zp_read(z_loan(s), NULL);
-        unsigned long elapsed_ms = z_clock_elapsed_ms(&pulse_time);
-        if (elapsed_ms >= (Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR)) {
-            pulse_time = z_clock_now();
-            zp_send_keep_alive(z_loan(s), NULL);
-            zp_send_join(z_loan(s), NULL);
-        }
+        zp_spin_once(z_loan(s));
     }
     z_drop(z_move(sub));
     z_drop(z_move(s));
@@ -124,7 +117,9 @@ static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke
 
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_SUBSCRIPTION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
     return -2;
 }
 #endif

@@ -82,8 +82,6 @@ int main(int argc, char **argv) {
     assert(z_open(&s_pub, z_move(cfg1), NULL) == Z_OK);
     printf("Publisher session opened\n");
     fflush(stdout);
-    assert(zp_start_read_task(z_loan_mut(s_pub), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s_pub), NULL) == Z_OK);
 
     // --- Session 2: subscribers ---
     z_owned_config_t cfg2;
@@ -93,8 +91,6 @@ int main(int argc, char **argv) {
     z_owned_session_t s_sub;
     assert(z_open(&s_sub, z_move(cfg2), NULL) == Z_OK);
     printf("Subscriber session opened\n");
-    assert(zp_start_read_task(z_loan_mut(s_sub), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s_sub), NULL) == Z_OK);
 
     z_sleep_s(SLEEP);
 
@@ -161,13 +157,6 @@ int main(int argc, char **argv) {
     z_drop(z_move(sub1));
     z_drop(z_move(sub2));
     z_drop(z_move(pub));
-
-    // Stop tasks and close sessions
-    zp_stop_read_task(z_loan_mut(s_pub));
-    zp_stop_lease_task(z_loan_mut(s_pub));
-    zp_stop_read_task(z_loan_mut(s_sub));
-    zp_stop_lease_task(z_loan_mut(s_sub));
-
     z_drop(z_move(s_pub));
     z_drop(z_move(s_sub));
 

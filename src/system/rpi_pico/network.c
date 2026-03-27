@@ -23,6 +23,7 @@
 #include "zenoh-pico/utils/checksum.h"
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/mutex.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -37,12 +38,12 @@
 #include "lwip/udp.h"
 #include "pico/cyw43_arch.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = lwip_fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (lwip_fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (lwip_fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
@@ -96,13 +97,12 @@ void _z_socket_close(_z_sys_net_socket_t *sock) {
     }
 }
 
-#if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     // Create select mask
     _z_transport_peer_unicast_slist_t **peers = (_z_transport_peer_unicast_slist_t **)v_peers;
-    _z_mutex_rec_lock(mutex);
+    _z_mutex_rec_mt_lock(mutex);
     _z_transport_peer_unicast_slist_t *curr = *peers;
     int max_fd = 0;
     while (curr != NULL) {
@@ -113,7 +113,7 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         }
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_mutex_rec_unlock(mutex);
+    _z_mutex_rec_mt_unlock(mutex);
     // Wait for events
     struct timeval timeout;
     timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
@@ -122,7 +122,7 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);  // Error or no data ready
     }
     // Mark sockets that are pending
-    _z_mutex_rec_lock(mutex);
+    _z_mutex_rec_mt_lock(mutex);
     curr = *peers;
     while (curr != NULL) {
         _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
@@ -131,16 +131,9 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         }
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_mutex_rec_unlock(mutex);
+    _z_mutex_rec_mt_unlock(mutex);
     return _Z_RES_OK;
 }
-#else
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
-    _ZP_UNUSED(peers);
-    _ZP_UNUSED(mutex);
-    return _Z_RES_OK;
-}
-#endif
 
 /*------------------ TCP sockets ------------------*/
 z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
@@ -310,8 +303,9 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
     return send(sock._fd, ptr, len, 0);
 }
 #else
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
+    _ZP_UNUSED(blocking);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }

@@ -57,6 +57,7 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
     _z_atomic_bool_init(&zn->_is_closed, true);
+    _z_runtime_null(&zn->_runtime);
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&zn->_mutex_inner));
     ret = _z_mutex_rec_init(&zn->_mutex_transport);
@@ -75,10 +76,6 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     zn->_mode = Z_WHATAMI_CLIENT;
     zn->_tp._type = _Z_TRANSPORT_NONE;
-#if Z_FEATURE_MULTI_THREAD == 1
-    zn->_read_task_should_run = false;
-    zn->_lease_task_should_run = false;
-#endif
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;
@@ -117,15 +114,6 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-#if Z_FEATURE_MULTI_THREAD == 1
-    zn->_periodic_scheduler_task = NULL;
-    zn->_periodic_task_should_run = false;
-    zn->_periodic_scheduler_task_attr = NULL;
-#endif
-    ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
-#endif
-
 #if Z_FEATURE_ADMIN_SPACE == 1
     zn->_admin_space_queryable_id = 0;
 #if Z_FEATURE_CONNECTIVITY == 1
@@ -147,6 +135,15 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     zn->_callback_drop_sync_group = _z_sync_group_null();
     _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
+    _Z_SET_IF_OK(ret, _z_runtime_init(&zn->_runtime));
+#if Z_FEATURE_QUERY
+    if (ret == _Z_RES_OK) {
+        _z_fut_t fut = _z_fut_null();
+        fut._fut_fn = _z_pending_query_process_timeout_task_fn;
+        fut._fut_arg = zn;
+        ret = _z_fut_handle_is_null(_z_runtime_spawn(&zn->_runtime, &fut)) ? _Z_ERR_FAILED_TO_SPAWN_TASK : _Z_RES_OK;
+    }
+#endif
     if (ret != _Z_RES_OK) {
 #if Z_FEATURE_MULTI_THREAD == 1
 #if Z_FEATURE_ADMIN_SPACE == 1
@@ -156,6 +153,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         _z_mutex_drop(&zn->_mutex_inner);
 #endif
         _z_sync_group_drop(&zn->_callback_drop_sync_group);
+        _z_runtime_clear(&zn->_runtime);
         _Z_ERROR_RETURN(ret);
     }
 
@@ -211,18 +209,8 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_session_admin_space_mutex_unlock(zn);
 #endif
 #endif
+    _z_runtime_clear(&zn->_runtime);
     _z_sync_group_wait(&zn->_callback_drop_sync_group);
-
-    // TODO: join tasks instead of just signalling them to stop
-#if Z_FEATURE_MULTI_THREAD == 1
-    _zp_stop_read_task(zn);
-    _zp_stop_lease_task(zn);
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-    _zp_stop_periodic_scheduler_task(zn);
-#endif
-#endif
-#endif
     return _Z_RES_OK;
 }
 
@@ -232,16 +220,8 @@ void _z_session_clear(_z_session_t *zn) {
     _z_config_clear(&zn->_config);
 #endif
     _z_session_transport_mutex_lock(zn);
-    _z_transport_clear(&zn->_tp, false);
+    _z_transport_clear(&zn->_tp);
     _z_session_transport_mutex_unlock(zn);
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-    if (_zp_periodic_scheduler_check(&zn->_periodic_scheduler)) {
-        _zp_periodic_scheduler_clear(&zn->_periodic_scheduler);
-    }
-#endif
-
-#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
 #if Z_FEATURE_ADMIN_SPACE == 1

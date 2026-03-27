@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_MULTICAST_READ_H
 #define ZENOH_PICO_MULTICAST_READ_H
 
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
@@ -22,15 +23,7 @@ extern "C" {
 #endif
 
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read);
-z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt);
-void *_zp_multicast_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
-
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_MULTICAST_TRANSPORT == 1
-z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task);
-#else
-z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task);
-#endif /* #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_MULTICAST_TRANSPORT == 1 */
-
+_z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *executor);
 #ifdef __cplusplus
 }
 #endif

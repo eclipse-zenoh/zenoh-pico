@@ -131,7 +131,6 @@ void _z_transport_peer_multicast_copy(_z_transport_peer_multicast_t *dst, const 
     dst->_sn_res = src->_sn_res;
     _z_conduit_sn_list_copy(&dst->_sn_rx_sns, &src->_sn_rx_sns);
     dst->_lease = src->_lease;
-    dst->_next_lease = src->_next_lease;
     _z_slice_copy(&dst->_remote_addr, &src->_remote_addr);
     _z_transport_peer_common_copy(&dst->common, &src->common);
 }

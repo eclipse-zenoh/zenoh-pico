@@ -20,6 +20,7 @@
 #include "zenoh-pico/collections/hashmap.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/sortedmap.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +48,7 @@ typedef struct {
     uint32_t _last_delivered;
     uint64_t _pending_queries;
     _z_uint32__z_sample_sortedmap_t _pending_samples;
-    uint32_t _periodic_query_id;
+    _z_fut_handle_t _periodic_query_handle;
     z_owned_keyexpr_t _query_keyexpr;
 } _ze_advanced_subscriber_sequenced_state_t;
 
