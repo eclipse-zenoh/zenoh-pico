@@ -281,6 +281,7 @@ set(Z_FEATURE_MULTICAST_DECLARATIONS 0 CACHE STRING "Toggle multicast resource d
 set(Z_FEATURE_PERIODIC_TASKS 0 CACHE STRING "Toggle periodic task support")
 set(Z_FEATURE_LOCAL_QUERYABLE 0 CACHE STRING "Toggle local queriables")
 set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support")
+set(Z_FEATURE_EFFICIENT_SLEEP 0 CACHE STRING "Toggle sleep function usage")
 
 # Add a warning message if someone tries to enable Z_FEATURE_LINK_SERIAL_USB directly
 if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
