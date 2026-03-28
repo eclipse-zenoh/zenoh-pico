@@ -1,0 +1,88 @@
+menuconfig PKG_USING_ZENOH_PICO
+    bool "zenoh-pico: Eclipse zenoh C client library"
+    default n
+    help
+        Eclipse zenoh is a pub/sub/query protocol unifying data in motion, data at rest and computations.
+
+if PKG_USING_ZENOH_PICO
+
+    config PKG_ZENOH_PICO_PATH
+        string
+        default "/packages/iot/zenoh-pico"
+
+    choice
+        prompt "Version"
+        default PKG_USING_ZENOH_PICO_LATEST_VERSION
+        help
+            Select the package version
+
+        config PKG_USING_ZENOH_PICO_LATEST_VERSION
+            bool "latest"
+    endchoice
+
+    config PKG_ZENOH_PICO_VER
+       string
+       default "latest"    if PKG_USING_ZENOH_PICO_LATEST_VERSION
+
+    config ZENOH_FEATURE_MULTI_THREAD
+        bool "Enable multi-threading support"
+        default y
+        help
+            Enable multi-threading support for zenoh-pico
+
+    config ZENOH_FEATURE_PUBLICATION
+        bool "Enable publication support"
+        default y
+        help
+            Enable publication support
+
+    config ZENOH_FEATURE_SUBSCRIPTION
+        bool "Enable subscription support"
+        default y
+        help
+            Enable subscription support
+
+    config ZENOH_FEATURE_QUERY
+        bool "Enable query support"
+        default y
+        help
+            Enable query support
+
+    config ZENOH_FEATURE_QUERYABLE
+        bool "Enable queryable support"
+        default y
+        help
+            Enable queryable support
+
+    config ZENOH_TRANSPORT_TCP
+        bool "Enable TCP transport"
+        default y
+        help
+            Enable TCP transport support
+
+    config ZENOH_TRANSPORT_UDP_UNICAST
+        bool "Enable UDP unicast transport"
+        default y
+        help
+            Enable UDP unicast transport support
+
+    config ZENOH_TRANSPORT_UDP_MULTICAST
+        bool "Enable UDP multicast transport"
+        default y
+        help
+            Enable UDP multicast transport support
+
+    config ZENOH_TRANSPORT_SERIAL
+        bool "Enable serial transport"
+        default n
+        help
+            Enable serial transport support
+
+    config ZENOH_DEBUG
+        int "Debug level"
+        range 0 3
+        default 0
+        help
+            Set debug level (0=none, 1=error, 2=info, 3=debug)
+
+endif
