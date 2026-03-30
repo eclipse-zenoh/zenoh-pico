@@ -37,6 +37,13 @@ typedef struct _z_background_executor_t {
 } _z_background_executor_t;
 
 z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr_t *task_attr);
+// Initializes the executor without spawning a background thread.
+// Tasks can be added via _z_background_executor_spawn but won't be executed until
+// _z_background_executor_start is called.
+z_result_t _z_background_executor_init_deferred(_z_background_executor_t *be);
+// Spawns a background thread to run an executor that was previously created with _z_background_executor_init_deferred.
+// Returns _Z_ERR_INVALID if the executor is already running.
+z_result_t _z_background_executor_start(_z_background_executor_t *be, z_task_attr_t *task_attr);
 static inline void _z_background_executor_null(_z_background_executor_t *be) {
     be->_inner = _z_background_executor_inner_rc_null();
 }

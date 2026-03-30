@@ -370,6 +370,103 @@ static void test_handle_status_transitions(void) {
     test_arg_clear(&arg);
 }
 
+// Deferred init: create without thread, add tasks, then start.
+static void test_deferred_init_and_start(void) {
+    printf("Test: deferred init allows adding tasks before start\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init_deferred(&be) == _Z_RES_OK);
+
+    test_arg_t arg;
+    test_arg_init(&arg);
+
+    // Spawn a task before the executor thread is running
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h;
+    assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
+    assert(!_z_fut_handle_is_null(h));
+
+    // Task should be pending but not executed
+    _z_fut_status_t status;
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status == _Z_FUT_STATUS_RUNNING);
+
+    z_sleep_ms(100);
+    assert(test_arg_get_calls(&arg) == 0);  // no thread running, so task cannot execute
+
+    // Now start the background thread
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+
+    // Task should now execute
+    test_arg_wait_calls(&arg, 1);
+    assert(arg.call_count == 1);
+    test_arg_wait_destroyed(&arg);
+    assert(arg.destroyed == true);
+
+    _z_background_executor_destroy(&be);
+    test_arg_clear(&arg);
+}
+
+// Deferred init: destroy without ever starting should clean up properly.
+static void test_deferred_destroy_without_start(void) {
+    printf("Test: deferred init + destroy without start cleans up\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init_deferred(&be) == _Z_RES_OK);
+
+    test_arg_t arg;
+    test_arg_init(&arg);
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut, NULL) == _Z_RES_OK);
+
+    // Destroy without starting — destroy_fn must still be called
+    _z_background_executor_destroy(&be);
+    assert(arg.destroyed == true);
+    assert(arg.call_count == 0);  // body never ran
+
+    test_arg_clear(&arg);
+}
+
+// Deferred init: starting twice should fail.
+static void test_deferred_double_start_fails(void) {
+    printf("Test: deferred init + double start returns error\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init_deferred(&be) == _Z_RES_OK);
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+    assert(_z_background_executor_start(&be, NULL) == _Z_ERR_INVALID);
+    _z_background_executor_destroy(&be);
+}
+
+// Deferred init: cancel a task before starting, then start — cancelled task should not run.
+static void test_deferred_cancel_before_start(void) {
+    printf("Test: deferred init + cancel before start\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init_deferred(&be) == _Z_RES_OK);
+
+    test_arg_t arg;
+    test_arg_init(&arg);
+
+    _z_fut_t fut = _z_fut_new(&arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h;
+    assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
+
+    // Cancel before starting
+    assert(_z_background_executor_cancel_fut(&be, &h) == _Z_RES_OK);
+    _z_fut_status_t status;
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status == _Z_FUT_STATUS_READY);
+
+    // Start the executor
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+
+    // Give it time, but the task should never run
+    z_sleep_ms(100);
+    assert(test_arg_get_calls(&arg) == 0);
+    assert(test_arg_get_destroyed(&arg) == true);  // destroy_fn must have been called on cancel
+
+    _z_background_executor_destroy(&be);
+    test_arg_clear(&arg);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -382,6 +479,10 @@ int main(void) {
     test_multiple_tasks_all_complete();
     test_destroy_with_pending_tasks();
     test_handle_status_transitions();
+    test_deferred_init_and_start();
+    test_deferred_destroy_without_start();
+    test_deferred_double_start_fails();
+    test_deferred_cancel_before_start();
     printf("All background executor tests passed.\n");
     return 0;
 }

@@ -8,6 +8,7 @@ typedef struct _z_background_executor_inner_t {
     _z_condvar_t _condvar;
     _z_atomic_size_t _waiters;
     bool _stop_requested;
+    _z_atomic_bool_t _started;
     _z_task_t _task;
 } _z_background_executor_inner_t;
 
@@ -65,6 +66,9 @@ z_result_t _z_background_executor_inner_signal_stop(_z_background_executor_inner
 }
 
 static inline bool _is_called_from_executor(const _z_background_executor_inner_t *be) {
+    if (!_z_atomic_bool_load((_z_atomic_bool_t *)&be->_started, _z_memory_order_acquire)) {
+        return false;  // if executor hasn't started yet, we can't be called from it
+    }
     _z_task_id_t current_task_id = _z_task_current_id();
     _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
     return _z_task_id_equal(&current_task_id, &executor_task_id);
@@ -105,12 +109,14 @@ z_result_t _z_background_executor_inner_cancel_fut(_z_background_executor_inner_
 }
 
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
-    if (_z_background_executor_inner_signal_stop(be) != _Z_RES_OK) {
-        // if we failed to signal the background task to stop, we are in an undefined state and there's not much we can
-        // do about it
-        return;
+    if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
+        if (_z_background_executor_inner_signal_stop(be) != _Z_RES_OK) {
+            // if we failed to signal the background task to stop, we are in an undefined state and there's not much we
+            // can do about it
+            return;
+        }
+        _z_task_join(&be->_task);
     }
-    _z_task_join(&be->_task);
     _z_executor_destroy(&be->_executor);
     _z_condvar_drop(&be->_condvar);
     _z_mutex_drop(&be->_mutex);
@@ -118,30 +124,48 @@ void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
 
 void *_z_background_executor_inner_task_fn(void *arg) {
     _z_background_executor_inner_t *be = (_z_background_executor_inner_t *)arg;
+    _z_atomic_bool_store(&be->_started, true, _z_memory_order_release);
     _z_background_executor_inner_run_forever(be);
     return NULL;
 }
 
-z_result_t _z_background_executor_inner_init(_z_background_executor_inner_t *be, z_task_attr_t *task_attr) {
+z_result_t _z_background_executor_inner_init_deferred(_z_background_executor_inner_t *be) {
     _Z_RETURN_IF_ERR(_z_mutex_init(&be->_mutex));
     _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&be->_condvar), _z_mutex_drop(&be->_mutex));
     _z_executor_init(&be->_executor);
     _z_atomic_size_init(&be->_waiters, 0);
     be->_stop_requested = false;
-    _Z_CLEAN_RETURN_IF_ERR(_z_task_init(&be->_task, task_attr, _z_background_executor_inner_task_fn, be),
-                           _z_executor_destroy(&be->_executor);
-                           _z_condvar_drop(&be->_condvar); _z_mutex_drop(&be->_mutex));
+    _z_atomic_bool_init(&be->_started, false);
     return _Z_RES_OK;
 }
 
-z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr_t *task_attr) {
+z_result_t _z_background_executor_inner_start(_z_background_executor_inner_t *be, z_task_attr_t *task_attr) {
+    _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
+    if (_z_atomic_bool_load(&be->_started, _z_memory_order_relaxed)) {
+        _z_mutex_unlock(&be->_mutex);
+        return _Z_ERR_INVALID;
+    }
+    z_result_t ret = _z_task_init(&be->_task, task_attr, _z_background_executor_inner_task_fn, be);
+    if (ret == _Z_RES_OK) {
+        // Wait for the spawned thread to set _started before releasing the mutex.
+        // The thread sets _started (release) before attempting to lock the mutex in _run_forever,
+        // so this spin completes quickly without risk of deadlock.
+        while (!_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
+            z_sleep_us(1);
+        }
+    }
+    _z_mutex_unlock(&be->_mutex);
+    return ret;
+}
+
+z_result_t _z_background_executor_init_deferred(_z_background_executor_t *be) {
     be->_inner = _z_background_executor_inner_rc_null();
     _z_background_executor_inner_t *inner =
         (_z_background_executor_inner_t *)z_malloc(sizeof(_z_background_executor_inner_t));
     if (!inner) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    if (_z_background_executor_inner_init(inner, task_attr) != _Z_RES_OK) {
+    if (_z_background_executor_inner_init_deferred(inner) != _Z_RES_OK) {
         z_free(inner);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -151,6 +175,19 @@ z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr
         z_free(inner);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_background_executor_start(_z_background_executor_t *be, z_task_attr_t *task_attr) {
+    if (_Z_RC_IS_NULL(&be->_inner)) {
+        return _Z_ERR_INVALID;
+    }
+    return _z_background_executor_inner_start(_Z_RC_IN_VAL(&be->_inner), task_attr);
+}
+
+z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr_t *task_attr) {
+    _Z_RETURN_IF_ERR(_z_background_executor_init_deferred(be));
+    _Z_CLEAN_RETURN_IF_ERR(_z_background_executor_start(be, task_attr), _z_background_executor_destroy(be));
     return _Z_RES_OK;
 }
 
