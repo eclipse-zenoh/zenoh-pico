@@ -288,6 +288,14 @@ z_result_t _z_background_executor_clone(_z_background_executor_t *dst, const _z_
     }
     return _Z_RES_OK;
 }
+
+bool _z_background_executor_is_running(const _z_background_executor_t *be) {
+    if (_Z_RC_IS_NULL(&be->_inner)) {
+        return false;
+    }
+    size_t state = _z_atomic_size_load((_z_atomic_size_t *)&_Z_RC_IN_VAL(&be->_inner)->_state, _z_memory_order_acquire);
+    return state != _Z_BACKGROUND_EXECUTOR_STATE_STOPPED;
+}
 #else
 // to prevent "empty compilation unit" warning when multi-threading is disabled
 typedef int _z_background_executor_inner_t;
