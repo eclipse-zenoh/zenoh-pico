@@ -11,18 +11,6 @@ typedef struct _z_background_executor_inner_t {
     _z_task_t _task;
 } _z_background_executor_inner_t;
 
-z_result_t _z_background_executor_inner_init(_z_background_executor_inner_t *be) {
-    _Z_RETURN_IF_ERR(_z_mutex_init(&be->_mutex));
-    _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&be->_condvar), _z_mutex_drop(&be->_mutex));
-    _z_executor_init(&be->_executor);
-    _z_atomic_size_init(&be->_waiters, 0);
-    be->_stop_requested = false;
-    _Z_CLEAN_RETURN_IF_ERR(_z_task_init(&be->_task, NULL, _z_background_executor_inner_task_fn, be),
-                           _z_executor_destroy(&be->_executor);
-                           _z_condvar_drop(&be->_condvar); _z_mutex_drop(&be->_mutex));
-    return _Z_RES_OK;
-}
-
 z_result_t _z_background_executor_inner_suspend_and_lock(_z_background_executor_inner_t *be) {
     _z_atomic_size_fetch_add(&be->_waiters, 1, _z_memory_order_acq_rel);
     return _z_mutex_lock(&be->_mutex);
@@ -134,14 +122,26 @@ void *_z_background_executor_inner_task_fn(void *arg) {
     return NULL;
 }
 
-z_result_t _z_background_executor_init(_z_background_executor_t *be) {
+z_result_t _z_background_executor_inner_init(_z_background_executor_inner_t *be, z_task_attr_t *task_attr) {
+    _Z_RETURN_IF_ERR(_z_mutex_init(&be->_mutex));
+    _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&be->_condvar), _z_mutex_drop(&be->_mutex));
+    _z_executor_init(&be->_executor);
+    _z_atomic_size_init(&be->_waiters, 0);
+    be->_stop_requested = false;
+    _Z_CLEAN_RETURN_IF_ERR(_z_task_init(&be->_task, task_attr, _z_background_executor_inner_task_fn, be),
+                           _z_executor_destroy(&be->_executor);
+                           _z_condvar_drop(&be->_condvar); _z_mutex_drop(&be->_mutex));
+    return _Z_RES_OK;
+}
+
+z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr_t *task_attr) {
     be->_inner = _z_background_executor_inner_rc_null();
     _z_background_executor_inner_t *inner =
         (_z_background_executor_inner_t *)z_malloc(sizeof(_z_background_executor_inner_t));
     if (!inner) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    if (_z_background_executor_inner_init(inner) != _Z_RES_OK) {
+    if (_z_background_executor_inner_init(inner, task_attr) != _Z_RES_OK) {
         z_free(inner);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
