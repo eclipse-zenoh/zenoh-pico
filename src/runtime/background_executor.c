@@ -68,12 +68,6 @@ z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner
     return _z_mutex_unlock(&be->_mutex);
 }
 
-z_result_t _z_background_executor_inner_signal_stop(_z_background_executor_inner_t *be) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
-    be->_stop_requested = true;
-    return _z_background_executor_inner_unlock_and_resume(be);
-}
-
 static inline bool _is_called_from_executor(const _z_background_executor_inner_t *be) {
     if (_z_atomic_size_load((_z_atomic_size_t *)&be->_state, _z_memory_order_acquire) !=
         _Z_BACKGROUND_EXECUTOR_STATE_RUNNING) {
@@ -144,6 +138,9 @@ z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be)
 }
 
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
+    _z_atomic_size_store(&be->_waiters, 0,
+                         _z_memory_order_release);  // ensure that if the executor thread is still running, it won't be
+                                                    // stuck waiting on the condition variable
     _z_background_executor_inner_stop(be);
     _z_executor_destroy(&be->_executor);
     _z_condvar_drop(&be->_condvar);
