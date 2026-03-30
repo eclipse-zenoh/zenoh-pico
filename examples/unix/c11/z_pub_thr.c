@@ -169,8 +169,6 @@ int main(int argc, char **argv) {
     pthread_t task2;
     pthread_create(&task2, NULL, stop_task, &stop_flag);
 
-    // Send join
-    zp_send_join(z_loan(s), NULL);
     // Send packets
     (void)batch_size;
 #if Z_FEATURE_BATCHING == 1

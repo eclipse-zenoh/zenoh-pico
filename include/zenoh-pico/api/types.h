@@ -493,30 +493,30 @@ typedef struct {
     z_reply_keyexpr_t accept_replies;
 } z_get_options_t;
 
+#if Z_FEATURE_MULTI_THREAD == 1 || defined(SPHINX_DOCS)
 /**
  * Represents the configuration used to configure a read task started via :c:func:`zp_start_read_task`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
     z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
 } zp_task_read_options_t;
 
 /**
  * Represents the configuration used to configure a lease task started via :c:func:`zp_start_lease_task`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
     z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
 } zp_task_lease_options_t;
-
+#endif
+#if Z_FEATURE_MULTI_THREAD == 0 || defined(SPHINX_DOCS)
 /**
  * Represents the configuration used to configure a read operation started via :c:func:`zp_read`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     bool single_read;  // Read a single packet instead of the whole buffer
@@ -524,6 +524,8 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a send keep alive operation started via :c:func:`zp_send_keep_alive`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -531,11 +533,13 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a send join operation started via :c:func:`zp_send_join`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } zp_send_join_options_t;
-
+#endif
 /**
  * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *

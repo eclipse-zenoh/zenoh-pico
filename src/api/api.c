@@ -2478,15 +2478,9 @@ z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener) 
     return ret;
 }
 #endif
-
-/**************** Tasks ****************/
-void zp_task_read_options_default(zp_task_read_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    options->task_attributes = NULL;
-#else
-    options->__dummy = 0;
-#endif
-}
+/**************** Tasks ****************/
+void zp_task_read_options_default(zp_task_read_options_t *options) { options->task_attributes = NULL; }
 
 z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options) {
     (void)(options);
@@ -2504,13 +2498,7 @@ bool zp_read_task_is_running(const z_loaned_session_t *zs) {
     return false;
 }
 
-void zp_task_lease_options_default(zp_task_lease_options_t *options) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    options->task_attributes = NULL;
-#else
-    options->__dummy = 0;
-#endif
-}
+void zp_task_lease_options_default(zp_task_lease_options_t *options) { options->task_attributes = NULL; }
 
 z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options) {
     (void)(options);
@@ -2527,7 +2515,7 @@ bool zp_lease_task_is_running(const z_loaned_session_t *zs) {
     (void)(zs);
     return false;
 }
-
+#else
 void zp_read_options_default(zp_read_options_t *options) { options->single_read = false; }
 
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options) {
@@ -2554,7 +2542,6 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
 
-#if Z_FEATURE_MULTI_THREAD == 0
 void zp_spin_once(const z_loaned_session_t *zs) { _z_runtime_spin_once(&_Z_RC_IN_VAL(zs)->_runtime); }
 #endif
 
