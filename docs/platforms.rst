@@ -67,7 +67,8 @@ That file should:
 
 * declare the platform-specific compile definitions and sources;
 * choose the default ``stream``, ``datagram`` and ``rawio`` backends for the platform.
-* optionally add include directories or adjust ``CHECK_THREADS`` if the platform needs it.
+* optionally add extra include directories needed to build the platform sources
+  or adjust ``CHECK_THREADS`` if the platform needs it.
 
 A platform descriptor defines the system-layer sources for the platform and selects the default lower backends.
 Existing backend implementations should be reused when only part of the platform support differs.
@@ -81,6 +82,8 @@ Example built-in platform descriptor:
    zp_platform_add_definition(ZENOH_MYRTOS)
    zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/myrtos/system.c")
    # Optional:
+   # These extra include directories are only used when building zenoh-pico itself.
+   # They are not exported as public installed headers.
    # zp_platform_add_include_dirs("${PROJECT_SOURCE_DIR}/src/system/myrtos/include")
    # set(CHECK_THREADS OFF)
    zp_platform_set_stream_backend(tcp_lwip)

@@ -609,10 +609,10 @@ set(_zp_component_include_dirs
 )
 if(NOT "${_zp_component_include_dirs}" STREQUAL "")
   if(PICO_STATIC)
-    target_include_directories(zenohpico_static PUBLIC ${_zp_component_include_dirs})
+    target_include_directories(zenohpico_static PRIVATE ${_zp_component_include_dirs})
   endif()
   if(PICO_SHARED)
-    target_include_directories(zenohpico_shared PUBLIC ${_zp_component_include_dirs})
+    target_include_directories(zenohpico_shared PRIVATE ${_zp_component_include_dirs})
   endif()
 endif()
 
