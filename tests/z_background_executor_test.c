@@ -127,7 +127,7 @@ static void test_new_destroy_no_tasks(void) {
     printf("Test: new and destroy with no tasks\n");
     _z_background_executor_t be;
     assert(_z_background_executor_init(&be) == _Z_RES_OK);
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
 }
 
 // A spawned future runs on the background thread; destroy_fn is called.
@@ -148,7 +148,7 @@ static void test_spawn_runs_task(void) {
     test_arg_wait_destroyed(&arg);
     assert(arg.destroyed == true);
 
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 
@@ -182,7 +182,7 @@ static void test_cancel_before_execution(void) {
     assert(arg.destroyed == true);
     assert(arg.call_count == 0);  // body never ran
 
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 
@@ -206,7 +206,7 @@ static void test_timed_reschedule_runs_twice(void) {
     assert(test_arg_get_calls(&arg) == 2);
     assert(test_arg_get_destroyed(&arg) == true);
 
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 
@@ -237,7 +237,7 @@ static void test_suspend_blocks_execution(void) {
     assert(arg.call_count == 1);
 
     test_arg_wait_destroyed(&arg);
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 
@@ -275,7 +275,7 @@ static void test_nested_suspend_resume(void) {
     assert(arg.call_count == 1);
 
     test_arg_wait_destroyed(&arg);
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 
@@ -307,7 +307,7 @@ static void test_multiple_tasks_all_complete(void) {
         assert(elapsed_ms <= args[i].wait_ms + 300);  // but not too much longer
     }
 
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     for (int i = 0; i < N; i++) {
         test_arg_clear(&args[i]);
     }
@@ -333,7 +333,7 @@ static void test_destroy_with_pending_tasks(void) {
     assert(_z_background_executor_resume(&be) == _Z_RES_OK);
 
     // Destroy immediately — some or all tasks may not have run yet
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
 
     // Every destroy_fn must have been called by now (destroy is synchronous)
     for (int i = 0; i < N; i++) {
@@ -366,7 +366,7 @@ static void test_handle_status_transitions(void) {
     assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
     assert(status == _Z_FUT_STATUS_READY);
 
-    assert(_z_background_executor_destroy(&be) == _Z_RES_OK);
+    _z_background_executor_destroy(&be);
     test_arg_clear(&arg);
 }
 

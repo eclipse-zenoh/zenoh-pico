@@ -34,7 +34,6 @@ _Z_REFCOUNT_DEFINE_NO_FROM_VAL(_z_background_executor_inner, _z_background_execu
 
 typedef struct _z_background_executor_t {
     _z_background_executor_inner_rc_t _inner;
-    _z_task_t _task;
 } _z_background_executor_t;
 
 z_result_t _z_background_executor_init(_z_background_executor_t *be);
@@ -47,10 +46,11 @@ static inline void _z_background_executor_null(_z_background_executor_t *be) {
 z_result_t _z_background_executor_spawn(_z_background_executor_t *be, _z_fut_t *fut, _z_fut_handle_t *opt_handle_out);
 z_result_t _z_background_executor_suspend(_z_background_executor_t *be);
 z_result_t _z_background_executor_resume(_z_background_executor_t *be);
-z_result_t _z_background_executor_destroy(_z_background_executor_t *be);
+void _z_background_executor_destroy(_z_background_executor_t *be);
 z_result_t _z_background_executor_get_fut_status(_z_background_executor_t *be, const _z_fut_handle_t *handle,
                                                  _z_fut_status_t *status_out);
 z_result_t _z_background_executor_cancel_fut(_z_background_executor_t *be, const _z_fut_handle_t *handle);
+z_result_t _z_background_executor_clone(_z_background_executor_t *dst, const _z_background_executor_t *src);
 #ifdef __cplusplus
 extern "C" {
 #endif
