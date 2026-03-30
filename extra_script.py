@@ -46,9 +46,6 @@ if FRAMEWORK == 'zephyr':
     ZP_PLATFORM = "zephyr"
     CPPDEFINES = [
         "ZENOH_ZEPHYR",
-        "ZP_DEFAULT_STREAM_OPS=_z_tcp_zephyr_stream_ops",
-        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_zephyr_datagram_ops",
-        "ZP_DEFAULT_RAWIO_OPS=_z_uart_zephyr_rawio_ops",
     ]
 
 elif FRAMEWORK == 'arduino':
@@ -60,9 +57,6 @@ elif FRAMEWORK == 'arduino':
             "ZENOH_ARDUINO_ESP32",
             "ZENOH_COMPILER_GCC",
             "ZENOH_C_STANDARD=99",
-            "ZP_DEFAULT_STREAM_OPS=_z_tcp_esp32_stream_ops",
-            "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_esp32_datagram_ops",
-            "ZP_DEFAULT_RAWIO_OPS=_z_uart_arduino_esp32_rawio_ops",
         ]
     if PLATFORM == 'ststm32':
         BOARD = env.get("PIOENV")
@@ -73,8 +67,6 @@ elif FRAMEWORK == 'arduino':
                 "ZENOH_ARDUINO_OPENCR",
                 "ZENOH_C_STANDARD=99",
                 "Z_FEATURE_MULTI_THREAD=0",
-                "ZP_DEFAULT_STREAM_OPS=_z_tcp_opencr_stream_ops",
-                "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_opencr_datagram_ops",
             ]
 
 elif FRAMEWORK == 'espidf':
@@ -82,9 +74,6 @@ elif FRAMEWORK == 'espidf':
     ZP_PLATFORM = "espidf"
     CPPDEFINES = [
         "ZENOH_ESPIDF",
-        "ZP_DEFAULT_STREAM_OPS=_z_tcp_esp32_stream_ops",
-        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_esp32_datagram_ops",
-        "ZP_DEFAULT_RAWIO_OPS=_z_uart_espidf_rawio_ops",
     ]
 
 elif FRAMEWORK == 'mbed':
@@ -93,9 +82,6 @@ elif FRAMEWORK == 'mbed':
     CPPDEFINES = [
         "ZENOH_MBED",
         "ZENOH_C_STANDARD=99",
-        "ZP_DEFAULT_STREAM_OPS=_z_tcp_mbed_stream_ops",
-        "ZP_DEFAULT_DATAGRAM_OPS=_z_udp_mbed_datagram_ops",
-        "ZP_DEFAULT_RAWIO_OPS=_z_uart_mbed_rawio_ops",
     ]
 elif FRAMEWORK == 'generic':
     SRC_FILTER = BASE_SRC_FILTER
