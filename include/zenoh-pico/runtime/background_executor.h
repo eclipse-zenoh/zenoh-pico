@@ -42,8 +42,12 @@ z_result_t _z_background_executor_init(_z_background_executor_t *be, z_task_attr
 // _z_background_executor_start is called.
 z_result_t _z_background_executor_init_deferred(_z_background_executor_t *be);
 // Spawns a background thread to run an executor that was previously created with _z_background_executor_init_deferred.
-// Returns _Z_ERR_INVALID if the executor is already running.
+// Returns _Z_RES_OK in case of success or if the executor is already running, non-zero value otherwise.
 z_result_t _z_background_executor_start(_z_background_executor_t *be, z_task_attr_t *task_attr);
+// Stops the background executor thread without destroying the executor.
+// Pending tasks are preserved and can be executed after restarting with _z_background_executor_start.
+// Returns _Z_RES_OK in case of success or if the executor was already stopped, non-zero value otherwise.
+z_result_t _z_background_executor_stop(_z_background_executor_t *be);
 static inline void _z_background_executor_null(_z_background_executor_t *be) {
     be->_inner = _z_background_executor_inner_rc_null();
 }
@@ -59,16 +63,8 @@ z_result_t _z_background_executor_get_fut_status(_z_background_executor_t *be, c
 z_result_t _z_background_executor_cancel_fut(_z_background_executor_t *be, const _z_fut_handle_t *handle);
 z_result_t _z_background_executor_clone(_z_background_executor_t *dst, const _z_background_executor_t *src);
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
 }
 #endif
 #endif /* Z_FEATURE_MULTI_THREAD */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

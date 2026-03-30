@@ -426,13 +426,13 @@ static void test_deferred_destroy_without_start(void) {
     test_arg_clear(&arg);
 }
 
-// Deferred init: starting twice should fail.
-static void test_deferred_double_start_fails(void) {
-    printf("Test: deferred init + double start returns error\n");
+// Deferred init: starting second time is no-op.
+static void test_deferred_second_start_is_no_op(void) {
+    printf("Test: deferred init + double start is no-op\n");
     _z_background_executor_t be;
     assert(_z_background_executor_init_deferred(&be) == _Z_RES_OK);
     assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
-    assert(_z_background_executor_start(&be, NULL) == _Z_ERR_INVALID);
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
     _z_background_executor_destroy(&be);
 }
 
@@ -467,6 +467,82 @@ static void test_deferred_cancel_before_start(void) {
     test_arg_clear(&arg);
 }
 
+// Stop a running executor, verify tasks don't execute, then restart.
+static void test_stop_and_restart(void) {
+    printf("Test: stop and restart executor\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init(&be, NULL) == _Z_RES_OK);
+
+    // Run a task to confirm executor is working
+    test_arg_t arg1;
+    test_arg_init(&arg1);
+    _z_fut_t fut1 = _z_fut_new(&arg1, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut1, NULL) == _Z_RES_OK);
+    test_arg_wait_calls(&arg1, 1);
+    assert(test_arg_get_calls(&arg1) == 1);
+
+    // Stop the executor
+    assert(_z_background_executor_stop(&be) == _Z_RES_OK);
+
+    // Stopping again should be a no-op (idempotent)
+    assert(_z_background_executor_stop(&be) == _Z_RES_OK);
+
+    // Spawn a task while stopped — should succeed but not execute
+    test_arg_t arg2;
+    test_arg_init(&arg2);
+    _z_fut_t fut2 = _z_fut_new(&arg2, fn_finish, destroy_fn);
+    _z_fut_handle_t h2;
+    assert(_z_background_executor_spawn(&be, &fut2, &h2) == _Z_RES_OK);
+    z_sleep_ms(100);
+    assert(test_arg_get_calls(&arg2) == 0);
+
+    // Restart the executor
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+
+    // The pending task should now execute
+    test_arg_wait_calls(&arg2, 1);
+    assert(test_arg_get_calls(&arg2) == 1);
+
+    _z_background_executor_destroy(&be);
+    test_arg_clear(&arg1);
+    test_arg_clear(&arg2);
+}
+
+// Stop executor with pending tasks — tasks should be preserved, not destroyed.
+static void test_stop_preserves_pending_tasks(void) {
+    printf("Test: stop preserves pending tasks\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init(&be, NULL) == _Z_RES_OK);
+
+    // Suspend so the task doesn't run before we stop
+    assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
+
+    test_arg_t arg;
+    test_arg_init(&arg);
+    arg.wait_ms = 500;  // ensure the task would still be pending after we stop
+    _z_fut_t fut = _z_fut_new(&arg, fn_reschedule_once, destroy_fn);
+    assert(_z_background_executor_resume(&be) == _Z_RES_OK);
+    _z_fut_handle_t h;
+    assert(_z_background_executor_spawn(&be, &fut, &h) == _Z_RES_OK);
+    // Stop the executor — task should still be pending, destroy_fn should NOT have been called
+    assert(_z_background_executor_stop(&be) == _Z_RES_OK);
+    z_sleep_ms(1000);
+
+    _z_fut_status_t status;
+    assert(_z_background_executor_get_fut_status(&be, &h, &status) == _Z_RES_OK);
+    assert(status != _Z_FUT_STATUS_READY);
+    assert(arg.destroyed == false);
+
+    // Restart and let it complete
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+    z_sleep_ms(1000);  // give it time to run the first call and reschedule
+    test_arg_wait_calls(&arg, 2);
+    test_arg_wait_destroyed(&arg);
+
+    _z_background_executor_destroy(&be);
+    test_arg_clear(&arg);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -481,8 +557,10 @@ int main(void) {
     test_handle_status_transitions();
     test_deferred_init_and_start();
     test_deferred_destroy_without_start();
-    test_deferred_double_start_fails();
+    test_deferred_second_start_is_no_op();
     test_deferred_cancel_before_start();
+    test_stop_and_restart();
+    test_stop_preserves_pending_tasks();
     printf("All background executor tests passed.\n");
     return 0;
 }
