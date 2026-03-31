@@ -2544,7 +2544,11 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
 
-void zp_spin_once(const z_loaned_session_t *zs) { _z_runtime_spin_once(&_Z_RC_IN_VAL(zs)->_runtime); }
+void zp_spin_once(const z_loaned_session_t *zs) {
+    if (!z_session_is_closed(zs)) {
+        _z_runtime_spin_once((_z_runtime_t *)&_Z_RC_IN_VAL(zs)->_runtime);
+    }
+}
 #endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
