@@ -165,8 +165,19 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 }
 
 z_result_t _z_session_close(_z_session_t *zn) {
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    // Need to run close sequence unconditionally, since
+    // this is the only way to guarantee that after _z_session_close returns,
+    // no more callbacks will be running
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
     _z_atomic_bool_store(&zn->_is_closed, true, _z_memory_order_release);
+    _z_session_mutex_unlock(zn);
+    // stop the runtime to prevent spawning new tasks
+    // this will also ensure that no callbacks can be called in response to message reception inside read task,
+    // session sync group at the end of the call might still be needed in case there are any historical
+    // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
+    // events
+    _z_runtime_stop(&zn->_runtime);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_free(&zn->_declaration_cache);
 #endif
@@ -209,13 +220,16 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_session_admin_space_mutex_unlock(zn);
 #endif
 #endif
-    _z_runtime_clear(&zn->_runtime);
+    // Despite stopping runtime at the very beginning, we still need to wait for possible historical callbacks
+    // from liveliness subscribers, matching listeners, connectivity events listeners, etc
+    // to finish
     _z_sync_group_wait(&zn->_callback_drop_sync_group);
     return _Z_RES_OK;
 }
 
 void _z_session_clear(_z_session_t *zn) {
     _z_session_close(zn);
+    _z_runtime_clear(&zn->_runtime);
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_config_clear(&zn->_config);
 #endif

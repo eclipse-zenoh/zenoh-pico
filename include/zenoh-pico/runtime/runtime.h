@@ -47,6 +47,8 @@ static inline void _z_runtime_null(_z_runtime_t *runtime) { _z_background_execut
 static inline z_result_t _z_runtime_start(_z_runtime_t *runtime, z_task_attr_t *task_attr) {
     return _z_background_executor_start(runtime, task_attr);
 }
+
+static inline z_result_t _z_runtime_stop(_z_runtime_t *runtime) { return _z_background_executor_stop(runtime); }
 #else
 typedef _z_executor_t _z_runtime_t;
 static inline _z_fut_handle_t _z_runtime_spawn(_z_runtime_t *runtime, _z_fut_t *fut) {
@@ -63,6 +65,11 @@ static inline z_result_t _z_runtime_cancel_fut(_z_runtime_t *runtime, _z_fut_han
     return _Z_RES_OK;
 }
 static inline void _z_runtime_spin_once(_z_runtime_t *runtime) { _z_executor_spin(runtime); }
+
+static inline z_result_t _z_runtime_stop(_z_runtime_t *runtime) {
+    _ZP_UNUSED(runtime);
+    return _Z_RES_OK;
+}
 #endif
 
 #ifdef __cplusplus
