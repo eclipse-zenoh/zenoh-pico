@@ -1110,6 +1110,7 @@ Functions
 .. autocfunction:: primitives.h::z_close
 .. autocfunction:: primitives.h::z_session_is_closed
 .. autocfunction:: primitives.h::z_session_id
+.. autocfunction:: primitives.h::zp_spin_once
 
 .. autocfunction:: primitives.h::z_info_zid
 .. autocfunction:: primitives.h::z_info_routers_zid
@@ -1793,15 +1794,6 @@ See details at :ref:`owned_types_concept`
 Others
 ======
 
-Data Structures
----------------
-
-.. autoctype:: types.h::zp_task_read_options_t
-.. autoctype:: types.h::zp_task_lease_options_t
-.. autoctype:: types.h::zp_read_options_t
-.. autoctype:: types.h::zp_send_keep_alive_options_t
-.. autoctype:: types.h::zp_send_join_options_t
-
 Constants
 ---------
 
@@ -1814,29 +1806,6 @@ Macros
 .. autocmacro:: macros.h::z_clone
 .. autocmacro:: macros.h::z_drop
 .. autocmacro:: macros.h::z_closure
-
-Functions
----------
-
-.. autocfunction:: primitives.h::zp_task_read_options_default
-.. autocfunction:: primitives.h::zp_start_read_task
-.. autocfunction:: primitives.h::zp_stop_read_task
-.. autocfunction:: primitives.h::zp_read_task_is_running
-
-.. autocfunction:: primitives.h::zp_task_lease_options_default
-.. autocfunction:: primitives.h::zp_start_lease_task
-.. autocfunction:: primitives.h::zp_stop_lease_task
-.. autocfunction:: primitives.h::zp_lease_task_is_running
-
-.. autocfunction:: primitives.h::zp_read_options_default
-.. autocfunction:: primitives.h::zp_read
-
-.. autocfunction:: primitives.h::zp_send_keep_alive_options_default
-.. autocfunction:: primitives.h::zp_send_keep_alive
-.. autocfunction:: primitives.h::zp_send_join_options_default
-.. autocfunction:: primitives.h::zp_send_join
-  
-.. autocfunction:: primitives.h::zp_spin_once
 
 Logging
 =======

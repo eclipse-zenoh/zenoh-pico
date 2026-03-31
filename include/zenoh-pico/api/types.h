@@ -176,17 +176,20 @@ typedef struct {
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
  *
  * Members:
- *   bool auto_start_read_task: auto-start read task after ``z_open()`` (default true; only multi-thread builds).
- *   bool auto_start_lease_task: auto-start lease task after ``z_open()`` (default true; only multi-thread builds).
- *   bool auto_start_periodic_task: auto-start periodic scheduler after ``z_open()`` (default false; only
- *     multi-thread builds when periodic tasks feature is enabled).
- *   bool auto_start_admin_space: auto-start admin space after ``z_open()`` (default false; only when admin space
- *     feature is enabled).
+ *   bool auto_start_read_task: Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are
+ * now started automatically when session is created.
+ *   bool auto_start_lease_task: Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started
+ * automatically when session is created.
+ *   z_task_attr_t* executor_task_attributes: the attributes to pass to zenoh session executor thread running read,
+ * lease, keep alive, join, connect and other tasks in the background (only when Z_FEATURE_MULTI_THREAD is enabled).
+ *   bool auto_start_admin_space: auto-start admin space after ``z_open()`` (default
+ * false; only when admin space feature is enabled).
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool auto_start_read_task;
     bool auto_start_lease_task;
+    z_task_attr_t *executor_task_attributes;
 #endif
 #if (Z_FEATURE_ADMIN_SPACE == 1)
     bool auto_start_admin_space;

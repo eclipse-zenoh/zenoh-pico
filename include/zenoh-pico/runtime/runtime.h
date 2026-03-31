@@ -39,11 +39,14 @@ static inline _z_fut_handle_t _z_runtime_spawn(_z_runtime_t *runtime, _z_fut_t *
 static inline z_result_t _z_runtime_cancel_fut(_z_runtime_t *runtime, _z_fut_handle_t *handle) {
     return _z_background_executor_cancel_fut(runtime, handle);
 }
-static inline z_result_t _z_runtime_init(_z_runtime_t *runtime, z_task_attr_t *task_attr) {
-    return _z_background_executor_init(runtime, task_attr);
+static inline z_result_t _z_runtime_init(_z_runtime_t *runtime) {
+    return _z_background_executor_init_deferred(runtime);
 }
 static inline void _z_runtime_clear(_z_runtime_t *runtime) { _z_background_executor_destroy(runtime); }
 static inline void _z_runtime_null(_z_runtime_t *runtime) { _z_background_executor_null(runtime); }
+static inline z_result_t _z_runtime_start(_z_runtime_t *runtime, z_task_attr_t *task_attr) {
+    return _z_background_executor_start(runtime, task_attr);
+}
 #else
 typedef _z_executor_t _z_runtime_t;
 static inline _z_fut_handle_t _z_runtime_spawn(_z_runtime_t *runtime, _z_fut_t *fut) {

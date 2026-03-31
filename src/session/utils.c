@@ -135,11 +135,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     zn->_callback_drop_sync_group = _z_sync_group_null();
     _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
-#if Z_FEATURE_MULTI_THREAD == 1
-    _Z_SET_IF_OK(ret, _z_runtime_init(&zn->_runtime, NULL));
-#else
     _Z_SET_IF_OK(ret, _z_runtime_init(&zn->_runtime));
-#endif
 #if Z_FEATURE_QUERY
     if (ret == _Z_RES_OK) {
         _z_fut_t fut = _z_fut_null();

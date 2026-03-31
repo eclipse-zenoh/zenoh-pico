@@ -3158,7 +3158,8 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 #if Z_FEATURE_MULTI_THREAD == 1 || defined(SPHINX_DOCS)
 /************* Multi Thread Tasks helpers **************/
 /**
- * Builds a :c:type:`zp_task_read_options_t` with default value.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3168,10 +3169,8 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 void zp_task_read_options_default(zp_task_read_options_t *options);
 
 /**
- * Starts a task to read from the network and process the received messages.
- *
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3185,9 +3184,8 @@ void zp_task_read_options_default(zp_task_read_options_t *options);
 z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
 
 /**
- * Stops the read task.
- *
- * This may result in stopping a thread or a process depending on the target platform.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3200,14 +3198,16 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
 z_result_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
- * Returns whether the read task is currently running for the given session.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 bool zp_read_task_is_running(const z_loaned_session_t *zs);
 
 /**
- * Builds a :c:type:`zp_task_lease_options_t` with default value.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3217,12 +3217,8 @@ bool zp_read_task_is_running(const z_loaned_session_t *zs);
 void zp_task_lease_options_default(zp_task_lease_options_t *options);
 
 /**
- * Starts a task to handle the session lease.
- *
- * This task will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
- * When operating over a multicast transport, it also periodically sends the ``Join`` messages.
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3236,9 +3232,8 @@ void zp_task_lease_options_default(zp_task_lease_options_t *options);
 z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
- * Stops the lease task.
- *
- * This may result in stopping a thread or a process depending on the target platform.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
@@ -3251,7 +3246,8 @@ z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_optio
 z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
 
 /**
- * Returns whether the lease task is currently running for the given session.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
@@ -3260,7 +3256,8 @@ bool zp_lease_task_is_running(const z_loaned_session_t *zs);
 #if Z_FEATURE_MULTI_THREAD == 0 || defined(SPHINX_DOCS)
 /************* Single Thread helpers **************/
 /**
- * Builds a :c:type:`zp_read_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3270,7 +3267,8 @@ bool zp_lease_task_is_running(const z_loaned_session_t *zs);
 void zp_read_options_default(zp_read_options_t *options);
 
 /**
- * Executes a single read from the network and process received messages.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3284,7 +3282,8 @@ void zp_read_options_default(zp_read_options_t *options);
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
 
 /**
- * Builds a :c:type:`zp_send_keep_alive_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3294,7 +3293,8 @@ z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *option
 void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
 
 /**
- * Executes a single send keep alive procedure.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3308,7 +3308,8 @@ void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
 z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
 
 /**
- * Builds a :c:type:`zp_send_join_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3318,7 +3319,8 @@ z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_a
 void zp_send_join_options_default(zp_send_join_options_t *options);
 
 /**
- * Executes a single send join procedure.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
@@ -3332,7 +3334,8 @@ void zp_send_join_options_default(zp_send_join_options_t *options);
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
 /**
- * Spins zenoh executor once, executing a single pending task (such as read, accept, connect, etc...) if any.
+ * Spins zenoh executor once, executing a single pending task (such as read, lease, keep alive, accept, connect, etc...)
+ * from the task queue.
  *
  * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *

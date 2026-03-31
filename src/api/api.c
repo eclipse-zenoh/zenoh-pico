@@ -835,7 +835,8 @@ void z_open_options_default(z_open_options_t *options) {
 #endif
 #if Z_FEATURE_MULTI_THREAD == 1
     options->auto_start_lease_task = false;
-    options->auto_start_read_task = false;
+    options->auto_start_read_task = true;
+    options->executor_task_attributes = NULL;
 #endif
 #if Z_FEATURE_ADMIN_SPACE == 0 && Z_FEATURE_MULTI_THREAD == 0
     options->__dummy = 0;
@@ -913,7 +914,13 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         z_config_drop(config);
         return ret;
     }
-
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (opts.auto_start_read_task) {
+        _Z_CLEAN_RETURN_IF_ERR(_z_runtime_start(&_Z_RC_IN_VAL(&zs->_rc)->_runtime, opts.executor_task_attributes),
+                               z_session_drop(z_session_move(zs));
+                               z_config_drop(config));
+    }
+#endif
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADMIN_SPACE == 1
     if (opts.auto_start_admin_space) {
@@ -2483,37 +2490,32 @@ z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener) 
 void zp_task_read_options_default(zp_task_read_options_t *options) { options->task_attributes = NULL; }
 
 z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options) {
-    (void)(options);
-    (void)(zs);
-    return -1;
+    return _z_background_executor_start(&_Z_RC_IN_VAL(zs)->_runtime, options == NULL ? NULL : options->task_attributes);
 }
 
 z_result_t zp_stop_read_task(z_loaned_session_t *zs) {
-    (void)(zs);
-    return -1;
+    return _z_background_executor_stop(&_Z_RC_IN_VAL(zs)->_runtime);
 }
 
 bool zp_read_task_is_running(const z_loaned_session_t *zs) {
-    (void)(zs);
-    return false;
+    return _z_background_executor_is_running(&_Z_RC_IN_VAL(zs)->_runtime);
 }
 
 void zp_task_lease_options_default(zp_task_lease_options_t *options) { options->task_attributes = NULL; }
 
 z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options) {
-    (void)(options);
-    (void)(zs);
-    return -1;
+    _ZP_UNUSED(zs);
+    _ZP_UNUSED(options);
+    return _Z_RES_OK;
 }
 
 z_result_t zp_stop_lease_task(z_loaned_session_t *zs) {
-    (void)(zs);
-    return -1;
+    _ZP_UNUSED(zs);
+    return _Z_RES_OK;
 }
 
 bool zp_lease_task_is_running(const z_loaned_session_t *zs) {
-    (void)(zs);
-    return false;
+    return _z_background_executor_is_running(&_Z_RC_IN_VAL(zs)->_runtime);
 }
 #else
 void zp_read_options_default(zp_read_options_t *options) { options->single_read = false; }
