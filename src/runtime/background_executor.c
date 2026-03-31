@@ -1,20 +1,14 @@
 #include "zenoh-pico/runtime/background_executor.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef enum {
-    _Z_BACKGROUND_EXECUTOR_STATE_STOPPED,
-    _Z_BACKGROUND_EXECUTOR_STATE_STARTING,
-    _Z_BACKGROUND_EXECUTOR_STATE_RUNNING,
-    _Z_BACKGROUND_EXECUTOR_STATE_STOPPING
-} _z_background_executor_state_t;
-
 typedef struct _z_background_executor_inner_t {
     _z_executor_t _executor;
     _z_mutex_t _mutex;
     _z_condvar_t _condvar;
     _z_atomic_size_t _waiters;
-    bool _stop_requested;
-    _z_atomic_size_t _state;
+    size_t _thread_idx;
+    _z_atomic_bool_t _started;
+    _z_atomic_size_t _thread_checkers;
     _z_task_t _task;
 } _z_background_executor_inner_t;
 
@@ -39,17 +33,18 @@ z_result_t _z_background_executor_inner_resume(_z_background_executor_inner_t *b
     return _z_background_executor_inner_unlock_and_resume(be);
 }
 
-z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner_t *be) {
+z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner_t *be, size_t thread_idx) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
     while (true) {
         while (_z_atomic_size_load(&be->_waiters, _z_memory_order_acquire) > 0) {
-            if (be->_stop_requested) {  // extra check to allow to stop executor thread even if there are waiters
-                break;                  // stop requested, exit the loop and end the thread
+            if (thread_idx <
+                be->_thread_idx) {  // extra check to allow to stop executor thread even if there are waiters
+                break;              // stop requested, exit the loop and end the thread
             }
             // if there are waiters, sleep until they are resumed
             _Z_CLEAN_RETURN_IF_ERR(_z_condvar_wait(&be->_condvar, &be->_mutex), _z_mutex_unlock(&be->_mutex));
         }
-        if (be->_stop_requested) {
+        if (thread_idx < be->_thread_idx) {
             break;  // stop requested, exit the loop and end the thread
         }
         _z_executor_spin_result_t res = _z_executor_spin(&be->_executor);
@@ -71,26 +66,29 @@ z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner
     return _z_mutex_unlock(&be->_mutex);
 }
 
-static inline bool _is_called_from_executor(const _z_background_executor_inner_t *be) {
-    if (_z_atomic_size_load((_z_atomic_size_t *)&be->_state, _z_memory_order_acquire) !=
-        _Z_BACKGROUND_EXECUTOR_STATE_RUNNING) {
-        return false;  // if executor hasn't started yet, we can't be called from it
+static inline bool _is_called_from_executor(_z_background_executor_inner_t *be) {
+    bool res = false;
+    _z_atomic_size_fetch_add(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
+    if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {  // only check task id if executor is started
+        _z_task_id_t current_task_id = _z_task_current_id();
+        _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
+        res = _z_task_id_equal(&current_task_id, &executor_task_id);
     }
-    _z_task_id_t current_task_id = _z_task_current_id();
-    _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
-    return _z_task_id_equal(&current_task_id, &executor_task_id);
+    _z_atomic_size_fetch_sub(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
+    return res;
 }
 
 z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut,
                                               _z_fut_handle_t *handle) {
+    z_result_t ret = _Z_RES_OK;
     if (_is_called_from_executor(be)) {
         *handle = _z_executor_spawn(&be->_executor, fut);
     } else {
         _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
         *handle = _z_executor_spawn(&be->_executor, fut);
-        _z_background_executor_inner_unlock_and_resume(be);
+        ret = _z_background_executor_inner_unlock_and_resume(be);
     }
-    return _z_fut_handle_is_null(*handle) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;
+    return _z_fut_handle_is_null(*handle) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : ret;
 }
 
 z_result_t _z_background_executor_inner_get_fut_status(_z_background_executor_inner_t *be,
@@ -119,29 +117,18 @@ z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be)
     _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
     // executor is now suspended, so no API can be called from its thread
     // in addition we are holding the mutex, so no other thread can request to stop or start the executor
-    size_t state = _z_atomic_size_load(&be->_state, _z_memory_order_acquire);
-    if (state != _Z_BACKGROUND_EXECUTOR_STATE_RUNNING) {
-        _Z_RETURN_IF_ERR(_z_background_executor_inner_unlock_and_resume(be));
-        if (state == _Z_BACKGROUND_EXECUTOR_STATE_STOPPING) {
-            // other thread requested executor to stop, it means that the executor thread is
-            // proceeding to its end, and thus it will not execute any more tasks, unless restarted,
-            // so it is safe to return success
-            return _Z_RES_OK;
-        } else if (state == _Z_BACKGROUND_EXECUTOR_STATE_STOPPED) {
-            // already stopped
-            return _Z_RES_OK;
-        } else {  // _Z_BACKGROUND_EXECUTOR_STATE_STARTING
-            // this state is unreacheable because the mutex is always held while the state is STARTING
-            return _Z_ERR_GENERIC;
-        }
+    if (!_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
+        return _z_background_executor_inner_unlock_and_resume(be);
     }
-    be->_stop_requested = true;
-    _z_atomic_size_store(&be->_state, _Z_BACKGROUND_EXECUTOR_STATE_STOPPING, _z_memory_order_release);
+    while (_z_atomic_size_load(&be->_thread_checkers, _z_memory_order_acquire) > 0) {
+        z_sleep_us(10);
+    }
+    be->_thread_idx++;
+    _z_atomic_bool_store(&be->_started, false, _z_memory_order_release);
+    _z_task_t task_to_join = be->_task;
     z_result_t ret = _z_background_executor_inner_unlock_and_resume(be);
-    // after resume the executor thread will proceed to stop directly without trying to execute any tasks.
-    _Z_SET_IF_OK(ret, _z_task_join(&be->_task));
-    be->_stop_requested = false;
-    _z_atomic_size_store(&be->_state, _Z_BACKGROUND_EXECUTOR_STATE_STOPPED, _z_memory_order_release);
+    // after resume the executor thread will proceed to stop directly without trying to execute any tasks
+    _Z_SET_IF_OK(ret, _z_task_join(&task_to_join));
     return ret;
 }
 
@@ -154,8 +141,10 @@ void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
 
 void *_z_background_executor_inner_task_fn(void *arg) {
     _z_background_executor_inner_t *be = (_z_background_executor_inner_t *)arg;
-    _z_atomic_size_store(&be->_state, _Z_BACKGROUND_EXECUTOR_STATE_RUNNING, _z_memory_order_release);
-    _z_background_executor_inner_run_forever(be);
+    size_t thread_idx = be->_thread_idx;  // this is safe since _z_background_executor_inner_start holds the mutex until
+                                          // be->_started is set to true.
+    _z_atomic_bool_store(&be->_started, true, _z_memory_order_release);
+    _z_background_executor_inner_run_forever(be, thread_idx);
     return NULL;
 }
 
@@ -164,38 +153,27 @@ z_result_t _z_background_executor_inner_init_deferred(_z_background_executor_inn
     _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&be->_condvar), _z_mutex_drop(&be->_mutex));
     _z_executor_init(&be->_executor);
     _z_atomic_size_init(&be->_waiters, 0);
-    be->_stop_requested = false;
-    _z_atomic_size_init(&be->_state, _Z_BACKGROUND_EXECUTOR_STATE_STOPPED);
+    _z_atomic_size_init(&be->_thread_checkers, 0);
+    be->_thread_idx = 0;
+    _z_atomic_bool_init(&be->_started, false);
     return _Z_RES_OK;
 }
 
 z_result_t _z_background_executor_inner_start(_z_background_executor_inner_t *be, z_task_attr_t *task_attr) {
-    _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
-    size_t expected = _Z_BACKGROUND_EXECUTOR_STATE_STOPPED;
-    while (!_z_atomic_size_compare_exchange_strong(&be->_state, &expected, _Z_BACKGROUND_EXECUTOR_STATE_STARTING,
-                                                   _z_memory_order_acq_rel, _z_memory_order_acquire)) {
-        _z_mutex_unlock(&be->_mutex);
-        if (expected == _Z_BACKGROUND_EXECUTOR_STATE_STARTING) {
-            // this state is unreacheable because the mutex is always held while the state is STARTING
-            return _Z_ERR_GENERIC;
-        } else if (expected == _Z_BACKGROUND_EXECUTOR_STATE_STOPPING) {
-            // other thread requested executor to stop, it means that the executor thread is proceeding to its end.
-            // Let's just wait for it
-            z_sleep_us(10);
-        } else {  // _Z_BACKGROUND_EXECUTOR_STATE_RUNNING
-            // already running
-            return _Z_RES_OK;
-        }
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+    if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
+        // already started, just return
+        return _z_background_executor_inner_unlock_and_resume(be);
     }
     z_result_t ret = _z_task_init(&be->_task, task_attr, _z_background_executor_inner_task_fn, be);
-    if (ret != _Z_RES_OK) {
-        _z_atomic_size_store(&be->_state, _Z_BACKGROUND_EXECUTOR_STATE_STOPPED, _z_memory_order_release);
-    } else {
-        while (_z_atomic_size_load(&be->_state, _z_memory_order_acquire) == _Z_BACKGROUND_EXECUTOR_STATE_STARTING) {
-            z_sleep_us(10);  // wait until the executor thread sets the state to RUNNING or any other transition happens
+    if (ret == _Z_RES_OK) {
+        while (!_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
+            z_sleep_us(10);  // wait until the executor thread sets the state to started
         }
     }
-    _z_mutex_unlock(&be->_mutex);
+    // resume the executor thread to let it proceed to run
+    z_result_t ret2 = _z_background_executor_inner_unlock_and_resume(be);
+    _Z_SET_IF_OK(ret, ret2);
     return ret;
 }
 
@@ -298,8 +276,7 @@ bool _z_background_executor_is_running(const _z_background_executor_t *be) {
     if (_Z_RC_IS_NULL(&be->_inner)) {
         return false;
     }
-    size_t state = _z_atomic_size_load((_z_atomic_size_t *)&_Z_RC_IN_VAL(&be->_inner)->_state, _z_memory_order_acquire);
-    return state != _Z_BACKGROUND_EXECUTOR_STATE_STOPPED;
+    return _z_atomic_bool_load(&_Z_RC_IN_VAL(&be->_inner)->_started, _z_memory_order_acquire);
 }
 #else
 // to prevent "empty compilation unit" warning when multi-threading is disabled
