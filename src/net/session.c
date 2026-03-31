@@ -210,13 +210,21 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 }
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
+void _z_client_reopen_task_drop(void *ztc_arg) {
+    _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
+    if (tc->_state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        // Drop the weak session reference as the task is being dropped in the middle of reconnection.
+        _z_session_weak_drop(&tc->_session);
+        tc->_state = _Z_TRANSPORT_STATE_CLOSED;
+    }
+}
+
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor) {
     _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
-    _z_session_weak_t weak_session = tc->_session;
     _z_transport_tasks_t tasks_handles = tc->_tasks;
-    _z_session_rc_t zs = _z_session_weak_upgrade(&weak_session);  // should not fail
+    _z_session_rc_t zs = _z_session_weak_upgrade(&tc->_session);  // should not fail
     _z_session_t *s = _Z_RC_IN_VAL(&zs);
-    _z_session_weak_drop(&weak_session);
+    _z_session_weak_drop(&tc->_session);
 
     if (_z_config_is_empty(&s->_config)) {
         _z_session_rc_drop(&zs);

@@ -111,6 +111,7 @@ _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_exe
     _z_fut_t f = _z_fut_null();
     f._fut_arg = &ztu->_common;
     f._fut_fn = _z_client_reopen_task_fn;
+    f._destroy_fn = _z_client_reopen_task_drop;
     if (_z_fut_handle_is_null(_z_executor_spawn(executor, &f))) {
         _Z_ERROR("Failed to spawn client reopen task after transport failure.");
         ztu->_common._state = _Z_TRANSPORT_STATE_CLOSED;

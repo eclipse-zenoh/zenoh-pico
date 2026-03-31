@@ -222,6 +222,7 @@ typedef struct _z_session_t {
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
+void _z_client_reopen_task_drop(void *ztc_arg);
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);
 #endif
 
