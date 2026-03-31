@@ -52,7 +52,7 @@ z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zb
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NO_SPACE);
             return _Z_ERR_TRANSPORT_NO_SPACE;
         }
-    } else if (read == 0 || read == SIZE_MAX) {
+    } else if (read == SIZE_MAX) {
         return Z_ETIMEDOUT;
     } else {
         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);

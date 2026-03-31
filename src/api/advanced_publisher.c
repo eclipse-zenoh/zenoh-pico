@@ -171,42 +171,44 @@ static _z_fut_fn_result_t _ze_advanced_publisher_heartbeat_handler(void *ctx, _z
     _ze_advanced_publisher_state_weak_t *state_weak_rc = (_ze_advanced_publisher_state_weak_t *)ctx;
     _ze_advanced_publisher_state_rc_t state_rc = _ze_advanced_publisher_state_weak_upgrade(state_weak_rc);
 
-    unsigned long heartbeat_period_ms = state_rc._val->_heartbeat_period_ms;
-    if (!_Z_RC_IS_NULL(&state_rc)) {
-        _ze_advanced_publisher_state_t *state = _Z_RC_IN_VAL(&state_rc);
-
-        bool publish = false;
-        uint32_t next_seq = (uint32_t)_z_atomic_size_load(&state->_seqnumber, _z_memory_order_relaxed);
-
-        switch (state->_heartbeat_mode) {
-            case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC:
-                publish = true;
-                break;
-            case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC:
-                // TODO: This doesn't account for sn wraparound
-                publish = (next_seq > state->_last_published_sn) ? true : false;
-                break;
-            default:
-                _Z_WARN("Failed to publish heartbeat, invalid mode: %d", state->_heartbeat_mode);
-                return _z_fut_fn_result_ready();
-        };
-
-        if (publish) {
-            z_owned_bytes_t payload;
-            z_bytes_empty(&payload);
-            ze_owned_serializer_t serializer;
-            ze_serializer_empty(&serializer);
-            ze_serializer_serialize_uint32(ze_serializer_loan_mut(&serializer), _z_seqnumber_prev(next_seq));
-            ze_serializer_finish(ze_serializer_move(&serializer), &payload);
-            z_result_t res = z_publisher_put(z_publisher_loan(&state->_publisher), z_bytes_move(&payload), NULL);
-            if (res != _Z_RES_OK) {
-                _Z_WARN("Failed to publish heartbeat: %d", res);
-            }
-            state->_last_published_sn = next_seq;
-        }
-
-        _ze_advanced_publisher_state_rc_drop(&state_rc);
+    if (_Z_RC_IS_NULL(&state_rc)) {
+        // State has been dropped, nothing to do
+        return _z_fut_fn_result_ready();
     }
+    unsigned long heartbeat_period_ms = state_rc._val->_heartbeat_period_ms;
+    _ze_advanced_publisher_state_t *state = _Z_RC_IN_VAL(&state_rc);
+
+    bool publish = false;
+    uint32_t next_seq = (uint32_t)_z_atomic_size_load(&state->_seqnumber, _z_memory_order_relaxed);
+
+    switch (state->_heartbeat_mode) {
+        case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC:
+            publish = true;
+            break;
+        case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC:
+            // TODO: This doesn't account for sn wraparound
+            publish = (next_seq > state->_last_published_sn) ? true : false;
+            break;
+        default:
+            _Z_WARN("Failed to publish heartbeat, invalid mode: %d", state->_heartbeat_mode);
+            return _z_fut_fn_result_ready();
+    };
+
+    if (publish) {
+        z_owned_bytes_t payload;
+        z_bytes_empty(&payload);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_uint32(ze_serializer_loan_mut(&serializer), _z_seqnumber_prev(next_seq));
+        ze_serializer_finish(ze_serializer_move(&serializer), &payload);
+        z_result_t res = z_publisher_put(z_publisher_loan(&state->_publisher), z_bytes_move(&payload), NULL);
+        if (res != _Z_RES_OK) {
+            _Z_WARN("Failed to publish heartbeat: %d", res);
+        }
+        state->_last_published_sn = next_seq;
+    }
+
+    _ze_advanced_publisher_state_rc_drop(&state_rc);
     return _z_fut_fn_result_wake_up_after(heartbeat_period_ms);
 }
 

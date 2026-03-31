@@ -37,7 +37,7 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (lwip_fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
+    if (lwip_fcntl(sock->_socket, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
@@ -46,7 +46,7 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
     socklen_t nlen = sizeof(naddr);
-    sock_out->_fd = -1;
+    sock_out->_socket = -1;
     int con_socket = lwip_accept(sock_in->_socket, &naddr, &nlen);
     if (con_socket < 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);

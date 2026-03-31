@@ -196,7 +196,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
     return z_time_elapsed_ms_since(&now, time);
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
+unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) / 1000; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     double date = emscripten_date_now();
