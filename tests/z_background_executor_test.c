@@ -543,6 +543,40 @@ static void test_stop_preserves_pending_tasks(void) {
     test_arg_clear(&arg);
 }
 
+// Suspend executor, than verify that stopping does not hang, nor causes pending tasks to be destroyed.
+// Then restart and verify pending tasks still run.
+static void test_suspend_stop_restart_resume(void) {
+    printf("Test: suspend-stop-restart-resume executor\n");
+    _z_background_executor_t be;
+    assert(_z_background_executor_init(&be, NULL) == _Z_RES_OK);
+
+    // Suspend the executor so tasks won't run until we explicitly resume
+    assert(_z_background_executor_suspend(&be) == _Z_RES_OK);
+
+    // Run a task to confirm executor is working
+    test_arg_t arg1;
+    test_arg_init(&arg1);
+    _z_fut_t fut1 = _z_fut_new(&arg1, fn_finish, destroy_fn);
+    assert(_z_background_executor_spawn(&be, &fut1, NULL) == _Z_RES_OK);
+    // Ensure that stopping suspended executor works
+    assert(_z_background_executor_stop(&be) == _Z_RES_OK);
+    z_sleep_ms(500);  // give it time to (incorrectly) run if stop didn't work
+    assert(test_arg_get_calls(&arg1) == 0);
+    assert(test_arg_get_destroyed(&arg1) == false);
+
+    // Restart the executor
+    assert(_z_background_executor_start(&be, NULL) == _Z_RES_OK);
+    // Resume the executor so the pending task can run
+    assert(_z_background_executor_resume(&be) == _Z_RES_OK);
+
+    z_sleep_ms(500);  // give it time to (incorrectly) run if stop didn't work
+    assert(test_arg_get_calls(&arg1) == 1);
+    assert(test_arg_get_destroyed(&arg1) == true);
+
+    _z_background_executor_destroy(&be);
+    test_arg_clear(&arg1);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -561,6 +595,7 @@ int main(void) {
     test_deferred_cancel_before_start();
     test_stop_and_restart();
     test_stop_preserves_pending_tasks();
+    test_suspend_stop_restart_resume();
     printf("All background executor tests passed.\n");
     return 0;
 }

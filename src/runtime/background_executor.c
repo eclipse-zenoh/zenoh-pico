@@ -42,8 +42,11 @@ z_result_t _z_background_executor_inner_resume(_z_background_executor_inner_t *b
 z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner_t *be) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
     while (true) {
-        while (_z_atomic_size_load(&be->_waiters, _z_memory_order_acquire) >
-               0) {  // if there are waiters, sleep until they are resumed
+        while (_z_atomic_size_load(&be->_waiters, _z_memory_order_acquire) > 0) {
+            if (be->_stop_requested) {  // extra check to allow to stop executor thread even if there are waiters
+                break;                  // stop requested, exit the loop and end the thread
+            }
+            // if there are waiters, sleep until they are resumed
             _Z_CLEAN_RETURN_IF_ERR(_z_condvar_wait(&be->_condvar, &be->_mutex), _z_mutex_unlock(&be->_mutex));
         }
         if (be->_stop_requested) {
@@ -138,9 +141,6 @@ z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be)
 }
 
 void _z_background_executor_inner_clear(_z_background_executor_inner_t *be) {
-    _z_atomic_size_store(&be->_waiters, 0,
-                         _z_memory_order_release);  // ensure that if the executor thread is still running, it won't be
-                                                    // stuck waiting on the condition variable
     _z_background_executor_inner_stop(be);
     _z_executor_destroy(&be->_executor);
     _z_condvar_drop(&be->_condvar);
