@@ -956,8 +956,7 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
     if (_Z_RC_IS_NULL(zs)) {
         return _Z_RES_OK;
     }
-    _z_session_close(_Z_RC_IN_VAL(zs));
-    return _Z_RES_OK;
+    return _z_session_close(_Z_RC_IN_VAL(zs));
 }
 
 bool z_session_is_closed(const z_loaned_session_t *zs) { return _z_session_is_closed(_Z_RC_IN_VAL(zs)); }

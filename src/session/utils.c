@@ -199,7 +199,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_flush_interest(zn);
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_CONNECTIVITY == 1
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
     _z_connectivity_transport_listener_intmap_clear(&zn->_connectivity_transport_event_listeners);
     _z_connectivity_link_listener_intmap_clear(&zn->_connectivity_link_event_listeners);
     zn->_connectivity_next_listener_id = 1;
