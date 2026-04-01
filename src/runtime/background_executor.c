@@ -12,13 +12,29 @@ typedef struct _z_background_executor_inner_t {
     _z_task_t _task;
 } _z_background_executor_inner_t;
 
-z_result_t _z_background_executor_inner_suspend_and_lock(_z_background_executor_inner_t *be) {
+static inline bool _is_called_from_executor(_z_background_executor_inner_t *be) {
+    bool res = false;
+    _z_atomic_size_fetch_add(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
+    if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {  // only check task id if executor is started
+        _z_task_id_t current_task_id = _z_task_current_id();
+        _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
+        res = _z_task_id_equal(&current_task_id, &executor_task_id);
+    }
+    _z_atomic_size_fetch_sub(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
+    return res;
+}
+
+z_result_t _z_background_executor_inner_suspend_and_lock(_z_background_executor_inner_t *be,
+                                                         bool check_executor_thread) {
+    if (check_executor_thread && _is_called_from_executor(be)) {
+        return _Z_ERR_INVALID;  // suspend cannot be called from executor thread
+    }
     _z_atomic_size_fetch_add(&be->_waiters, 1, _z_memory_order_acq_rel);
     return _z_mutex_lock(&be->_mutex);
 }
 
 z_result_t _z_background_executor_inner_suspend(_z_background_executor_inner_t *be) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, true));
     return _z_mutex_unlock(&be->_mutex);
 }
 
@@ -29,6 +45,9 @@ z_result_t _z_background_executor_inner_unlock_and_resume(_z_background_executor
 }
 
 z_result_t _z_background_executor_inner_resume(_z_background_executor_inner_t *be) {
+    if (_is_called_from_executor(be)) {
+        return _Z_ERR_INVALID;  // resume cannot be called from executor thread
+    }
     _Z_RETURN_IF_ERR(_z_mutex_lock(&be->_mutex));
     return _z_background_executor_inner_unlock_and_resume(be);
 }
@@ -61,21 +80,7 @@ z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner
             }
         }
     }
-    // wake up all waiters so that they can see that executor is no longer running and exit
-    _z_condvar_signal_all(&be->_condvar);
     return _z_mutex_unlock(&be->_mutex);
-}
-
-static inline bool _is_called_from_executor(_z_background_executor_inner_t *be) {
-    bool res = false;
-    _z_atomic_size_fetch_add(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
-    if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {  // only check task id if executor is started
-        _z_task_id_t current_task_id = _z_task_current_id();
-        _z_task_id_t executor_task_id = _z_task_get_id(&be->_task);
-        res = _z_task_id_equal(&current_task_id, &executor_task_id);
-    }
-    _z_atomic_size_fetch_sub(&be->_thread_checkers, 1, _z_memory_order_acq_rel);
-    return res;
 }
 
 z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be, _z_fut_t *fut,
@@ -84,7 +89,7 @@ z_result_t _z_background_executor_inner_spawn(_z_background_executor_inner_t *be
     if (_is_called_from_executor(be)) {
         *handle = _z_executor_spawn(&be->_executor, fut);
     } else {
-        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, false));
         *handle = _z_executor_spawn(&be->_executor, fut);
         ret = _z_background_executor_inner_unlock_and_resume(be);
     }
@@ -97,7 +102,7 @@ z_result_t _z_background_executor_inner_get_fut_status(_z_background_executor_in
         *status_out = _z_executor_get_fut_status(&be->_executor, handle);
         return _Z_RES_OK;
     } else {
-        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, false));
         *status_out = _z_executor_get_fut_status(&be->_executor, handle);
         return _z_background_executor_inner_unlock_and_resume(be);
     }
@@ -107,14 +112,14 @@ z_result_t _z_background_executor_inner_cancel_fut(_z_background_executor_inner_
     if (_is_called_from_executor(be)) {
         return _z_executor_cancel_fut(&be->_executor, handle) ? _Z_RES_OK : _Z_ERR_INVALID;
     } else {
-        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+        _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, false));
         _z_executor_cancel_fut(&be->_executor, handle);
         return _z_background_executor_inner_unlock_and_resume(be);
     }
 }
 
 z_result_t _z_background_executor_inner_stop(_z_background_executor_inner_t *be) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, true));
     // executor is now suspended, so no API can be called from its thread
     // in addition we are holding the mutex, so no other thread can request to stop or start the executor
     if (!_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
@@ -160,7 +165,7 @@ z_result_t _z_background_executor_inner_init_deferred(_z_background_executor_inn
 }
 
 z_result_t _z_background_executor_inner_start(_z_background_executor_inner_t *be, z_task_attr_t *task_attr) {
-    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be));
+    _Z_RETURN_IF_ERR(_z_background_executor_inner_suspend_and_lock(be, true));
     if (_z_atomic_bool_load(&be->_started, _z_memory_order_acquire)) {
         // already started, just return
         return _z_background_executor_inner_unlock_and_resume(be);

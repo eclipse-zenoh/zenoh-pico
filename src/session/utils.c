@@ -176,7 +176,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     // session sync group at the end of the call might still be needed in case there are any historical
     // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
     // events
-    _z_runtime_stop(&zn->_runtime);
+    _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
     _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_free(&zn->_declaration_cache);

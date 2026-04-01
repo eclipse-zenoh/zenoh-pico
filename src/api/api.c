@@ -2494,7 +2494,7 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
 }
 
 z_result_t zp_stop_read_task(z_loaned_session_t *zs) {
-    return _z_background_executor_stop(&_Z_RC_IN_VAL(zs)->_runtime);
+    return _z_runtime_stop((_z_runtime_t *)&_Z_RC_IN_VAL(zs)->_runtime);
 }
 
 bool zp_read_task_is_running(const z_loaned_session_t *zs) {
