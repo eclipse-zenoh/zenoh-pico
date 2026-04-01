@@ -609,6 +609,95 @@ void test_wbuf_wrap_bytes(void) {
     printf("Ok\n");
 }
 
+static void fill_pattern(uint8_t *buf, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)(0xA0u + (uint8_t)i);
+    }
+}
+
+void test_copy_bytes_readable_region(void) {
+    _z_iosli_t src = _z_iosli_make(16);
+    _z_iosli_t dst = _z_iosli_make(16);
+    assert(src._buf);
+    assert(dst._buf);
+
+    fill_pattern(src._buf, src._capacity);
+
+    // Make readable window be [r_pos..w_pos) = [5..12) => length 7
+    src._r_pos = 5;
+    src._w_pos = 12;
+
+    // Dirty dst positions to ensure function overwrites them
+    dst._r_pos = 3;
+    dst._w_pos = 9;
+    memset(dst._buf, 0x00, dst._capacity);
+
+    _z_iosli_copy_bytes(&dst, &src);
+
+    // dst now contains exactly the readable bytes starting at offset 0
+    assert(dst._r_pos == 0);
+    assert(dst._w_pos == 7);
+    assert(memcmp(dst._buf, src._buf + src._r_pos, 7) == 0);
+
+    _z_iosli_clear(&src);
+    _z_iosli_clear(&dst);
+}
+
+void test_copy_bytes_exact_capacity_fit(void) {
+    _z_iosli_t src = _z_iosli_make(32);
+    assert(src._buf);
+
+    // Create a readable region length = 10
+    src._r_pos = 2;
+    src._w_pos = 12;  // len = 10
+    fill_pattern(src._buf, src._capacity);
+
+    _z_iosli_t dst = _z_iosli_make(10);
+    assert(dst._buf);
+    memset(dst._buf, 0xEE, dst._capacity);
+
+    // Should succeed because dst capacity == readable length
+    _z_iosli_copy_bytes(&dst, &src);
+
+    assert(dst._r_pos == 0);
+    assert(dst._w_pos == 10);
+    assert(memcmp(dst._buf, src._buf + src._r_pos, 10) == 0);
+
+    _z_iosli_clear(&src);
+    _z_iosli_clear(&dst);
+}
+
+void test_copy_bytes_does_not_alias(void) {
+    _z_iosli_t src = _z_iosli_make(16);
+    _z_iosli_t dst = _z_iosli_make(16);
+    assert(src._buf && dst._buf);
+
+    fill_pattern(src._buf, src._capacity);
+    src._r_pos = 4;
+    src._w_pos = 9;  // len = 5
+
+    _z_iosli_copy_bytes(&dst, &src);
+
+    assert(dst._r_pos == 0);
+    assert(dst._w_pos == 5);
+    assert(memcmp(dst._buf, src._buf + src._r_pos, 5) == 0);
+
+    // Mutate src readable region; dst should remain unchanged (deep copy)
+    src._buf[src._r_pos + 0] ^= 0xFF;
+    src._buf[src._r_pos + 1] ^= 0xFF;
+
+    // Should differ
+    assert(memcmp(dst._buf, src._buf + src._r_pos, 5) != 0);
+
+    // But dst still equals original pattern:
+    uint8_t expected_full[16];
+    fill_pattern(expected_full, sizeof(expected_full));
+    assert(memcmp(dst._buf, expected_full + 4, 5) == 0);
+
+    _z_iosli_clear(&src);
+    _z_iosli_clear(&dst);
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -634,4 +723,7 @@ int main(void) {
         wbuf_reusable_write_zbuf_read();
     }
     test_wbuf_wrap_bytes();
+    test_copy_bytes_readable_region();
+    test_copy_bytes_exact_capacity_fit();
+    test_copy_bytes_does_not_alias();
 }
