@@ -72,12 +72,6 @@ void *node_task(void *ptr) {
         printf("Unable to open session!\n");
         return NULL;
     }
-    // Start read and lease tasks
-    if (zp_start_read_task(z_loan_mut(s), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(s), NULL) != Z_OK) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        return NULL;
-    }
     // Create keyexprs
     z_view_keyexpr_t sub_qybl_ke;
     if (z_view_keyexpr_from_str(&sub_qybl_ke, keyexpr_in) != Z_OK) {
@@ -108,21 +102,30 @@ void *node_task(void *ptr) {
     // Declare publisher
     printf("Declaring publisher for '%s'...\n", ctx->keyexpr_out);
     z_owned_publisher_t pub;
-    if (z_declare_publisher(z_loan(s), &pub, z_loan(pub_qry_ke), NULL) != Z_OK) {
+    z_publisher_options_t pub_opts;
+    z_publisher_options_default(&pub_opts);
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    pub_opts.allowed_destination = Z_LOCALITY_REMOTE;
+#endif
+    if (z_declare_publisher(z_loan(s), &pub, z_loan(pub_qry_ke), &pub_opts) != Z_OK) {
         printf("Unable to declare publisher for key expression!\n");
         return NULL;
     }
     // Declare querier
     printf("Declaring Querier on '%s'...\n", ctx->keyexpr_out);
     z_owned_querier_t querier;
-    if (z_declare_querier(z_loan(s), &querier, z_loan(pub_qry_ke), NULL) != Z_OK) {
+    z_querier_options_t qry_opts;
+    z_querier_options_default(&qry_opts);
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    qry_opts.allowed_destination = Z_LOCALITY_REMOTE;
+#endif
+    if (z_declare_querier(z_loan(s), &querier, z_loan(pub_qry_ke), &qry_opts) != Z_OK) {
         printf("Unable to declare Querier for key expression!\n");
         return NULL;
     }
     // Wait for other nodes to come online
-    z_sleep_s(1);
+    z_sleep_s(5);
     // Send a join
-    zp_send_join(z_loan(s), NULL);
     printf("Starting sending data\n");
     // Publish data
     char buf[256];
@@ -167,14 +170,9 @@ void *node_task(void *ptr) {
         z_drop(z_move(qry_handler));
     }
     // Wait for sub & queryable data
-    while (true) {
-        if ((ctx->sub_msg_nb >= rx_nb) && (ctx->qybl_msg_nb >= rx_nb)) {
-            break;
-        }
-        z_sleep_s(1);
-    }
-    // Wait for other threads to resolve properly
-    z_sleep_s(1);
+    z_sleep_s(5);
+    assert(ctx->sub_msg_nb >= rx_nb);
+    assert(ctx->qybl_msg_nb >= rx_nb);
     // Clean up
     z_drop(z_move(pub));
     z_drop(z_move(querier));

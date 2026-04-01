@@ -31,7 +31,7 @@ static void _ze_advanced_publisher_state_init(_ze_advanced_publisher_state_t *st
     state->_heartbeat_mode = ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE;
     state->_last_published_sn = 0;
     z_internal_publisher_null(&state->_publisher);
-    state->_state_publisher_task_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
+    state->_state_publisher_task_handle = _z_fut_handle_null();
     state->_zn = _z_session_weak_null();
     _z_atomic_size_init(&state->_seqnumber, 0);
 }
@@ -43,13 +43,13 @@ static bool _ze_advanced_publisher_state_check(const _ze_advanced_publisher_stat
 
 void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state) {
     if (state->_heartbeat_mode != ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE &&
-        state->_state_publisher_task_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
+        !_z_fut_handle_is_null(state->_state_publisher_task_handle)) {
         _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
         if (!_Z_RC_IS_NULL(&sess_rc)) {
-            _zp_periodic_task_remove(_Z_RC_IN_VAL(&sess_rc), state->_state_publisher_task_id);
+            _z_runtime_cancel_fut(&_Z_RC_IN_VAL(&sess_rc)->_runtime, &state->_state_publisher_task_handle);
             _z_session_rc_drop(&sess_rc);
         }
-        state->_state_publisher_task_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
+        state->_state_publisher_task_handle = _z_fut_handle_null();
         z_undeclare_publisher(z_publisher_move(&state->_publisher));
     }
     _z_session_weak_drop(&state->_zn);
@@ -166,45 +166,50 @@ static z_result_t _ze_advanced_publisher_ke_suffix(z_owned_keyexpr_t *suffix, co
     return _Z_RES_OK;
 }
 
-static void _ze_advanced_publisher_heartbeat_handler(void *ctx) {
+static _z_fut_fn_result_t _ze_advanced_publisher_heartbeat_handler(void *ctx, _z_executor_t *executor) {
+    _ZP_UNUSED(executor);
     _ze_advanced_publisher_state_weak_t *state_weak_rc = (_ze_advanced_publisher_state_weak_t *)ctx;
     _ze_advanced_publisher_state_rc_t state_rc = _ze_advanced_publisher_state_weak_upgrade(state_weak_rc);
 
-    if (!_Z_RC_IS_NULL(&state_rc)) {
-        _ze_advanced_publisher_state_t *state = _Z_RC_IN_VAL(&state_rc);
-
-        bool publish = false;
-        uint32_t next_seq = (uint32_t)_z_atomic_size_load(&state->_seqnumber, _z_memory_order_relaxed);
-
-        switch (state->_heartbeat_mode) {
-            case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC:
-                publish = true;
-                break;
-            case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC:
-                // TODO: This doesn't account for sn wraparound
-                publish = (next_seq > state->_last_published_sn) ? true : false;
-                break;
-            default:
-                _Z_WARN("Failed to publish heartbeat, invalid mode: %d", state->_heartbeat_mode);
-                return;
-        };
-
-        if (publish) {
-            z_owned_bytes_t payload;
-            z_bytes_empty(&payload);
-            ze_owned_serializer_t serializer;
-            ze_serializer_empty(&serializer);
-            ze_serializer_serialize_uint32(ze_serializer_loan_mut(&serializer), _z_seqnumber_prev(next_seq));
-            ze_serializer_finish(ze_serializer_move(&serializer), &payload);
-            z_result_t res = z_publisher_put(z_publisher_loan(&state->_publisher), z_bytes_move(&payload), NULL);
-            if (res != _Z_RES_OK) {
-                _Z_WARN("Failed to publish heartbeat: %d", res);
-            }
-            state->_last_published_sn = next_seq;
-        }
-
-        _ze_advanced_publisher_state_rc_drop(&state_rc);
+    if (_Z_RC_IS_NULL(&state_rc)) {
+        // State has been dropped, nothing to do
+        return _z_fut_fn_result_ready();
     }
+    unsigned long heartbeat_period_ms = state_rc._val->_heartbeat_period_ms;
+    _ze_advanced_publisher_state_t *state = _Z_RC_IN_VAL(&state_rc);
+
+    bool publish = false;
+    uint32_t next_seq = (uint32_t)_z_atomic_size_load(&state->_seqnumber, _z_memory_order_relaxed);
+
+    switch (state->_heartbeat_mode) {
+        case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC:
+            publish = true;
+            break;
+        case ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC:
+            // TODO: This doesn't account for sn wraparound
+            publish = (next_seq > state->_last_published_sn) ? true : false;
+            break;
+        default:
+            _Z_WARN("Failed to publish heartbeat, invalid mode: %d", state->_heartbeat_mode);
+            return _z_fut_fn_result_ready();
+    };
+
+    if (publish) {
+        z_owned_bytes_t payload;
+        z_bytes_empty(&payload);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_uint32(ze_serializer_loan_mut(&serializer), _z_seqnumber_prev(next_seq));
+        ze_serializer_finish(ze_serializer_move(&serializer), &payload);
+        z_result_t res = z_publisher_put(z_publisher_loan(&state->_publisher), z_bytes_move(&payload), NULL);
+        if (res != _Z_RES_OK) {
+            _Z_WARN("Failed to publish heartbeat: %d", res);
+        }
+        state->_last_published_sn = next_seq;
+    }
+
+    _ze_advanced_publisher_state_rc_drop(&state_rc);
+    return _z_fut_fn_result_wake_up_after(heartbeat_period_ms);
 }
 
 static void _ze_advanced_publisher_heartbeat_dropper(void *ctx) {
@@ -303,6 +308,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
         if (opt.sample_miss_detection.is_enabled &&
             opt.sample_miss_detection.heartbeat_mode != ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE) {
             _ze_advanced_publisher_state_t *state = _Z_RC_IN_VAL(&pub->_val._state);
+            state->_heartbeat_period_ms = opt.sample_miss_detection.heartbeat_period_ms;
             state->_heartbeat_mode = opt.sample_miss_detection.heartbeat_mode;
             state->_zn = _z_session_rc_clone_as_weak(zs);
             state->_last_published_sn = (uint32_t)_z_atomic_size_load(&state->_seqnumber, _z_memory_order_relaxed);
@@ -330,19 +336,21 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
                 _ze_advanced_cache_free(&pub->_val._cache);
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
+            _z_fut_t f = _z_fut_null();
+            f._destroy_fn = _ze_advanced_publisher_heartbeat_dropper;
+            f._fut_fn = _ze_advanced_publisher_heartbeat_handler;
+            f._fut_arg = ctx;
 
-            _zp_closure_periodic_task_t closure = {.call = _ze_advanced_publisher_heartbeat_handler,
-                                                   .drop = _ze_advanced_publisher_heartbeat_dropper,
-                                                   .context = ctx};
-
-            _Z_CLEAN_RETURN_IF_ERR(
-                _zp_periodic_task_add(_Z_RC_IN_VAL(zs), &closure, opt.sample_miss_detection.heartbeat_period_ms,
-                                      &state->_state_publisher_task_id),
+            state->_state_publisher_task_handle = _z_runtime_spawn(&_Z_RC_IN_VAL(zs)->_runtime, &f);
+            if (_z_fut_handle_is_null(state->_state_publisher_task_handle)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke));
                 _ze_advanced_publisher_state_rc_drop(&pub->_val._state);
                 z_publisher_drop(z_publisher_move(&pub->_val._publisher));
                 z_liveliness_token_drop(z_liveliness_token_move(&pub->_val._liveliness));
-                z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_cache_free(&pub->_val._cache));
+                z_keyexpr_drop(z_keyexpr_move(&suffix));
+                _ze_advanced_cache_free(&pub->_val._cache);
+                return _Z_ERR_FAILED_TO_SPAWN_TASK;
+            }
         }
 
         z_keyexpr_drop(z_keyexpr_move(&ke));

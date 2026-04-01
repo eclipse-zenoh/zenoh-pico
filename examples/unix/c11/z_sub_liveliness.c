@@ -62,13 +62,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        return -1;
-    }
-
 #if Z_FEATURE_ADMIN_SPACE == 1
     // Start admin space
     if (zp_start_admin_space(z_loan_mut(s)) < 0) {
@@ -94,7 +87,8 @@ int main(int argc, char **argv) {
     }
     if (z_liveliness_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), &sub_opt) < 0) {
         printf("Unable to declare liveliness subscriber.\n");
-        exit(-1);
+        z_drop(z_move(s));
+        return -1;
     }
 
     printf("Press CTRL-C to quit...\n");

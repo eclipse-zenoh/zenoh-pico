@@ -26,6 +26,7 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/weak_session.h"
 
 #ifdef __cplusplus
@@ -94,7 +95,6 @@ typedef struct {
     // SN numbers
     _z_zint_t _sn_res;
     volatile _z_zint_t _lease;
-    volatile _z_zint_t _next_lease;
 } _z_transport_peer_multicast_t;
 
 size_t _z_transport_peer_multicast_size(const _z_transport_peer_multicast_t *src);
@@ -142,6 +142,26 @@ _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
+typedef enum _z_transport_state_t {
+    _Z_TRANSPORT_STATE_CLOSED = 0,
+    _Z_TRANSPORT_STATE_RECONNECTING = 1,
+    _Z_TRANSPORT_STATE_OPEN = 2,
+} _z_transport_state_t;
+
+// Handles to the transport tasks, stored at predefined positions.
+// Used by the reconnect task to resume them after a successful reconnection.
+// Index via _Z_TRANSPORT_TASK_* constants defined below.
+#define _Z_TRANSPORT_TASK_KEEP_ALIVE 0
+#define _Z_TRANSPORT_TASK_LEASE 1
+#define _Z_TRANSPORT_TASK_READ 2
+#define _Z_TRANSPORT_TASK_SEND_JOIN 3  // multicast / raweth only
+#define _Z_TRANSPORT_TASK_COUNT 4
+#if Z_FEATURE_AUTO_RECONNECT == 1
+typedef struct _z_transport_tasks_t {
+    _z_fut_handle_t _task_handles[_Z_TRANSPORT_TASK_COUNT];
+} _z_transport_tasks_t;
+#endif
+
 typedef struct {
     _z_session_weak_t _session;
     _z_link_t *_link;
@@ -155,21 +175,19 @@ typedef struct {
     volatile _z_zint_t _lease;
     volatile bool _transmitted;
 #if Z_FEATURE_MULTI_THREAD == 1
-    // TX and RX mutexes
-    _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
     _z_mutex_rec_t _mutex_peer;
-
-    _z_task_t *_read_task;
-    _z_task_t *_lease_task;
-    bool *_accept_task_running;
-    volatile bool _read_task_running;
-    volatile bool _lease_task_running;
 #endif
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
     uint8_t _batch_state;
     size_t _batch_count;
+#endif
+    // Here we assume the value is set only by the session _z_open
+    // and after it only read by the transport tasks, so we don't need to make it atomic or protect it with mutexes.
+    _z_transport_state_t _state;
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_transport_tasks_t _tasks;
 #endif
 } _z_transport_common_t;
 
@@ -233,7 +251,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
-void _z_transport_clear(_z_transport_t *zt, bool detach_tasks);
+void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 
 static inline void _z_transport_get_link_properties(const _z_transport_common_t *transport, uint16_t *mtu,
@@ -279,8 +297,6 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
     }
 }
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
-static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _z_mutex_lock(&ztc->_mutex_rx); }
-static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_rx); }
 static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) {
     (void)_z_mutex_rec_lock(&ztc->_mutex_peer);
 }
@@ -294,8 +310,6 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
     return _Z_RES_OK;
 }
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
-static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
-static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1

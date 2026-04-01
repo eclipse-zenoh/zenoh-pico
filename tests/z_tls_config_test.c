@@ -172,10 +172,6 @@ int main(void) {
         fprintf(stderr, "server z_open failed: %d\n", res);
         return 1;
     }
-    if (zp_start_read_task(z_loan_mut(server), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(server), NULL) != Z_OK) {
-        fprintf(stderr, "server: failed to start tasks\n");
-        goto cleanup_server;
-    }
     (void)z_sleep_ms(50);
 
     z_view_keyexpr_t keyexpr;
@@ -209,10 +205,6 @@ int main(void) {
     if (res != Z_OK) {
         fprintf(stderr, "client z_open failed: %d\n", res);
         return 1;
-    }
-    if (zp_start_read_task(z_loan_mut(client), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(client), NULL) != Z_OK) {
-        fprintf(stderr, "client: failed to start tasks\n");
-        goto cleanup_client;
     }
     (void)z_sleep_ms(50);
 

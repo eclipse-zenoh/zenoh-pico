@@ -65,6 +65,10 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
+_z_task_id_t _z_task_get_id(const _z_task_t *task) { return *task; }
+_z_task_id_t _z_task_current_id(void) { return pthread_self(); }
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r) { return pthread_equal(*l, *r) != 0; }
+
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, NULL)); }
 
@@ -147,8 +151,23 @@ z_result_t z_sleep_s(size_t time) {
     return 0;
 }
 
+unsigned long z_time_elapsed_ms_since(z_time_t *time, z_time_t *epoch) {
+    unsigned long elapsed = *time > *epoch ? *time - *epoch : 0;
+    return elapsed;
+}
+
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) { return z_time_now(); }
+
+unsigned long zp_clock_elapsed_us_since(z_clock_t *instant, z_clock_t *epoch) {
+    return z_time_elapsed_ms_since(instant, epoch) * 1000;
+}
+unsigned long zp_clock_elapsed_ms_since(z_clock_t *instant, z_clock_t *epoch) {
+    return z_time_elapsed_ms_since(instant, epoch);
+}
+unsigned long zp_clock_elapsed_s_since(z_clock_t *instant, z_clock_t *epoch) {
+    return z_time_elapsed_ms_since(instant, epoch) / 1000;
+}
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms(instant) * 1000; }
 
@@ -174,12 +193,10 @@ unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time)
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now = emscripten_get_now();
-
-    unsigned long elapsed = now - *time;
-    return elapsed;
+    return z_time_elapsed_ms_since(&now, time);
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
+unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) / 1000; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     double date = emscripten_date_now();

@@ -45,13 +45,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        return -1;
-    }
-
     z_id_t self_id = z_info_zid(z_loan(s));
     printf("Own ID:");
     print_zid(&self_id, NULL);

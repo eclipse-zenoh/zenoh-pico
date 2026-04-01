@@ -19,7 +19,9 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/common/rx.h"
+#include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -107,70 +109,22 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
         return _zp_multicast_process_messages(ztm, &addr);
     }
 }
-#else
-z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
-    _ZP_UNUSED(ztm);
-    _ZP_UNUSED(single_read);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_MULTICAST_TRANSPORT == 1
-
-void *_zp_multicast_read_task(void *ztm_arg) {
+_z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *executor) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-
-    // Acquire and keep the lock
-    _z_mutex_lock(&ztm->_common._mutex_rx);
-
-    // Prepare the buffer
-    _z_zbuf_reset(&ztm->_common._zbuf);
-
+    if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_suspend();
+    }
     uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
     _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
-    while (ztm->_common._read_task_running) {
-        if (_zp_multicast_process_messages(ztm, &addr) < _Z_RES_OK) {
-            ztm->_common._read_task_running = false;
-        }
+    if (_zp_multicast_process_messages(ztm, &addr) < _Z_RES_OK) {
+        // TODO: report failure and disconnect ?
+        _Z_WARN("Multicast read task failed");
+        return _zp_multicast_failed_result(ztm, executor);
+    } else {
+        return _z_fut_fn_result_continue();
     }
-    _z_mutex_unlock(&ztm->_common._mutex_rx);
-    return NULL;
-}
-
-z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
-    // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
-    zt->_transport._multicast._common._read_task_running = true;  // Init before z_task_init for concurrency issue
-    // Init task
-    if (_z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
-        zt->_transport._multicast._common._read_task_running = false;
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
-    }
-    // Attach task
-    zt->_transport._multicast._common._read_task = task;
-    return _Z_RES_OK;
-}
-
-z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
-    zt->_transport._multicast._common._read_task_running = false;
-    return _Z_RES_OK;
-}
-#else
-
-void *_zp_multicast_read_task(void *ztm_arg) {
-    _ZP_UNUSED(ztm_arg);
-    return NULL;
-}
-
-z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(attr);
-    _ZP_UNUSED(task);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-
-z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif

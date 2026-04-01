@@ -138,17 +138,7 @@ int main(int argc, char **argv) {
         printf("Unable to open session!\n");
         exit(-1);
     }
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start lease tasks\n");
-        z_drop(z_move(s));
-        exit(-1);
-    }
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read tasks\n");
-        z_drop(z_move(s));
-        exit(-1);
-    }
+
     // Timer for sub to prepare
     z_sleep_s(1);
     // Declare publisher
@@ -179,8 +169,6 @@ int main(int argc, char **argv) {
     pthread_t task2;
     pthread_create(&task2, NULL, stop_task, &stop_flag);
 
-    // Send join
-    zp_send_join(z_loan(s), NULL);
     // Send packets
     (void)batch_size;
 #if Z_FEATURE_BATCHING == 1

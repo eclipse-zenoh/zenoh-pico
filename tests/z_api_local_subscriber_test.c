@@ -35,11 +35,6 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
 
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
-
     z_owned_subscriber_t subscriber1, subscriber2;
     z_subscriber_options_t opts1, opts2;
     z_subscriber_options_default(&opts1);
@@ -113,11 +108,6 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
 
     z_fifo_handler_sample_drop(z_fifo_handler_sample_move(&subscriber_handler1));
     z_fifo_handler_sample_drop(z_fifo_handler_sample_move(&subscriber_handler2));
-
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s2));
 
     z_subscriber_drop(z_subscriber_move(&subscriber1));
     z_subscriber_drop(z_subscriber_move(&subscriber2));

@@ -216,15 +216,6 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
     assert_eq(zids, 1);
 
-#ifdef ZENOH_PICO
-    zp_task_read_options_t _ret_read_opt;
-    zp_task_read_options_default(&_ret_read_opt);
-    zp_start_read_task(z_loan_mut(s1), &_ret_read_opt);
-    zp_task_lease_options_t _ret_lease_opt;
-    zp_task_lease_options_default(&_ret_lease_opt);
-    zp_start_lease_task(z_loan_mut(s1), &_ret_lease_opt);
-#endif
-
     z_sleep_s(SLEEP);
 
     z_config_default(&_ret_config);
@@ -244,11 +235,6 @@ int main(int argc, char **argv) {
     z_id_to_string(&_ret_zid, &id_str);
     printf("%.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
     z_drop(z_move(id_str));
-
-#ifdef ZENOH_PICO
-    zp_start_read_task(z_loan_mut(s2), NULL);
-    zp_start_lease_task(z_loan_mut(s2), NULL);
-#endif
 
     z_sleep_s(SLEEP);
 
@@ -410,20 +396,11 @@ int main(int argc, char **argv) {
     assert(!z_internal_check(_ret_expr));
     printf("Ok\n");
 
-#ifdef ZENOH_PICO
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s1));
-#endif
-
     printf("Close sessions...");
     _ret_res = z_close(z_loan_mut(s1), NULL);
     assert_eq(_ret_res, 0);
     z_drop(z_move(s1));
 
-#ifdef ZENOH_PICO
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s2));
-#endif
     _ret_res = z_close(z_loan_mut(s2), NULL);
     assert_eq(_ret_res, 0);
     z_drop(z_move(s2));

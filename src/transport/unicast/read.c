@@ -20,9 +20,11 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -138,17 +140,8 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     }
     return _Z_RES_OK;
 }
-#else
 
-z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
-    _ZP_UNUSED(ztu);
-    _ZP_UNUSED(single_read);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
-
+#if Z_FEATURE_UNICAST_PEER == 1
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
@@ -342,93 +335,50 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
     _z_transport_peer_mutex_unlock(&ztu->_common);
     return _Z_RES_OK;
 }
+#endif
 
-void *_zp_unicast_read_task(void *ztu_arg) {
+_z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *executor) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
-
-    // Acquire and keep the lock
-    _z_mutex_lock(&ztu->_common._mutex_rx);
-
-    // Prepare the buffer
-    _z_zbuf_reset(&ztu->_common._zbuf);
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    } else if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_suspend();
+    }
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
-    _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
-        curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
         assert(curr_peer != NULL);
+        size_t to_read = 0;
+        // Retrieve data
+        if (_z_unicast_client_read(ztu, curr_peer, &to_read) &&
+            _z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+            _Z_INFO("Read task failed, closing session\n");
+            return _zp_unicast_failed_result(ztu, executor);
+        }
     }
-    while (ztu->_common._read_task_running) {
 #if Z_FEATURE_UNICAST_PEER == 1
-        if (mode == Z_WHATAMI_PEER) {
-            // Wait for at least one peer
-            if (_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
-                z_sleep_s(1);
-                continue;
-            }
-            // Wait for events on sockets (need mutex)
-            if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) != _Z_RES_OK) {
-                continue;  // Might need to process errors other than timeout
-            }
-            // Process events for all peers
-            if (_zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
-                ztu->_common._read_task_running = false;
-                continue;
-            }
-        } else
+    if (mode == Z_WHATAMI_PEER) {
+        _z_transport_peer_mutex_lock(&ztu->_common);
+        bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        if (!has_peers) {
+            // TODO: suspend or finish the task and restart it when a new connection is established.
+            return _z_fut_fn_result_wake_up_after(100);
+        } else {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer);
+#else
+            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, NULL);
 #endif
-        {
-            size_t to_read = 0;
-            // Retrieve data
-            if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
-                continue;
-            }
-            // Process data
-            if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
-                ztu->_common._read_task_running = false;
-                continue;
+            if (wait_res == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+                // TODO: Close transport on error. Probably we should just close the failed peer and
+                // initiate reconnection task
+                return _z_fut_fn_result_ready();
             }
         }
     }
-    _z_mutex_unlock(&ztu->_common._mutex_rx);
-    return NULL;
+#endif
+    return _z_fut_fn_result_continue();
 }
-
-z_result_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
-    // Init memory
-    (void)memset(task, 0, sizeof(_z_task_t));
-    zt->_transport._unicast._common._read_task_running = true;  // Init before z_task_init for concurrency issue
-    // Init task
-    if (_z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
-        zt->_transport._unicast._common._read_task_running = false;
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
-    }
-    // Attach task
-    zt->_transport._unicast._common._read_task = task;
-    return _Z_RES_OK;
-}
-
-z_result_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
-    zt->_transport._unicast._common._read_task_running = false;
-    return _Z_RES_OK;
-}
-
-#else   // Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
-
-void *_zp_unicast_read_task(void *ztu_arg) {
-    _ZP_UNUSED(ztu_arg);
-    return NULL;
-}
-
-z_result_t _zp_unicast_start_read_task(_z_transport_t *zt, void *attr, void *task) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(attr);
-    _ZP_UNUSED(task);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-
-z_result_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
-    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
-}
-#endif  //  Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

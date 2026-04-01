@@ -39,7 +39,6 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
 
-    _z_transport_rx_mutex_lock(&ztm->_common);
     size_t to_read = 0;
     do {
         switch (ztm->_common._link->_cap._flow) {
@@ -86,7 +85,6 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
         _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
-    _z_transport_rx_mutex_unlock(&ztm->_common);
     return ret;
 }
 
@@ -379,7 +377,6 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
         // Update lease time (set as ms during)
         entry->_lease = msg->_lease;
-        entry->_next_lease = entry->_lease;
         entry->common._remote_zid = msg->_zid;
         entry->common._remote_whatami = msg->_whatami;
         entry->common._received = true;

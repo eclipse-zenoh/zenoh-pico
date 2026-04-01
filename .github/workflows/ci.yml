@@ -36,7 +36,7 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_PERIODIC_TASKS=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
+          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
   run_windows_test:
     name: Run peer unicast test on windows-latest
@@ -70,7 +70,7 @@ jobs:
       - name: Build tests
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_PERIODIC_TASKS=1 CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
+          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
 
       - name: Install valgrind
         run: |

@@ -176,25 +176,25 @@ typedef struct {
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
  *
  * Members:
- *   bool auto_start_read_task: auto-start read task after ``z_open()`` (default true; only multi-thread builds).
- *   bool auto_start_lease_task: auto-start lease task after ``z_open()`` (default true; only multi-thread builds).
- *   bool auto_start_periodic_task: auto-start periodic scheduler after ``z_open()`` (default false; only
- *     multi-thread builds when periodic tasks feature is enabled).
- *   bool auto_start_admin_space: auto-start admin space after ``z_open()`` (default false; only when admin space
- *     feature is enabled).
+ *   bool auto_start_read_task: Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are
+ * now started automatically when session is created.
+ *   bool auto_start_lease_task: Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started
+ * automatically when session is created.
+ *   z_task_attr_t* executor_task_attributes: the attributes to pass to zenoh session executor thread running read,
+ * lease, keep alive, join, connect and other tasks in the background (only when Z_FEATURE_MULTI_THREAD is enabled).
+ *   bool auto_start_admin_space: auto-start admin space after ``z_open()`` (default
+ * false; only when admin space feature is enabled).
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool auto_start_read_task;
     bool auto_start_lease_task;
+    z_task_attr_t *executor_task_attributes;
 #endif
-#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_PERIODIC_TASKS == 1)
-    bool auto_start_periodic_task;
-#endif
-#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
+#if (Z_FEATURE_ADMIN_SPACE == 1)
     bool auto_start_admin_space;
 #endif
-#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
+#if Z_FEATURE_ADMIN_SPACE == 0 && (Z_FEATURE_MULTI_THREAD == 0)
     uint8_t __dummy;  // avoid empty struct
 #endif
 } z_open_options_t;
@@ -496,44 +496,30 @@ typedef struct {
     z_reply_keyexpr_t accept_replies;
 } z_get_options_t;
 
+#if Z_FEATURE_MULTI_THREAD == 1 || defined(SPHINX_DOCS)
 /**
  * Represents the configuration used to configure a read task started via :c:func:`zp_start_read_task`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
     z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
 } zp_task_read_options_t;
 
 /**
  * Represents the configuration used to configure a lease task started via :c:func:`zp_start_lease_task`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
     z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
 } zp_task_lease_options_t;
-
-#if Z_FEATURE_PERIODIC_TASKS == 1
-/**
- * Represents the configuration used to configure a periodic scheduler task started via
- * :c:func:`zp_start_periodic_scheduler_task`.
- */
-typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_task_attr_t *task_attributes;
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif
-} zp_task_periodic_scheduler_options_t;
-#endif
-
+#if Z_FEATURE_MULTI_THREAD == 0 || defined(SPHINX_DOCS)
 /**
  * Represents the configuration used to configure a read operation started via :c:func:`zp_read`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     bool single_read;  // Read a single packet instead of the whole buffer
@@ -541,6 +527,8 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a send keep alive operation started via :c:func:`zp_send_keep_alive`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -548,11 +536,13 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a send join operation started via :c:func:`zp_send_join`.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } zp_send_join_options_t;
-
+#endif
 /**
  * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *

@@ -60,6 +60,8 @@ typedef struct {
     TX_SEMAPHORE sem;
     UINT waiters;
 } _z_condvar_t;
+
+typedef TX_THREAD *_z_task_id_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

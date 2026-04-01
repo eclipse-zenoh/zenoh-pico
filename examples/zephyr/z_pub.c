@@ -56,10 +56,6 @@ int main(int argc, char **argv) {
     }
     printf("OK\n");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan_mut(s), NULL);
-    zp_start_lease_task(z_loan_mut(s), NULL);
-
     printf("Declaring publisher for '%s'...", KEYEXPR);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);

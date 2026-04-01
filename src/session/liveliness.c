@@ -284,7 +284,9 @@ void _z_liveliness_clear(_z_session_t *zn) {
     _z_liveliness_pending_query_intmap_clear(&zn->_liveliness_pending_queries);
 #endif
     _z_declared_keyexpr_intmap_t local_tokens = zn->_local_tokens;
+    zn->_local_tokens = _z_declared_keyexpr_intmap_make();
     _z_keyexpr_intmap_t remote_tokens = zn->_remote_tokens;
+    zn->_remote_tokens = _z_keyexpr_intmap_make();
     _z_session_mutex_unlock(zn);
     // drop maps outside of session mutex to avoid deadlock
     _z_declared_keyexpr_intmap_clear(&local_tokens);

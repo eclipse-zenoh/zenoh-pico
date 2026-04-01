@@ -3155,10 +3155,13 @@ z_result_t zp_batch_flush(const z_loaned_session_t *zs);
  */
 z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 #endif
-
+#if Z_FEATURE_MULTI_THREAD == 1 || defined(SPHINX_DOCS)
 /************* Multi Thread Tasks helpers **************/
 /**
- * Builds a :c:type:`zp_task_read_options_t` with default value.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`zp_task_read_options_t`.
@@ -3166,10 +3169,10 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 void zp_task_read_options_default(zp_task_read_options_t *options);
 
 /**
- * Starts a task to read from the network and process the received messages.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
@@ -3181,9 +3184,10 @@ void zp_task_read_options_default(zp_task_read_options_t *options);
 z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
 
 /**
- * Stops the read task.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
- * This may result in stopping a thread or a process depending on the target platform.
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to stop the task from.
@@ -3194,12 +3198,18 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
 z_result_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
- * Returns whether the read task is currently running for the given session.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 bool zp_read_task_is_running(const z_loaned_session_t *zs);
 
 /**
- * Builds a :c:type:`zp_task_lease_options_t` with default value.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`zp_task_lease_options_t`.
@@ -3207,12 +3217,10 @@ bool zp_read_task_is_running(const z_loaned_session_t *zs);
 void zp_task_lease_options_default(zp_task_lease_options_t *options);
 
 /**
- * Starts a task to handle the session lease.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
- * This task will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
- * When operating over a multicast transport, it also periodically sends the ``Join`` messages.
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
@@ -3224,9 +3232,10 @@ void zp_task_lease_options_default(zp_task_lease_options_t *options);
 z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
- * Stops the lease task.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
  *
- * This may result in stopping a thread or a process depending on the target platform.
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to stop the task from.
@@ -3237,78 +3246,31 @@ z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_optio
 z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
 
 /**
- * Returns whether the lease task is currently running for the given session.
+ * Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are now started automatically when session is
+ * created.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is enabled.
  */
 bool zp_lease_task_is_running(const z_loaned_session_t *zs);
-
+#endif
+#if Z_FEATURE_MULTI_THREAD == 0 || defined(SPHINX_DOCS)
 /************* Single Thread helpers **************/
 /**
- * Builds a :c:type:`zp_read_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`zp_read_options_t`.
  */
 void zp_read_options_default(zp_read_options_t *options);
 
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
 /**
- * Builds a :c:type:`zp_task_periodic_scheduler_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
  *
- * Parameters:
- *   options: Pointer to an uninitialized :c:type:`zp_task_periodic_scheduler_options_t`.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
- */
-void zp_task_periodic_scheduler_options_default(zp_task_periodic_scheduler_options_t *options);
-
-/**
- * Starts the periodic scheduler task for a session.
- *
- * The periodic scheduler task executes registered periodic jobs according
- * to their configured intervals. Jobs are added and removed via the scheduler API.
- *
- * The scheduler runs in a background task (thread, process, or equivalent)
- * whose implementation is platform-dependent.
- *
- * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` whose scheduler to start.
- *   options: Pointer to a :c:type:`zp_task_periodic_scheduler_options_t` structure
- *            used to configure the scheduler task.
- *
- * Return:
- *   ``0`` if the scheduler task started successfully, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
- */
-z_result_t zp_start_periodic_scheduler_task(z_loaned_session_t *zs,
-                                            const zp_task_periodic_scheduler_options_t *options);
-
-/**
- * Stops the periodic scheduler task for a session.
- *
- * This halts execution of all registered periodic jobs. Depending on the target
- * platform, this may involve stopping a thread, process, or equivalent.
- *
- * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` whose scheduler to stop.
- *
- * Return:
- *   ``0`` if the scheduler task stopped successfully, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
- */
-z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs);
-
-/**
- * Returns whether the periodic scheduler task is currently running for the given session.
- */
-bool zp_periodic_scheduler_task_is_running(const z_loaned_session_t *zs);
-#endif
-#endif
-
-/**
- * Executes a single read from the network and process received messages.
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the read for.
@@ -3320,7 +3282,10 @@ bool zp_periodic_scheduler_task_is_running(const z_loaned_session_t *zs);
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
 
 /**
- * Builds a :c:type:`zp_send_keep_alive_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`zp_send_keep_alive_options_t`.
@@ -3328,7 +3293,10 @@ z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *option
 void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
 
 /**
- * Executes a single send keep alive procedure.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
@@ -3340,7 +3308,10 @@ void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
 z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
 
 /**
- * Builds a :c:type:`zp_send_join_options_t` with default value.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`zp_send_join_options_t`.
@@ -3348,7 +3319,10 @@ z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_a
 void zp_send_join_options_default(zp_send_join_options_t *options);
 
 /**
- * Executes a single send join procedure.
+ * Deprecated, please use :c:func:`zp_spin_once` instead, which will run a single pending zenoh task
+ * (including read, lease, keep alive, accept, connect, etc...) from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
@@ -3359,22 +3333,19 @@ void zp_send_join_options_default(zp_send_join_options_t *options);
  */
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-
 /**
- * Process outstanding periodic tasks.
+ * Spins zenoh executor once, executing a single pending task (such as read, lease, keep alive, accept, connect, etc...)
+ * from the task queue.
+ *
+ * Note: only if Z_FEATURE_MULTI_THREAD is disabled.
  *
  * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to process tasks for.
- *
- * Return:
- *   ``0`` if execution was successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to spin executor for.
  */
-z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs);
+void zp_spin_once(const z_loaned_session_t *zs);
 #endif
+
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  * Gets the default reliability value (unstable).
  *
