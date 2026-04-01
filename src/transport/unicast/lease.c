@@ -141,7 +141,7 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
         if (curr_peer->common._received) {
             // Reset the lease parameters
             curr_peer->common._received = false;
-            return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE);
+            return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease);
         } else {
             // THIS LOG STRING USED IN TEST, change with caution
             _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
@@ -163,7 +163,7 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
         }
         _z_transport_peer_mutex_unlock(&ztu->_common);
         _zp_unicast_report_disconnected_peers(ztu, &dropped_peers);
-        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE);
+        return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease);
     }
 #endif
     return _z_fut_fn_result_ready();
@@ -188,7 +188,7 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
             }
         }
         ztu->_common._transmitted = false;
-        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+        return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     }
 // TODO: Should we have a task per peer ?
 #if Z_FEATURE_UNICAST_PEER == 1
@@ -207,7 +207,7 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
             _z_transport_peer_mutex_unlock(&ztu->_common);
         }
         ztu->_common._transmitted = false;
-        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+        return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     }
 #endif
     return _z_fut_fn_result_ready();
