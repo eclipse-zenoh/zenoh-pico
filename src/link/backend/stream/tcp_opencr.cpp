@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
-#if defined(ZENOH_ARDUINO_OPENCR)
+#if defined(ZP_PLATFORM_SOCKET_OPENCR)
 
 #include <Arduino.h>
 #include <WiFiClient.h>
@@ -80,6 +80,13 @@ static z_result_t _z_tcp_opencr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
     return _Z_ERR_GENERIC;
 }
 
+static z_result_t _z_tcp_opencr_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    _ZP_UNUSED(sock_in);
+    _ZP_UNUSED(sock_out);
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
+    return _Z_ERR_GENERIC;
+}
+
 static void _z_tcp_opencr_close(_z_sys_net_socket_t *sock) {
     if (sock->_tcp != NULL) {
         sock->_tcp->stop();
@@ -124,15 +131,10 @@ static size_t _z_tcp_opencr_write(_z_sys_net_socket_t sock, const uint8_t *ptr, 
 }
 
 extern const _z_stream_ops_t _z_tcp_opencr_stream_ops = {
-    _z_tcp_opencr_endpoint_init,
-    _z_tcp_opencr_endpoint_clear,
-    _z_tcp_opencr_open,
-    _z_tcp_opencr_listen,
-    _z_tcp_opencr_close,
-    _z_tcp_opencr_read,
-    _z_tcp_opencr_read_exact,
-    _z_tcp_opencr_write,
+    _z_tcp_opencr_endpoint_init, _z_tcp_opencr_endpoint_clear, _z_tcp_opencr_open,
+    _z_tcp_opencr_listen,        _z_tcp_opencr_accept,         _z_tcp_opencr_close,
+    _z_tcp_opencr_read,          _z_tcp_opencr_read_exact,     _z_tcp_opencr_write,
 };
 }  // extern "C"
 
-#endif /* defined(ZENOH_ARDUINO_OPENCR) */
+#endif /* defined(ZP_PLATFORM_SOCKET_OPENCR) */

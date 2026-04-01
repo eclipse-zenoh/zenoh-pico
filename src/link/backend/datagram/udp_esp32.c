@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if defined(ZENOH_ESPIDF) || defined(ZENOH_ARDUINO_ESP32)
+#if defined(ZP_PLATFORM_SOCKET_ESP32)
 
 #include <netdb.h>
 #include <stddef.h>
@@ -136,4 +136,4 @@ const _z_datagram_ops_t _z_udp_esp32_datagram_ops = {
     .write = _z_udp_esp32_write,
 };
 
-#endif /* defined(ZENOH_ESPIDF) || defined(ZENOH_ARDUINO_ESP32) */
+#endif /* defined(ZP_PLATFORM_SOCKET_ESP32) */

@@ -1,0 +1,1 @@
+zp_register_network(NAME threadx_stm32 SOCKET_COMPONENT threadx_stm32)

@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if defined(ZENOH_FREERTOS_PLUS_TCP)
+#if defined(ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP)
 
 #include <stdlib.h>
 
@@ -152,4 +152,4 @@ const _z_datagram_ops_t _z_udp_freertos_plus_tcp_datagram_ops = {
     .write = _z_udp_freertos_plus_tcp_write,
 };
 
-#endif /* defined(ZENOH_FREERTOS_PLUS_TCP) */
+#endif /* defined(ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP) */

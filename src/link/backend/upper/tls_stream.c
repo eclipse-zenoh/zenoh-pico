@@ -651,6 +651,25 @@ z_result_t _z_tls_accept(_z_sys_net_socket_t *socket, const _z_sys_net_socket_t 
     return _Z_RES_OK;
 }
 
+void _z_close_tls_socket(_z_sys_net_socket_t *socket) {
+    if (socket == NULL) {
+        return;
+    }
+    if (socket->_tls_sock == NULL) {
+        return;
+    }
+
+    _z_tls_socket_t *tls_sock = (_z_tls_socket_t *)socket->_tls_sock;
+    bool peer_socket = tls_sock->_is_peer_socket;
+    _z_close_tls(tls_sock);
+    if (peer_socket) {
+        z_free(tls_sock);
+    }
+
+    socket->_tls_sock = NULL;
+    socket->_fd = -1;
+}
+
 void _z_close_tls(_z_tls_socket_t *sock) {
     if (sock->_tls_ctx != NULL) {
         mbedtls_ssl_close_notify(&sock->_tls_ctx->_ssl);

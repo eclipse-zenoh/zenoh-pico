@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
-#if defined(ZENOH_MBED)
+#if defined(ZP_PLATFORM_SOCKET_MBED)
 
 #include <NetworkInterface.h>
 #include <mbed.h>
@@ -81,6 +81,12 @@ static z_result_t _z_tcp_mbed_listen(_z_sys_net_socket_t *sock, const _z_sys_net
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
+static z_result_t _z_tcp_mbed_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    _ZP_UNUSED(sock_in);
+    _ZP_UNUSED(sock_out);
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+}
+
 static void _z_tcp_mbed_close(_z_sys_net_socket_t *sock) {
     if (sock->_tcp != NULL) {
         sock->_tcp->close();
@@ -124,15 +130,10 @@ static size_t _z_tcp_mbed_write(_z_sys_net_socket_t sock, const uint8_t *ptr, si
 }
 
 extern const _z_stream_ops_t _z_tcp_mbed_stream_ops = {
-    _z_tcp_mbed_endpoint_init,
-    _z_tcp_mbed_endpoint_clear,
-    _z_tcp_mbed_open,
-    _z_tcp_mbed_listen,
-    _z_tcp_mbed_close,
-    _z_tcp_mbed_read,
-    _z_tcp_mbed_read_exact,
-    _z_tcp_mbed_write,
+    _z_tcp_mbed_endpoint_init, _z_tcp_mbed_endpoint_clear, _z_tcp_mbed_open,
+    _z_tcp_mbed_listen,        _z_tcp_mbed_accept,         _z_tcp_mbed_close,
+    _z_tcp_mbed_read,          _z_tcp_mbed_read_exact,     _z_tcp_mbed_write,
 };
 }  // extern "C"
 
-#endif /* defined(ZENOH_MBED) */
+#endif /* defined(ZP_PLATFORM_SOCKET_MBED) */

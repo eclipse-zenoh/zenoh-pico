@@ -1,0 +1,1 @@
+zp_register_network(NAME freertos_plus_tcp SOCKET_COMPONENT freertos_plus_tcp)

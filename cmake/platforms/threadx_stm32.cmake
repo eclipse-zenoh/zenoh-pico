@@ -1,5 +1,4 @@
-zp_platform_add_definition(ZENOH_THREADX_STM32)
-zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/threadx/stm32/system.c"
-                        "${PROJECT_SOURCE_DIR}/src/system/threadx/stm32/network.c")
+zp_platform_set_system_layer(threadx_stm32)
+zp_platform_set_network(threadx_stm32)
 set(CHECK_THREADS OFF)
-zp_platform_set_rawio_backend(uart_threadx_stm32)
+zp_platform_set_serial_backend(uart_threadx_stm32)

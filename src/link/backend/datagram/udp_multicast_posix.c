@@ -15,7 +15,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/udp_multicast.h"
 
-#if (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_POSIX) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -242,7 +242,8 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
             if (join != NULL) {
                 char *joins = _z_str_clone(join);
-                for (char *ip = strsep(&joins, "|"); ip != NULL; ip = strsep(&joins, "|")) {
+                char *joins_cursor = joins;
+                for (char *ip = strsep(&joins_cursor, "|"); ip != NULL; ip = strsep(&joins_cursor, "|")) {
                     if (rep._iptcp->ai_family == AF_INET) {
                         struct ip_mreq mreq;
                         (void)memset(&mreq, 0, sizeof(mreq));
@@ -396,7 +397,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
     return (size_t)sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
 
-const _z_udp_multicast_ops_t _z_udp_multicast_ops = {
+const _z_udp_multicast_ops_t _z_udp_multicast_posix_ops = {
     .endpoint_init_from_address = _z_udp_multicast_default_endpoint_init_from_address,
     .endpoint_clear = _z_udp_multicast_default_endpoint_clear,
     .open = _z_open_udp_multicast,

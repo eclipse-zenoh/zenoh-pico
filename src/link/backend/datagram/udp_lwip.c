@@ -1,6 +1,6 @@
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if (defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_RPI_PICO)) && (Z_FEATURE_LINK_UDP_UNICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_LWIP) && (Z_FEATURE_LINK_UDP_UNICAST == 1)
 
 #include <stddef.h>
 #include <string.h>
@@ -122,4 +122,4 @@ const _z_datagram_ops_t _z_udp_lwip_datagram_ops = {
     .write = _z_udp_lwip_write,
 };
 
-#endif /* defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_RPI_PICO) */
+#endif /* defined(ZP_PLATFORM_SOCKET_LWIP) */

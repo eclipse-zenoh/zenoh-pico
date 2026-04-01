@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
-#if defined(ZENOH_ARDUINO_OPENCR) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_OPENCR) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
 #include <Arduino.h>
 #include <WiFiClient.h>
@@ -154,7 +154,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
     return len;
 }
 
-const _z_udp_multicast_ops_t _z_udp_multicast_ops = {
+const _z_udp_multicast_ops_t _z_udp_multicast_opencr_ops = {
     _z_udp_multicast_default_endpoint_init_from_address,
     _z_udp_multicast_default_endpoint_clear,
     _z_open_udp_multicast,

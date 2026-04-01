@@ -32,14 +32,11 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/socket.h"
-#include "zenoh-pico/utils/mutex.h"
-#if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/backend/tls_stream.h"
-#endif
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+
+static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) { return (uintptr_t)sock->_fd; }
 
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
@@ -52,65 +49,9 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     return _Z_RES_OK;
 }
 
-z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
-    struct sockaddr naddr;
-    unsigned int nlen = sizeof(naddr);
-    sock_out->_fd = -1;
-    int con_socket = accept(sock_in->_fd, &naddr, &nlen);
-    if (con_socket < 0) {
-        if (errno == EBADF) {
-            _Z_ERROR_RETURN(_Z_ERR_INVALID);
-        } else {
-            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-        }
-    }
-
-    z_time_t tv;
-    tv.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / (uint32_t)1000;
-    tv.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % (uint32_t)1000) * (uint32_t)1000;
-    if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
-        close(con_socket);
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-
-    int flags = 1;
-    if (setsockopt(con_socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0) {
-        close(con_socket);
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-#if Z_FEATURE_TCP_NODELAY == 1
-    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0) {
-        close(con_socket);
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-#endif
-
-    struct linger ling;
-    ling.l_onoff = 1;
-    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
-        close(con_socket);
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-
-    sock_out->_fd = con_socket;
-    return _Z_RES_OK;
-}
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) { return _z_socket_set_blocking(sock, false); }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
-#if Z_FEATURE_LINK_TLS == 1
-    if (sock->_tls_sock != NULL) {
-        _z_tls_socket_t *tls_sock = (_z_tls_socket_t *)sock->_tls_sock;
-        bool peer_socket = tls_sock->_is_peer_socket;
-        _z_close_tls(tls_sock);
-        if (peer_socket) {
-            z_free(tls_sock);
-        }
-        sock->_tls_sock = NULL;
-        return;
-    }
-#endif
-
     if (sock->_fd >= 0) {
         shutdown(sock->_fd, SHUT_RDWR);
         close(sock->_fd);
@@ -119,52 +60,55 @@ void _z_socket_close(_z_sys_net_socket_t *sock) {
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
+static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
+                                               uint32_t timeout_ms) {
     fd_set read_fds;
-    FD_ZERO(&read_fds);
-
-    _z_transport_peer_unicast_slist_t **peers = (_z_transport_peer_unicast_slist_t **)v_peers;
-    _z_mutex_rec_mt_lock(mutex);
-    _z_transport_peer_unicast_slist_t *curr = *peers;
+    size_t i = 0;
     int max_fd = 0;
-    while (curr != NULL) {
-        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
-        FD_SET(peer->_socket._fd, &read_fds);
-        if (peer->_socket._fd > max_fd) {
-            max_fd = peer->_socket._fd;
-        }
-        curr = _z_transport_peer_unicast_slist_next(curr);
-    }
-    _z_mutex_rec_mt_unlock(mutex);
 
-    struct timeval timeout;
-    timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
-    timeout.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % 1000) * 1000;
+    FD_ZERO(&read_fds);
+    if (count == 0) {
+        return _Z_RES_OK;
+    }
+
+    for (i = 0; i < count; i++) {
+        ready[i] = 0;
+        FD_SET(sockets[i]._fd, &read_fds);
+        if (sockets[i]._fd > max_fd) {
+            max_fd = sockets[i]._fd;
+        }
+    }
+
+    struct timeval timeout = {
+        .tv_sec = (time_t)(timeout_ms / 1000U),
+        .tv_usec = (suseconds_t)((timeout_ms % 1000U) * 1000U),
+    };
     int result = select(max_fd + 1, &read_fds, NULL, NULL, &timeout);
     if (result < 0) {
         _Z_DEBUG("Errno: %d\n", errno);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
-    _z_mutex_rec_mt_lock(mutex);
-    curr = *peers;
-    while (curr != NULL) {
-        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
-        if (FD_ISSET(peer->_socket._fd, &read_fds)) {
-            peer->_pending = true;
+    for (i = 0; i < count; i++) {
+        if (FD_ISSET(sockets[i]._fd, &read_fds)) {
+            ready[i] = 1;
         }
-        curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_mutex_rec_mt_unlock(mutex);
-    return _Z_RES_OK;
-}
-#else
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
-    _ZP_UNUSED(peers);
-    _ZP_UNUSED(mutex);
+
     return _Z_RES_OK;
 }
 #endif
+
+const _z_socket_ops_t _z_posix_socket_ops = {
+    .id = _z_socket_id_impl,
+    .set_non_blocking = _z_socket_set_non_blocking,
+#if Z_FEATURE_MULTI_THREAD == 1
+    .wait_readable = _z_socket_wait_readable_impl,
+#else
+    .wait_readable = NULL,
+#endif
+    .close = _z_socket_close,
+};
 
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on Unix port of Zenoh-Pico"

@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/stream.h"
 
-#if defined(ZENOH_WINDOWS)
+#if defined(ZP_PLATFORM_SOCKET_WINDOWS)
 
 #include <string.h>
 #include <winsock2.h>
@@ -200,6 +200,43 @@ static z_result_t _z_tcp_windows_listen(_z_sys_net_socket_t *sock, const _z_sys_
     return ret;
 }
 
+static z_result_t _z_tcp_windows_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct sockaddr naddr;
+    int nlen = sizeof(naddr);
+    sock_out->_sock._fd = INVALID_SOCKET;
+    SOCKET con_socket = accept(sock_in->_sock._fd, &naddr, &nlen);
+    if (con_socket == INVALID_SOCKET) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    DWORD tv = Z_CONFIG_SOCKET_TIMEOUT;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
+        closesocket(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    int flags = 1;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0) {
+        closesocket(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+#if Z_FEATURE_TCP_NODELAY == 1
+    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0) {
+        closesocket(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+#endif
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        closesocket(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    sock_out->_sock._fd = con_socket;
+    return _Z_RES_OK;
+}
+
 static void _z_tcp_windows_close(_z_sys_net_socket_t *sock) {
     if (sock->_sock._fd != INVALID_SOCKET) {
         shutdown(sock->_sock._fd, SD_BOTH);
@@ -250,10 +287,11 @@ const _z_stream_ops_t _z_tcp_windows_stream_ops = {
     .endpoint_clear = _z_tcp_windows_endpoint_clear,
     .open = _z_tcp_windows_open,
     .listen = _z_tcp_windows_listen,
+    .accept = _z_tcp_windows_accept,
     .close = _z_tcp_windows_close,
     .read = _z_tcp_windows_read,
     .read_exact = _z_tcp_windows_read_exact,
     .write = _z_tcp_windows_write,
 };
 
-#endif /* defined(ZENOH_WINDOWS) */
+#endif /* defined(ZP_PLATFORM_SOCKET_WINDOWS) */

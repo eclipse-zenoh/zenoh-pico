@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if defined(ZENOH_ZEPHYR) && (Z_FEATURE_LINK_UDP_UNICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_ZEPHYR) && (Z_FEATURE_LINK_UDP_UNICAST == 1)
 
 #include <netdb.h>
 #include <stddef.h>

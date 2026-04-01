@@ -37,6 +37,7 @@ typedef struct {
     // flawfinder: ignore
     z_result_t (*open)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
     z_result_t (*listen)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint);
+    z_result_t (*accept)(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
     void (*close)(_z_sys_net_socket_t *sock);
 
     // flawfinder: ignore
@@ -68,6 +69,11 @@ static inline z_result_t _z_stream_open(const _z_stream_ops_t *ops, _z_sys_net_s
 static inline z_result_t _z_stream_listen(const _z_stream_ops_t *ops, _z_sys_net_socket_t *sock,
                                           const _z_sys_net_endpoint_t endpoint) {
     return ops->listen(sock, endpoint);
+}
+
+static inline z_result_t _z_stream_accept(const _z_stream_ops_t *ops, const _z_sys_net_socket_t *sock_in,
+                                          _z_sys_net_socket_t *sock_out) {
+    return ops->accept(sock_in, sock_out);
 }
 
 static inline void _z_stream_close(const _z_stream_ops_t *ops, _z_sys_net_socket_t *sock) { ops->close(sock); }

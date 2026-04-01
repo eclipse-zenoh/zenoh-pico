@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
-#if defined(ZENOH_MBED)
+#if defined(ZP_PLATFORM_SOCKET_MBED)
 
 #include <NetworkInterface.h>
 #include <mbed.h>
@@ -121,15 +121,9 @@ static size_t _z_udp_mbed_write(_z_sys_net_socket_t sock, const uint8_t *ptr, si
 }
 
 extern const _z_datagram_ops_t _z_udp_mbed_datagram_ops = {
-    _z_udp_mbed_endpoint_init,
-    _z_udp_mbed_endpoint_clear,
-    _z_udp_mbed_open,
-    _z_udp_mbed_listen,
-    _z_udp_mbed_close,
-    _z_udp_mbed_read,
-    _z_udp_mbed_read_exact,
-    _z_udp_mbed_write,
+    _z_udp_mbed_endpoint_init, _z_udp_mbed_endpoint_clear, _z_udp_mbed_open,       _z_udp_mbed_listen,
+    _z_udp_mbed_close,         _z_udp_mbed_read,           _z_udp_mbed_read_exact, _z_udp_mbed_write,
 };
 }  // extern "C"
 
-#endif /* defined(ZENOH_MBED) */
+#endif /* defined(ZP_PLATFORM_SOCKET_MBED) */

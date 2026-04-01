@@ -15,7 +15,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/udp_multicast.h"
 
-#if defined(ZENOH_ZEPHYR) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_ZEPHYR) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
 #include <netdb.h>
 #include <string.h>
@@ -358,7 +358,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
 
-const _z_udp_multicast_ops_t _z_udp_multicast_ops = {
+const _z_udp_multicast_ops_t _z_udp_multicast_zephyr_ops = {
     .endpoint_init_from_address = _z_udp_multicast_default_endpoint_init_from_address,
     .endpoint_clear = _z_udp_multicast_default_endpoint_clear,
     .open = _z_open_udp_multicast,

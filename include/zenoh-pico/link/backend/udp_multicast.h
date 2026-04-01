@@ -46,9 +46,17 @@ typedef struct {
     size_t (*write)(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t rep);
 } _z_udp_multicast_ops_t;
 
-extern const _z_udp_multicast_ops_t _z_udp_multicast_ops;
+#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
+extern const _z_udp_multicast_ops_t ZP_DEFAULT_UDP_MULTICAST_OPS;
+#endif
 
-static inline const _z_udp_multicast_ops_t *_z_default_udp_multicast_ops(void) { return &_z_udp_multicast_ops; }
+static inline const _z_udp_multicast_ops_t *_z_default_udp_multicast_ops(void) {
+#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
+    return &ZP_DEFAULT_UDP_MULTICAST_OPS;
+#else
+    return NULL;
+#endif
+}
 
 static inline z_result_t _z_udp_multicast_default_endpoint_init_from_address(_z_sys_net_endpoint_t *ep,
                                                                              const _z_string_t *address) {

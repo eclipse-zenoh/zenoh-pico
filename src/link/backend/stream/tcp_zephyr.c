@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/stream.h"
 
-#if defined(ZENOH_ZEPHYR) && (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1 || Z_FEATURE_LINK_WS == 1)
+#if defined(ZP_PLATFORM_SOCKET_ZEPHYR) && (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1 || Z_FEATURE_LINK_WS == 1)
 
 #include <netdb.h>
 #include <stddef.h>
@@ -148,6 +148,36 @@ static z_result_t _z_tcp_zephyr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
     return _Z_ERR_GENERIC;
 }
 
+static z_result_t _z_tcp_zephyr_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct sockaddr naddr;
+    unsigned int nlen = sizeof(naddr);
+    sock_out->_fd = -1;
+    int con_socket = accept(sock_in->_fd, &naddr, &nlen);
+    if (con_socket < 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+#if Z_FEATURE_TCP_NODELAY == 1
+    int optflag = 1;
+    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
+        close(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+#endif
+#if LWIP_SO_LINGER == 1
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        close(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+#endif
+
+    sock_out->_fd = con_socket;
+    return _Z_RES_OK;
+}
+
 static void _z_tcp_zephyr_close(_z_sys_net_socket_t *sock) {
     if (sock->_fd >= 0) {
         close(sock->_fd);
@@ -191,6 +221,7 @@ const _z_stream_ops_t _z_tcp_zephyr_stream_ops = {
     .endpoint_clear = _z_tcp_zephyr_endpoint_clear,
     .open = _z_tcp_zephyr_open,
     .listen = _z_tcp_zephyr_listen,
+    .accept = _z_tcp_zephyr_accept,
     .close = _z_tcp_zephyr_close,
     .read = _z_tcp_zephyr_read,
     .read_exact = _z_tcp_zephyr_read_exact,

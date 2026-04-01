@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 
-#if defined(ZENOH_ARDUINO_OPENCR)
+#if defined(ZP_PLATFORM_SOCKET_OPENCR)
 
 #include <Arduino.h>
 #include <WiFiUdp.h>
@@ -135,15 +135,9 @@ static size_t _z_udp_opencr_write(_z_sys_net_socket_t sock, const uint8_t *ptr, 
 }
 
 extern const _z_datagram_ops_t _z_udp_opencr_datagram_ops = {
-    _z_udp_opencr_endpoint_init,
-    _z_udp_opencr_endpoint_clear,
-    _z_udp_opencr_open,
-    _z_udp_opencr_listen,
-    _z_udp_opencr_close,
-    _z_udp_opencr_read,
-    _z_udp_opencr_read_exact,
-    _z_udp_opencr_write,
+    _z_udp_opencr_endpoint_init, _z_udp_opencr_endpoint_clear, _z_udp_opencr_open,       _z_udp_opencr_listen,
+    _z_udp_opencr_close,         _z_udp_opencr_read,           _z_udp_opencr_read_exact, _z_udp_opencr_write,
 };
 }  // extern "C"
 
-#endif /* defined(ZENOH_ARDUINO_OPENCR) */
+#endif /* defined(ZP_PLATFORM_SOCKET_OPENCR) */

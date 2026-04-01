@@ -1,6 +1,6 @@
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
+#if defined(ZP_PLATFORM_SOCKET_POSIX)
 
 #include <netdb.h>
 #include <stddef.h>
@@ -118,4 +118,4 @@ const _z_datagram_ops_t _z_udp_posix_datagram_ops = {
     .write = _z_udp_posix_write,
 };
 
-#endif /* defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) */
+#endif /* defined(ZP_PLATFORM_SOCKET_POSIX) */

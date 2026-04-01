@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/stream.h"
 
-#if defined(ZENOH_FREERTOS_PLUS_TCP)
+#if defined(ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP)
 
 #include <stdlib.h>
 
@@ -95,6 +95,25 @@ static z_result_t _z_tcp_freertos_plus_tcp_listen(_z_sys_net_socket_t *sock, con
     return _Z_RES_OK;
 }
 
+static z_result_t _z_tcp_freertos_plus_tcp_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct freertos_sockaddr naddr;
+    socklen_t nlen = sizeof(naddr);
+    sock_out->_socket = FREERTOS_INVALID_SOCKET;
+    Socket_t con_socket = FreeRTOS_accept(sock_in->_socket, &naddr, &nlen);
+    if (con_socket == FREERTOS_INVALID_SOCKET) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    TickType_t receive_timeout = pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT);
+    if (FreeRTOS_setsockopt(con_socket, 0, FREERTOS_SO_RCVTIMEO, &receive_timeout, 0) != 0) {
+        FreeRTOS_closesocket(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    sock_out->_socket = con_socket;
+    return _Z_RES_OK;
+}
+
 static void _z_tcp_freertos_plus_tcp_close(_z_sys_net_socket_t *sock) {
     if (sock->_socket != FREERTOS_INVALID_SOCKET) {
         FreeRTOS_closesocket(sock->_socket);
@@ -138,10 +157,11 @@ const _z_stream_ops_t _z_tcp_freertos_plus_tcp_stream_ops = {
     .endpoint_clear = _z_tcp_freertos_plus_tcp_endpoint_clear,
     .open = _z_tcp_freertos_plus_tcp_open,
     .listen = _z_tcp_freertos_plus_tcp_listen,
+    .accept = _z_tcp_freertos_plus_tcp_accept,
     .close = _z_tcp_freertos_plus_tcp_close,
     .read = _z_tcp_freertos_plus_tcp_read,
     .read_exact = _z_tcp_freertos_plus_tcp_read_exact,
     .write = _z_tcp_freertos_plus_tcp_write,
 };
 
-#endif /* defined(ZENOH_FREERTOS_PLUS_TCP) */
+#endif /* defined(ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP) */

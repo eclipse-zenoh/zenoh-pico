@@ -15,7 +15,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/udp_multicast.h"
 
-#if (defined(ZENOH_ESPIDF) || defined(ZENOH_ARDUINO_ESP32)) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
+#if defined(ZP_PLATFORM_SOCKET_ESP32) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
 #include <netdb.h>
 #include <string.h>
@@ -24,37 +24,46 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                                 uint32_t tout, const char *iface) {
-    _ZP_UNUSED(iface);
+static unsigned int _z_esp32_udp_multicast_ipv6_outbound_ifindex(void) {
+    // TODO: route this through platform/socket support once esp32 multicast iface selection is explicit.
+    return 0U;
+}
+
+static unsigned int _z_esp32_udp_multicast_ipv6_membership_ifindex(void) {
+    // TODO: route this through platform/socket support once esp32 multicast iface selection is explicit.
+    return 1U;
+}
+
+static z_result_t _z_esp32_udp_multicast_make_local_addr(int family, in_port_t port, struct sockaddr **lsockaddr,
+                                                         socklen_t *addrlen) {
     z_result_t ret = _Z_RES_OK;
 
-    struct sockaddr *lsockaddr = NULL;
-    socklen_t addrlen = 0;
-    if (rep._iptcp->ai_family == AF_INET) {
-        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        if (lsockaddr != NULL) {
-            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
-            addrlen = sizeof(struct sockaddr_in);
+    *lsockaddr = NULL;
+    *addrlen = 0;
+    if (family == AF_INET) {
+        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
+        if (*lsockaddr != NULL) {
+            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
+            *addrlen = sizeof(struct sockaddr_in);
 
-            struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
+            struct sockaddr_in *c_laddr = (struct sockaddr_in *)*lsockaddr;
             c_laddr->sin_family = AF_INET;
             c_laddr->sin_addr.s_addr = INADDR_ANY;
-            c_laddr->sin_port = htons(INADDR_ANY);
+            c_laddr->sin_port = port;
         } else {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
-    } else if (rep._iptcp->ai_family == AF_INET6) {
-        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        if (lsockaddr != NULL) {
-            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
-            addrlen = sizeof(struct sockaddr_in6);
+    } else if (family == AF_INET6) {
+        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
+        if (*lsockaddr != NULL) {
+            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
+            *addrlen = sizeof(struct sockaddr_in6);
 
-            struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
+            struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)*lsockaddr;
             c_laddr->sin6_family = AF_INET6;
             c_laddr->sin6_addr = in6addr_any;
-            c_laddr->sin6_port = htons(INADDR_ANY);
+            c_laddr->sin6_port = port;
         } else {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
@@ -64,7 +73,86 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
         ret = _Z_ERR_GENERIC;
     }
 
-    if (addrlen != 0U) {
+    return ret;
+}
+
+static z_result_t _z_esp32_udp_multicast_configure_outbound_iface(int fd, const struct sockaddr *lsockaddr) {
+    z_result_t ret = _Z_RES_OK;
+
+    if (lsockaddr->sa_family == AF_INET) {
+        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &((const struct sockaddr_in *)lsockaddr)->sin_addr,
+                       sizeof(struct in_addr)) < 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+    } else if (lsockaddr->sa_family == AF_INET6) {
+        unsigned int ifindex = _z_esp32_udp_multicast_ipv6_outbound_ifindex();
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+static z_result_t _z_esp32_udp_multicast_apply_membership(int fd, int family, int option, const void *addr_bytes) {
+    z_result_t ret = _Z_RES_OK;
+
+    if (family == AF_INET) {
+        struct ip_mreq mreq;
+        (void)memset(&mreq, 0, sizeof(mreq));
+        // flawfinder: ignore
+        (void)memcpy(&mreq.imr_multiaddr, addr_bytes, sizeof(struct in_addr));
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (setsockopt(fd, IPPROTO_IP, option, &mreq, sizeof(mreq)) < 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+    } else if (family == AF_INET6) {
+        struct ipv6_mreq mreq;
+        (void)memset(&mreq, 0, sizeof(mreq));
+        // flawfinder: ignore
+        (void)memcpy(&mreq.ipv6mr_multiaddr, addr_bytes, sizeof(struct in6_addr));
+        mreq.ipv6mr_interface = _z_esp32_udp_multicast_ipv6_membership_ifindex();
+        if (setsockopt(fd, IPPROTO_IPV6, option, &mreq, sizeof(mreq)) < 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
+        ret = _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+static z_result_t _z_esp32_udp_multicast_apply_primary_membership(int fd, const _z_sys_net_endpoint_t rep, int option) {
+    if (rep._iptcp->ai_family == AF_INET) {
+        return _z_esp32_udp_multicast_apply_membership(fd, rep._iptcp->ai_family, option,
+                                                       &((const struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
+    }
+    if (rep._iptcp->ai_family == AF_INET6) {
+        return _z_esp32_udp_multicast_apply_membership(fd, rep._iptcp->ai_family, option,
+                                                       &((const struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
+    }
+
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
+    return _Z_ERR_GENERIC;
+}
+
+z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface) {
+    _ZP_UNUSED(iface);
+    z_result_t ret = _Z_RES_OK;
+
+    struct sockaddr *lsockaddr = NULL;
+    socklen_t addrlen = 0;
+    ret = _z_esp32_udp_multicast_make_local_addr(rep._iptcp->ai_family, 0, &lsockaddr, &addrlen);
+    if ((ret == _Z_RES_OK) && (addrlen != 0U)) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
             z_time_t tv;
@@ -85,23 +173,8 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                 ret = _Z_ERR_GENERIC;
             }
 
-            if (lsockaddr->sa_family == AF_INET) {
-                if ((ret == _Z_RES_OK) &&
-                    (setsockopt(sock->_fd, IPPROTO_IP, IP_MULTICAST_IF, &((struct sockaddr_in *)lsockaddr)->sin_addr,
-                                sizeof(struct in_addr)) < 0)) {
-                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                    ret = _Z_ERR_GENERIC;
-                }
-            } else if (lsockaddr->sa_family == AF_INET6) {
-                int ifindex = 0;
-                if ((ret == _Z_RES_OK) &&
-                    (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)) {
-                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                    ret = _Z_ERR_GENERIC;
-                }
-            } else {
-                _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                ret = _Z_ERR_GENERIC;
+            if (ret == _Z_RES_OK) {
+                ret = _z_esp32_udp_multicast_configure_outbound_iface(sock->_fd, lsockaddr);
             }
 
             if (ret != _Z_RES_OK) {
@@ -137,7 +210,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
         if (ret != _Z_RES_OK) {
             z_free(lsockaddr);
         }
-    } else {
+    } else if (ret == _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
@@ -152,41 +225,19 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
     z_result_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
-    unsigned int addrlen = 0;
+    socklen_t addrlen = 0;
     if (rep._iptcp->ai_family == AF_INET) {
-        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
-        if (lsockaddr != NULL) {
-            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in));
-            addrlen = sizeof(struct sockaddr_in);
-
-            struct sockaddr_in *c_laddr = (struct sockaddr_in *)lsockaddr;
-            c_laddr->sin_family = AF_INET;
-            c_laddr->sin_addr.s_addr = INADDR_ANY;
-            c_laddr->sin_port = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port;
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_GENERIC);
-            ret = _Z_ERR_GENERIC;
-        }
+        ret = _z_esp32_udp_multicast_make_local_addr(
+            rep._iptcp->ai_family, ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_port, &lsockaddr, &addrlen);
     } else if (rep._iptcp->ai_family == AF_INET6) {
-        lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
-        if (lsockaddr != NULL) {
-            (void)memset(lsockaddr, 0, sizeof(struct sockaddr_in6));
-            addrlen = sizeof(struct sockaddr_in6);
-
-            struct sockaddr_in6 *c_laddr = (struct sockaddr_in6 *)lsockaddr;
-            c_laddr->sin6_family = AF_INET6;
-            c_laddr->sin6_addr = in6addr_any;
-            c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_GENERIC);
-            ret = _Z_ERR_GENERIC;
-        }
+        ret = _z_esp32_udp_multicast_make_local_addr(
+            rep._iptcp->ai_family, ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port, &lsockaddr, &addrlen);
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
-    if (addrlen != 0U) {
+    if ((ret == _Z_RES_OK) && (addrlen != 0U)) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
             z_time_t tv;
@@ -209,31 +260,15 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 ret = _Z_ERR_GENERIC;
             }
 
-            if (rep._iptcp->ai_family == AF_INET) {
-                struct ip_mreq mreq;
-                (void)memset(&mreq, 0, sizeof(mreq));
-                mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr.s_addr;
-                mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-                if ((ret == _Z_RES_OK) &&
-                    (setsockopt(sock->_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)) {
+            if (ret == _Z_RES_OK) {
+                if (rep._iptcp->ai_family == AF_INET) {
+                    ret = _z_esp32_udp_multicast_apply_primary_membership(sock->_fd, rep, IP_ADD_MEMBERSHIP);
+                } else if (rep._iptcp->ai_family == AF_INET6) {
+                    ret = _z_esp32_udp_multicast_apply_primary_membership(sock->_fd, rep, IPV6_JOIN_GROUP);
+                } else {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
-            } else if (rep._iptcp->ai_family == AF_INET6) {
-                struct ipv6_mreq mreq;
-                (void)memset(&mreq, 0, sizeof(mreq));
-                // flawfinder: ignore
-                (void)memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr,
-                             sizeof(struct in6_addr));
-                mreq.ipv6mr_interface = 1;
-                if ((ret == _Z_RES_OK) &&
-                    (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
-                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                    ret = _Z_ERR_GENERIC;
-                }
-            } else {
-                _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                ret = _Z_ERR_GENERIC;
             }
 
             if (ret != _Z_RES_OK) {
@@ -259,21 +294,9 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
     _ZP_UNUSED(lep);
     if (sockrecv->_fd >= 0) {
         if (rep._iptcp->ai_family == AF_INET) {
-            struct ip_mreq mreq;
-            (void)memset(&mreq, 0, sizeof(mreq));
-            mreq.imr_multiaddr.s_addr = ((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr.s_addr;
-            mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-            setsockopt(sockrecv->_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+            (void)_z_esp32_udp_multicast_apply_primary_membership(sockrecv->_fd, rep, IP_DROP_MEMBERSHIP);
         } else if (rep._iptcp->ai_family == AF_INET6) {
-            struct ipv6_mreq mreq;
-            (void)memset(&mreq, 0, sizeof(mreq));
-            // flawfinder: ignore
-            (void)memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr,
-                         sizeof(struct in6_addr));
-            mreq.ipv6mr_interface = 1;
-            setsockopt(sockrecv->_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, sizeof(mreq));
-        } else {
-            /* Do nothing. */
+            (void)_z_esp32_udp_multicast_apply_primary_membership(sockrecv->_fd, rep, IPV6_LEAVE_GROUP);
         }
     }
 
@@ -359,7 +382,7 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
     return sendto(sock._fd, ptr, len, 0, rep._iptcp->ai_addr, rep._iptcp->ai_addrlen);
 }
 
-const _z_udp_multicast_ops_t _z_udp_multicast_ops = {
+const _z_udp_multicast_ops_t _z_udp_multicast_esp32_ops = {
     .endpoint_init_from_address = _z_udp_multicast_default_endpoint_init_from_address,
     .endpoint_clear = _z_udp_multicast_default_endpoint_clear,
     .open = _z_open_udp_multicast,

@@ -15,6 +15,7 @@
 #include "zenoh-pico/transport/unicast/read.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
@@ -142,6 +143,109 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     return _Z_RES_OK;
 }
 
+typedef struct {
+    size_t count;
+    _z_sys_net_socket_t *sockets;
+    uintptr_t *ids;
+    uint8_t *ready;
+} _z_unicast_socket_wait_snapshot_t;
+
+static void _z_unicast_socket_wait_snapshot_clear(_z_unicast_socket_wait_snapshot_t *snapshot) {
+    if (snapshot == NULL) {
+        return;
+    }
+
+    z_free(snapshot->sockets);
+    z_free(snapshot->ids);
+    z_free(snapshot->ready);
+    *snapshot = (_z_unicast_socket_wait_snapshot_t){0};
+}
+
+static z_result_t _z_unicast_socket_wait_snapshot_make(_z_transport_unicast_t *ztu,
+                                                       _z_unicast_socket_wait_snapshot_t *snapshot) {
+    _z_transport_peer_unicast_slist_t *curr = NULL;
+    size_t index = 0;
+
+    *snapshot = (_z_unicast_socket_wait_snapshot_t){0};
+
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    curr = ztu->_peers;
+    while (curr != NULL) {
+        snapshot->count += 1;
+        curr = _z_transport_peer_unicast_slist_next(curr);
+    }
+
+    if (snapshot->count == 0) {
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        return _Z_RES_OK;
+    }
+
+    snapshot->sockets = (_z_sys_net_socket_t *)z_malloc(snapshot->count * sizeof(_z_sys_net_socket_t));
+    snapshot->ids = (uintptr_t *)z_malloc(snapshot->count * sizeof(uintptr_t));
+    snapshot->ready = (uint8_t *)z_malloc(snapshot->count * sizeof(uint8_t));
+    if ((snapshot->sockets == NULL) || (snapshot->ids == NULL) || (snapshot->ready == NULL)) {
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        _z_unicast_socket_wait_snapshot_clear(snapshot);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+
+    curr = ztu->_peers;
+    while (curr != NULL) {
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+        snapshot->sockets[index] = peer->_socket;
+        snapshot->ids[index] = _z_socket_id(&peer->_socket);
+        snapshot->ready[index] = 0;
+        index += 1;
+        curr = _z_transport_peer_unicast_slist_next(curr);
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+
+    return _Z_RES_OK;
+}
+
+static void _z_unicast_mark_ready_peers(_z_transport_unicast_t *ztu,
+                                        const _z_unicast_socket_wait_snapshot_t *snapshot) {
+    _z_transport_peer_unicast_slist_t *curr = NULL;
+
+    if ((snapshot == NULL) || (snapshot->count == 0)) {
+        return;
+    }
+
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    curr = ztu->_peers;
+    while (curr != NULL) {
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+        uintptr_t socket_id = _z_socket_id(&peer->_socket);
+        for (size_t i = 0; i < snapshot->count; i++) {
+            if ((snapshot->ready[i] != 0) && (snapshot->ids[i] == socket_id)) {
+                peer->_pending = true;
+                break;
+            }
+        }
+        curr = _z_transport_peer_unicast_slist_next(curr);
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+}
+
+static z_result_t _z_unicast_wait_peer_event(_z_transport_unicast_t *ztu) {
+    _z_unicast_socket_wait_snapshot_t snapshot = {0};
+    z_result_t ret = _z_unicast_socket_wait_snapshot_make(ztu, &snapshot);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    if (snapshot.count == 0) {
+        return _Z_RES_OK;
+    }
+
+    ret = _z_socket_wait_readable(snapshot.sockets, snapshot.count, snapshot.ready, Z_CONFIG_SOCKET_TIMEOUT);
+    if (ret == _Z_RES_OK) {
+        _z_unicast_mark_ready_peers(ztu, &snapshot);
+    }
+
+    _z_unicast_socket_wait_snapshot_clear(&snapshot);
+    return ret;
+}
 #if Z_FEATURE_UNICAST_PEER == 1
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
@@ -364,19 +468,13 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
         _z_transport_peer_mutex_unlock(&ztu->_common);
         if (!has_peers) {
-            // TODO: suspend or finish the task and restart it when a new connection is established.
             return _z_fut_fn_result_wake_up_after(100);
-        } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer);
-#else
-            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, NULL);
-#endif
-            if (wait_res == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
-                // TODO: Close transport on error. Probably we should just close the failed peer and
-                // initiate reconnection task
-                return _z_fut_fn_result_ready();
-            }
+        }
+
+        if (_z_unicast_wait_peer_event(ztu) == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+            // TODO: Close transport on error. Probably we should just close the failed peer and
+            // initiate reconnection task.
+            return _z_fut_fn_result_ready();
         }
     }
 #endif

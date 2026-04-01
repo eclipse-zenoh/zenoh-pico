@@ -13,6 +13,9 @@
 //
 
 #include "zenoh-pico/link/backend/socket.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/backend/tls_stream.h"
+#endif
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
@@ -149,6 +152,9 @@ bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
     _z_zbuf_clear(&src->flow_buff);
     if (src->_owns_socket) {
+#if Z_FEATURE_LINK_TLS == 1
+        _z_close_tls_socket(&src->_socket);
+#endif
         _z_socket_close(&src->_socket);
     }
     _z_transport_peer_common_clear(&src->common);

@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/link/backend/datagram.h"
 
-#if defined(ZENOH_WINDOWS)
+#if defined(ZP_PLATFORM_SOCKET_WINDOWS)
 
 #include <string.h>
 #include <winsock2.h>
@@ -151,4 +151,4 @@ const _z_datagram_ops_t _z_udp_windows_datagram_ops = {
     .write = _z_udp_windows_write,
 };
 
-#endif /* defined(ZENOH_WINDOWS) */
+#endif /* defined(ZP_PLATFORM_SOCKET_WINDOWS) */
