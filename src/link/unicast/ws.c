@@ -18,13 +18,13 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/stream.h"
+#include "zenoh-pico/link/backend/tcp.h"
 #include "zenoh-pico/link/backend/ws.h"
 #include "zenoh-pico/link/manager.h"
 
 #if Z_FEATURE_LINK_WS == 1
 
-static z_result_t _z_ws_address_valid(const _z_string_t *address) { return _z_stream_address_valid(address); }
+static z_result_t _z_ws_address_valid(const _z_string_t *address) { return _z_tcp_address_valid(address); }
 
 z_result_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
     _z_string_t str = _z_string_alias_str(WS_SCHEMA);

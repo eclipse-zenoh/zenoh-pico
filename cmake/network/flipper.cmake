@@ -1,0 +1,1 @@
+set(ZP_NETWORK_SOCKET_COMPONENT "flipper")

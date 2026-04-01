@@ -26,6 +26,7 @@ BASE_SRC_FILTER = [
     "-<example/>",
     "-<system/>",
     "+<system/common/>",
+    "+<system/socket/>",
 ]
 
 

@@ -120,6 +120,32 @@ function(get_target_property_if_set var target property)
   set(${var} ${value} PARENT_SCOPE)
 endfunction()
 
+function(zp_source_list_requires_cxx out_var)
+  set(_zp_uses_cxx OFF)
+  foreach(_zp_source IN LISTS ARGN)
+    get_filename_component(_zp_source_ext "${_zp_source}" EXT)
+    string(TOLOWER "${_zp_source_ext}" _zp_source_ext)
+    if(_zp_source_ext STREQUAL ".cc" OR _zp_source_ext STREQUAL ".cpp" OR _zp_source_ext STREQUAL ".cxx")
+      set(_zp_uses_cxx ON)
+      break()
+    endif()
+  endforeach()
+  set(${out_var} "${_zp_uses_cxx}" PARENT_SCOPE)
+endfunction()
+
+function(zp_target_requires_cxx target out_var)
+  if("${target}" STREQUAL "" OR NOT TARGET "${target}")
+    set(${out_var} OFF PARENT_SCOPE)
+    return()
+  endif()
+
+  get_target_property_if_set(_zp_sources "${target}" SOURCES)
+  get_target_property_if_set(_zp_interface_sources "${target}" INTERFACE_SOURCES)
+  zp_source_list_requires_cxx(_zp_requires_cxx ${_zp_sources} ${_zp_interface_sources})
+  set(${out_var} "${_zp_requires_cxx}" PARENT_SCOPE)
+endfunction()
+
+
 #
 # Unset variables if they have empty string value
 #

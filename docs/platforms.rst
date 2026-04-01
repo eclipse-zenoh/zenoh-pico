@@ -16,79 +16,126 @@
 Platforms and Backends
 **********************
 
-Zenoh-Pico builds are composed from a platform profile and a set of transport backends.
+Zenoh-Pico builds are selected primarily by ``ZP_PLATFORM``. A platform profile
+chooses the system layer, the network layer, and the default ``tcp``, ``udp``
+and ``serial`` transport backends.
+
+Platform profiles can reuse the built-in ``network``, ``socket``, ``tcp`` and
+``udp`` components and add platform-specific parts such as a custom system
+layer, serial backend, or transport backend.
 
 Platform selection
 ==================
 
-``ZP_PLATFORM`` is the primary build option. A platform profile selects:
+If neither ``ZP_PLATFORM`` nor ``ZP_SYSTEM_LAYER`` is set, Zenoh-Pico selects a
+default host profile from the build environment.
 
-* the system-layer implementation used by the build;
-* the default ``stream``, ``datagram`` and ``rawio`` backends.
+For example, the built-in ``linux`` profile can be selected with:
 
-Backend families
-================
+.. code-block:: bash
 
-Zenoh-Pico uses three lower backend families:
+   cmake -S . -B build \
+     -DZP_PLATFORM=linux
 
-* ``stream`` for TCP-like transports;
-* ``datagram`` for UDP-like transports;
-* ``rawio`` for serial and other byte-stream devices.
-
-TLS and the serial framing protocol are upper layers built on top of these backends.
-
-Overriding backend defaults
-===========================
-
-A platform profile can be overridden with explicit backend choices:
+Individual component overrides are also available. For the built-in ``linux``
+profile, the following longer form is equivalent because it simply repeats the
+profile defaults explicitly:
 
 .. code-block:: bash
 
    cmake -S . -B build \
      -DZP_PLATFORM=linux \
-     -DZP_STREAM_BACKEND=tcp_posix \
-     -DZP_DATAGRAM_BACKEND=udp_posix \
-     -DZP_RAWIO_BACKEND=tty_posix
+     -DZP_NETWORK=posix \
+     -DZP_TCP_BACKEND=tcp_posix \
+     -DZP_UDP_BACKEND=posix \
+     -DZP_SERIAL_BACKEND=tty_posix
 
-Adding a new platform
-=====================
+``ZP_UDP_BACKEND`` selects the UDP transport backend. The selected backend may
+provide both UDP unicast and UDP multicast support. The multicast part is
+optional.
 
-There are two ways to add a platform descriptor:
+Adding a built-in platform
+==========================
 
-* built in: add a file under Zenoh-Pico's ``cmake/platforms/`` directory;
-* external: keep the descriptor in your own tree and register its directory through ``ZP_EXTERNAL_CMAKE``.
+To add a built-in platform profile, add ``cmake/platforms/<name>.cmake``.
 
-The platform name is the descriptor file name without the ``.cmake`` suffix. For example,
-``cmake/platforms/myrtos.cmake`` defines the ``myrtos`` platform profile.
+The profile contains:
 
-In the common built-in case, adding a new platform only requires adding a new file under ``cmake/platforms/``.
+* select the system layer;
+* select the network layer;
+* select the default ``tcp``, ``udp`` and ``serial`` transport backends;
+* optional extra platform-only sources, include directories, or compile
+  definitions.
 
-That file should:
-
-* declare the platform-specific compile definitions and sources;
-* choose the default ``stream``, ``datagram`` and ``rawio`` backends for the platform.
-* optionally add extra include directories needed to build the platform sources
-  or adjust ``CHECK_THREADS`` if the platform needs it.
-
-A platform descriptor defines the system-layer sources for the platform and selects the default lower backends.
-Existing backend implementations should be reused when only part of the platform support differs.
-
-Example built-in platform descriptor:
+Example:
 
 .. code-block:: cmake
 
    # cmake/platforms/myrtos.cmake
+   zp_platform_set_system_layer(myrtos)
+   zp_platform_set_network(freertos_lwip)
+   zp_platform_set_tcp_backend(tcp_lwip)
+   zp_platform_set_udp_backend(lwip)
+   zp_platform_set_serial_backend(uart_myrtos)
 
-   zp_platform_add_definition(ZENOH_MYRTOS)
-   zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/myrtos/system.c")
-   # Optional:
-   # These extra include directories are only used when building zenoh-pico itself.
-   # They are not exported as public installed headers.
+   # Optional platform-specific additions
+   # zp_platform_add_definition(ZENOH_MYRTOS_BOARD)
+   # zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/myrtos/platform_extra.c")
    # zp_platform_add_include_dirs("${PROJECT_SOURCE_DIR}/src/system/myrtos/include")
-   # set(CHECK_THREADS OFF)
-   zp_platform_set_stream_backend(tcp_lwip)
-   zp_platform_set_datagram_backend(udp_lwip)
-   zp_platform_set_rawio_backend(uart_myrtos)
+
+If the platform also needs a new system layer, add ``cmake/system/<name>.cmake``:
+
+.. code-block:: cmake
+
+   # cmake/system/myrtos.cmake
+   set(ZP_SYSTEM_LAYER_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/system/myrtos/system.c")
+   set(ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS
+       ZENOH_MYRTOS)
+
+``ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS`` declares the platform markers associated
+with the selected system layer. For built-in layers these definitions are used
+to compile the system-layer sources and are also needed when building code that
+includes Zenoh-Pico headers.
+
+If it needs a new built-in transport backend, add a descriptor in the
+appropriate backend directory:
+
+* ``cmake/backends/tcp/`` for TCP backends;
+* ``cmake/backends/udp/`` for UDP backends;
+* ``cmake/backends/serial/`` for ``serial`` backends.
+
+Zenoh-Pico selects transport implementations through exported ``*_ops``
+symbols. Each ``*_ops`` object is a table of function pointers for one backend
+type, such as TCP, UDP, or serial. Backend descriptors set the symbol that
+Zenoh-Pico should use for the selected implementation.
+
+Example built-in serial backend:
+
+.. code-block:: cmake
+
+   # cmake/backends/serial/uart_myrtos.cmake
+   set(ZP_BACKEND_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_myrtos.c")
+   set(ZP_SERIAL_BACKEND_SYMBOL
+       "_z_uart_myrtos_serial_ops")
+   set(ZP_BACKEND_COMPATIBLE_SYSTEM_LAYERS
+       "myrtos")
+
+Example built-in UDP backend:
+
+.. code-block:: cmake
+
+   # cmake/backends/udp/myrtos.cmake
+   set(ZP_BACKEND_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_myrtos.c"
+       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myrtos.c")
+   set(ZP_UDP_BACKEND_UNICAST_SYMBOL
+       "_z_udp_myrtos_unicast_ops")
+   set(ZP_UDP_BACKEND_MULTICAST_SYMBOL
+       "_z_udp_multicast_myrtos_ops")
+   set(ZP_BACKEND_SOCKET_COMPONENT
+       "lwip")
 
 Then configure Zenoh-Pico with:
 
@@ -96,123 +143,261 @@ Then configure Zenoh-Pico with:
 
    cmake -S . -B build -DZP_PLATFORM=myrtos
 
-If the same kind of descriptor is provided by an external integration, keep the descriptor in the external tree and
-register its directory through a small CMake shim:
+Out-of-Tree Packages
+====================
 
-.. code-block:: cmake
+Out-of-tree integrations are provided as CMake packages.
+For each package name listed in ``ZP_EXTERNAL_PACKAGES``, Zenoh-Pico calls
+``find_package(<name> CONFIG REQUIRED)`` during configuration.
 
-   # /path/to/myrtos/zenoh_pico.cmake
-   zp_add_platform_dir("/path/to/myrtos/cmake/platforms")
-
-The external tree then provides the actual platform descriptor:
-
-.. code-block:: cmake
-
-   # /path/to/myrtos/cmake/platforms/myrtos.cmake
-   zp_platform_add_definition(ZENOH_MYRTOS)
-   zp_platform_add_sources("/path/to/myrtos/src/system/myrtos/system.c")
-   zp_platform_set_stream_backend(tcp_lwip)
-   zp_platform_set_datagram_backend(udp_lwip)
-   zp_platform_set_rawio_backend(uart_myrtos)
-
-Then configure Zenoh-Pico with:
+For example:
 
 .. code-block:: bash
 
    cmake -S . -B build \
-     -DZP_EXTERNAL_CMAKE=/path/to/myrtos/zenoh_pico.cmake \
+     -DZP_EXTERNAL_PACKAGES=zenohpico-myrtos \
+     -DCMAKE_PREFIX_PATH=/path/to/prefix \
      -DZP_PLATFORM=myrtos
 
-Adding a backend
-================
+An external package may provide:
 
-Backend descriptors follow the same pattern as platform descriptors:
+* a platform profile, if it wants to expose a new ``ZP_PLATFORM`` value;
+* a custom system-layer library;
+* transport-backend libraries for ``serial``, ``tcp`` or ``udp``.
 
-* built in: add a file under ``cmake/backends/stream/``, ``cmake/backends/datagram/`` or
-  ``cmake/backends/rawio/``;
-* external: keep the descriptor in your own tree and register its directory through ``ZP_EXTERNAL_CMAKE``.
+Out-of-tree platforms can reuse Zenoh-Pico's built-in ``network`` and
+``socket`` layers.
 
-The backend name is the descriptor file name without the ``.cmake`` suffix. For example,
-``cmake/backends/rawio/uart_myrtos.cmake`` defines the ``uart_myrtos`` backend.
+See ``examples/packages/zenohpico-mylinux`` for a package that exports an
+external system layer and serial backend.
 
-Example built-in backend descriptor:
+External Libraries and Descriptors
+----------------------------------
+
+Providing an external component requires:
+
+* a library target exported by the package's own build;
+* a Zenoh-Pico descriptor file that points to that target and provides the
+  Zenoh-Pico-specific metadata.
+
+The library target may use any package-native imported name such as
+``myrtos::tcp`` or ``myrtos::serial_uart``. The descriptor passes that target
+name to Zenoh-Pico through ``ZP_BACKEND_IMPORTED_TARGET``.
+
+For external backend descriptors, ``ZP_BACKEND_IMPORTED_TARGET`` is required.
+Built-in backend descriptors use ``ZP_BACKEND_SOURCE_FILES`` and related build
+variables instead. A backend descriptor uses one form or the other, not both.
+TCP descriptors use ``ZP_TCP_BACKEND_SYMBOL``.
+UDP descriptors use ``ZP_UDP_BACKEND_UNICAST_SYMBOL`` and optional
+``ZP_UDP_BACKEND_MULTICAST_SYMBOL``.
+serial descriptors use ``ZP_SERIAL_BACKEND_SYMBOL``.
+
+The exported symbol must match the backend type:
+
+* TCP backends export ``const _z_tcp_ops_t ...`` from
+  ``include/zenoh-pico/link/backend/tcp.h``
+* UDP backends export ``const _z_udp_unicast_ops_t ...`` from
+  ``include/zenoh-pico/link/backend/udp_unicast.h``. If multicast support is
+  present, they also export ``const _z_udp_multicast_ops_t ...`` from
+  ``include/zenoh-pico/link/backend/udp_multicast.h``
+* serial backends export ``const _z_serial_ops_t ...`` from
+  ``include/zenoh-pico/link/backend/serial.h``
+
+Example TCP backend descriptor:
 
 .. code-block:: cmake
 
-   # cmake/backends/rawio/uart_myrtos.cmake
-   zp_register_rawio_backend(
-     NAME uart_myrtos
-     SYMBOL _z_uart_myrtos_rawio_ops
-     SOURCES "${PROJECT_SOURCE_DIR}/src/link/backend/rawio/uart_myrtos.c"
-   )
+   # <prefix>/lib/cmake/zenohpico-myrtos/backends/tcp/tcp_myrtos.cmake
+   set(ZP_BACKEND_IMPORTED_TARGET "myrtos::tcp")
+   set(ZP_TCP_BACKEND_SYMBOL "_z_tcp_myrtos_ops")
+   set(ZP_BACKEND_SOCKET_COMPONENT "lwip")
 
-An external integration can register its own backend directory:
+Example UDP backend library:
+
+.. code-block:: c
+
+   #include "zenoh-pico/link/backend/udp_unicast.h"
+   #include "zenoh-pico/link/backend/udp_multicast.h"
+
+   const _z_udp_unicast_ops_t _z_udp_myrtos_unicast_ops = {
+       .endpoint_init = myrtos_udp_endpoint_init,
+       .endpoint_clear = myrtos_udp_endpoint_clear,
+       .open = myrtos_udp_open,
+       .listen = myrtos_udp_listen,
+       .close = myrtos_udp_close,
+       .read = myrtos_udp_read,
+       .read_exact = myrtos_udp_read_exact,
+       .write = myrtos_udp_write,
+   };
+
+   const _z_udp_multicast_ops_t _z_udp_multicast_myrtos_ops = {
+       .endpoint_init_from_address = myrtos_mc_endpoint_init_from_address,
+       .endpoint_clear = myrtos_mc_endpoint_clear,
+       .open = myrtos_mc_open,
+       .listen = myrtos_mc_listen,
+       .close = myrtos_mc_close,
+       .read_exact = myrtos_mc_read_exact,
+       .read = myrtos_mc_read,
+       .write = myrtos_mc_write,
+   };
+
+Example UDP backend descriptor:
 
 .. code-block:: cmake
 
-   # /path/to/myrtos/zenoh_pico.cmake
-   zp_add_rawio_backend_dir("/path/to/myrtos/cmake/backends/rawio")
+   # <prefix>/lib/cmake/zenohpico-myrtos/backends/udp/myrtos.cmake
+   set(ZP_BACKEND_IMPORTED_TARGET "myrtos::udp")
+   set(ZP_UDP_BACKEND_UNICAST_SYMBOL "_z_udp_myrtos_unicast_ops")
+   set(ZP_UDP_BACKEND_MULTICAST_SYMBOL "_z_udp_multicast_myrtos_ops")
+   set(ZP_BACKEND_SOCKET_COMPONENT "lwip")
 
-The backend can then be selected either from a platform descriptor:
+Example serial descriptor:
 
 .. code-block:: cmake
 
-   zp_platform_set_rawio_backend(uart_myrtos)
+   # <prefix>/lib/cmake/zenohpico-myrtos/backends/serial/uart_myrtos.cmake
+   set(ZP_BACKEND_IMPORTED_TARGET "myrtos::serial_uart")
+   set(ZP_SERIAL_BACKEND_SYMBOL "_z_uart_myrtos_serial_ops")
 
-or directly at configure time:
+In the TCP and serial cases, the library exports ``const _z_tcp_ops_t ...`` or
+``const _z_serial_ops_t ...`` under the symbol named by
+``ZP_TCP_BACKEND_SYMBOL`` or ``ZP_SERIAL_BACKEND_SYMBOL``.
 
-.. code-block:: bash
+``ZP_UDP_BACKEND_UNICAST_SYMBOL`` is required.
+``ZP_UDP_BACKEND_MULTICAST_SYMBOL`` is used only when UDP multicast support is
+enabled in the build.
 
-   cmake -S . -B build \
-     -DZP_EXTERNAL_CMAKE=/path/to/myrtos/zenoh_pico.cmake \
-     -DZP_PLATFORM=linux \
-     -DZP_RAWIO_BACKEND=uart_myrtos
+Example system-layer descriptor:
 
-Explicit system-layer selection
-===============================
+.. code-block:: cmake
 
-``ZP_SYSTEM_LAYER`` is an optional build setting. Most builds should set ``ZP_PLATFORM`` and leave
-``ZP_SYSTEM_LAYER`` unset.
+   # <prefix>/lib/cmake/zenohpico-myrtos/system/myrtos.cmake
+   set(ZP_SYSTEM_LAYER_IMPORTED_TARGET "myrtos::system")
+   set(ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS ZENOH_MYRTOS)
 
-It is mainly intended for explicit builds and integration scenarios that need to choose the system-layer
-implementation directly.
+External backend libraries that include Zenoh-Pico headers use the same
+system-layer definitions in their own build.
+``include/zenoh-pico/system/common/platform.h`` uses these definitions to
+select the platform branch and define socket-family macros such as
+``ZP_PLATFORM_SOCKET_LWIP``.
 
-This is useful when an external integration wants to expose a stable system-layer name without requiring users to know
-the platform descriptor name.
+``ZP_BACKEND_SOCKET_COMPONENT`` matches the built-in network selected by
+the platform profile. For example, the built-in ``posix`` network requires the
+``posix`` socket component, while ``freertos_lwip`` requires ``lwip``.
 
-If the system-layer name and the descriptor file name differ, register the mapping with
-``zp_register_system_layer_profile()`` in the external CMake file.
+When an external component has its own sources, dependencies, or code
+generation, build it in the package project and install/export its target
+there. The package config file then loads that exported target.
+Do not call ``add_library()`` directly in the package config file.
 
 Example:
 
 .. code-block:: cmake
 
-   # /path/to/myrtos/cmake/platforms/myboard.cmake
-   zp_platform_add_definition(ZENOH_MYRTOS)
-   zp_platform_add_sources("/path/to/myrtos/src/system/myrtos/system.c")
-   zp_platform_set_stream_backend(tcp_lwip)
-   zp_platform_set_datagram_backend(udp_lwip)
-   zp_platform_set_rawio_backend(uart_myrtos)
+   # In the package project's CMakeLists.txt
+   add_library(myrtos_udp STATIC ...)
+   install(TARGETS myrtos_udp EXPORT zenohpicoMyrtosTargets ...)
+   install(EXPORT zenohpicoMyrtosTargets
+           NAMESPACE myrtos::
+           FILE zenohpicoMyrtosTargets.cmake
+           DESTINATION lib/cmake/zenohpico-myrtos)
+
+   # In zenohpico-myrtosConfig.cmake
+   include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoMyrtosTargets.cmake")
+
+Package Layout and Config
+-------------------------
+
+Example package layout:
+
+.. code-block:: text
+
+   <prefix>/lib/cmake/zenohpico-myrtos/
+     zenohpico-myrtosConfig.cmake
+     platforms/
+       myrtos.cmake
+     system/
+       myrtos.cmake
+     backends/tcp/
+       tcp_myrtos.cmake
+     backends/udp/
+       myrtos.cmake
+     backends/serial/
+       uart_myrtos.cmake
+
+A package contains only the descriptor directories and targets that it
+provides. For example, a package that exports only a system layer and a serial
+backend does not need ``backends/tcp/`` or ``backends/udp/``.
+
+The package config:
+
+* registers its platform descriptors with ``zp_add_platform_dir(...)``;
+* appends any package-provided system-layer descriptor directories to
+  ``ZP_SYSTEM_LAYER_DIRS``;
+* appends any package-provided backend descriptor directories to the matching
+  search lists, for example ``ZP_TCP_BACKEND_DIRS`` or
+  ``ZP_UDP_BACKEND_DIRS`` or ``ZP_SERIAL_BACKEND_DIRS``;
+* includes the package's exported targets file so that the descriptors can point
+  to real imported targets.
+
+Example package config:
 
 .. code-block:: cmake
 
-   # /path/to/myrtos/zenoh_pico.cmake
-   zp_add_platform_dir("/path/to/myrtos/cmake/platforms")
+   # <prefix>/lib/cmake/zenohpico-myrtos/zenohpico-myrtosConfig.cmake
+   include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoMyrtosTargets.cmake")
+
+   if(COMMAND zp_add_platform_dir)
+     zp_add_platform_dir("${CMAKE_CURRENT_LIST_DIR}/platforms")
+   endif()
+
+   list(APPEND ZP_SYSTEM_LAYER_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/system")
+   list(APPEND ZP_TCP_BACKEND_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/backends/tcp")
+   list(APPEND ZP_UDP_BACKEND_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/backends/udp")
+   list(APPEND ZP_SERIAL_BACKEND_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/backends/serial")
+
+Package Example
+---------------
+
+For a full package example see
+``examples/packages/zenohpico-mylinux/README.md``.
+
+It shows:
+
+* a package project that exports ``mylinux::system`` and
+  ``mylinux::serial_uart``;
+* descriptor files in ``cmake/platforms/``, ``cmake/system/`` and
+  ``cmake/backends/serial/``;
+* a Zenoh-Pico build that loads the package through
+  ``-DZP_EXTERNAL_PACKAGES=zenohpico-mylinux``;
+* a downstream consumer that uses the installed ``zenohpico::static`` target.
+
+Explicit System-Layer Selection
+===============================
+
+``ZP_SYSTEM_LAYER`` is an optional override. A build can set ``ZP_PLATFORM``
+and leave ``ZP_SYSTEM_LAYER`` unset.
+
+It can be used when an external integration wants users to select a stable
+system-layer name even if the platform profile has a different file name. In
+that case, the package can register the mapping from its package config:
+
+.. code-block:: cmake
+
    zp_register_system_layer_profile(SYSTEM_LAYER myrtos PROFILE myboard)
+
+Then users can configure:
 
 .. code-block:: bash
 
    cmake -S . -B build \
-     -DZP_EXTERNAL_CMAKE=/path/to/myrtos/zenoh_pico.cmake \
+     -DZP_EXTERNAL_PACKAGES=zenohpico-myrtos \
+     -DCMAKE_PREFIX_PATH=/path/to/prefix \
      -DZP_SYSTEM_LAYER=myrtos
 
-In this example the descriptor file is named ``myboard.cmake``, but the external integration wants users to select the
-system layer as ``myrtos``. ``ZP_SYSTEM_LAYER`` is what makes that possible. If the profile name and the system-layer
-name are the same, no extra registration is needed.
-
-In that case, the external integration should provide:
-
-* a platform descriptor under its own ``cmake/platforms/`` directory, registered through ``ZP_EXTERNAL_CMAKE``;
-* the system-layer sources, typically under ``src/system/<name>/``, for platform runtime and socket primitives;
-* optional backend sources under ``src/link/backend/stream/``, ``src/link/backend/datagram/`` or
-  ``src/link/backend/rawio/`` only when the built-in backends cannot be reused for that system layer.
+This mapping is only needed when the platform profile name and the system-layer
+name are different. When they are the same, no extra configuration is required.

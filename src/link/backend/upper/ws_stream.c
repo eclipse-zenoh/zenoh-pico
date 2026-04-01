@@ -13,75 +13,75 @@
 //
 
 #include "zenoh-pico/link/backend/default_ops.h"
-#include "zenoh-pico/link/backend/stream.h"
+#include "zenoh-pico/link/backend/tcp.h"
 #include "zenoh-pico/link/backend/ws.h"
 
 #if Z_FEATURE_LINK_WS == 1
 
 z_result_t _z_ws_endpoint_init(_z_sys_net_endpoint_t *ep, const _z_string_t *address) {
-    return _z_stream_endpoint_init_from_address(_z_default_stream_ops(), ep, address);
+    return _z_tcp_endpoint_init_from_address(_z_default_tcp_ops(), ep, address);
 }
 
 void _z_ws_endpoint_clear(_z_sys_net_endpoint_t *ep) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops != NULL) {
-        _z_stream_endpoint_clear(ops, ep);
+        _z_tcp_endpoint_clear(ops, ep);
     }
 }
 
 z_result_t _z_ws_transport_open(_z_ws_socket_t *sock, uint32_t tout) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
-    return _z_stream_open(ops, &sock->_sock, sock->_rep, tout);
+    return _z_tcp_open(ops, &sock->_sock, sock->_rep, tout);
 }
 
 z_result_t _z_ws_transport_listen(_z_ws_socket_t *sock) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
-    return _z_stream_listen(ops, &sock->_sock, sock->_rep);
+    return _z_tcp_listen(ops, &sock->_sock, sock->_rep);
 }
 
 void _z_ws_transport_close(_z_ws_socket_t *sock) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops != NULL) {
-        _z_stream_close(ops, &sock->_sock);
+        _z_tcp_close(ops, &sock->_sock);
     }
 }
 
 size_t _z_ws_transport_read(const _z_ws_socket_t *sock, uint8_t *ptr, size_t len) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return SIZE_MAX;
     }
-    return _z_stream_read(ops, sock->_sock, ptr, len);
+    return _z_tcp_read(ops, sock->_sock, ptr, len);
 }
 
 size_t _z_ws_transport_read_exact(const _z_ws_socket_t *sock, uint8_t *ptr, size_t len) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return SIZE_MAX;
     }
-    return _z_stream_read_exact(ops, sock->_sock, ptr, len);
+    return _z_tcp_read_exact(ops, sock->_sock, ptr, len);
 }
 
 size_t _z_ws_transport_write(const _z_ws_socket_t *sock, const uint8_t *ptr, size_t len) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return SIZE_MAX;
     }
-    return _z_stream_write(ops, sock->_sock, ptr, len);
+    return _z_tcp_write(ops, sock->_sock, ptr, len);
 }
 
 size_t _z_ws_transport_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    const _z_stream_ops_t *ops = _z_default_stream_ops();
+    const _z_tcp_ops_t *ops = _z_default_tcp_ops();
     if (ops == NULL) {
         return SIZE_MAX;
     }
-    return _z_stream_read(ops, socket, ptr, len);
+    return _z_tcp_read(ops, socket, ptr, len);
 }
 
 #endif

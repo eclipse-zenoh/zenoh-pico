@@ -18,9 +18,12 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 project(zenohpico VERSION ${version} LANGUAGES C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-include(backends)
 include(helpers)
+include(backends)
 include(platforms)
+include(system)
+include(socket)
+include(network)
 
 # Configure header file to define the project version
 set(ZENOH_PICO ${PROJECT_VERSION})
@@ -45,16 +48,13 @@ include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
-option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
-option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
-option(WITH_FREERTOS_LWIP "Build for FreeRTOS RTOS and LWIP (Lightweight IP) network stack" OFF)
-option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
 set(ZP_PLATFORM "" CACHE STRING "Built-in or external platform profile")
 set(ZP_SYSTEM_LAYER "" CACHE STRING "Built-in or external system layer")
-set(ZP_EXTERNAL_CMAKE "" CACHE FILEPATH "Optional external integration file")
-set(ZP_STREAM_BACKEND "" CACHE STRING "Override the selected stream backend")
-set(ZP_DATAGRAM_BACKEND "" CACHE STRING "Override the selected datagram backend")
-set(ZP_RAWIO_BACKEND "" CACHE STRING "Override the selected rawio backend")
+set(ZP_EXTERNAL_PACKAGES "" CACHE STRING "Optional external CMake packages to load")
+set(ZP_NETWORK "" CACHE STRING "Override the selected network implementation")
+set(ZP_TCP_BACKEND "" CACHE STRING "Override the selected TCP transport backend")
+set(ZP_UDP_BACKEND "" CACHE STRING "Override the selected UDP transport backend")
+set(ZP_SERIAL_BACKEND "" CACHE STRING "Override the selected serial transport backend")
 set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -64,8 +64,10 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 set(ZP_PLATFORM_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/platforms")
-if(NOT ZP_EXTERNAL_CMAKE STREQUAL "")
-  include("${ZP_EXTERNAL_CMAKE}")
+if(NOT ZP_EXTERNAL_PACKAGES STREQUAL "")
+  foreach(_zp_external_package IN LISTS ZP_EXTERNAL_PACKAGES)
+    find_package(${_zp_external_package} CONFIG REQUIRED)
+  endforeach()
 endif()
 if(ZP_PLATFORM STREQUAL "" AND ZP_SYSTEM_LAYER STREQUAL "")
   zp_detect_default_platform(_zp_default_platform)
@@ -90,15 +92,18 @@ endif()
 set(ZP_PLATFORM "${_zp_resolved_platform_profile}")
 zp_load_platform_profile("${ZP_PLATFORM}")
 if(ZP_SYSTEM_LAYER STREQUAL "")
-  get_property(_zp_profile_system_layer_set GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}" SET)
-  if(_zp_profile_system_layer_set)
-    get_property(_zp_resolved_system_layer GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}")
-    set(ZP_SYSTEM_LAYER "${_zp_resolved_system_layer}")
+  if(NOT ZP_PLATFORM_SYSTEM_LAYER STREQUAL "")
+    set(ZP_SYSTEM_LAYER "${ZP_PLATFORM_SYSTEM_LAYER}")
   else()
-    set(ZP_SYSTEM_LAYER "${ZP_PLATFORM}")
+    get_property(_zp_profile_system_layer_set GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}" SET)
+    if(_zp_profile_system_layer_set)
+      get_property(_zp_resolved_system_layer GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}")
+      set(ZP_SYSTEM_LAYER "${_zp_resolved_system_layer}")
+    else()
+      set(ZP_SYSTEM_LAYER "${ZP_PLATFORM}")
+    endif()
   endif()
 endif()
-zp_sync_legacy_platform_flags("${ZP_SYSTEM_LAYER}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   if (BUILD_SHARED_LIBS) 
@@ -202,17 +207,29 @@ function(pico_target_link_library value)
   endif()
 endfunction()
 
-function(zp_sources_require_cxx out_var)
-  set(_zp_uses_cxx OFF)
-  foreach(_zp_source IN LISTS ARGN)
-    get_filename_component(_zp_source_ext "${_zp_source}" EXT)
-    string(TOLOWER "${_zp_source_ext}" _zp_source_ext)
-    if(_zp_source_ext STREQUAL ".cc" OR _zp_source_ext STREQUAL ".cpp" OR _zp_source_ext STREQUAL ".cxx")
-      set(_zp_uses_cxx ON)
-      break()
+function(zp_target_link_imported_component scope component_target)
+  if("${component_target}" STREQUAL "" OR NOT TARGET "${component_target}")
+    return()
+  endif()
+
+  if("${scope}" STREQUAL "PUBLIC")
+    get_target_property(_zp_component_type "${component_target}" TYPE)
+    if(_zp_component_type STREQUAL "INTERFACE_LIBRARY")
+      get_target_property_if_set(_zp_interface_sources "${component_target}" INTERFACE_SOURCES)
+      if(NOT "${_zp_interface_sources}" STREQUAL "")
+        message(FATAL_ERROR
+                "External component target ${component_target} is linked PUBLIC and must not "
+                "use INTERFACE_SOURCES. Define a real library target instead.")
+      endif()
     endif()
-  endforeach()
-  set(${out_var} "${_zp_uses_cxx}" PARENT_SCOPE)
+  endif()
+
+  if(PICO_STATIC)
+    target_link_libraries(zenohpico_static ${scope} "${component_target}")
+  endif()
+  if(PICO_SHARED)
+    target_link_libraries(zenohpico_shared ${scope} "${component_target}")
+  endif()
 endfunction()
 
 pico_add_compile_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
@@ -226,21 +243,51 @@ endif()
 if(ZP_SYSTEM_LAYER STREQUAL "macos")
   set(MACOSX_RPATH "ON")
 endif()
-if(ZP_STREAM_BACKEND STREQUAL "")
-  set(ZP_STREAM_BACKEND "${ZP_PLATFORM_DEFAULT_STREAM_BACKEND}")
+
+if(ZP_TCP_BACKEND STREQUAL "")
+  set(ZP_TCP_BACKEND "${ZP_PLATFORM_DEFAULT_TCP_BACKEND}")
 endif()
-if(ZP_DATAGRAM_BACKEND STREQUAL "")
-  set(ZP_DATAGRAM_BACKEND "${ZP_PLATFORM_DEFAULT_DATAGRAM_BACKEND}")
+zp_udp_multicast_enabled(_zp_udp_multicast_enabled)
+set(_zp_selected_udp_backend "${ZP_UDP_BACKEND}")
+if("${_zp_selected_udp_backend}" STREQUAL "")
+  set(_zp_selected_udp_backend "${ZP_PLATFORM_DEFAULT_UDP_BACKEND}")
 endif()
-if(ZP_RAWIO_BACKEND STREQUAL "")
-  set(ZP_RAWIO_BACKEND "${ZP_PLATFORM_DEFAULT_RAWIO_BACKEND}")
+set(_zp_effective_udp_backend "${_zp_selected_udp_backend}")
+if(ZP_SERIAL_BACKEND STREQUAL "")
+  set(ZP_SERIAL_BACKEND "${ZP_PLATFORM_DEFAULT_SERIAL_BACKEND}")
 endif()
-zp_resolve_stream_backend("${ZP_STREAM_BACKEND}" ZP_STREAM_BACKEND_SYMBOL ZP_STREAM_BACKEND_SOURCE_FILES
-                          ZP_STREAM_BACKEND_INCLUDE_DIRS)
-zp_resolve_datagram_backend("${ZP_DATAGRAM_BACKEND}" ZP_DATAGRAM_BACKEND_SYMBOL ZP_DATAGRAM_BACKEND_SOURCE_FILES
-                            ZP_DATAGRAM_BACKEND_INCLUDE_DIRS)
-zp_resolve_rawio_backend("${ZP_RAWIO_BACKEND}" ZP_RAWIO_BACKEND_SYMBOL ZP_RAWIO_BACKEND_SOURCE_FILES
-                         ZP_RAWIO_BACKEND_INCLUDE_DIRS)
+if(ZP_NETWORK STREQUAL "")
+  set(ZP_NETWORK "${ZP_PLATFORM_NETWORK}")
+elseif(NOT ZP_PLATFORM_NETWORK STREQUAL "" AND NOT ZP_NETWORK STREQUAL "${ZP_PLATFORM_NETWORK}")
+  message(FATAL_ERROR
+          "Network ${ZP_NETWORK} does not match platform profile ${ZP_PLATFORM}. "
+          "Expected network: ${ZP_PLATFORM_NETWORK}")
+elseif(ZP_PLATFORM_NETWORK STREQUAL "")
+  message(FATAL_ERROR
+          "Platform profile ${ZP_PLATFORM} does not define a network. "
+          "Set zp_platform_set_network(...) in the platform descriptor.")
+endif()
+zp_resolve_network("${ZP_NETWORK}")
+set(ZP_SOCKET_COMPONENT "${ZP_NETWORK_SOCKET_COMPONENT}")
+zp_resolve_system_layer("${ZP_SYSTEM_LAYER}")
+if(NOT ZP_SOCKET_COMPONENT STREQUAL "")
+  zp_resolve_socket_component("${ZP_SOCKET_COMPONENT}")
+endif()
+if(NOT "${_zp_selected_udp_backend}" STREQUAL "")
+  zp_resolve_udp_backend("${_zp_selected_udp_backend}")
+endif()
+zp_resolve_tcp_backend("${ZP_TCP_BACKEND}")
+zp_resolve_serial_backend("${ZP_SERIAL_BACKEND}")
+zp_validate_backend_selection(tcp "${ZP_TCP_BACKEND}" "${ZP_TCP_BACKEND_SOCKET_COMPONENT}"
+                              "${ZP_TCP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
+                              "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
+zp_validate_backend_selection(udp "${_zp_effective_udp_backend}"
+                              "${ZP_UDP_BACKEND_SOCKET_COMPONENT}"
+                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}"
+                              "${ZP_SYSTEM_LAYER}" "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
+zp_validate_backend_selection(serial "${ZP_SERIAL_BACKEND}" "${ZP_SERIAL_BACKEND_SOCKET_COMPONENT}"
+                              "${ZP_SERIAL_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
+                              "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
 set(_zp_selected_platform_glob_sources "")
 foreach(_zp_platform_source_glob IN LISTS ZP_PLATFORM_SOURCE_GLOBS)
   file(GLOB _zp_globbed_platform_sources ${_zp_platform_source_glob})
@@ -249,27 +296,86 @@ endforeach()
 set(_zp_selected_component_sources
     ${_zp_selected_platform_glob_sources}
     ${ZP_PLATFORM_SOURCE_FILES}
-    ${ZP_STREAM_BACKEND_SOURCE_FILES}
-    ${ZP_DATAGRAM_BACKEND_SOURCE_FILES}
-    ${ZP_RAWIO_BACKEND_SOURCE_FILES})
-zp_sources_require_cxx(ZP_USES_CXX ${_zp_selected_component_sources})
+    ${ZP_SYSTEM_SOURCE_FILES}
+    ${ZP_SOCKET_COMPONENT_SOURCE_FILES}
+    ${ZP_NETWORK_SOURCE_FILES}
+    ${ZP_TCP_BACKEND_SOURCE_FILES}
+    ${ZP_UDP_BACKEND_SOURCE_FILES}
+    ${ZP_SERIAL_BACKEND_SOURCE_FILES})
+set(_zp_selected_component_include_dirs
+    ${ZP_PLATFORM_INCLUDE_DIRS}
+    ${ZP_SYSTEM_INCLUDE_DIRS}
+    ${ZP_SOCKET_COMPONENT_INCLUDE_DIRS}
+    ${ZP_NETWORK_INCLUDE_DIRS}
+    ${ZP_TCP_BACKEND_INCLUDE_DIRS}
+    ${ZP_UDP_BACKEND_INCLUDE_DIRS}
+    ${ZP_SERIAL_BACKEND_INCLUDE_DIRS})
+set(_zp_selected_component_compile_definitions
+    ${ZP_SYSTEM_COMPILE_DEFINITIONS}
+    ${ZP_SOCKET_COMPONENT_COMPILE_DEFINITIONS}
+    ${ZP_NETWORK_COMPILE_DEFINITIONS}
+    ${ZP_TCP_BACKEND_COMPILE_DEFINITIONS}
+    ${ZP_UDP_BACKEND_COMPILE_DEFINITIONS}
+    ${ZP_SERIAL_BACKEND_COMPILE_DEFINITIONS})
+set(_zp_selected_component_compile_options
+    ${ZP_SYSTEM_COMPILE_OPTIONS}
+    ${ZP_SOCKET_COMPONENT_COMPILE_OPTIONS}
+    ${ZP_NETWORK_COMPILE_OPTIONS}
+    ${ZP_TCP_BACKEND_COMPILE_OPTIONS}
+    ${ZP_UDP_BACKEND_COMPILE_OPTIONS}
+    ${ZP_SERIAL_BACKEND_COMPILE_OPTIONS})
+set(_zp_selected_component_link_libraries
+    ${ZP_SYSTEM_LINK_LIBRARIES}
+    ${ZP_SOCKET_COMPONENT_LINK_LIBRARIES}
+    ${ZP_NETWORK_LINK_LIBRARIES}
+    ${ZP_TCP_BACKEND_LINK_LIBRARIES}
+    ${ZP_UDP_BACKEND_LINK_LIBRARIES}
+    ${ZP_SERIAL_BACKEND_LINK_LIBRARIES})
+set(_zp_selected_imported_component_targets
+    "${ZP_SYSTEM_IMPORTED_TARGET}"
+    "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
+    "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
+    "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
+list(REMOVE_ITEM _zp_selected_imported_component_targets "")
+list(REMOVE_DUPLICATES _zp_selected_imported_component_targets)
+zp_source_list_requires_cxx(_zp_platform_uses_cxx ${_zp_selected_component_sources})
+if(_zp_platform_uses_cxx)
+  set(ZP_USES_CXX ON)
+else()
+  set(ZP_USES_CXX OFF)
+  foreach(_zp_component_target IN LISTS _zp_selected_imported_component_targets)
+    zp_target_requires_cxx("${_zp_component_target}" _zp_component_uses_cxx)
+    if(_zp_component_uses_cxx)
+      set(ZP_USES_CXX ON)
+      break()
+    endif()
+  endforeach()
+endif()
 if(ZP_USES_CXX)
   enable_language(CXX)
 endif()
 foreach(_zp_platform_definition IN LISTS ZP_PLATFORM_COMPILE_DEFINITIONS)
   pico_add_compile_definition(${_zp_platform_definition})
 endforeach()
-set(ZP_DEFAULT_STREAM_OPS "")
-if(NOT ZP_STREAM_BACKEND_SYMBOL STREQUAL "")
-  set(ZP_DEFAULT_STREAM_OPS "${ZP_STREAM_BACKEND_SYMBOL}")
+set(ZP_DEFAULT_TCP_OPS "")
+if(NOT ZP_TCP_BACKEND_SYMBOL STREQUAL "")
+  set(ZP_DEFAULT_TCP_OPS "${ZP_TCP_BACKEND_SYMBOL}")
 endif()
-set(ZP_DEFAULT_DATAGRAM_OPS "")
-if(NOT ZP_DATAGRAM_BACKEND_SYMBOL STREQUAL "")
-  set(ZP_DEFAULT_DATAGRAM_OPS "${ZP_DATAGRAM_BACKEND_SYMBOL}")
+set(ZP_DEFAULT_UDP_UNICAST_OPS "")
+if(NOT ZP_UDP_BACKEND_UNICAST_SYMBOL STREQUAL "")
+  set(ZP_DEFAULT_UDP_UNICAST_OPS "${ZP_UDP_BACKEND_UNICAST_SYMBOL}")
 endif()
-set(ZP_DEFAULT_RAWIO_OPS "")
-if(NOT ZP_RAWIO_BACKEND_SYMBOL STREQUAL "")
-  set(ZP_DEFAULT_RAWIO_OPS "${ZP_RAWIO_BACKEND_SYMBOL}")
+set(ZP_DEFAULT_UDP_MULTICAST_OPS "")
+if(_zp_udp_multicast_enabled AND NOT ZP_UDP_BACKEND_MULTICAST_SYMBOL STREQUAL "")
+  set(ZP_DEFAULT_UDP_MULTICAST_OPS "${ZP_UDP_BACKEND_MULTICAST_SYMBOL}")
+endif()
+set(ZP_DEFAULT_SERIAL_OPS "")
+if(NOT ZP_SERIAL_BACKEND_SYMBOL STREQUAL "")
+  set(ZP_DEFAULT_SERIAL_OPS "${ZP_SERIAL_BACKEND_SYMBOL}")
+endif()
+set(ZP_DEFAULT_SOCKET_OPS "")
+if(NOT ZP_SOCKET_OPS_SYMBOL STREQUAL "")
+  set(ZP_DEFAULT_SOCKET_OPS "${ZP_SOCKET_OPS_SYMBOL}")
 endif()
 
 # Compiler definition
@@ -386,6 +492,14 @@ if(ZP_SYSTEM_LAYER STREQUAL "freertos_plus_tcp" AND Z_FEATURE_LINK_UDP_MULTICAST
   set(Z_FEATURE_LINK_UDP_MULTICAST 0 CACHE STRING "Toggle UDP multicast links" FORCE)
 endif()
 
+if(ZP_NETWORK STREQUAL "" AND
+   (Z_FEATURE_LINK_TCP OR Z_FEATURE_LINK_TLS OR Z_FEATURE_LINK_WS OR
+    Z_FEATURE_LINK_UDP_MULTICAST OR Z_FEATURE_LINK_UDP_UNICAST))
+  message(FATAL_ERROR
+          "No network selected for platform profile ${ZP_PLATFORM}. "
+          "Set zp_platform_set_network(...) in the platform descriptor or pass -DZP_NETWORK=...")
+endif()
+
 if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_PUBLICATION OR NOT Z_FEATURE_LIVELINESS))
   message(WARNING "Z_FEATURE_ADVANCED_PUBLICATION can only be enabled when Z_FEATURE_UNSTABLE_API, Z_FEATURE_PUBLICATION and Z_FEATURE_LIVELINESS is also enabled. Disabling Z_FEATURE_ADVANCED_PUBLICATION.")
   set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature" FORCE)
@@ -439,24 +553,23 @@ message(STATUS "Zenoh Level Log: ${ZENOH_LOG}")
 message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
 message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
 message(STATUS "Multicast batch max size: ${BATCH_MULTICAST_SIZE}")
-message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
-message(STATUS "Build for FreeRTOS-Plus-TCP: ${WITH_FREERTOS_PLUS_TCP}")
-message(STATUS "Build for FreeRTOS + LWIP: ${WITH_FREERTOS_LWIP}")
-message(STATUS "Build for Raspberry Pi Pico: ${WITH_RPI_PICO}")
 if(NOT ZP_PLATFORM STREQUAL "")
   message(STATUS "Platform profile: ${ZP_PLATFORM}")
 else()
   message(STATUS "Platform profile: none")
 endif()
 message(STATUS "System layer: ${ZP_SYSTEM_LAYER}")
-if(NOT ZP_STREAM_BACKEND STREQUAL "")
-  message(STATUS "Selected stream backend: ${ZP_STREAM_BACKEND}")
+if(NOT ZP_NETWORK STREQUAL "")
+  message(STATUS "Selected network: ${ZP_NETWORK}")
 endif()
-if(NOT ZP_DATAGRAM_BACKEND STREQUAL "")
-  message(STATUS "Selected datagram backend: ${ZP_DATAGRAM_BACKEND}")
+if(NOT ZP_TCP_BACKEND STREQUAL "")
+  message(STATUS "Selected TCP transport backend: ${ZP_TCP_BACKEND}")
 endif()
-if(NOT ZP_RAWIO_BACKEND STREQUAL "")
-  message(STATUS "Selected rawio backend: ${ZP_RAWIO_BACKEND}")
+if(NOT "${_zp_effective_udp_backend}" STREQUAL "")
+  message(STATUS "Selected UDP transport backend: ${_zp_effective_udp_backend}")
+endif()
+if(NOT ZP_SERIAL_BACKEND STREQUAL "")
+  message(STATUS "Selected serial transport backend: ${ZP_SERIAL_BACKEND}")
 endif()
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
@@ -584,16 +697,19 @@ list(APPEND Sources ${LinkSources})
 list(APPEND Sources
   "${PROJECT_SOURCE_DIR}/src/link/link.c"
   "${PROJECT_SOURCE_DIR}/src/link/endpoint.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/stream/address.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/datagram/address.c"
+  "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/address.c"
+  "${PROJECT_SOURCE_DIR}/src/link/backend/udp/address.c"
   "${PROJECT_SOURCE_DIR}/src/link/backend/upper/serial_protocol.c"
   "${PROJECT_SOURCE_DIR}/src/link/backend/upper/tls_stream.c"
 )
 list(APPEND Sources ${_zp_selected_platform_glob_sources})
 list(APPEND Sources ${ZP_PLATFORM_SOURCE_FILES})
-list(APPEND Sources ${ZP_STREAM_BACKEND_SOURCE_FILES})
-list(APPEND Sources ${ZP_DATAGRAM_BACKEND_SOURCE_FILES})
-list(APPEND Sources ${ZP_RAWIO_BACKEND_SOURCE_FILES})
+list(APPEND Sources ${ZP_SYSTEM_SOURCE_FILES})
+list(APPEND Sources ${ZP_SOCKET_COMPONENT_SOURCE_FILES})
+list(APPEND Sources ${ZP_NETWORK_SOURCE_FILES})
+list(APPEND Sources ${ZP_TCP_BACKEND_SOURCE_FILES})
+list(APPEND Sources ${ZP_UDP_BACKEND_SOURCE_FILES})
+list(APPEND Sources ${ZP_SERIAL_BACKEND_SOURCE_FILES})
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
@@ -604,32 +720,47 @@ endif()
 if(PICO_SHARED)
   target_sources(zenohpico_shared PRIVATE ${Sources})
 endif()
-set(_zp_component_include_dirs
-  ${ZP_PLATFORM_INCLUDE_DIRS}
-  ${ZP_STREAM_BACKEND_INCLUDE_DIRS}
-  ${ZP_DATAGRAM_BACKEND_INCLUDE_DIRS}
-  ${ZP_RAWIO_BACKEND_INCLUDE_DIRS}
-)
-if(NOT "${_zp_component_include_dirs}" STREQUAL "")
+list(REMOVE_DUPLICATES _zp_selected_component_include_dirs)
+if(NOT "${_zp_selected_component_include_dirs}" STREQUAL "")
   if(PICO_STATIC)
-    target_include_directories(zenohpico_static PRIVATE ${_zp_component_include_dirs})
+    target_include_directories(zenohpico_static PRIVATE ${_zp_selected_component_include_dirs})
   endif()
   if(PICO_SHARED)
-    target_include_directories(zenohpico_shared PRIVATE ${_zp_component_include_dirs})
+    target_include_directories(zenohpico_shared PRIVATE ${_zp_selected_component_include_dirs})
   endif()
 endif()
+list(REMOVE_DUPLICATES _zp_selected_component_compile_definitions)
+foreach(_zp_component_definition IN LISTS _zp_selected_component_compile_definitions)
+  pico_add_compile_definition(${_zp_component_definition})
+endforeach()
+list(REMOVE_DUPLICATES _zp_selected_component_compile_options)
+if(NOT "${_zp_selected_component_compile_options}" STREQUAL "")
+  if(PICO_STATIC)
+    target_compile_options(zenohpico_static PRIVATE ${_zp_selected_component_compile_options})
+  endif()
+  if(PICO_SHARED)
+    target_compile_options(zenohpico_shared PRIVATE ${_zp_selected_component_compile_options})
+  endif()
+endif()
+list(REMOVE_DUPLICATES _zp_selected_component_link_libraries)
+foreach(_zp_component_link_library IN LISTS _zp_selected_component_link_libraries)
+  pico_target_link_library("${_zp_component_link_library}")
+endforeach()
 
 if(CHECK_THREADS)
   pico_target_link_library(Threads::Threads)
 endif()
 
+zp_target_link_imported_component(PRIVATE "${ZP_SYSTEM_IMPORTED_TARGET}")
+foreach(_zp_component_target IN ITEMS
+        "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
+        "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
+        "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
+  zp_target_link_imported_component(PRIVATE "${_zp_component_target}")
+endforeach()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   pico_target_link_library(rt)
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  pico_target_link_library(Ws2_32)
-  pico_target_link_library(Iphlpapi)
 endif()
 
 
@@ -822,6 +953,12 @@ if(UNIX OR MSVC)
     configure_file(${PROJECT_SOURCE_DIR}/tests/connection_restore.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/connection_restore.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/routed_peer_client.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed_peer_client.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/valgrind.supp ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/valgrind.supp COPYONLY)
+    if(UNIX)
+      configure_file(${PROJECT_SOURCE_DIR}/tests/package_mylinux.sh.in
+                     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/package_mylinux.sh @ONLY)
+      configure_file(${PROJECT_SOURCE_DIR}/tests/package_myrtos.sh.in
+                     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/package_myrtos.sh @ONLY)
+    endif()
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
@@ -851,6 +988,10 @@ if(UNIX OR MSVC)
     add_test(z_hashmap_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_hashmap_test)
     add_test(z_pqueue_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_pqueue_test)
     add_test(z_test_fragment_decode_error_transport_zbuf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_test_fragment_decode_error_transport_zbuf)
+    if(UNIX)
+      add_test(z_package_mylinux_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/package_mylinux.sh)
+      add_test(z_package_myrtos_configure_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/package_myrtos.sh)
+    endif()
   endif()
 
   if(BUILD_INTEGRATION)

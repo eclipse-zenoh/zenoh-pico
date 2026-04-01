@@ -10,13 +10,22 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-//
 
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+
+static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_WS == 1
+    return (uintptr_t)sock->_ws._fd;
+#else
+    _ZP_UNUSED(sock);
+    return 0;
+#endif
+}
 
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
@@ -25,21 +34,36 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
-z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
-    _ZP_UNUSED(sock_in);
-    _ZP_UNUSED(sock_out);
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+    _ZP_UNUSED(sock);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
-    _ZP_UNUSED(peers);
-    _ZP_UNUSED(mutex);
+#if Z_FEATURE_MULTI_THREAD == 1
+static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
+                                               uint32_t timeout_ms) {
+    _ZP_UNUSED(sockets);
+    _ZP_UNUSED(count);
+    _ZP_UNUSED(ready);
+    _ZP_UNUSED(timeout_ms);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
+#endif
+
+const _z_socket_ops_t _z_emscripten_socket_ops = {
+    .id = _z_socket_id_impl,
+    .set_non_blocking = _z_socket_set_non_blocking,
+#if Z_FEATURE_MULTI_THREAD == 1
+    .wait_readable = _z_socket_wait_readable_impl,
+#else
+    .wait_readable = NULL,
+#endif
+    .close = _z_socket_close,
+};
 
 #if Z_FEATURE_LINK_TCP == 1
 #error "TCP not supported yet on Emscripten port of Zenoh-Pico"

@@ -1,0 +1,5 @@
+zp_platform_set_system_layer(mylinux)
+zp_platform_set_network(posix)
+zp_platform_set_tcp_backend(tcp_posix)
+zp_platform_set_udp_backend(posix)
+zp_platform_set_serial_backend(uart_mylinux)

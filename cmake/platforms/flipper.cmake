@@ -1,5 +1,4 @@
-zp_platform_add_definition(ZENOH_FLIPPER)
-zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/flipper/system.c"
-                        "${PROJECT_SOURCE_DIR}/src/system/flipper/network.c")
+zp_platform_set_system_layer(flipper)
+zp_platform_set_network(flipper)
 set(CHECK_THREADS OFF)
-zp_platform_set_rawio_backend(uart_flipper)
+zp_platform_set_serial_backend(uart_flipper)

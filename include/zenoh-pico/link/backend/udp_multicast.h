@@ -18,8 +18,8 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/slice.h"
-#include "zenoh-pico/link/backend/datagram.h"
 #include "zenoh-pico/link/backend/default_ops.h"
+#include "zenoh-pico/link/backend/udp_unicast.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,19 +46,27 @@ typedef struct {
     size_t (*write)(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t rep);
 } _z_udp_multicast_ops_t;
 
-extern const _z_udp_multicast_ops_t _z_udp_multicast_ops;
+#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
+extern const _z_udp_multicast_ops_t ZP_DEFAULT_UDP_MULTICAST_OPS;
+#endif
 
-static inline const _z_udp_multicast_ops_t *_z_default_udp_multicast_ops(void) { return &_z_udp_multicast_ops; }
+static inline const _z_udp_multicast_ops_t *_z_default_udp_multicast_ops(void) {
+#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
+    return &ZP_DEFAULT_UDP_MULTICAST_OPS;
+#else
+    return NULL;
+#endif
+}
 
 static inline z_result_t _z_udp_multicast_default_endpoint_init_from_address(_z_sys_net_endpoint_t *ep,
                                                                              const _z_string_t *address) {
-    return _z_datagram_endpoint_init_from_address(_z_default_datagram_ops(), ep, address);
+    return _z_udp_unicast_endpoint_init_from_address(_z_default_udp_unicast_ops(), ep, address);
 }
 
 static inline void _z_udp_multicast_default_endpoint_clear(_z_sys_net_endpoint_t *ep) {
-    const _z_datagram_ops_t *ops = _z_default_datagram_ops();
+    const _z_udp_unicast_ops_t *ops = _z_default_udp_unicast_ops();
     if (ops != NULL) {
-        _z_datagram_endpoint_clear(ops, ep);
+        _z_udp_unicast_endpoint_clear(ops, ep);
     }
 }
 

@@ -19,7 +19,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/default_ops.h"
-#include "zenoh-pico/link/backend/stream.h"
+#include "zenoh-pico/link/backend/tcp.h"
 #include "zenoh-pico/link/backend/tls_stream.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
@@ -38,7 +38,7 @@ z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    z_result_t ret = _z_stream_address_valid(&endpoint->_locator._address);
+    z_result_t ret = _z_tcp_address_valid(&endpoint->_locator._address);
     if (ret != _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
@@ -86,28 +86,28 @@ static _z_config_t _z_tls_merge_config(_z_str_intmap_t *endpoint_cfg, const _z_c
 static z_result_t _z_f_link_open_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
-    char *hostname = _z_stream_address_parse_host(&self->_endpoint._locator._address);
-    const _z_stream_ops_t *lower_ops = _z_default_stream_ops();
+    char *hostname = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
+    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     if (hostname == NULL) {
         _Z_ERROR("Failed to parse TLS endpoint address");
         z_free(hostname);
         return _Z_ERR_GENERIC;
     }
     if (lower_ops == NULL) {
-        _Z_ERROR("No lower stream backend available for TLS");
+        _Z_ERROR("No lower TCP backend available for TLS");
         z_free(hostname);
         return _Z_ERR_GENERIC;
     }
 
     _z_sys_net_endpoint_t rep = {0};
-    ret = _z_stream_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
+    ret = _z_tcp_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
     if (ret != _Z_RES_OK) {
         z_free(hostname);
         return ret;
     }
 
     ret = _z_open_tls(&self->_socket._tls, lower_ops, &rep, hostname, &self->_endpoint._config, false);
-    _z_stream_endpoint_clear(lower_ops, &rep);
+    _z_tcp_endpoint_clear(lower_ops, &rep);
     z_free(hostname);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS open failed");
@@ -118,28 +118,28 @@ static z_result_t _z_f_link_open_tls(_z_link_t *self) {
 static z_result_t _z_f_link_listen_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
-    char *host = _z_stream_address_parse_host(&self->_endpoint._locator._address);
-    const _z_stream_ops_t *lower_ops = _z_default_stream_ops();
+    char *host = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
+    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     if (host == NULL) {
         _Z_ERROR("Invalid TLS endpoint");
         z_free(host);
         return _Z_ERR_GENERIC;
     }
     if (lower_ops == NULL) {
-        _Z_ERROR("No lower stream backend available for TLS");
+        _Z_ERROR("No lower TCP backend available for TLS");
         z_free(host);
         return _Z_ERR_GENERIC;
     }
 
     _z_sys_net_endpoint_t rep = {0};
-    ret = _z_stream_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
+    ret = _z_tcp_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
     if (ret != _Z_RES_OK) {
         z_free(host);
         return ret;
     }
 
     ret = _z_listen_tls(&self->_socket._tls, lower_ops, &rep, &self->_endpoint._config);
-    _z_stream_endpoint_clear(lower_ops, &rep);
+    _z_tcp_endpoint_clear(lower_ops, &rep);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS listen failed");
     }
@@ -231,8 +231,8 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
 
 z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket, const _z_config_t *session_cfg) {
     _z_sys_net_endpoint_t sys_endpoint = {0};
-    char *hostname = _z_stream_address_parse_host(&endpoint->_locator._address);
-    const _z_stream_ops_t *lower_ops = _z_default_stream_ops();
+    char *hostname = _z_tcp_address_parse_host(&endpoint->_locator._address);
+    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     z_result_t ret = _Z_RES_OK;
     if (hostname == NULL) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
@@ -243,7 +243,7 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
         goto cleanup;
     }
 
-    ret = _z_stream_endpoint_init_from_address(lower_ops, &sys_endpoint, &endpoint->_locator._address);
+    ret = _z_tcp_endpoint_init_from_address(lower_ops, &sys_endpoint, &endpoint->_locator._address);
     if (ret != _Z_RES_OK) {
         goto cleanup;
     }
@@ -271,7 +271,7 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
 cleanup:
     z_free(hostname);
     if (lower_ops != NULL && sys_endpoint._iptcp != NULL) {
-        _z_stream_endpoint_clear(lower_ops, &sys_endpoint);
+        _z_tcp_endpoint_clear(lower_ops, &sys_endpoint);
     }
     return ret;
 }

@@ -17,9 +17,9 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/backend/bt.h"
-#include "zenoh-pico/link/backend/datagram.h"
 #include "zenoh-pico/link/backend/raweth.h"
-#include "zenoh-pico/link/backend/stream.h"
+#include "zenoh-pico/link/backend/tcp.h"
+#include "zenoh-pico/link/backend/udp_unicast.h"
 #include "zenoh-pico/link/backend/ws.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -58,8 +58,8 @@ typedef enum {
  * Link flow capability enum.
  *
  * Enumerators:
- *     Z_LINK_CAP_FLOW_STREAM: Link use datagrams.
- *     Z_LINK_CAP_FLOW_DATAGRAM: Link use byte stream.
+ *     Z_LINK_CAP_FLOW_DATAGRAM: Link uses datagrams.
+ *     Z_LINK_CAP_FLOW_STREAM: Link uses a byte stream.
  */
 typedef enum {
     Z_LINK_CAP_FLOW_DATAGRAM = 0,

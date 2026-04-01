@@ -10,7 +10,6 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-//
 
 #include "zenoh-pico/config.h"
 
@@ -26,9 +25,21 @@
 extern "C" {
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+
+static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_TCP == 1
+    return (uintptr_t)sock->_tcp;
+#elif Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+    return (uintptr_t)sock->_udp;
+#else
+    _ZP_UNUSED(sock);
+    return 0;
+#endif
+}
 
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
@@ -37,21 +48,36 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
-z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
-    _ZP_UNUSED(sock_in);
-    _ZP_UNUSED(sock_out);
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+    _ZP_UNUSED(sock);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
-    _ZP_UNUSED(peers);
-    _ZP_UNUSED(mutex);
+#if Z_FEATURE_MULTI_THREAD == 1
+static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
+                                               uint32_t timeout_ms) {
+    _ZP_UNUSED(sockets);
+    _ZP_UNUSED(count);
+    _ZP_UNUSED(ready);
+    _ZP_UNUSED(timeout_ms);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
+#endif
+
+const _z_socket_ops_t _z_arduino_opencr_socket_ops = {
+    _z_socket_id_impl,
+    _z_socket_set_non_blocking,
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_socket_wait_readable_impl,
+#else
+    NULL,
+#endif
+    _z_socket_close,
+};
 
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 #error "Bluetooth not supported yet on OpenCR port of Zenoh-Pico"

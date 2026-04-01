@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="@PROJECT_SOURCE_DIR@"
+WORK_DIR="$(mktemp -d "${PWD}/zenoh-pico-package-myrtos-XXXXXX")"
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+PREFIX_DIR="$WORK_DIR/prefix"
+PACKAGE_DIR="$PREFIX_DIR/lib/cmake/zenohpico-myrtos"
+PLATFORM_DIR="$PACKAGE_DIR/platforms"
+SYSTEM_DIR="$PACKAGE_DIR/system"
+SERIAL_DIR="$PACKAGE_DIR/backends/serial"
+LIB_DIR="$PREFIX_DIR/lib"
+BUILD_DIR="$WORK_DIR/build"
+
+mkdir -p "$PLATFORM_DIR" "$SYSTEM_DIR" "$SERIAL_DIR" "$LIB_DIR"
+
+cat >"$PLATFORM_DIR/myrtos.cmake" <<'EOF'
+zp_platform_set_system_layer(myrtos)
+zp_platform_set_network(freertos_lwip)
+zp_platform_set_tcp_backend(tcp_lwip)
+zp_platform_set_udp_backend(lwip)
+zp_platform_set_serial_backend(uart_myrtos)
+EOF
+
+cat >"$SERIAL_DIR/uart_myrtos.cmake" <<'EOF'
+set(ZP_BACKEND_IMPORTED_TARGET "myrtos::serial_uart")
+set(ZP_SERIAL_BACKEND_SYMBOL "_z_tty_posix_serial_ops")
+EOF
+
+cat >"$SYSTEM_DIR/myrtos.cmake" <<'EOF'
+set(ZP_SYSTEM_LAYER_IMPORTED_TARGET "myrtos::system")
+set(ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS ZENOH_FREERTOS_LWIP)
+EOF
+
+: >"$LIB_DIR/libmyrtos_system.a"
+: >"$LIB_DIR/libmyrtos_serial_uart.a"
+
+cat >"$PACKAGE_DIR/zenohpico-myrtosConfig.cmake" <<'EOF'
+if(COMMAND zp_add_platform_dir)
+  zp_add_platform_dir("${CMAKE_CURRENT_LIST_DIR}/platforms")
+endif()
+list(APPEND ZP_SYSTEM_LAYER_DIRS "${CMAKE_CURRENT_LIST_DIR}/system")
+list(APPEND ZP_SERIAL_BACKEND_DIRS "${CMAKE_CURRENT_LIST_DIR}/backends/serial")
+add_library(myrtos::system STATIC IMPORTED GLOBAL)
+set_target_properties(myrtos::system PROPERTIES
+                      IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../libmyrtos_system.a")
+
+add_library(myrtos::serial_uart STATIC IMPORTED GLOBAL)
+set_target_properties(myrtos::serial_uart PROPERTIES
+                      IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../libmyrtos_serial_uart.a")
+EOF
+
+cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
+  -DZ_FEATURE_MULTI_THREAD=@Z_FEATURE_MULTI_THREAD@ \
+  -DZ_FEATURE_LINK_SERIAL=@Z_FEATURE_LINK_SERIAL@ \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_TESTING=OFF \
+  -DZ_FEATURE_LINK_UDP_MULTICAST=0 \
+  -DZ_FEATURE_MULTICAST_TRANSPORT=0 \
+  -DZP_EXTERNAL_PACKAGES=zenohpico-myrtos \
+  -DCMAKE_PREFIX_PATH="$PREFIX_DIR" \
+  -DZP_PLATFORM=myrtos

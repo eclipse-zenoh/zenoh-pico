@@ -38,9 +38,9 @@ typedef struct {
 } _z_serial_socket_t;
 
 z_result_t _z_serial_endpoint_valid(const _z_endpoint_t *endpoint);
-z_result_t _z_serial_open(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint);
-z_result_t _z_serial_listen(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint);
-void _z_serial_close(_z_serial_socket_t *sock);
+z_result_t _z_serial_protocol_open(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint);
+z_result_t _z_serial_protocol_listen(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint);
+void _z_serial_protocol_close(_z_serial_socket_t *sock);
 z_result_t _z_connect_serial(const _z_sys_net_socket_t sock);
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);

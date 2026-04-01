@@ -22,13 +22,15 @@
 
 z_result_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) { return _z_serial_endpoint_valid(endpoint); }
 
-z_result_t _z_f_link_open_serial(_z_link_t *self) { return _z_serial_open(&self->_socket._serial, &self->_endpoint); }
-
-z_result_t _z_f_link_listen_serial(_z_link_t *self) {
-    return _z_serial_listen(&self->_socket._serial, &self->_endpoint);
+z_result_t _z_f_link_open_serial(_z_link_t *self) {
+    return _z_serial_protocol_open(&self->_socket._serial, &self->_endpoint);
 }
 
-void _z_f_link_close_serial(_z_link_t *self) { _z_serial_close(&self->_socket._serial); }
+z_result_t _z_f_link_listen_serial(_z_link_t *self) {
+    return _z_serial_protocol_listen(&self->_socket._serial, &self->_endpoint);
+}
+
+void _z_f_link_close_serial(_z_link_t *self) { _z_serial_protocol_close(&self->_socket._serial); }
 
 void _z_f_link_free_serial(_z_link_t *self) { (void)(self); }
 
