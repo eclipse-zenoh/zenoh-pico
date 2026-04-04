@@ -1,0 +1,4 @@
+zp_platform_set_system_layer(windows)
+zp_platform_set_network(windows)
+zp_platform_set_tcp_backend(tcp_windows)
+zp_platform_set_udp_backend(windows)

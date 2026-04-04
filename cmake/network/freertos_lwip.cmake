@@ -1,0 +1,1 @@
+zp_register_network(NAME freertos_lwip SOCKET_COMPONENT lwip)

@@ -1,0 +1,5 @@
+zp_platform_set_system_layer(arduino_opencr)
+zp_platform_set_network(opencr)
+set(CHECK_THREADS OFF)
+zp_platform_set_tcp_backend(tcp_opencr)
+zp_platform_set_udp_backend(opencr)

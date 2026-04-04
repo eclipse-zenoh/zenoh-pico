@@ -1,0 +1,4 @@
+zp_platform_set_system_layer(freertos_lwip)
+zp_platform_set_network(freertos_lwip)
+zp_platform_set_tcp_backend(tcp_lwip)
+zp_platform_set_udp_backend(lwip)

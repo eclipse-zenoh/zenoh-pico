@@ -16,38 +16,23 @@
 #define ZENOH_PICO_LINK_H
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/backend/bt.h"
+#include "zenoh-pico/link/backend/datagram.h"
+#include "zenoh-pico/link/backend/raweth.h"
+#include "zenoh-pico/link/backend/stream.h"
+#include "zenoh-pico/link/backend/ws.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_LINK_TCP == 1
-#include "zenoh-pico/system/link/tcp.h"
-#endif
-
-#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-#include "zenoh-pico/system/link/udp.h"
-#endif
-
-#if Z_FEATURE_RAWETH_TRANSPORT == 1
-#include "zenoh-pico/system/link/raweth.h"
-#endif
-
-#if Z_FEATURE_LINK_BLUETOOTH == 1
-#include "zenoh-pico/system/link/bt.h"
-#endif
-
 #if Z_FEATURE_LINK_SERIAL == 1
-#include "zenoh-pico/system/link/serial.h"
-#endif
-
-#if Z_FEATURE_LINK_WS == 1
-#include "zenoh-pico/system/link/ws.h"
+#include "zenoh-pico/link/backend/serial_protocol.h"
 #endif
 
 #if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/system/link/tls.h"
+#include "zenoh-pico/link/backend/tls_stream.h"
 #endif
 
 #include "zenoh-pico/utils/result.h"

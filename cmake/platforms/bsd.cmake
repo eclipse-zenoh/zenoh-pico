@@ -1,0 +1,6 @@
+zp_platform_set_system_layer(bsd)
+zp_platform_set_network(posix)
+zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/link/backend/datagram/raweth_unix.c")
+zp_platform_set_tcp_backend(tcp_posix)
+zp_platform_set_udp_backend(posix)
+zp_platform_set_serial_backend(tty_posix)

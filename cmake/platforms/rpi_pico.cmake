@@ -1,0 +1,7 @@
+zp_platform_set_system_layer(rpi_pico)
+set(CHECK_THREADS OFF)
+zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/rpi_pico/usb_uart.c")
+zp_platform_set_network(rpi_pico)
+zp_platform_set_tcp_backend(tcp_lwip)
+zp_platform_set_udp_backend(rpi_pico)
+zp_platform_set_serial_backend(uart_rpi_pico)

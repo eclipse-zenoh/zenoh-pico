@@ -1,0 +1,4 @@
+zp_platform_set_system_layer(freertos_plus_tcp)
+zp_platform_set_network(freertos_plus_tcp)
+zp_platform_set_tcp_backend(tcp_freertos_plus_tcp)
+zp_platform_set_udp_backend(freertos_plus_tcp)

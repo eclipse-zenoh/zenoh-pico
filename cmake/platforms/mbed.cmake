@@ -1,0 +1,6 @@
+zp_platform_set_system_layer(mbed)
+zp_platform_set_network(mbed)
+set(CHECK_THREADS OFF)
+zp_platform_set_tcp_backend(tcp_mbed)
+zp_platform_set_udp_backend(mbed)
+zp_platform_set_serial_backend(uart_mbed)

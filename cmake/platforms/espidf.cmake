@@ -1,0 +1,6 @@
+zp_platform_set_system_layer(espidf)
+zp_platform_set_network(espidf)
+set(CHECK_THREADS OFF)
+zp_platform_set_tcp_backend(tcp_esp32)
+zp_platform_set_udp_backend(esp32)
+zp_platform_set_serial_backend(uart_espidf)

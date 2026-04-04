@@ -1,0 +1,4 @@
+zp_platform_set_system_layer(threadx_stm32)
+zp_platform_set_network(threadx_stm32)
+set(CHECK_THREADS OFF)
+zp_platform_set_serial_backend(uart_threadx_stm32)

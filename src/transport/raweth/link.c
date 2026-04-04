@@ -18,10 +18,10 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/backend/raweth.h"
 #include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/codec/core.h"
-#include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
@@ -119,12 +119,11 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     if (cfg_str == NULL) {
         return 0;
     }
-    char *s_mapping = (char *)z_malloc(strlen(cfg_str));
+    char *s_mapping = _z_str_clone(cfg_str);
     if (s_mapping == NULL) {
         return 0;
     }
     size_t size = 0;
-    strcpy(s_mapping, cfg_str);
     // Parse list
     const char *delim = RAWETH_CFG_LIST_SEPARATOR;
     char *entry = strtok(s_mapping, delim);
@@ -149,11 +148,10 @@ static z_result_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapp
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Copy data
-    char *s_mapping = (char *)z_malloc(strlen(cfg_str));
+    char *s_mapping = _z_str_clone(cfg_str);
     if (s_mapping == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    strcpy(s_mapping, cfg_str);
     // Allocate array
     *array = _zp_raweth_mapping_array_make(size);
     if (_zp_raweth_mapping_array_len(array) == 0) {
@@ -183,11 +181,10 @@ static size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
         return 0;
     }
     // Copy data
-    char *s_whitelist = (char *)z_malloc(strlen(cfg_str));
+    char *s_whitelist = _z_str_clone(cfg_str);
     if (s_whitelist == NULL) {
         return 0;
     }
-    strcpy(s_whitelist, cfg_str);
     // Parse list
     size_t size = 0;
     const char *delim = RAWETH_CFG_LIST_SEPARATOR;
@@ -215,11 +212,10 @@ static z_result_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_wh
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Copy data
-    char *s_whitelist = (char *)z_malloc(strlen(cfg_str));
+    char *s_whitelist = _z_str_clone(cfg_str);
     if (s_whitelist == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    strcpy(s_whitelist, cfg_str);
     // Allocate array
     *array = _zp_raweth_whitelist_array_make(size);
     if (_zp_raweth_whitelist_array_len(array) == 0) {
@@ -237,6 +233,7 @@ static z_result_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_wh
         }
         // Copy address to entry
         _zp_raweth_whitelist_entry_t *elem = _zp_raweth_whitelist_array_get(array, idx);
+        // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
         memcpy(elem->_mac, addr, _ZP_MAC_ADDR_LENGTH);
         z_free(addr);
         // Next iteration
@@ -249,6 +246,7 @@ static z_result_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_wh
 }
 
 static z_result_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *storage) {
+    // Flawfinder: ignore [CWE-126] - entry is a '\0'-terminated token produced from a cloned config string.
     size_t len = strlen(entry);
     const char *entry_end = &entry[len - (size_t)1];
 
@@ -267,6 +265,7 @@ static z_result_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *
     p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
     *p_end = '\0';
     uint8_t *addr = _z_parse_address_raweth(p_start);
+    // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
     memcpy(storage->_dmac, addr, _ZP_MAC_ADDR_LENGTH);
     z_free(addr);
     *p_end = RAWETH_CFG_TUPLE_SEPARATOR;
@@ -283,6 +282,7 @@ static z_result_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *
     return _Z_RES_OK;
 }
 static bool _z_valid_mapping_entry(char *entry) {
+    // Flawfinder: ignore [CWE-126] - entry is a '\0'-terminated token produced from a cloned config string.
     size_t len = strlen(entry);
     const char *entry_end = &entry[len - (size_t)1];
 
@@ -347,13 +347,10 @@ static uint8_t *_z_parse_address_raweth(const char *address) {
     if (ret == NULL) {
         return ret;
     }
-    for (int i = 0; i < _ZP_MAC_ADDR_LENGTH; ++i) {
-        // Extract a pair of hexadecimal digits from the MAC address string
-        char byteString[3];
-        strncpy(byteString, address + i * 3, 2);
-        byteString[2] = '\0';
-        // Convert the hexadecimal string to an integer
-        ret[i] = (unsigned char)strtol(byteString, NULL, 16);
+    for (size_t i = 0; i < _ZP_MAC_ADDR_LENGTH; ++i) {
+        // Flawfinder: ignore [CWE-120] - fixed 2-digit hex byte plus explicit terminator.
+        char byte_string[3] = {address[i * 3], address[(i * 3) + 1], '\0'};
+        ret[i] = (uint8_t)strtol(byte_string, NULL, 16);
     }
     return ret;
 }
@@ -365,11 +362,13 @@ static z_result_t _z_f_link_open_raweth(_z_link_t *self) {
     // Init socket smac
     if (_z_valid_address_raweth_inner(&self->_endpoint._locator._address)) {
         uint8_t *addr = _z_parse_address_raweth(_z_string_data(&self->_endpoint._locator._address));
-        memcpy(&self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
+        // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
+        memcpy(self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
         z_free(addr);
     } else {
         _Z_DEBUG("Invalid locator source mac addr, using default value.");
-        memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_DEFAULT_SMAC, _ZP_MAC_ADDR_LENGTH);
+        // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
+        memcpy(self->_socket._raweth._smac, _ZP_RAWETH_DEFAULT_SMAC, _ZP_MAC_ADDR_LENGTH);
     }
     // Init socket interface
     if (_z_valid_iface_raweth(&self->_endpoint._config)) {
@@ -512,6 +511,7 @@ z_result_t _z_raweth_config_from_strn(_z_str_intmap_t *strint, const char *s, si
 }
 
 z_result_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {
+    // Flawfinder: ignore [CWE-126] - public from_str() expects a conventional '\0'-terminated C string.
     return _z_raweth_config_from_strn(strint, s, strlen(s));
 }
 

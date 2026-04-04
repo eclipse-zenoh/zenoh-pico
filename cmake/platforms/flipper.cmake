@@ -1,0 +1,4 @@
+zp_platform_set_system_layer(flipper)
+zp_platform_set_network(flipper)
+set(CHECK_THREADS OFF)
+zp_platform_set_serial_backend(uart_flipper)

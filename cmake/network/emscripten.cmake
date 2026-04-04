@@ -1,0 +1,1 @@
+zp_register_network(NAME emscripten SOCKET_COMPONENT emscripten)

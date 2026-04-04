@@ -1,0 +1,5 @@
+zp_platform_set_system_layer(zephyr)
+zp_platform_set_network(zephyr)
+zp_platform_set_tcp_backend(tcp_zephyr)
+zp_platform_set_udp_backend(zephyr)
+zp_platform_set_serial_backend(uart_zephyr)

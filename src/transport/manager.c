@@ -17,6 +17,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/link/backend/socket.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/backend/tls_stream.h"
+#endif
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -173,11 +177,17 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
             ret = _z_unicast_open_peer(&tp_param, zt->_transport._unicast._common._link, session_id, _Z_PEER_OP_OPEN,
                                        &socket);
             if (ret != _Z_RES_OK) {
+#if Z_FEATURE_LINK_TLS == 1
+                _z_close_tls_socket(&socket);
+#endif
                 _z_socket_close(&socket);
                 return ret;
             }
             ret = _z_socket_set_blocking(&socket, false);
             if (ret != _Z_RES_OK) {
+#if Z_FEATURE_LINK_TLS == 1
+                _z_close_tls_socket(&socket);
+#endif
                 _z_socket_close(&socket);
                 return ret;
             }
