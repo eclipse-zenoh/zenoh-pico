@@ -158,7 +158,11 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, true));
     z_result_t ret = _Z_RES_OK;
 
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    // Remember callback and its argument for dispatch after session lock
+    _z_closure_reply_callback_t reply_cb = NULL;
+    void *cb_arg = NULL;
+
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
 
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);
@@ -178,20 +182,27 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
         }
 
         if (ret == _Z_RES_OK) {
-            _z_encoding_t encoding = _z_encoding_null();
-            _z_bytes_t payload = _z_bytes_null();
-            _z_bytes_t attachment = _z_bytes_null();
-            _z_source_info_t source_info = _z_source_info_null();
-            _z_reply_t reply;
-            _z_reply_steal_data(&reply, &ke, _z_entity_global_id_null(), &payload, timestamp, &encoding,
-                                Z_SAMPLE_KIND_PUT, &attachment, &source_info);
-
-            pq->_callback(&reply, pq->_arg);
-            _z_reply_clear(&reply);
+            // Capture the callback pointer and arg still under session lock
+            reply_cb = pq->_callback;
+            cb_arg = pq->_arg;
         }
     }
 
     _z_session_mutex_unlock(zn);
+
+    // Invoke callback after session lock to prevent deadlock
+    if (reply_cb != NULL) {
+        _z_encoding_t encoding = _z_encoding_null();
+        _z_bytes_t payload = _z_bytes_null();
+        _z_bytes_t attachment = _z_bytes_null();
+        _z_source_info_t source_info = _z_source_info_null();
+        _z_reply_t reply;
+        _z_reply_steal_data(&reply, &ke, _z_entity_global_id_null(), &payload, timestamp, &encoding,
+                            Z_SAMPLE_KIND_PUT, &attachment, &source_info);
+        reply_cb(&reply, cb_arg);
+        _z_reply_clear(&reply);
+    }
+
     _z_keyexpr_clear(&ke);
 
     return ret;
