@@ -40,7 +40,6 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) { return 
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
-#if Z_FEATURE_MULTI_THREAD == 1
 static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
                                                uint32_t timeout_ms) {
     z_result_t ret = _Z_RES_OK;
@@ -70,16 +69,11 @@ static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *socket
     FreeRTOS_DeleteSocketSet(socketSet);
     return ret;
 }
-#endif
 
 const _z_socket_ops_t _z_freertos_plus_tcp_socket_ops = {
     .id = _z_socket_id_impl,
     .set_non_blocking = _z_socket_set_non_blocking,
-#if Z_FEATURE_MULTI_THREAD == 1
     .wait_readable = _z_socket_wait_readable_impl,
-#else
-    .wait_readable = NULL,
-#endif
     .close = _z_socket_close,
 };
 

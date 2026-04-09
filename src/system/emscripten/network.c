@@ -42,7 +42,6 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-#if Z_FEATURE_MULTI_THREAD == 1
 static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
                                                uint32_t timeout_ms) {
     _ZP_UNUSED(sockets);
@@ -52,16 +51,11 @@ static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *socket
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
-#endif
 
 const _z_socket_ops_t _z_emscripten_socket_ops = {
     .id = _z_socket_id_impl,
     .set_non_blocking = _z_socket_set_non_blocking,
-#if Z_FEATURE_MULTI_THREAD == 1
     .wait_readable = _z_socket_wait_readable_impl,
-#else
-    .wait_readable = NULL,
-#endif
     .close = _z_socket_close,
 };
 
