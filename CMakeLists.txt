@@ -63,12 +63,26 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
       ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
 
-set(ZP_PLATFORM_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/platforms")
+set(ZP_PLATFORM_DIRS "")
 if(NOT ZP_EXTERNAL_PACKAGES STREQUAL "")
   foreach(_zp_external_package IN LISTS ZP_EXTERNAL_PACKAGES)
     find_package(${_zp_external_package} CONFIG REQUIRED)
   endforeach()
 endif()
+find_package(zenohpico_platform CONFIG REQUIRED CONFIGS platformConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_system CONFIG REQUIRED CONFIGS systemConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_network CONFIG REQUIRED CONFIGS networkConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_socket CONFIG REQUIRED CONFIGS socketConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_tcp_backend CONFIG REQUIRED CONFIGS tcp_backendConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_udp_backend CONFIG REQUIRED CONFIGS udp_backendConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_serial_backend CONFIG REQUIRED CONFIGS serial_backendConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 if(ZP_PLATFORM STREQUAL "" AND ZP_SYSTEM_LAYER STREQUAL "")
   zp_detect_default_platform(_zp_default_platform)
   set(ZP_PLATFORM "${_zp_default_platform}")
@@ -331,12 +345,22 @@ set(_zp_selected_component_link_libraries
     ${ZP_TCP_BACKEND_LINK_LIBRARIES}
     ${ZP_UDP_BACKEND_LINK_LIBRARIES}
     ${ZP_SERIAL_BACKEND_LINK_LIBRARIES})
+set(_zp_public_imported_component_targets "")
+set(_zp_private_imported_component_targets "")
+if(NOT "${ZP_SYSTEM_IMPORTED_TARGET}" STREQUAL "")
+  list(APPEND _zp_public_imported_component_targets "${ZP_SYSTEM_IMPORTED_TARGET}")
+endif()
+foreach(_zp_component_target IN ITEMS
+        "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
+        "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
+        "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
+  if(NOT "${_zp_component_target}" STREQUAL "")
+    list(APPEND _zp_private_imported_component_targets "${_zp_component_target}")
+  endif()
+endforeach()
 set(_zp_selected_imported_component_targets
-    "${ZP_SYSTEM_IMPORTED_TARGET}"
-    "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
-    "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
-    "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
-list(REMOVE_ITEM _zp_selected_imported_component_targets "")
+    ${_zp_public_imported_component_targets}
+    ${_zp_private_imported_component_targets})
 list(REMOVE_DUPLICATES _zp_selected_imported_component_targets)
 zp_source_list_requires_cxx(_zp_platform_uses_cxx ${_zp_selected_component_sources})
 if(_zp_platform_uses_cxx)
@@ -682,14 +706,7 @@ list(APPEND Sources
   "${PROJECT_SOURCE_DIR}/src/link/backend/upper/serial_protocol.c"
   "${PROJECT_SOURCE_DIR}/src/link/backend/upper/tls_stream.c"
 )
-list(APPEND Sources ${_zp_selected_platform_glob_sources})
-list(APPEND Sources ${ZP_PLATFORM_SOURCE_FILES})
-list(APPEND Sources ${ZP_SYSTEM_SOURCE_FILES})
-list(APPEND Sources ${ZP_SOCKET_COMPONENT_SOURCE_FILES})
-list(APPEND Sources ${ZP_NETWORK_SOURCE_FILES})
-list(APPEND Sources ${ZP_TCP_BACKEND_SOURCE_FILES})
-list(APPEND Sources ${ZP_UDP_BACKEND_SOURCE_FILES})
-list(APPEND Sources ${ZP_SERIAL_BACKEND_SOURCE_FILES})
+list(APPEND Sources ${_zp_selected_component_sources})
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
@@ -731,11 +748,10 @@ if(CHECK_THREADS)
   pico_target_link_library(Threads::Threads)
 endif()
 
-zp_target_link_imported_component(PRIVATE "${ZP_SYSTEM_IMPORTED_TARGET}")
-foreach(_zp_component_target IN ITEMS
-        "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
-        "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
-        "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
+foreach(_zp_component_target IN LISTS _zp_public_imported_component_targets)
+  zp_target_link_imported_component(PUBLIC "${_zp_component_target}")
+endforeach()
+foreach(_zp_component_target IN LISTS _zp_private_imported_component_targets)
   zp_target_link_imported_component(PRIVATE "${_zp_component_target}")
 endforeach()
 

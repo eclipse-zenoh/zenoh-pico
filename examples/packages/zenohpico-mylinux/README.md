@@ -13,13 +13,17 @@ and provides descriptor files for:
 - `backends/serial/uart_mylinux.cmake`
 
 The example reuses Zenoh-Pico's built-in `network`, `tcp`, and `udp` pieces and
-adds only an external system layer and serial backend.
+adds only an external system layer and serial backend. The system layer uses a
+custom platform marker, `ZENOH_MYLINUX`, and provides the corresponding
+platform header, `zenoh_mylinux_platform.h`.
 
 ## Package layout
 
 ```text
 examples/packages/zenohpico-mylinux/
   CMakeLists.txt
+  include/
+    zenoh_mylinux_platform.h
   cmake/
     zenohpico-mylinuxConfig.cmake
     platforms/
@@ -36,12 +40,16 @@ examples/packages/zenohpico-mylinux/
 ## What each file does
 
 - `CMakeLists.txt` builds and installs the exported package targets
-  `mylinux::system` and `mylinux::serial_uart`.
+  `mylinux::system` and `mylinux::serial_uart`, and installs the custom
+  platform header.
+- `include/zenoh_mylinux_platform.h` defines the platform-specific types used
+  when `ZENOH_MYLINUX` is selected.
 - `cmake/zenohpico-mylinuxConfig.cmake` loads the exported targets file and
   registers the package descriptor directories.
 - `cmake/platforms/mylinux.cmake` defines the `mylinux` platform profile.
 - `cmake/system/mylinux.cmake` maps the `mylinux` system layer to
-  `mylinux::system`.
+  `mylinux::system` and declares the `ZENOH_MYLINUX` platform marker plus the
+  custom platform header.
 - `cmake/backends/serial/uart_mylinux.cmake` maps the `uart_mylinux` serial
   backend to `mylinux::serial_uart`.
 - `consumer/` is a minimal downstream project that uses an installed

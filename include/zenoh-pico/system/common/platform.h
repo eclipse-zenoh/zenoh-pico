@@ -67,7 +67,9 @@
 #define ZP_PLATFORM_SOCKET_LINKS_ENABLED 1
 #endif
 
-#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
+#ifdef ZP_SYSTEM_PLATFORM_HEADER
+#include ZP_SYSTEM_PLATFORM_HEADER
+#elif defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_WINDOWS)
 #define NOMINMAX

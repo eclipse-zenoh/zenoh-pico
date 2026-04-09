@@ -19,15 +19,29 @@ add_library(mylinux_system STATIC "${ZENOH_PICO_SOURCE_DIR}/src/system/unix/syst
 set_target_properties(mylinux_system PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       EXPORT_NAME system)
-target_include_directories(mylinux_system PRIVATE "${ZENOH_PICO_SOURCE_DIR}/include")
-target_compile_definitions(mylinux_system PRIVATE ZENOH_LINUX)
+target_include_directories(mylinux_system
+                           PUBLIC
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                           PRIVATE
+                             "${ZENOH_PICO_SOURCE_DIR}/include")
+target_compile_definitions(mylinux_system
+                           PRIVATE
+                             ZENOH_MYLINUX
+                             ZP_SYSTEM_PLATFORM_HEADER=\"zenoh_mylinux_platform.h\")
 
 add_library(mylinux_serial_uart STATIC "${ZENOH_PICO_SOURCE_DIR}/src/link/backend/serial/tty_posix.c")
 set_target_properties(mylinux_serial_uart PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       EXPORT_NAME serial_uart)
-target_include_directories(mylinux_serial_uart PRIVATE "${ZENOH_PICO_SOURCE_DIR}/include")
-target_compile_definitions(mylinux_serial_uart PRIVATE ZENOH_LINUX)
+target_include_directories(mylinux_serial_uart
+                           PRIVATE
+                             "${ZENOH_PICO_SOURCE_DIR}/include"
+                             "${CMAKE_CURRENT_LIST_DIR}/include")
+target_compile_definitions(mylinux_serial_uart
+                           PRIVATE
+                             ZENOH_MYLINUX
+                             ZP_SYSTEM_PLATFORM_HEADER=\"zenoh_mylinux_platform.h\")
 
 install(TARGETS mylinux_system mylinux_serial_uart
         EXPORT zenohpicoMylinuxTargets
@@ -35,6 +49,8 @@ install(TARGETS mylinux_system mylinux_serial_uart
 install(EXPORT zenohpicoMylinuxTargets
         NAMESPACE mylinux::
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico-mylinux")
+install(FILES "${CMAKE_CURRENT_LIST_DIR}/include/zenoh_mylinux_platform.h"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/zenohpico-mylinuxConfig.cmake"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico-mylinux")
 install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/cmake/platforms"

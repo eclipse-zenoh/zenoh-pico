@@ -92,11 +92,19 @@ If the platform also needs a new system layer, add ``cmake/system/<name>.cmake``
        "${PROJECT_SOURCE_DIR}/src/system/myrtos/system.c")
    set(ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS
        ZENOH_MYRTOS)
+   set(ZP_SYSTEM_LAYER_PLATFORM_HEADER
+       "zenoh_myrtos_platform.h")
 
 ``ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS`` declares the platform markers associated
 with the selected system layer. For built-in layers these definitions are used
 to compile the system-layer sources and are also needed when building code that
 includes Zenoh-Pico headers.
+
+Set ``ZP_SYSTEM_LAYER_PLATFORM_HEADER`` to the header that defines the
+platform-specific types selected by ``ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS``,
+such as ``_z_mutex_t`` and ``z_clock_t``. If the system layer reuses a built-in
+socket family, that header also defines the corresponding socket-family marker
+and socket types needed by that family.
 
 If it needs a new built-in transport backend, add a descriptor in the
 appropriate backend directory:
@@ -116,6 +124,9 @@ provides those entry points.
   is present, ``include/zenoh-pico/link/backend/udp_multicast.h``.
 * serial backends define the functions from
   ``include/zenoh-pico/link/backend/serial.h``.
+
+Optionally set ``ZP_BACKEND_COMPATIBLE_SYSTEM_LAYERS`` when a backend is only
+valid with specific system layers.
 
 Example built-in serial backend:
 
@@ -234,11 +245,14 @@ Example system-layer descriptor:
    # <prefix>/lib/cmake/zenohpico-myrtos/system/myrtos.cmake
    set(ZP_SYSTEM_LAYER_IMPORTED_TARGET "myrtos::system")
    set(ZP_SYSTEM_LAYER_COMPILE_DEFINITIONS ZENOH_MYRTOS)
+   set(ZP_SYSTEM_LAYER_PLATFORM_HEADER "zenoh_myrtos_platform.h")
 
 External backend libraries that include Zenoh-Pico headers use the same
 system-layer definitions in their own build.
 ``include/zenoh-pico/system/common/platform.h`` uses these definitions to
-select the platform branch and define socket-family macros such as
+select either a built-in platform header or the header named by
+``ZP_SYSTEM_LAYER_PLATFORM_HEADER``. That header then provides the
+platform-specific types and any socket-family markers such as
 ``ZP_PLATFORM_SOCKET_LWIP``.
 
 ``ZP_BACKEND_SOCKET_COMPONENT`` matches the built-in network selected by

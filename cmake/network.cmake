@@ -54,4 +54,4 @@ macro(zp_platform_set_network value)
   set(ZP_PLATFORM_NETWORK "${value}")
 endmacro()
 
-set(ZP_NETWORK_DIRS "${CMAKE_CURRENT_LIST_DIR}/network")
+set(ZP_NETWORK_DIRS "")
