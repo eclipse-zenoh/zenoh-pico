@@ -12,12 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "utils/assert_helpers.h"
 #include "zenoh-pico.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/transport/common/tx.h"
@@ -114,17 +114,13 @@ int main(int argc, char **argv) {
     uint8_t *value = NULL;
     size_t size = 3000;
 
-    // Init value
     value = z_malloc(size);
-    if (value == NULL) {
-        printf("Unable to allocate memory for value!\n");
-        return -1;
-    }
+    ASSERT_NOT_NULL(value);
+
     for (size_t i = 0; i < size; i++) {
         value[i] = (uint8_t)i;
     }
 
-    // Set configs
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
@@ -133,65 +129,25 @@ int main(int argc, char **argv) {
     zp_config_insert(z_loan_mut(c1), Z_CONFIG_LISTEN_KEY, "udp/224.0.0.224:7447#iface=lo");
     zp_config_insert(z_loan_mut(c2), Z_CONFIG_LISTEN_KEY, "udp/224.0.0.224:7447#iface=lo");
 
-    // Open sessions
     z_owned_session_t s1, s2;
-    if (z_open(&s1, z_move(c1), NULL) < 0) {
-        printf("Unable to open session 1!\n");
-        return -1;
-    }
-    if (z_open(&s2, z_move(c2), NULL) < 0) {
-        printf("Unable to open session 2!\n");
-        return -1;
-    }
+    ASSERT_OK(z_open(&s1, z_move(c1), NULL));
+    ASSERT_OK(z_open(&s2, z_move(c2), NULL));
 
-    // Declare subscriber
     z_owned_closure_sample_t closure;
     z_owned_fifo_handler_sample_t handler;
-    z_fifo_channel_sample_new(&closure, &handler, 3);
+    ASSERT_OK(z_fifo_channel_sample_new(&closure, &handler, 3));
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
-    if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
-        printf("%s is not a valid key expression\n", keyexpr);
-        z_drop(z_move(handler));
-        z_drop(z_move(s1));
-        z_drop(z_move(s2));
-        z_free(value);
-        return -1;
-    }
-    if (z_declare_subscriber(z_loan(s1), &sub, z_loan(ke), z_move(closure), NULL) < 0) {
-        printf("Unable to declare subscriber.\n");
-        z_drop(z_move(handler));
-        z_drop(z_move(s1));
-        z_drop(z_move(s2));
-        z_free(value);
-        return -1;
-    }
+    ASSERT_OK(z_view_keyexpr_from_str(&ke, keyexpr));
+    ASSERT_OK(z_declare_subscriber(z_loan(s1), &sub, z_loan(ke), z_move(closure), NULL));
 
-    // Declare publisher
     z_owned_publisher_t pub;
-    if (z_declare_publisher(z_loan(s2), &pub, z_loan(ke), NULL) < 0) {
-        printf("Unable to declare publisher.\n");
-        z_drop(z_move(sub));
-        z_drop(z_move(handler));
-        z_drop(z_move(s1));
-        z_drop(z_move(s2));
-        z_free(value);
-        return -1;
-    }
+    ASSERT_OK(z_declare_publisher(z_loan(s2), &pub, z_loan(ke), NULL));
 
-    z_sleep_s(1);  // Sleep to ensure subscriber is ready before sending
+    z_sleep_s(1);
 
-    // verify normal reception first.
     printf("[tx]: Sending valid packet on %s, len: %d\n", keyexpr, (int)size);
-    if (publish_buf(z_loan(pub), value, size) < 0) {
-        z_drop(z_move(sub));
-        z_drop(z_move(handler));
-        z_drop(z_move(pub));
-        z_drop(z_move(s1));
-        z_drop(z_move(s2));
-        z_free(value);
-        return -1;
-    }
+    ASSERT_OK(publish_buf(z_loan(pub), value, size));
 
     z_sleep_s(1);
 
@@ -201,32 +157,22 @@ int main(int argc, char **argv) {
     dump_zbuf_state("[initial zbuf]", zbuf);
 
     z_result_t res = read_until_sample(z_loan(s1), z_loan(handler), zbuf, MAX_READS);
-    assert(res == _Z_RES_OK);
+    ASSERT_OK(res);
     dump_zbuf_state("[zbuf after sample]", zbuf);
-    assert(_z_zbuf_get_rpos(zbuf) == _z_zbuf_get_wpos(zbuf));
+    ASSERT_EQ_U32(_z_zbuf_get_rpos(zbuf), _z_zbuf_get_wpos(zbuf));
 
-    // install override, inject corruption, and verify decoder error.
     _z_transport_set_message_encode_override(_z_transport_message_encode_override);
 
     printf("[tx]: Sending corrupted packet on %s, len: %d\n", keyexpr, (int)size);
-    if (publish_buf(z_loan(pub), value, size) < 0) {
-        z_drop(z_move(sub));
-        z_drop(z_move(handler));
-        z_drop(z_move(pub));
-        z_drop(z_move(s1));
-        z_drop(z_move(s2));
-        z_free(value);
-        return -1;
-    }
+    ASSERT_OK(publish_buf(z_loan(pub), value, size));
 
     z_sleep_s(1);
 
     res = read_until_sample(z_loan(s1), z_loan(handler), zbuf, MAX_READS);
-    assert(res == _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN);
+    ASSERT_ERR(res, _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN);
     dump_zbuf_state("[zbuf after bad sample]", zbuf);
-    assert(_z_zbuf_get_rpos(zbuf) == _z_zbuf_get_wpos(zbuf));
+    ASSERT_EQ_U32(_z_zbuf_get_rpos(zbuf), _z_zbuf_get_wpos(zbuf));
 
-    /* Clean up */
     z_drop(z_move(sub));
     z_drop(z_move(handler));
     z_drop(z_move(pub));
@@ -235,12 +181,15 @@ int main(int argc, char **argv) {
     z_free(value);
     return 0;
 }
+
 #else
+
 int main(void) {
     printf(
         "Missing config token to build this test. This test requires: Z_FEATURE_SUBSCRIPTION=1, "
-        "Z_FEATURE_PUBLICATION=1,"
+        "Z_FEATURE_PUBLICATION=1, "
         "Z_FEATURE_FRAGMENTATION=1 and Z_FEATURE_MULTI_THREAD=0\n");
     return 0;
 }
+
 #endif
