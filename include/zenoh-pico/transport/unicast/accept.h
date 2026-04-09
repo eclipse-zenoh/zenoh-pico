@@ -22,7 +22,10 @@
 extern "C" {
 #endif
 
+#if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1 && \
+    (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1)
 _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ztu_arg, _z_executor_t *executor);
+#endif
 
 #ifdef __cplusplus
 }

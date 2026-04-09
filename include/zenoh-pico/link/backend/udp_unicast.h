@@ -32,64 +32,21 @@ typedef struct {
     _z_sys_net_endpoint_t _lep;
 } _z_udp_socket_t;
 
-typedef struct {
-    z_result_t (*endpoint_init)(_z_sys_net_endpoint_t *ep, const char *address, const char *port);
-    void (*endpoint_clear)(_z_sys_net_endpoint_t *ep);
-
-    // flawfinder: ignore
-    z_result_t (*open)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
-    z_result_t (*listen)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
-    void (*close)(_z_sys_net_socket_t *sock);
-
-    // flawfinder: ignore
-    size_t (*read)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-    size_t (*read_exact)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-    size_t (*write)(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t endpoint);
-} _z_udp_unicast_ops_t;
-
 z_result_t _z_udp_unicast_address_valid(const _z_string_t *address);
-z_result_t _z_udp_unicast_endpoint_init_from_address(const _z_udp_unicast_ops_t *ops, _z_sys_net_endpoint_t *ep,
-                                                     const _z_string_t *address);
+z_result_t _z_udp_unicast_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port);
+void _z_udp_unicast_endpoint_clear(_z_sys_net_endpoint_t *ep);
+z_result_t _z_udp_unicast_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address);
 
-static inline z_result_t _z_udp_unicast_endpoint_init(const _z_udp_unicast_ops_t *ops, _z_sys_net_endpoint_t *ep,
-                                                      const char *address, const char *port) {
-    return ops->endpoint_init(ep, address, port);
-}
+// flawfinder: ignore
+z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
+z_result_t _z_udp_unicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
+void _z_udp_unicast_close(_z_sys_net_socket_t *sock);
 
-static inline void _z_udp_unicast_endpoint_clear(const _z_udp_unicast_ops_t *ops, _z_sys_net_endpoint_t *ep) {
-    ops->endpoint_clear(ep);
-}
-
-static inline z_result_t _z_udp_unicast_open(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t *sock,
-                                             const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
-    // flawfinder: ignore
-    return ops->open(sock, endpoint, tout);
-}
-
-static inline z_result_t _z_udp_unicast_listen(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t *sock,
-                                               const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
-    return ops->listen(sock, endpoint, tout);
-}
-
-static inline void _z_udp_unicast_close(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t *sock) {
-    ops->close(sock);
-}
-
-static inline size_t _z_udp_unicast_read(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t sock, uint8_t *ptr,
-                                         size_t len) {
-    // flawfinder: ignore
-    return ops->read(sock, ptr, len);
-}
-
-static inline size_t _z_udp_unicast_read_exact(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t sock, uint8_t *ptr,
-                                               size_t len) {
-    return ops->read_exact(sock, ptr, len);
-}
-
-static inline size_t _z_udp_unicast_write(const _z_udp_unicast_ops_t *ops, _z_sys_net_socket_t sock, const uint8_t *ptr,
-                                          size_t len, const _z_sys_net_endpoint_t endpoint) {
-    return ops->write(sock, ptr, len, endpoint);
-}
+// flawfinder: ignore
+size_t _z_udp_unicast_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_udp_unicast_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_udp_unicast_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                            const _z_sys_net_endpoint_t endpoint);
 
 #ifdef __cplusplus
 }

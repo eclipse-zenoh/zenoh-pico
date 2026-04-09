@@ -146,14 +146,30 @@ static size_t _z_uart_rpi_pico_write(_z_sys_net_socket_t sock, const uint8_t *pt
     return len;
 }
 
-const _z_serial_ops_t _z_uart_rpi_pico_serial_ops = {
-    .open_from_pins = _z_uart_rpi_pico_open_from_pins,
-    .open_from_dev = _z_uart_rpi_pico_open_from_dev,
-    .listen_from_pins = _z_uart_rpi_pico_listen_from_pins,
-    .listen_from_dev = _z_uart_rpi_pico_listen_from_dev,
-    .close = _z_uart_rpi_pico_close,
-    .read = _z_uart_rpi_pico_read,
-    .write = _z_uart_rpi_pico_write,
-};
+z_result_t _z_serial_open_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    return _z_uart_rpi_pico_open_from_pins(sock, txpin, rxpin, baudrate);
+}
+
+z_result_t _z_serial_open_from_dev(_z_sys_net_socket_t *sock, const char *dev, uint32_t baudrate) {
+    return _z_uart_rpi_pico_open_from_dev(sock, dev, baudrate);
+}
+
+z_result_t _z_serial_listen_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    return _z_uart_rpi_pico_listen_from_pins(sock, txpin, rxpin, baudrate);
+}
+
+z_result_t _z_serial_listen_from_dev(_z_sys_net_socket_t *sock, const char *dev, uint32_t baudrate) {
+    return _z_uart_rpi_pico_listen_from_dev(sock, dev, baudrate);
+}
+
+void _z_serial_close(_z_sys_net_socket_t *sock) { _z_uart_rpi_pico_close(sock); }
+
+size_t _z_serial_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    return _z_uart_rpi_pico_read(sock, ptr, len);
+}
+
+size_t _z_serial_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    return _z_uart_rpi_pico_write(sock, ptr, len);
+}
 
 #endif /* defined(ZENOH_RPI_PICO) && (Z_FEATURE_LINK_SERIAL == 1) */

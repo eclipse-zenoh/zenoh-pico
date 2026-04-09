@@ -18,7 +18,6 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/slice.h"
-#include "zenoh-pico/link/backend/default_ops.h"
 #include "zenoh-pico/link/backend/udp_unicast.h"
 
 #ifdef __cplusplus
@@ -27,94 +26,33 @@ extern "C" {
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
 
-typedef struct {
-    z_result_t (*endpoint_init_from_address)(_z_sys_net_endpoint_t *ep, const _z_string_t *address);
-    void (*endpoint_clear)(_z_sys_net_endpoint_t *ep);
-
-    // flawfinder: ignore
-    z_result_t (*open)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                       uint32_t tout, const char *iface);
-    z_result_t (*listen)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout, const char *iface,
-                         const char *join);
-    void (*close)(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend, const _z_sys_net_endpoint_t rep,
-                  const _z_sys_net_endpoint_t lep);
-
-    size_t (*read_exact)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                         _z_slice_t *ep);
-    // flawfinder: ignore
-    size_t (*read)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep, _z_slice_t *ep);
-    size_t (*write)(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t rep);
-} _z_udp_multicast_ops_t;
-
-#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
-extern const _z_udp_multicast_ops_t ZP_DEFAULT_UDP_MULTICAST_OPS;
-#endif
-
-static inline const _z_udp_multicast_ops_t *_z_default_udp_multicast_ops(void) {
-#if defined(ZP_DEFAULT_UDP_MULTICAST_OPS)
-    return &ZP_DEFAULT_UDP_MULTICAST_OPS;
-#else
-    return NULL;
-#endif
-}
-
 static inline z_result_t _z_udp_multicast_default_endpoint_init_from_address(_z_sys_net_endpoint_t *ep,
                                                                              const _z_string_t *address) {
-    return _z_udp_unicast_endpoint_init_from_address(_z_default_udp_unicast_ops(), ep, address);
+    return _z_udp_unicast_endpoint_init_from_address(ep, address);
 }
 
 static inline void _z_udp_multicast_default_endpoint_clear(_z_sys_net_endpoint_t *ep) {
-    const _z_udp_unicast_ops_t *ops = _z_default_udp_unicast_ops();
-    if (ops != NULL) {
-        _z_udp_unicast_endpoint_clear(ops, ep);
-    }
+    _z_udp_unicast_endpoint_clear(ep);
 }
 
-static inline z_result_t _z_udp_multicast_endpoint_init_from_address(const _z_udp_multicast_ops_t *ops,
-                                                                     _z_sys_net_endpoint_t *ep,
-                                                                     const _z_string_t *address) {
-    return ops->endpoint_init_from_address(ep, address);
-}
+z_result_t _z_udp_multicast_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address);
+void _z_udp_multicast_endpoint_clear(_z_sys_net_endpoint_t *ep);
 
-static inline void _z_udp_multicast_endpoint_clear(const _z_udp_multicast_ops_t *ops, _z_sys_net_endpoint_t *ep) {
-    ops->endpoint_clear(ep);
-}
+// flawfinder: ignore
+z_result_t _z_udp_multicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface);
+z_result_t _z_udp_multicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                                   const char *iface, const char *join);
+void _z_udp_multicast_close(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
+                            const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep);
 
-static inline z_result_t _z_udp_multicast_open(const _z_udp_multicast_ops_t *ops, _z_sys_net_socket_t *sock,
-                                               const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                                               uint32_t tout, const char *iface) {
-    // flawfinder: ignore
-    return ops->open(sock, rep, lep, tout, iface);
-}
-
-static inline z_result_t _z_udp_multicast_listen(const _z_udp_multicast_ops_t *ops, _z_sys_net_socket_t *sock,
-                                                 const _z_sys_net_endpoint_t rep, uint32_t tout, const char *iface,
-                                                 const char *join) {
-    return ops->listen(sock, rep, tout, iface, join);
-}
-
-static inline void _z_udp_multicast_close(const _z_udp_multicast_ops_t *ops, _z_sys_net_socket_t *sockrecv,
-                                          _z_sys_net_socket_t *socksend, const _z_sys_net_endpoint_t rep,
-                                          const _z_sys_net_endpoint_t lep) {
-    ops->close(sockrecv, socksend, rep, lep);
-}
-
-static inline size_t _z_udp_multicast_read_exact(const _z_udp_multicast_ops_t *ops, const _z_sys_net_socket_t sock,
-                                                 uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                                                 _z_slice_t *ep) {
-    return ops->read_exact(sock, ptr, len, lep, ep);
-}
-
-static inline size_t _z_udp_multicast_read(const _z_udp_multicast_ops_t *ops, const _z_sys_net_socket_t sock,
-                                           uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep, _z_slice_t *ep) {
-    // flawfinder: ignore
-    return ops->read(sock, ptr, len, lep, ep);
-}
-
-static inline size_t _z_udp_multicast_write(const _z_udp_multicast_ops_t *ops, const _z_sys_net_socket_t sock,
-                                            const uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t rep) {
-    return ops->write(sock, ptr, len, rep);
-}
+size_t _z_udp_multicast_read_exact(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *ep);
+// flawfinder: ignore
+size_t _z_udp_multicast_read(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
+                             _z_slice_t *ep);
+size_t _z_udp_multicast_write(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                              const _z_sys_net_endpoint_t rep);
 
 #endif
 

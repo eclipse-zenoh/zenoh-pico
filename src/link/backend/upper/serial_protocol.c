@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/link/backend/default_ops.h"
 #include "zenoh-pico/link/backend/serial.h"
 #include "zenoh-pico/link/config/serial.h"
 #include "zenoh-pico/protocol/codec/serial.h"
@@ -131,14 +130,10 @@ static z_result_t _z_serial_endpoint_parse(_z_serial_endpoint_cfg_t *cfg, const 
     return _Z_RES_OK;
 }
 
-#if defined(ZP_DEFAULT_SERIAL_OPS)
-static const _z_serial_ops_t *_z_serial_ops(void) { return _z_default_serial_ops(); }
-
-static size_t _z_serial_write_all(const _z_serial_ops_t *ops, _z_sys_net_socket_t sock, const uint8_t *ptr,
-                                  size_t len) {
+static size_t _z_serial_write_all(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     size_t total = 0;
     while (total != len) {
-        size_t wb = _z_serial_write(ops, sock, _z_ptr_u8_offset((uint8_t *)ptr, (ptrdiff_t)total), len - total);
+        size_t wb = _z_serial_write(sock, _z_ptr_u8_offset((uint8_t *)ptr, (ptrdiff_t)total), len - total);
         if (wb == SIZE_MAX || wb == 0) {
             return SIZE_MAX;
         }
@@ -148,11 +143,6 @@ static size_t _z_serial_write_all(const _z_serial_ops_t *ops, _z_sys_net_socket_
 }
 
 static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
-    const _z_serial_ops_t *ops = _z_serial_ops();
-    if (ops == NULL) {
-        return SIZE_MAX;
-    }
-
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if (raw_buf == NULL) {
         _Z_ERROR("Failed to allocate serial COBS buffer");
@@ -161,7 +151,7 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
 
     size_t rb = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
-        size_t chunk = _z_serial_read(ops, sock, &raw_buf[rb], 1);
+        size_t chunk = _z_serial_read(sock, &raw_buf[rb], 1);
         if (chunk != 1) {
             z_free(raw_buf);
             return SIZE_MAX;
@@ -187,11 +177,6 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
 }
 
 static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    const _z_serial_ops_t *ops = _z_serial_ops();
-    if (ops == NULL) {
-        return SIZE_MAX;
-    }
-
     uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if ((raw_buf == NULL) || (tmp_buf == NULL)) {
@@ -209,28 +194,11 @@ static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t he
         return SIZE_MAX;
     }
 
-    size_t written = _z_serial_write_all(ops, sock, raw_buf, raw_len);
+    size_t written = _z_serial_write_all(sock, raw_buf, raw_len);
     z_free(raw_buf);
     z_free(tmp_buf);
     return (written == raw_len) ? len : SIZE_MAX;
 }
-#else
-static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
-    _ZP_UNUSED(sock);
-    _ZP_UNUSED(header);
-    _ZP_UNUSED(ptr);
-    _ZP_UNUSED(len);
-    return SIZE_MAX;
-}
-
-static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    _ZP_UNUSED(sock);
-    _ZP_UNUSED(header);
-    _ZP_UNUSED(ptr);
-    _ZP_UNUSED(len);
-    return SIZE_MAX;
-}
-#endif
 
 z_result_t _z_serial_endpoint_valid(const _z_endpoint_t *endpoint) {
     _z_serial_endpoint_cfg_t cfg;
@@ -242,15 +210,9 @@ z_result_t _z_serial_endpoint_valid(const _z_endpoint_t *endpoint) {
     return ret;
 }
 
-#if defined(ZP_DEFAULT_SERIAL_OPS)
 static z_result_t _z_serial_open_impl(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint, bool connect) {
     _z_serial_endpoint_cfg_t cfg;
-    const _z_serial_ops_t *ops = _z_serial_ops();
     z_result_t ret = _Z_RES_OK;
-
-    if (ops == NULL) {
-        return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-    }
 
     ret = _z_serial_endpoint_parse(&cfg, endpoint);
     if (ret != _Z_RES_OK) {
@@ -259,11 +221,11 @@ static z_result_t _z_serial_open_impl(_z_serial_socket_t *sock, const _z_endpoin
     }
 
     if (cfg._from_pins) {
-        ret = connect ? _z_serial_open_from_pins(ops, &sock->_sock, cfg._txpin, cfg._rxpin, cfg._baudrate)
-                      : _z_serial_listen_from_pins(ops, &sock->_sock, cfg._txpin, cfg._rxpin, cfg._baudrate);
+        ret = connect ? _z_serial_open_from_pins(&sock->_sock, cfg._txpin, cfg._rxpin, cfg._baudrate)
+                      : _z_serial_listen_from_pins(&sock->_sock, cfg._txpin, cfg._rxpin, cfg._baudrate);
     } else {
-        ret = connect ? _z_serial_open_from_dev(ops, &sock->_sock, cfg._dev, cfg._baudrate)
-                      : _z_serial_listen_from_dev(ops, &sock->_sock, cfg._dev, cfg._baudrate);
+        ret = connect ? _z_serial_open_from_dev(&sock->_sock, cfg._dev, cfg._baudrate)
+                      : _z_serial_listen_from_dev(&sock->_sock, cfg._dev, cfg._baudrate);
     }
 
     if (ret != _Z_RES_OK || !connect) {
@@ -273,7 +235,7 @@ static z_result_t _z_serial_open_impl(_z_serial_socket_t *sock, const _z_endpoin
 
     ret = _z_connect_serial(sock->_sock);
     if (ret != _Z_RES_OK) {
-        _z_serial_close(ops, &sock->_sock);
+        _z_serial_close(&sock->_sock);
     }
 
     _z_serial_endpoint_cfg_clear(&cfg);
@@ -288,27 +250,7 @@ z_result_t _z_serial_protocol_listen(_z_serial_socket_t *sock, const _z_endpoint
     return _z_serial_open_impl(sock, endpoint, false);
 }
 
-void _z_serial_protocol_close(_z_serial_socket_t *sock) {
-    const _z_serial_ops_t *ops = _z_serial_ops();
-    if (ops != NULL) {
-        _z_serial_close(ops, &sock->_sock);
-    }
-}
-#else
-z_result_t _z_serial_protocol_open(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint) {
-    _ZP_UNUSED(sock);
-    _ZP_UNUSED(endpoint);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-z_result_t _z_serial_protocol_listen(_z_serial_socket_t *sock, const _z_endpoint_t *endpoint) {
-    _ZP_UNUSED(sock);
-    _ZP_UNUSED(endpoint);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-void _z_serial_protocol_close(_z_serial_socket_t *sock) { _ZP_UNUSED(sock); }
-#endif
+void _z_serial_protocol_close(_z_serial_socket_t *sock) { _z_serial_close(&sock->_sock); }
 
 z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
     while (true) {

@@ -130,11 +130,35 @@ static size_t _z_tcp_opencr_write(_z_sys_net_socket_t sock, const uint8_t *ptr, 
     return len;
 }
 
-extern const _z_tcp_ops_t _z_tcp_opencr_ops = {
-    _z_tcp_opencr_endpoint_init, _z_tcp_opencr_endpoint_clear, _z_tcp_opencr_open,
-    _z_tcp_opencr_listen,        _z_tcp_opencr_accept,         _z_tcp_opencr_close,
-    _z_tcp_opencr_read,          _z_tcp_opencr_read_exact,     _z_tcp_opencr_write,
-};
+z_result_t _z_tcp_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port) {
+    return _z_tcp_opencr_endpoint_init(ep, address, port);
+}
+
+void _z_tcp_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_tcp_opencr_endpoint_clear(ep); }
+
+z_result_t _z_tcp_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+    return _z_tcp_opencr_open(sock, endpoint, tout);
+}
+
+z_result_t _z_tcp_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint) {
+    return _z_tcp_opencr_listen(sock, endpoint);
+}
+
+z_result_t _z_tcp_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    return _z_tcp_opencr_accept(sock_in, sock_out);
+}
+
+void _z_tcp_close(_z_sys_net_socket_t *sock) { _z_tcp_opencr_close(sock); }
+
+size_t _z_tcp_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) { return _z_tcp_opencr_read(sock, ptr, len); }
+
+size_t _z_tcp_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    return _z_tcp_opencr_read_exact(sock, ptr, len);
+}
+
+size_t _z_tcp_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    return _z_tcp_opencr_write(sock, ptr, len);
+}
 }  // extern "C"
 
 #endif /* defined(ZP_PLATFORM_SOCKET_OPENCR) */

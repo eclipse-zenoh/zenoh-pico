@@ -18,7 +18,6 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/default_ops.h"
 #include "zenoh-pico/link/backend/tcp.h"
 #include "zenoh-pico/link/backend/tls_stream.h"
 #include "zenoh-pico/link/link.h"
@@ -87,27 +86,21 @@ static z_result_t _z_f_link_open_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
     char *hostname = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
-    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     if (hostname == NULL) {
         _Z_ERROR("Failed to parse TLS endpoint address");
         z_free(hostname);
         return _Z_ERR_GENERIC;
     }
-    if (lower_ops == NULL) {
-        _Z_ERROR("No lower TCP backend available for TLS");
-        z_free(hostname);
-        return _Z_ERR_GENERIC;
-    }
 
     _z_sys_net_endpoint_t rep = {0};
-    ret = _z_tcp_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
+    ret = _z_tcp_endpoint_init_from_address(&rep, &self->_endpoint._locator._address);
     if (ret != _Z_RES_OK) {
         z_free(hostname);
         return ret;
     }
 
-    ret = _z_open_tls(&self->_socket._tls, lower_ops, &rep, hostname, &self->_endpoint._config, false);
-    _z_tcp_endpoint_clear(lower_ops, &rep);
+    ret = _z_open_tls(&self->_socket._tls, &rep, hostname, &self->_endpoint._config, false);
+    _z_tcp_endpoint_clear(&rep);
     z_free(hostname);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS open failed");
@@ -119,27 +112,21 @@ static z_result_t _z_f_link_listen_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
     char *host = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
-    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     if (host == NULL) {
         _Z_ERROR("Invalid TLS endpoint");
         z_free(host);
         return _Z_ERR_GENERIC;
     }
-    if (lower_ops == NULL) {
-        _Z_ERROR("No lower TCP backend available for TLS");
-        z_free(host);
-        return _Z_ERR_GENERIC;
-    }
 
     _z_sys_net_endpoint_t rep = {0};
-    ret = _z_tcp_endpoint_init_from_address(lower_ops, &rep, &self->_endpoint._locator._address);
+    ret = _z_tcp_endpoint_init_from_address(&rep, &self->_endpoint._locator._address);
     if (ret != _Z_RES_OK) {
         z_free(host);
         return ret;
     }
 
-    ret = _z_listen_tls(&self->_socket._tls, lower_ops, &rep, &self->_endpoint._config);
-    _z_tcp_endpoint_clear(lower_ops, &rep);
+    ret = _z_listen_tls(&self->_socket._tls, &rep, &self->_endpoint._config);
+    _z_tcp_endpoint_clear(&rep);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS listen failed");
     }
@@ -232,18 +219,13 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
 z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket, const _z_config_t *session_cfg) {
     _z_sys_net_endpoint_t sys_endpoint = {0};
     char *hostname = _z_tcp_address_parse_host(&endpoint->_locator._address);
-    const _z_tcp_ops_t *lower_ops = _z_default_tcp_ops();
     z_result_t ret = _Z_RES_OK;
     if (hostname == NULL) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         goto cleanup;
     }
-    if (lower_ops == NULL) {
-        ret = _Z_ERR_GENERIC;
-        goto cleanup;
-    }
 
-    ret = _z_tcp_endpoint_init_from_address(lower_ops, &sys_endpoint, &endpoint->_locator._address);
+    ret = _z_tcp_endpoint_init_from_address(&sys_endpoint, &endpoint->_locator._address);
     if (ret != _Z_RES_OK) {
         goto cleanup;
     }
@@ -255,7 +237,7 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
     }
 
     _z_config_t cfg = _z_tls_merge_config(&endpoint->_config, session_cfg);
-    ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_sock, lower_ops, &sys_endpoint, hostname, &cfg, true);
+    ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_sock, &sys_endpoint, hostname, &cfg, true);
     if (ret != _Z_RES_OK) {
         z_free(socket->_tls_sock);
         socket->_tls_sock = NULL;
@@ -270,8 +252,8 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
 
 cleanup:
     z_free(hostname);
-    if (lower_ops != NULL && sys_endpoint._iptcp != NULL) {
-        _z_tcp_endpoint_clear(lower_ops, &sys_endpoint);
+    if (sys_endpoint._iptcp != NULL) {
+        _z_tcp_endpoint_clear(&sys_endpoint);
     }
     return ret;
 }

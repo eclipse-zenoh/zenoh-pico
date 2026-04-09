@@ -246,16 +246,34 @@ static size_t _z_tcp_lwip_write(_z_sys_net_socket_t sock, const uint8_t *ptr, si
     return (size_t)send(_z_lwip_socket_get(sock), ptr, len, 0);
 }
 
-const _z_tcp_ops_t _z_tcp_lwip_ops = {
-    .endpoint_init = _z_tcp_lwip_endpoint_init,
-    .endpoint_clear = _z_tcp_lwip_endpoint_clear,
-    .open = _z_tcp_lwip_open,
-    .listen = _z_tcp_lwip_listen,
-    .accept = _z_tcp_lwip_accept,
-    .close = _z_tcp_lwip_close,
-    .read = _z_tcp_lwip_read,
-    .read_exact = _z_tcp_lwip_read_exact,
-    .write = _z_tcp_lwip_write,
-};
+z_result_t _z_tcp_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port) {
+    return _z_tcp_lwip_endpoint_init(ep, address, port);
+}
+
+void _z_tcp_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_tcp_lwip_endpoint_clear(ep); }
+
+z_result_t _z_tcp_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+    return _z_tcp_lwip_open(sock, endpoint, tout);
+}
+
+z_result_t _z_tcp_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint) {
+    return _z_tcp_lwip_listen(sock, endpoint);
+}
+
+z_result_t _z_tcp_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    return _z_tcp_lwip_accept(sock_in, sock_out);
+}
+
+void _z_tcp_close(_z_sys_net_socket_t *sock) { _z_tcp_lwip_close(sock); }
+
+size_t _z_tcp_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) { return _z_tcp_lwip_read(sock, ptr, len); }
+
+size_t _z_tcp_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    return _z_tcp_lwip_read_exact(sock, ptr, len);
+}
+
+size_t _z_tcp_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
+    return _z_tcp_lwip_write(sock, ptr, len);
+}
 
 #endif /* defined(ZP_PLATFORM_SOCKET_LWIP) */

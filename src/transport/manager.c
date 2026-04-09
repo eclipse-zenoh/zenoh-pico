@@ -85,6 +85,9 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
 static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *locator, const _z_id_t *local_zid,
                                         int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime) {
     z_result_t ret = _Z_RES_OK;
+#if Z_FEATURE_LINK_TCP != 1 && Z_FEATURE_LINK_TLS != 1
+    _ZP_UNUSED(runtime);
+#endif
     // Init link
     _z_link_t *zl = (_z_link_t *)z_malloc(sizeof(_z_link_t));
     if (zl == NULL) {
@@ -117,6 +120,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                     ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
                                                         false, NULL);
                 } else {
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1
                     _z_fut_t f = _z_fut_null();
                     f._fut_arg = &zt->_transport._unicast;
                     f._fut_fn = _zp_unicast_accept_task_fn;
@@ -124,6 +128,10 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                         _Z_ERROR("Failed to spawn unicast accept task after transport creation.");
                         ret = _Z_ERR_FAILED_TO_SPAWN_TASK;
                     }
+#else
+                    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
+                    ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+#endif
                 }
             }
 #else

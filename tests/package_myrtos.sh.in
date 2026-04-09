@@ -25,7 +25,6 @@ EOF
 
 cat >"$SERIAL_DIR/uart_myrtos.cmake" <<'EOF'
 set(ZP_BACKEND_IMPORTED_TARGET "myrtos::serial_uart")
-set(ZP_SERIAL_BACKEND_SYMBOL "_z_tty_posix_serial_ops")
 EOF
 
 cat >"$SYSTEM_DIR/myrtos.cmake" <<'EOF'

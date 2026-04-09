@@ -1,3 +1,2 @@
 set(ZP_SOCKET_COMPONENT_SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/system/windows/network.c")
 set(ZP_SOCKET_COMPONENT_LINK_LIBRARIES Ws2_32 Iphlpapi)
-set(ZP_SOCKET_COMPONENT_SOCKET_OPS_SYMBOL "_z_windows_socket_ops")

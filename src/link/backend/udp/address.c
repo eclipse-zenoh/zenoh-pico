@@ -27,18 +27,15 @@ z_result_t _z_udp_unicast_address_valid(const _z_string_t *address) {
     return ret;
 }
 
-z_result_t _z_udp_unicast_endpoint_init_from_address(const _z_udp_unicast_ops_t *ops, _z_sys_net_endpoint_t *ep,
-                                                     const _z_string_t *address) {
+z_result_t _z_udp_unicast_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address) {
     z_result_t ret = _Z_RES_OK;
     char *host = _z_endpoint_parse_host(address);
     char *port = _z_endpoint_parse_port(address);
 
-    if (ops == NULL) {
-        ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-    } else if ((host == NULL) || (port == NULL)) {
+    if ((host == NULL) || (port == NULL)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     } else {
-        ret = _z_udp_unicast_endpoint_init(ops, ep, host, port);
+        ret = _z_udp_unicast_endpoint_init(ep, host, port);
     }
 
     z_free(host);

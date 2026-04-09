@@ -30,66 +30,22 @@ typedef struct {
     _z_sys_net_endpoint_t _rep;
 } _z_tcp_socket_t;
 
-typedef struct {
-    z_result_t (*endpoint_init)(_z_sys_net_endpoint_t *ep, const char *address, const char *port);
-    void (*endpoint_clear)(_z_sys_net_endpoint_t *ep);
-
-    // flawfinder: ignore
-    z_result_t (*open)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
-    z_result_t (*listen)(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint);
-    z_result_t (*accept)(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
-    void (*close)(_z_sys_net_socket_t *sock);
-
-    // flawfinder: ignore
-    size_t (*read)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-    size_t (*read_exact)(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-    size_t (*write)(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
-} _z_tcp_ops_t;
-
 char *_z_tcp_address_parse_host(const _z_string_t *address);
 z_result_t _z_tcp_address_valid(const _z_string_t *address);
-z_result_t _z_tcp_endpoint_init_from_address(const _z_tcp_ops_t *ops, _z_sys_net_endpoint_t *ep,
-                                             const _z_string_t *address);
+z_result_t _z_tcp_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port);
+void _z_tcp_endpoint_clear(_z_sys_net_endpoint_t *ep);
+z_result_t _z_tcp_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address);
 
-static inline z_result_t _z_tcp_endpoint_init(const _z_tcp_ops_t *ops, _z_sys_net_endpoint_t *ep, const char *address,
-                                              const char *port) {
-    return ops->endpoint_init(ep, address, port);
-}
+// flawfinder: ignore
+z_result_t _z_tcp_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
+z_result_t _z_tcp_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint);
+z_result_t _z_tcp_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
+void _z_tcp_close(_z_sys_net_socket_t *sock);
 
-static inline void _z_tcp_endpoint_clear(const _z_tcp_ops_t *ops, _z_sys_net_endpoint_t *ep) {
-    ops->endpoint_clear(ep);
-}
-
-static inline z_result_t _z_tcp_open(const _z_tcp_ops_t *ops, _z_sys_net_socket_t *sock,
-                                     const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
-    // flawfinder: ignore
-    return ops->open(sock, endpoint, tout);
-}
-
-static inline z_result_t _z_tcp_listen(const _z_tcp_ops_t *ops, _z_sys_net_socket_t *sock,
-                                       const _z_sys_net_endpoint_t endpoint) {
-    return ops->listen(sock, endpoint);
-}
-
-static inline z_result_t _z_tcp_accept(const _z_tcp_ops_t *ops, const _z_sys_net_socket_t *sock_in,
-                                       _z_sys_net_socket_t *sock_out) {
-    return ops->accept(sock_in, sock_out);
-}
-
-static inline void _z_tcp_close(const _z_tcp_ops_t *ops, _z_sys_net_socket_t *sock) { ops->close(sock); }
-
-static inline size_t _z_tcp_read(const _z_tcp_ops_t *ops, _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    // flawfinder: ignore
-    return ops->read(sock, ptr, len);
-}
-
-static inline size_t _z_tcp_read_exact(const _z_tcp_ops_t *ops, _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    return ops->read_exact(sock, ptr, len);
-}
-
-static inline size_t _z_tcp_write(const _z_tcp_ops_t *ops, _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
-    return ops->write(sock, ptr, len);
-}
+// flawfinder: ignore
+size_t _z_tcp_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_tcp_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
+size_t _z_tcp_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
 #ifdef __cplusplus
 }

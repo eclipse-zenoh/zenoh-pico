@@ -11,7 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/link/backend/default_ops.h"
 #include "zenoh-pico/link/backend/socket.h"
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/link/backend/tls_stream.h"
@@ -27,7 +26,8 @@
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
+#if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1 && \
+    (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1)
 #if Z_FEATURE_CONNECTIVITY == 1
 static void _zp_unicast_dispatch_connected_event(_z_transport_unicast_t *ztu, const _z_transport_peer_unicast_t *peer) {
     if (ztu == NULL || peer == NULL) {
@@ -62,46 +62,18 @@ static void _zp_unicast_dispatch_connected_event(_z_transport_unicast_t *ztu, co
 }
 #endif
 
-static const _z_tcp_ops_t *_zp_unicast_accept_tcp_ops(const _z_link_t *link) {
-    if (link == NULL) {
-        return NULL;
-    }
-
-    switch (link->_type) {
-#if Z_FEATURE_LINK_TCP == 1
-        case _Z_LINK_TYPE_TCP:
-            return _z_default_tcp_ops();
-#endif
-#if Z_FEATURE_LINK_WS == 1
-        case _Z_LINK_TYPE_WS:
-            return _z_default_tcp_ops();
-#endif
-#if Z_FEATURE_LINK_TLS == 1
-        case _Z_LINK_TYPE_TLS:
-            return link->_socket._tls._ops;
-#endif
-        default:
-            return NULL;
-    }
-}
-
 _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor) {
     _ZP_UNUSED(executor);
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
     const _z_sys_net_socket_t *socket_ptr = _z_link_get_socket(ztu->_common._link);
-    const _z_tcp_ops_t *tcp_ops = _zp_unicast_accept_tcp_ops(ztu->_common._link);
     if (socket_ptr == NULL) {
         _Z_ERROR_LOG(_Z_ERR_INVALID);
-        return _z_fut_fn_result_ready();
-    }
-    if (tcp_ops == NULL) {
-        _Z_INFO("No TCP backend available for accept");
         return _z_fut_fn_result_ready();
     }
 
     _z_sys_net_socket_t listen_socket = *socket_ptr;
     _z_sys_net_socket_t con_socket = {0};
-    z_result_t ret = _z_tcp_accept(tcp_ops, &listen_socket, &con_socket);
+    z_result_t ret = _z_tcp_accept(&listen_socket, &con_socket);
     if (ret != _Z_RES_OK) {
         if (ret == _Z_ERR_INVALID) {
             _Z_INFO("Accept socket was closed");

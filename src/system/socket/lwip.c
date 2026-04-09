@@ -123,11 +123,11 @@ static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *socket
 }
 #endif
 
-const _z_socket_ops_t _z_lwip_socket_ops = {
-    .id = _z_socket_id_impl,
-    .set_non_blocking = _z_socket_set_non_blocking,
-    .wait_readable = _z_socket_wait_readable_impl,
-    .close = _z_socket_close,
-};
+uintptr_t _z_socket_id(const _z_sys_net_socket_t *sock) { return _z_socket_id_impl(sock); }
+
+z_result_t _z_socket_wait_readable(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
+                                   uint32_t timeout_ms) {
+    return _z_socket_wait_readable_impl(sockets, count, ready, timeout_ms);
+}
 
 #endif /* defined(ZP_PLATFORM_SOCKET_LWIP) */

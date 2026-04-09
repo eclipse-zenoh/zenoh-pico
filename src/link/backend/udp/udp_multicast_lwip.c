@@ -56,15 +56,40 @@ static z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sy
     return _z_lwip_udp_multicast_listen(sock, rep, tout, iface, join, __get_ip_from_iface);
 }
 
-const _z_udp_multicast_ops_t _z_udp_multicast_lwip_ops = {
-    .endpoint_init_from_address = _z_udp_multicast_default_endpoint_init_from_address,
-    .endpoint_clear = _z_udp_multicast_default_endpoint_clear,
-    .open = _z_open_udp_multicast,
-    .listen = _z_listen_udp_multicast,
-    .close = _z_lwip_udp_multicast_close,
-    .read_exact = _z_lwip_udp_multicast_read_exact,
-    .read = _z_lwip_udp_multicast_read,
-    .write = _z_lwip_udp_multicast_write,
-};
+z_result_t _z_udp_multicast_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address) {
+    return _z_udp_multicast_default_endpoint_init_from_address(ep, address);
+}
+
+void _z_udp_multicast_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_udp_multicast_default_endpoint_clear(ep); }
+
+z_result_t _z_udp_multicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface) {
+    return _z_open_udp_multicast(sock, rep, lep, tout, iface);
+}
+
+z_result_t _z_udp_multicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                                   const char *iface, const char *join) {
+    return _z_listen_udp_multicast(sock, rep, tout, iface, join);
+}
+
+void _z_udp_multicast_close(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
+                            const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
+    _z_lwip_udp_multicast_close(sockrecv, socksend, rep, lep);
+}
+
+size_t _z_udp_multicast_read_exact(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *ep) {
+    return _z_lwip_udp_multicast_read_exact(sock, ptr, len, lep, ep);
+}
+
+size_t _z_udp_multicast_read(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
+                             _z_slice_t *ep) {
+    return _z_lwip_udp_multicast_read(sock, ptr, len, lep, ep);
+}
+
+size_t _z_udp_multicast_write(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                              const _z_sys_net_endpoint_t rep) {
+    return _z_lwip_udp_multicast_write(sock, ptr, len, rep);
+}
 
 #endif

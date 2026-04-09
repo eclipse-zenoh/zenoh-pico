@@ -352,18 +352,13 @@ static z_result_t _z_tls_load_client_cert(_z_tls_context_t *ctx, const _z_str_in
     return _Z_RES_OK;
 }
 
-z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, const _z_sys_net_endpoint_t *rep,
-                       const char *hostname, const _z_str_intmap_t *config, bool peer_socket) {
+z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, const char *hostname,
+                       const _z_str_intmap_t *config, bool peer_socket) {
     if ((rep == NULL) || (rep->_iptcp == NULL)) {
         _Z_ERROR("Invalid TCP endpoint for TLS connection");
         return _Z_ERR_GENERIC;
     }
-    if (lower_ops == NULL) {
-        _Z_ERROR("TLS lower layer ops are NULL");
-        return _Z_ERR_GENERIC;
-    }
 
-    sock->_ops = lower_ops;
     sock->_is_peer_socket = peer_socket;
 
     bool verify_name = true;
@@ -399,7 +394,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
         return ret;
     }
 
-    ret = _z_tcp_open(sock->_ops, &sock->_sock, *rep, Z_CONFIG_SOCKET_TIMEOUT);
+    ret = _z_tcp_open(&sock->_sock, *rep, Z_CONFIG_SOCKET_TIMEOUT);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Failed to open lower TCP socket: %d", ret);
         _z_tls_context_free(&sock->_tls_ctx);
@@ -413,7 +408,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
                                               MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
     if (mbedret != 0) {
         _Z_ERROR("Failed to set SSL config defaults: -0x%04x", -mbedret);
-        _z_tcp_close(sock->_ops, &sock->_sock);
+        _z_tcp_close(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
     }
@@ -430,7 +425,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
                                                 &sock->_tls_ctx->_client_key);
         if (own_ret != 0) {
             _Z_ERROR("Failed to configure client certificate: -0x%04x", -own_ret);
-            _z_tcp_close(sock->_ops, &sock->_sock);
+            _z_tcp_close(&sock->_sock);
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
@@ -439,14 +434,14 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
     mbedret = mbedtls_ssl_setup(&sock->_tls_ctx->_ssl, &sock->_tls_ctx->_ssl_config);
     if (mbedret != 0) {
         _Z_ERROR("Failed to setup SSL: -0x%04x", -mbedret);
-        _z_tcp_close(sock->_ops, &sock->_sock);
+        _z_tcp_close(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
     }
 
     if (!hostname) {
         _Z_ERROR("No hostname is set");
-        _z_tcp_close(sock->_ops, &sock->_sock);
+        _z_tcp_close(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
     }
@@ -454,7 +449,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
     mbedret = mbedtls_ssl_set_hostname(&sock->_tls_ctx->_ssl, hostname);
     if (mbedret != 0) {
         _Z_ERROR("Failed to set hostname: -0x%04x", -mbedret);
-        _z_tcp_close(sock->_ops, &sock->_sock);
+        _z_tcp_close(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
     }
@@ -464,7 +459,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
     while ((mbedret = mbedtls_ssl_handshake(&sock->_tls_ctx->_ssl)) != 0) {
         if (mbedret != MBEDTLS_ERR_SSL_WANT_READ && mbedret != MBEDTLS_ERR_SSL_WANT_WRITE) {
             _Z_ERROR("TLS handshake failed: -0x%04x", -mbedret);
-            _z_tcp_close(sock->_ops, &sock->_sock);
+            _z_tcp_close(&sock->_sock);
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
@@ -475,7 +470,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
     if (verify_result != 0) {
         if ((verify_result & ~ignored_flags) != 0u) {
             _Z_ERROR("TLS client certificate verification failed: 0x%08x", verify_result);
-            _z_tcp_close(sock->_ops, &sock->_sock);
+            _z_tcp_close(&sock->_sock);
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
@@ -487,18 +482,12 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, con
     return _Z_RES_OK;
 }
 
-z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, const _z_sys_net_endpoint_t *rep,
-                         const _z_str_intmap_t *config) {
+z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, const _z_str_intmap_t *config) {
     if ((rep == NULL) || (rep->_iptcp == NULL)) {
         _Z_ERROR("Invalid lower TCP endpoint for TLS listen");
         return _Z_ERR_GENERIC;
     }
-    if (lower_ops == NULL) {
-        _Z_ERROR("TLS lower layer ops are NULL");
-        return _Z_ERR_GENERIC;
-    }
 
-    sock->_ops = lower_ops;
     sock->_is_peer_socket = false;
     bool enable_mtls = false;
     const char *mtls_opt = _z_str_intmap_get(config, TLS_CONFIG_ENABLE_MTLS_KEY);
@@ -526,7 +515,7 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, c
     }
     sock->_tls_ctx->_enable_mtls = enable_mtls;
 
-    ret = _z_tcp_listen(sock->_ops, &sock->_sock, *rep);
+    ret = _z_tcp_listen(&sock->_sock, *rep);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Failed to listen on lower TCP socket for TLS, ret=%d", ret);
         _z_tls_context_free(&sock->_tls_ctx);
@@ -540,7 +529,7 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, c
                                               MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
     if (mbedret != 0) {
         _Z_ERROR("Failed to set SSL config defaults for server: -0x%04x", -mbedret);
-        _z_tcp_close(sock->_ops, &sock->_sock);
+        _z_tcp_close(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
     }
@@ -554,7 +543,7 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_tcp_ops_t *lower_ops, c
                                             &sock->_tls_ctx->_listen_key);
         if (mbedret != 0) {
             _Z_ERROR("Failed to configure server certificate: -0x%04x", -mbedret);
-            _z_tcp_close(sock->_ops, &sock->_sock);
+            _z_tcp_close(&sock->_sock);
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
@@ -591,7 +580,6 @@ z_result_t _z_tls_accept(_z_sys_net_socket_t *socket, const _z_sys_net_socket_t 
         return _Z_ERR_GENERIC;
     }
 
-    tls_sock->_ops = NULL;
     tls_sock->_sock = *socket;
 
     mbedtls_ssl_init(&tls_sock->_tls_ctx->_ssl);
@@ -605,7 +593,6 @@ z_result_t _z_tls_accept(_z_sys_net_socket_t *socket, const _z_sys_net_socket_t 
         return _Z_ERR_GENERIC;
     }
 
-    tls_sock->_ops = listen_tls_sock->_ops;
     tls_sock->_tls_ctx->_enable_mtls = listen_tls_sock->_tls_ctx->_enable_mtls;
 
     mbedtls_ssl_config *listen_conf = &listen_tls_sock->_tls_ctx->_ssl_config;
@@ -675,9 +662,7 @@ void _z_close_tls(_z_tls_socket_t *sock) {
         mbedtls_ssl_close_notify(&sock->_tls_ctx->_ssl);
         _z_tls_context_free(&sock->_tls_ctx);
     }
-    if (sock->_ops != NULL) {
-        _z_tcp_close(sock->_ops, &sock->_sock);
-    }
+    _z_tcp_close(&sock->_sock);
     sock->_sock._tls_sock = NULL;
 }
 

@@ -105,10 +105,17 @@ appropriate backend directory:
 * ``cmake/backends/udp/`` for UDP backends;
 * ``cmake/backends/serial/`` for ``serial`` backends.
 
-Zenoh-Pico selects transport implementations through exported ``*_ops``
-symbols. Each ``*_ops`` object is a table of function pointers for one backend
-type, such as TCP, UDP, or serial. Backend descriptors set the symbol that
-Zenoh-Pico should use for the selected implementation.
+Transport backends provide the entry points declared in the matching backend
+headers. Backend descriptors select the source files or imported target that
+provides those entry points.
+
+* TCP backends define the functions from
+  ``include/zenoh-pico/link/backend/tcp.h``.
+* UDP backends define the functions from
+  ``include/zenoh-pico/link/backend/udp_unicast.h`` and, when multicast support
+  is present, ``include/zenoh-pico/link/backend/udp_multicast.h``.
+* serial backends define the functions from
+  ``include/zenoh-pico/link/backend/serial.h``.
 
 Example built-in serial backend:
 
@@ -117,8 +124,6 @@ Example built-in serial backend:
    # cmake/backends/serial/uart_myrtos.cmake
    set(ZP_BACKEND_SOURCE_FILES
        "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_myrtos.c")
-   set(ZP_SERIAL_BACKEND_SYMBOL
-       "_z_uart_myrtos_serial_ops")
    set(ZP_BACKEND_COMPATIBLE_SYSTEM_LAYERS
        "myrtos")
 
@@ -130,10 +135,6 @@ Example built-in UDP backend:
    set(ZP_BACKEND_SOURCE_FILES
        "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_myrtos.c"
        "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myrtos.c")
-   set(ZP_UDP_BACKEND_UNICAST_SYMBOL
-       "_z_udp_myrtos_unicast_ops")
-   set(ZP_UDP_BACKEND_MULTICAST_SYMBOL
-       "_z_udp_multicast_myrtos_ops")
    set(ZP_BACKEND_SOCKET_COMPONENT
        "lwip")
 
@@ -187,21 +188,17 @@ name to Zenoh-Pico through ``ZP_BACKEND_IMPORTED_TARGET``.
 For external backend descriptors, ``ZP_BACKEND_IMPORTED_TARGET`` is required.
 Built-in backend descriptors use ``ZP_BACKEND_SOURCE_FILES`` and related build
 variables instead. A backend descriptor uses one form or the other, not both.
-TCP descriptors use ``ZP_TCP_BACKEND_SYMBOL``.
-UDP descriptors use ``ZP_UDP_BACKEND_UNICAST_SYMBOL`` and optional
-``ZP_UDP_BACKEND_MULTICAST_SYMBOL``.
-serial descriptors use ``ZP_SERIAL_BACKEND_SYMBOL``.
 
-The exported symbol must match the backend type:
+The library defines the entry points for the backend type:
 
-* TCP backends export ``const _z_tcp_ops_t ...`` from
-  ``include/zenoh-pico/link/backend/tcp.h``
-* UDP backends export ``const _z_udp_unicast_ops_t ...`` from
-  ``include/zenoh-pico/link/backend/udp_unicast.h``. If multicast support is
-  present, they also export ``const _z_udp_multicast_ops_t ...`` from
-  ``include/zenoh-pico/link/backend/udp_multicast.h``
-* serial backends export ``const _z_serial_ops_t ...`` from
-  ``include/zenoh-pico/link/backend/serial.h``
+* TCP backends define the functions declared in
+  ``include/zenoh-pico/link/backend/tcp.h``.
+* UDP backends define the functions declared in
+  ``include/zenoh-pico/link/backend/udp_unicast.h`` and, when UDP multicast
+  support is enabled in the build, in
+  ``include/zenoh-pico/link/backend/udp_multicast.h``.
+* serial backends define the functions declared in
+  ``include/zenoh-pico/link/backend/serial.h``.
 
 Example TCP backend descriptor:
 
@@ -209,37 +206,11 @@ Example TCP backend descriptor:
 
    # <prefix>/lib/cmake/zenohpico-myrtos/backends/tcp/tcp_myrtos.cmake
    set(ZP_BACKEND_IMPORTED_TARGET "myrtos::tcp")
-   set(ZP_TCP_BACKEND_SYMBOL "_z_tcp_myrtos_ops")
    set(ZP_BACKEND_SOCKET_COMPONENT "lwip")
 
-Example UDP backend library:
-
-.. code-block:: c
-
-   #include "zenoh-pico/link/backend/udp_unicast.h"
-   #include "zenoh-pico/link/backend/udp_multicast.h"
-
-   const _z_udp_unicast_ops_t _z_udp_myrtos_unicast_ops = {
-       .endpoint_init = myrtos_udp_endpoint_init,
-       .endpoint_clear = myrtos_udp_endpoint_clear,
-       .open = myrtos_udp_open,
-       .listen = myrtos_udp_listen,
-       .close = myrtos_udp_close,
-       .read = myrtos_udp_read,
-       .read_exact = myrtos_udp_read_exact,
-       .write = myrtos_udp_write,
-   };
-
-   const _z_udp_multicast_ops_t _z_udp_multicast_myrtos_ops = {
-       .endpoint_init_from_address = myrtos_mc_endpoint_init_from_address,
-       .endpoint_clear = myrtos_mc_endpoint_clear,
-       .open = myrtos_mc_open,
-       .listen = myrtos_mc_listen,
-       .close = myrtos_mc_close,
-       .read_exact = myrtos_mc_read_exact,
-       .read = myrtos_mc_read,
-       .write = myrtos_mc_write,
-   };
+An external UDP backend library defines the ``_z_udp_unicast_*`` functions and,
+when UDP multicast support is enabled, the ``_z_udp_multicast_*`` functions
+declared in the corresponding headers.
 
 Example UDP backend descriptor:
 
@@ -247,8 +218,6 @@ Example UDP backend descriptor:
 
    # <prefix>/lib/cmake/zenohpico-myrtos/backends/udp/myrtos.cmake
    set(ZP_BACKEND_IMPORTED_TARGET "myrtos::udp")
-   set(ZP_UDP_BACKEND_UNICAST_SYMBOL "_z_udp_myrtos_unicast_ops")
-   set(ZP_UDP_BACKEND_MULTICAST_SYMBOL "_z_udp_multicast_myrtos_ops")
    set(ZP_BACKEND_SOCKET_COMPONENT "lwip")
 
 Example serial descriptor:
@@ -257,15 +226,6 @@ Example serial descriptor:
 
    # <prefix>/lib/cmake/zenohpico-myrtos/backends/serial/uart_myrtos.cmake
    set(ZP_BACKEND_IMPORTED_TARGET "myrtos::serial_uart")
-   set(ZP_SERIAL_BACKEND_SYMBOL "_z_uart_myrtos_serial_ops")
-
-In the TCP and serial cases, the library exports ``const _z_tcp_ops_t ...`` or
-``const _z_serial_ops_t ...`` under the symbol named by
-``ZP_TCP_BACKEND_SYMBOL`` or ``ZP_SERIAL_BACKEND_SYMBOL``.
-
-``ZP_UDP_BACKEND_UNICAST_SYMBOL`` is required.
-``ZP_UDP_BACKEND_MULTICAST_SYMBOL`` is used only when UDP multicast support is
-enabled in the build.
 
 Example system-layer descriptor:
 

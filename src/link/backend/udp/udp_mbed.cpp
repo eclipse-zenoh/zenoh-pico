@@ -120,10 +120,34 @@ static size_t _z_udp_mbed_write(_z_sys_net_socket_t sock, const uint8_t *ptr, si
     return (size_t)wb;
 }
 
-extern const _z_udp_unicast_ops_t _z_udp_mbed_unicast_ops = {
-    _z_udp_mbed_endpoint_init, _z_udp_mbed_endpoint_clear, _z_udp_mbed_open,       _z_udp_mbed_listen,
-    _z_udp_mbed_close,         _z_udp_mbed_read,           _z_udp_mbed_read_exact, _z_udp_mbed_write,
-};
+z_result_t _z_udp_unicast_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port) {
+    return _z_udp_mbed_endpoint_init(ep, address, port);
+}
+
+void _z_udp_unicast_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_udp_mbed_endpoint_clear(ep); }
+
+z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+    return _z_udp_mbed_open(sock, endpoint, tout);
+}
+
+z_result_t _z_udp_unicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+    return _z_udp_mbed_listen(sock, endpoint, tout);
+}
+
+void _z_udp_unicast_close(_z_sys_net_socket_t *sock) { _z_udp_mbed_close(sock); }
+
+size_t _z_udp_unicast_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    return _z_udp_mbed_read(sock, ptr, len);
+}
+
+size_t _z_udp_unicast_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+    return _z_udp_mbed_read_exact(sock, ptr, len);
+}
+
+size_t _z_udp_unicast_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len,
+                            const _z_sys_net_endpoint_t endpoint) {
+    return _z_udp_mbed_write(sock, ptr, len, endpoint);
+}
 }  // extern "C"
 
 #endif /* defined(ZP_PLATFORM_SOCKET_MBED) */
