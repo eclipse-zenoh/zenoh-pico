@@ -30,12 +30,10 @@
 z_result_t _z_transport_message_encode_override(_z_wbuf_t *wbf, const _z_transport_message_t *msg, bool *handled) {
     z_result_t res = _Z_RES_OK;
     if (_Z_MID(msg->_header) == _Z_MID_T_FRAGMENT) {
-        res = _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
+        res = _z_fragment_encode(wbf, 0, &msg->_body._fragment);
         if (res < 0) {
             return res;
         }
-        _z_transport_message_t *msg_mut = (_z_transport_message_t *)msg;
-        msg_mut->_header = 0;
         *handled = true;
     }
     return res;
@@ -74,7 +72,7 @@ static z_result_t read_until_sample(const z_loaned_session_t *zs, const z_loaned
         } else if (res == _Z_RES_OK) {
             z_view_string_t keystr;
             z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
-            printf("[rx] Received packet on %.*s, len: %ld\n", (int)z_string_len(z_loan(keystr)),
+            printf("[rx] Received packet on %.*s, len: %zu\n", (int)z_string_len(z_loan(keystr)),
                    z_string_data(z_loan(keystr)), z_bytes_len(z_sample_payload(z_loan(sample))));
             z_drop(z_move(sample));
             dump_zbuf_state("[recv success zbuf]", zbuf);

@@ -49,10 +49,10 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
             break;
         }
 
-        z_result_t local_ret = _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
-        if (local_ret != _Z_RES_OK) {
-            _Z_ERROR("Dropping message due to processing error: %d", local_ret);
-            _z_t_msg_clear(&t_msg);
+        ret = _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
+        if (ret != _Z_RES_OK) {
+            _Z_ERROR("Dropping message due to processing error: %d", ret);
+            break;
         }
     }
     // Move the read position of the read buffer
