@@ -1,6 +1,19 @@
-zp_platform_set_system_layer(bsd)
-zp_platform_set_network(posix)
-zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/link/backend/udp/raweth_unix.c")
-zp_platform_set_tcp_backend(tcp_posix)
-zp_platform_set_udp_backend(posix)
-zp_platform_set_serial_backend(tty_posix)
+set(ZP_PLATFORM_SYSTEM_LAYER bsd)
+set(ZP_PLATFORM_SYSTEM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/unix/system.c")
+set(ZP_PLATFORM_SYSTEM_COMPILE_DEFINITIONS ZENOH_BSD)
+set(ZP_PLATFORM_NETWORK posix)
+set(ZP_PLATFORM_NETWORK_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/unix/network.c")
+set(ZP_PLATFORM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/udp/raweth_unix.c")
+set(ZP_PLATFORM_TCP_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/tcp_posix.c")
+set(ZP_PLATFORM_UDP_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_posix.c")
+if(ZP_UDP_MULTICAST_ENABLED)
+  list(APPEND ZP_PLATFORM_UDP_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_posix.c")
+endif()
+set(ZP_PLATFORM_SERIAL_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/tty_posix.c")

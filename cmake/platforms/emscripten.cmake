@@ -1,3 +1,9 @@
-zp_platform_set_system_layer(emscripten)
-zp_platform_set_network(emscripten)
-zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/link/backend/upper/ws_emscripten.c")
+set(ZP_PLATFORM_SYSTEM_LAYER emscripten)
+set(ZP_PLATFORM_SYSTEM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/emscripten/system.c")
+set(ZP_PLATFORM_SYSTEM_COMPILE_DEFINITIONS ZENOH_EMSCRIPTEN)
+set(ZP_PLATFORM_NETWORK emscripten)
+set(ZP_PLATFORM_NETWORK_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/emscripten/network.c")
+set(ZP_PLATFORM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/upper/ws_emscripten.c")

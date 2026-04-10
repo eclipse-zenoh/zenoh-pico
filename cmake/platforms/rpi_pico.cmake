@@ -1,7 +1,21 @@
-zp_platform_set_system_layer(rpi_pico)
+set(ZP_PLATFORM_SYSTEM_LAYER rpi_pico)
+set(ZP_PLATFORM_SYSTEM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/rpi_pico/system.c")
+set(ZP_PLATFORM_SYSTEM_COMPILE_DEFINITIONS ZENOH_RPI_PICO)
 set(CHECK_THREADS OFF)
-zp_platform_add_sources("${PROJECT_SOURCE_DIR}/src/system/rpi_pico/usb_uart.c")
-zp_platform_set_network(rpi_pico)
-zp_platform_set_tcp_backend(tcp_lwip)
-zp_platform_set_udp_backend(rpi_pico)
-zp_platform_set_serial_backend(uart_rpi_pico)
+set(ZP_PLATFORM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/rpi_pico/usb_uart.c")
+set(ZP_PLATFORM_NETWORK lwip)
+set(ZP_PLATFORM_NETWORK_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/socket/lwip.c")
+set(ZP_PLATFORM_TCP_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/tcp_lwip.c")
+set(ZP_PLATFORM_UDP_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_lwip.c")
+if(ZP_UDP_MULTICAST_ENABLED)
+  list(APPEND ZP_PLATFORM_UDP_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_rpi_pico.c"
+       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_lwip_common.c")
+endif()
+set(ZP_PLATFORM_SERIAL_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_rpi_pico.c")

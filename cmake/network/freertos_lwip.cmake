@@ -1,1 +1,0 @@
-set(ZP_NETWORK_SOCKET_COMPONENT "lwip")

@@ -1,1 +1,1 @@
-set(ZP_NETWORK_SOCKET_COMPONENT "mbed")
+set(ZP_NETWORK_SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/system/mbed/network.cpp")

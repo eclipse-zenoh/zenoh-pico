@@ -1,4 +1,10 @@
-zp_platform_set_system_layer(flipper)
-zp_platform_set_network(flipper)
+set(ZP_PLATFORM_SYSTEM_LAYER flipper)
+set(ZP_PLATFORM_SYSTEM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/flipper/system.c")
+set(ZP_PLATFORM_SYSTEM_COMPILE_DEFINITIONS ZENOH_FLIPPER)
+set(ZP_PLATFORM_NETWORK flipper)
+set(ZP_PLATFORM_NETWORK_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/flipper/network.c")
 set(CHECK_THREADS OFF)
-zp_platform_set_serial_backend(uart_flipper)
+set(ZP_PLATFORM_SERIAL_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_flipper.c")

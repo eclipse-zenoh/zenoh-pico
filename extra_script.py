@@ -116,7 +116,6 @@ def _has_cmake_arg(name):
 if (
     ZP_PLATFORM is not None
     and not _has_cmake_arg("-DZP_PLATFORM")
-    and not _has_cmake_arg("-DZP_SYSTEM_LAYER")
 ):
     cmake_extra_args_list.append(f"-DZP_PLATFORM={ZP_PLATFORM}")
 

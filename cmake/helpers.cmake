@@ -145,6 +145,43 @@ function(zp_target_requires_cxx target out_var)
   set(${out_var} "${_zp_requires_cxx}" PARENT_SCOPE)
 endfunction()
 
+macro(zp_find_external_package package_name)
+  get_property(_zp_imported_targets_before DIRECTORY PROPERTY IMPORTED_TARGETS)
+  find_package(${package_name} CONFIG REQUIRED)
+  get_property(_zp_imported_targets_after DIRECTORY PROPERTY IMPORTED_TARGETS)
+
+  set(_zp_new_imported_targets ${_zp_imported_targets_after})
+  if(NOT "${_zp_imported_targets_before}" STREQUAL "")
+    list(REMOVE_ITEM _zp_new_imported_targets ${_zp_imported_targets_before})
+  endif()
+
+  foreach(_zp_target IN LISTS _zp_new_imported_targets)
+    list(FIND ZP_EXTERNAL_IMPORTED_TARGETS "${_zp_target}" _zp_target_index)
+    if(_zp_target_index EQUAL -1)
+      list(APPEND ZP_EXTERNAL_IMPORTED_TARGETS "${_zp_target}")
+      list(APPEND ZP_EXTERNAL_IMPORTED_TARGET_PACKAGES "${package_name}")
+    endif()
+  endforeach()
+endmacro()
+
+function(zp_collect_target_packages out_var)
+  set(_zp_packages "")
+  foreach(_zp_target IN LISTS ARGN)
+    if("${_zp_target}" STREQUAL "" OR NOT TARGET "${_zp_target}")
+      continue()
+    endif()
+
+    list(FIND ZP_EXTERNAL_IMPORTED_TARGETS "${_zp_target}" _zp_target_index)
+    if(NOT _zp_target_index EQUAL -1)
+      list(GET ZP_EXTERNAL_IMPORTED_TARGET_PACKAGES ${_zp_target_index} _zp_package_name)
+      list(APPEND _zp_packages "${_zp_package_name}")
+    endif()
+  endforeach()
+
+  list(REMOVE_DUPLICATES _zp_packages)
+  set(${out_var} "${_zp_packages}" PARENT_SCOPE)
+endfunction()
+
 
 #
 # Unset variables if they have empty string value

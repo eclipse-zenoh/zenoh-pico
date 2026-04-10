@@ -22,7 +22,6 @@ include(helpers)
 include(backends)
 include(platforms)
 include(system)
-include(socket)
 include(network)
 
 # Configure header file to define the project version
@@ -49,7 +48,6 @@ include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 set(ZP_PLATFORM "" CACHE STRING "Built-in or external platform profile")
-set(ZP_SYSTEM_LAYER "" CACHE STRING "Built-in or external system layer")
 set(ZP_EXTERNAL_PACKAGES "" CACHE STRING "Optional external CMake packages to load")
 set(ZP_NETWORK "" CACHE STRING "Override the selected network implementation")
 set(ZP_TCP_BACKEND "" CACHE STRING "Override the selected TCP transport backend")
@@ -64,18 +62,16 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 set(ZP_PLATFORM_DIRS "")
+set(ZP_EXTERNAL_IMPORTED_TARGETS "")
+set(ZP_EXTERNAL_IMPORTED_TARGET_PACKAGES "")
 if(NOT ZP_EXTERNAL_PACKAGES STREQUAL "")
   foreach(_zp_external_package IN LISTS ZP_EXTERNAL_PACKAGES)
-    find_package(${_zp_external_package} CONFIG REQUIRED)
+    zp_find_external_package("${_zp_external_package}")
   endforeach()
 endif()
 find_package(zenohpico_platform CONFIG REQUIRED CONFIGS platformConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
              NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_system CONFIG REQUIRED CONFIGS systemConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 find_package(zenohpico_network CONFIG REQUIRED CONFIGS networkConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_socket CONFIG REQUIRED CONFIGS socketConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
              NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 find_package(zenohpico_tcp_backend CONFIG REQUIRED CONFIGS tcp_backendConfig.cmake
              PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -83,40 +79,36 @@ find_package(zenohpico_udp_backend CONFIG REQUIRED CONFIGS udp_backendConfig.cma
              PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 find_package(zenohpico_serial_backend CONFIG REQUIRED CONFIGS serial_backendConfig.cmake
              PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-if(ZP_PLATFORM STREQUAL "" AND ZP_SYSTEM_LAYER STREQUAL "")
+if(DEFINED ZP_SYSTEM_LAYER AND NOT "${ZP_SYSTEM_LAYER}" STREQUAL "")
+  message(FATAL_ERROR "ZP_SYSTEM_LAYER is no longer supported. Use ZP_PLATFORM instead.")
+endif()
+if(ZP_PLATFORM STREQUAL "")
   zp_detect_default_platform(_zp_default_platform)
   set(ZP_PLATFORM "${_zp_default_platform}")
 endif()
-set(_zp_resolved_platform_profile "${ZP_PLATFORM}")
-if(_zp_resolved_platform_profile STREQUAL "" AND NOT ZP_SYSTEM_LAYER STREQUAL "")
-  zp_resolve_platform_profile_for_system_layer(_zp_resolved_platform_profile "${ZP_SYSTEM_LAYER}")
+if(ZP_PLATFORM STREQUAL "")
+  message(FATAL_ERROR "No platform profile selected. Set ZP_PLATFORM.")
 endif()
-if(_zp_resolved_platform_profile STREQUAL "")
-  message(FATAL_ERROR "No platform profile selected. Set ZP_PLATFORM or ZP_SYSTEM_LAYER.")
+if(DEFINED Z_FEATURE_LINK_UDP_MULTICAST)
+  set(_zp_link_udp_multicast "${Z_FEATURE_LINK_UDP_MULTICAST}")
+else()
+  set(_zp_link_udp_multicast "1")
 endif()
-if(NOT ZP_PLATFORM STREQUAL "" AND NOT ZP_SYSTEM_LAYER STREQUAL "")
-  zp_resolve_platform_profile_for_system_layer(_zp_system_layer_platform_profile "${ZP_SYSTEM_LAYER}")
-  if(_zp_system_layer_platform_profile STREQUAL "")
-    message(FATAL_ERROR "Unknown system layer: ${ZP_SYSTEM_LAYER}")
-  elseif(NOT _zp_system_layer_platform_profile STREQUAL "${_zp_resolved_platform_profile}")
-    message(FATAL_ERROR
-            "Platform profile ${ZP_PLATFORM} does not match system layer ${ZP_SYSTEM_LAYER}.")
-  endif()
+if(DEFINED Z_FEATURE_MULTICAST_TRANSPORT)
+  set(_zp_multicast_transport "${Z_FEATURE_MULTICAST_TRANSPORT}")
+else()
+  set(_zp_multicast_transport "1")
 endif()
-set(ZP_PLATFORM "${_zp_resolved_platform_profile}")
+if("${_zp_link_udp_multicast}" STREQUAL "1" AND "${_zp_multicast_transport}" STREQUAL "1")
+  set(ZP_UDP_MULTICAST_ENABLED ON)
+else()
+  set(ZP_UDP_MULTICAST_ENABLED OFF)
+endif()
 zp_load_platform_profile("${ZP_PLATFORM}")
-if(ZP_SYSTEM_LAYER STREQUAL "")
-  if(NOT ZP_PLATFORM_SYSTEM_LAYER STREQUAL "")
-    set(ZP_SYSTEM_LAYER "${ZP_PLATFORM_SYSTEM_LAYER}")
-  else()
-    get_property(_zp_profile_system_layer_set GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}" SET)
-    if(_zp_profile_system_layer_set)
-      get_property(_zp_resolved_system_layer GLOBAL PROPERTY "ZP_PROFILE_SYSTEM_LAYER_${ZP_PLATFORM}")
-      set(ZP_SYSTEM_LAYER "${_zp_resolved_system_layer}")
-    else()
-      set(ZP_SYSTEM_LAYER "${ZP_PLATFORM}")
-    endif()
-  endif()
+if(NOT ZP_PLATFORM_SYSTEM_LAYER STREQUAL "")
+  set(ZP_SYSTEM_LAYER "${ZP_PLATFORM_SYSTEM_LAYER}")
+else()
+  set(ZP_SYSTEM_LAYER "${ZP_PLATFORM}")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -258,50 +250,137 @@ if(ZP_SYSTEM_LAYER STREQUAL "macos")
   set(MACOSX_RPATH "ON")
 endif()
 
-if(ZP_TCP_BACKEND STREQUAL "")
-  set(ZP_TCP_BACKEND "${ZP_PLATFORM_DEFAULT_TCP_BACKEND}")
-endif()
-zp_udp_multicast_enabled(_zp_udp_multicast_enabled)
+foreach(_zp_inline_component IN ITEMS NETWORK TCP UDP SERIAL)
+  string(TOLOWER "${_zp_inline_component}" _zp_inline_component_lc)
+  set("_zp_platform_has_inline_${_zp_inline_component_lc}" OFF)
+  foreach(_zp_component_var IN ITEMS
+          IMPORTED_TARGET
+          SOURCE_FILES
+          INCLUDE_DIRS
+          COMPILE_DEFINITIONS)
+    if(NOT "${ZP_PLATFORM_${_zp_inline_component}_${_zp_component_var}}" STREQUAL "")
+      set("_zp_platform_has_inline_${_zp_inline_component_lc}" ON)
+      break()
+    endif()
+  endforeach()
+endforeach()
+
+set(_zp_effective_tcp_backend "")
 set(_zp_selected_udp_backend "${ZP_UDP_BACKEND}")
-if("${_zp_selected_udp_backend}" STREQUAL "")
-  set(_zp_selected_udp_backend "${ZP_PLATFORM_DEFAULT_UDP_BACKEND}")
-endif()
-set(_zp_effective_udp_backend "${_zp_selected_udp_backend}")
-if(ZP_SERIAL_BACKEND STREQUAL "")
-  set(ZP_SERIAL_BACKEND "${ZP_PLATFORM_DEFAULT_SERIAL_BACKEND}")
+set(_zp_effective_udp_backend "")
+set(_zp_effective_serial_backend "")
+set(_zp_selected_network "${ZP_NETWORK}")
+if(_zp_selected_network STREQUAL "")
+  if(NOT ZP_PLATFORM_NETWORK STREQUAL "")
+    set(_zp_selected_network "${ZP_PLATFORM_NETWORK}")
+  elseif(NOT _zp_platform_has_inline_network)
+    message(FATAL_ERROR
+            "Platform profile ${ZP_PLATFORM} does not define a network. "
+            "Set ZP_PLATFORM_NETWORK in the platform descriptor or pass -DZP_NETWORK=...")
+  endif()
+elseif(NOT ZP_PLATFORM_NETWORK STREQUAL "" AND NOT _zp_selected_network STREQUAL "${ZP_PLATFORM_NETWORK}")
+  message(FATAL_ERROR
+          "Network ${_zp_selected_network} does not match platform profile ${ZP_PLATFORM}. "
+          "Expected network: ${ZP_PLATFORM_NETWORK}")
 endif()
 if(ZP_NETWORK STREQUAL "")
-  set(ZP_NETWORK "${ZP_PLATFORM_NETWORK}")
-elseif(NOT ZP_PLATFORM_NETWORK STREQUAL "" AND NOT ZP_NETWORK STREQUAL "${ZP_PLATFORM_NETWORK}")
-  message(FATAL_ERROR
-          "Network ${ZP_NETWORK} does not match platform profile ${ZP_PLATFORM}. "
-          "Expected network: ${ZP_PLATFORM_NETWORK}")
-elseif(ZP_PLATFORM_NETWORK STREQUAL "")
-  message(FATAL_ERROR
-          "Platform profile ${ZP_PLATFORM} does not define a network. "
-          "Set zp_platform_set_network(...) in the platform descriptor.")
+  if(_zp_platform_has_inline_network)
+    set(ZP_NETWORK_IMPORTED_TARGET "")
+    set(ZP_NETWORK_SOURCE_FILES "")
+    set(ZP_NETWORK_INCLUDE_DIRS "")
+    set(ZP_NETWORK_COMPILE_DEFINITIONS "${ZP_PLATFORM_NETWORK_COMPILE_DEFINITIONS}")
+    set(_zp_network_has_builtin_component OFF)
+    foreach(_zp_component_var IN ITEMS SOURCE_FILES INCLUDE_DIRS)
+      if(NOT "${ZP_PLATFORM_NETWORK_${_zp_component_var}}" STREQUAL "")
+        set(_zp_network_has_builtin_component ON)
+        break()
+      endif()
+    endforeach()
+
+    if(NOT "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" STREQUAL "" AND _zp_network_has_builtin_component)
+      message(FATAL_ERROR
+              "Network from ${ZP_PLATFORM_PROFILE_FILE} may not define both "
+              "ZP_PLATFORM_NETWORK_IMPORTED_TARGET and built-in source/include variables")
+    endif()
+
+    if(NOT "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" STREQUAL "")
+      if(NOT TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
+        message(FATAL_ERROR
+                "Network from ${ZP_PLATFORM_PROFILE_FILE} references missing target "
+                "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
+      endif()
+      get_property(_zp_is_imported TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" PROPERTY IMPORTED)
+      if(NOT _zp_is_imported)
+        message(FATAL_ERROR
+                "Network from ${ZP_PLATFORM_PROFILE_FILE} requires "
+                "ZP_PLATFORM_NETWORK_IMPORTED_TARGET to name an imported/exported package target. "
+                "Local targets created directly inside package config files are not supported "
+                "because they break static install/export paths.")
+      endif()
+      set(ZP_NETWORK_IMPORTED_TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
+    else()
+      if("${ZP_PLATFORM_NETWORK_SOURCE_FILES}" STREQUAL "")
+        message(FATAL_ERROR
+                "Network from ${ZP_PLATFORM_PROFILE_FILE} must define either "
+                "ZP_PLATFORM_NETWORK_IMPORTED_TARGET or ZP_PLATFORM_NETWORK_SOURCE_FILES")
+      endif()
+      set(ZP_NETWORK_SOURCE_FILES "${ZP_PLATFORM_NETWORK_SOURCE_FILES}")
+      set(ZP_NETWORK_INCLUDE_DIRS "${ZP_PLATFORM_NETWORK_INCLUDE_DIRS}")
+      set(ZP_NETWORK_COMPILE_OPTIONS "")
+      set(ZP_NETWORK_LINK_LIBRARIES "")
+    endif()
+  else()
+    zp_resolve_network("${_zp_selected_network}")
+  endif()
+else()
+  zp_resolve_network("${_zp_selected_network}")
 endif()
-zp_resolve_network("${ZP_NETWORK}")
-set(ZP_SOCKET_COMPONENT "${ZP_NETWORK_SOCKET_COMPONENT}")
-zp_resolve_system_layer("${ZP_SYSTEM_LAYER}")
-if(NOT ZP_SOCKET_COMPONENT STREQUAL "")
-  zp_resolve_socket_component("${ZP_SOCKET_COMPONENT}")
+set(ZP_NETWORK "${_zp_selected_network}")
+zp_resolve_system_layer("${ZP_PLATFORM_PROFILE_FILE}")
+
+if(ZP_TCP_BACKEND STREQUAL "")
+  if(_zp_platform_has_inline_tcp)
+    zp_resolve_inline_backend("ZP_PLATFORM_TCP" "TCP backend" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_TCP_BACKEND")
+    set(_zp_effective_tcp_backend "platform-inline")
+  endif()
+else()
+  zp_resolve_backend("${ZP_TCP_BACKEND}" "TCP backend" "ZP_TCP_BACKEND" ${ZP_TCP_BACKEND_DIRS})
+  set(_zp_effective_tcp_backend "${ZP_TCP_BACKEND}")
 endif()
-if(NOT "${_zp_selected_udp_backend}" STREQUAL "")
-  zp_resolve_udp_backend("${_zp_selected_udp_backend}")
+
+if("${_zp_selected_udp_backend}" STREQUAL "")
+  if(_zp_platform_has_inline_udp)
+    zp_resolve_inline_backend("ZP_PLATFORM_UDP" "UDP transport backend" "${ZP_PLATFORM_PROFILE_FILE}"
+                              "ZP_UDP_BACKEND")
+    set(_zp_effective_udp_backend "platform-inline")
+  endif()
+else()
+  zp_resolve_backend("${_zp_selected_udp_backend}" "UDP transport backend" "ZP_UDP_BACKEND"
+                     ${ZP_UDP_BACKEND_DIRS})
+  set(_zp_effective_udp_backend "${_zp_selected_udp_backend}")
 endif()
-zp_resolve_tcp_backend("${ZP_TCP_BACKEND}")
-zp_resolve_serial_backend("${ZP_SERIAL_BACKEND}")
-zp_validate_backend_selection(tcp "${ZP_TCP_BACKEND}" "${ZP_TCP_BACKEND_SOCKET_COMPONENT}"
+
+if(ZP_SERIAL_BACKEND STREQUAL "")
+  if(_zp_platform_has_inline_serial)
+    zp_resolve_inline_backend("ZP_PLATFORM_SERIAL" "serial backend" "${ZP_PLATFORM_PROFILE_FILE}"
+                              "ZP_SERIAL_BACKEND")
+    set(_zp_effective_serial_backend "platform-inline")
+  endif()
+else()
+  zp_resolve_backend("${ZP_SERIAL_BACKEND}" "serial backend" "ZP_SERIAL_BACKEND"
+                     ${ZP_SERIAL_BACKEND_DIRS})
+  set(_zp_effective_serial_backend "${ZP_SERIAL_BACKEND}")
+endif()
+
+zp_validate_backend_selection(tcp "${_zp_effective_tcp_backend}" "${ZP_TCP_BACKEND_NETWORK}"
                               "${ZP_TCP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
-zp_validate_backend_selection(udp "${_zp_effective_udp_backend}"
-                              "${ZP_UDP_BACKEND_SOCKET_COMPONENT}"
-                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}"
-                              "${ZP_SYSTEM_LAYER}" "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
-zp_validate_backend_selection(serial "${ZP_SERIAL_BACKEND}" "${ZP_SERIAL_BACKEND_SOCKET_COMPONENT}"
+                              "${ZP_NETWORK}")
+zp_validate_backend_selection(udp "${_zp_effective_udp_backend}" "${ZP_UDP_BACKEND_NETWORK}"
+                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
+                              "${ZP_NETWORK}")
+zp_validate_backend_selection(serial "${_zp_effective_serial_backend}" "${ZP_SERIAL_BACKEND_NETWORK}"
                               "${ZP_SERIAL_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}" "${ZP_SOCKET_COMPONENT}")
+                              "${ZP_NETWORK}")
 set(_zp_selected_platform_glob_sources "")
 foreach(_zp_platform_source_glob IN LISTS ZP_PLATFORM_SOURCE_GLOBS)
   file(GLOB _zp_globbed_platform_sources ${_zp_platform_source_glob})
@@ -311,7 +390,6 @@ set(_zp_selected_component_sources
     ${_zp_selected_platform_glob_sources}
     ${ZP_PLATFORM_SOURCE_FILES}
     ${ZP_SYSTEM_SOURCE_FILES}
-    ${ZP_SOCKET_COMPONENT_SOURCE_FILES}
     ${ZP_NETWORK_SOURCE_FILES}
     ${ZP_TCP_BACKEND_SOURCE_FILES}
     ${ZP_UDP_BACKEND_SOURCE_FILES}
@@ -319,28 +397,26 @@ set(_zp_selected_component_sources
 set(_zp_selected_component_include_dirs
     ${ZP_PLATFORM_INCLUDE_DIRS}
     ${ZP_SYSTEM_INCLUDE_DIRS}
-    ${ZP_SOCKET_COMPONENT_INCLUDE_DIRS}
     ${ZP_NETWORK_INCLUDE_DIRS}
     ${ZP_TCP_BACKEND_INCLUDE_DIRS}
     ${ZP_UDP_BACKEND_INCLUDE_DIRS}
     ${ZP_SERIAL_BACKEND_INCLUDE_DIRS})
 set(_zp_selected_component_compile_definitions
     ${ZP_SYSTEM_COMPILE_DEFINITIONS}
-    ${ZP_SOCKET_COMPONENT_COMPILE_DEFINITIONS}
     ${ZP_NETWORK_COMPILE_DEFINITIONS}
     ${ZP_TCP_BACKEND_COMPILE_DEFINITIONS}
     ${ZP_UDP_BACKEND_COMPILE_DEFINITIONS}
     ${ZP_SERIAL_BACKEND_COMPILE_DEFINITIONS})
 set(_zp_selected_component_compile_options
+    ${ZP_PLATFORM_COMPILE_OPTIONS}
     ${ZP_SYSTEM_COMPILE_OPTIONS}
-    ${ZP_SOCKET_COMPONENT_COMPILE_OPTIONS}
     ${ZP_NETWORK_COMPILE_OPTIONS}
     ${ZP_TCP_BACKEND_COMPILE_OPTIONS}
     ${ZP_UDP_BACKEND_COMPILE_OPTIONS}
     ${ZP_SERIAL_BACKEND_COMPILE_OPTIONS})
 set(_zp_selected_component_link_libraries
+    ${ZP_PLATFORM_LINK_LIBRARIES}
     ${ZP_SYSTEM_LINK_LIBRARIES}
-    ${ZP_SOCKET_COMPONENT_LINK_LIBRARIES}
     ${ZP_NETWORK_LINK_LIBRARIES}
     ${ZP_TCP_BACKEND_LINK_LIBRARIES}
     ${ZP_UDP_BACKEND_LINK_LIBRARIES}
@@ -351,6 +427,7 @@ if(NOT "${ZP_SYSTEM_IMPORTED_TARGET}" STREQUAL "")
   list(APPEND _zp_public_imported_component_targets "${ZP_SYSTEM_IMPORTED_TARGET}")
 endif()
 foreach(_zp_component_target IN ITEMS
+        "${ZP_NETWORK_IMPORTED_TARGET}"
         "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
         "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
         "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
@@ -496,12 +573,12 @@ if(ZP_SYSTEM_LAYER STREQUAL "freertos_plus_tcp" AND Z_FEATURE_LINK_UDP_MULTICAST
   set(Z_FEATURE_LINK_UDP_MULTICAST 0 CACHE STRING "Toggle UDP multicast links" FORCE)
 endif()
 
-if(ZP_NETWORK STREQUAL "" AND
+if(ZP_NETWORK STREQUAL "" AND NOT _zp_platform_has_inline_network AND
    (Z_FEATURE_LINK_TCP OR Z_FEATURE_LINK_TLS OR Z_FEATURE_LINK_WS OR
     Z_FEATURE_LINK_UDP_MULTICAST OR Z_FEATURE_LINK_UDP_UNICAST))
   message(FATAL_ERROR
           "No network selected for platform profile ${ZP_PLATFORM}. "
-          "Set zp_platform_set_network(...) in the platform descriptor or pass -DZP_NETWORK=...")
+          "Set ZP_PLATFORM_NETWORK in the platform descriptor or pass -DZP_NETWORK=...")
 endif()
 
 if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_PUBLICATION OR NOT Z_FEATURE_LIVELINESS))
@@ -566,14 +643,14 @@ message(STATUS "System layer: ${ZP_SYSTEM_LAYER}")
 if(NOT ZP_NETWORK STREQUAL "")
   message(STATUS "Selected network: ${ZP_NETWORK}")
 endif()
-if(NOT ZP_TCP_BACKEND STREQUAL "")
-  message(STATUS "Selected TCP transport backend: ${ZP_TCP_BACKEND}")
+if(NOT "${_zp_effective_tcp_backend}" STREQUAL "")
+  message(STATUS "Selected TCP transport backend: ${_zp_effective_tcp_backend}")
 endif()
 if(NOT "${_zp_effective_udp_backend}" STREQUAL "")
   message(STATUS "Selected UDP transport backend: ${_zp_effective_udp_backend}")
 endif()
-if(NOT ZP_SERIAL_BACKEND STREQUAL "")
-  message(STATUS "Selected serial transport backend: ${ZP_SERIAL_BACKEND}")
+if(NOT "${_zp_effective_serial_backend}" STREQUAL "")
+  message(STATUS "Selected serial transport backend: ${_zp_effective_serial_backend}")
 endif()
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
@@ -786,6 +863,14 @@ endif()
 if(PICO_SHARED)
   list(APPEND PICO_LIBS zenohpico_shared)
 endif()
+
+set(_zp_required_dependency_targets ${_zp_public_imported_component_targets})
+if(PICO_STATIC)
+  list(APPEND _zp_required_dependency_targets ${_zp_private_imported_component_targets})
+endif()
+list(REMOVE_DUPLICATES _zp_required_dependency_targets)
+zp_collect_target_packages(ZP_PACKAGE_DEPENDENCY_PACKAGES
+                           ${_zp_required_dependency_targets})
 
 install(TARGETS ${PICO_LIBS}
   EXPORT zenohpicoTargets

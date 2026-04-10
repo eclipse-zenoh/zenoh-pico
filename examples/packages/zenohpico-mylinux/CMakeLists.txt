@@ -54,6 +54,4 @@ install(FILES "${CMAKE_CURRENT_LIST_DIR}/include/zenoh_mylinux_platform.h"
 install(FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/zenohpico-mylinuxConfig.cmake"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico-mylinux")
 install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/cmake/platforms"
-                  "${CMAKE_CURRENT_LIST_DIR}/cmake/system"
-                  "${CMAKE_CURRENT_LIST_DIR}/cmake/backends"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico-mylinux")
