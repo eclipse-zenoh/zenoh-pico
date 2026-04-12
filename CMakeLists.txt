@@ -26,17 +26,21 @@ set(ZENOH_PICO ${PROJECT_VERSION})
 set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
 set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
 set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
-set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+if(PROJECT_VERSION_TWEAK STREQUAL "")
+  set(ZENOH_PICO_TWEAK 0)
+else()
+  set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+endif()
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
   @ONLY
 )
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
-  ${CMAKE_CURRENT_BINARY_DIR}/library.json
+  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
   @ONLY
 )
 
@@ -420,12 +424,6 @@ message(STATUS "Building with feature config:\n\
 * ADMIN SPACE: ${Z_FEATURE_ADMIN_SPACE}")
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
-  @ONLY
-)
-
-configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
   @ONLY
@@ -673,7 +671,7 @@ install(TARGETS ${PICO_LIBS}
   ARCHIVE COMPONENT Dev
   RUNTIME COMPONENT Runtime
 )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
   DESTINATION include
   COMPONENT Headers
 )
