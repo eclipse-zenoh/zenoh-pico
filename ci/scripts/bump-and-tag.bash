@@ -18,7 +18,16 @@ export GIT_COMMITTER_EMAIL=$git_user_email
 # Bump CMake project version
 printf '%s' "$version" > version.txt
 
-git commit version.txt -m "chore: Bump version to $version"
+# Refresh the in-tree copies of zenoh-pico.h and library.json so the
+# release commit (and the tag that points at it) is internally
+# consistent. A short CMake configure is enough — configure_file()
+# writes the files into the source tree as part of the normal
+# configure step.
+cmake -S . -B build-bump -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+rm -rf build-bump
+
+git commit version.txt include/zenoh-pico.h library.json \
+  -m "chore: Bump version to $version"
 if [[ ${live_run} == true ]]; then
   git tag --force "$version" -m "v$version"
   git show-ref --tags
