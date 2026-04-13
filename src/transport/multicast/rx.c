@@ -34,34 +34,30 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
-static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_slice_t *addr) {
-    _Z_DEBUG(">> recv session msg");
+z_result_t _z_multicast_recv_zbuf(_z_transport_multicast_t *ztm, size_t *to_read) {
     z_result_t ret = _Z_RES_OK;
 
-    size_t to_read = 0;
     do {
+        // Read bytes from socket to the main buffer
         switch (ztm->_common._link->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
+                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, &ztm->_zbuf_addr);
                     if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztm->_common._zbuf);
-                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         break;
                     }
                 }
                 // Get stream size
-                to_read = _z_read_stream_size(&ztm->_common._zbuf);
+                *to_read = _z_read_stream_size(&ztm->_common._zbuf);
                 // Read data
-                if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
-                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
-                    if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
+                if (_z_zbuf_len(&ztm->_common._zbuf) < *to_read) {
+                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, NULL);
+                    if (_z_zbuf_len(&ztm->_common._zbuf) < *to_read) {
                         _z_zbuf_set_rpos(&ztm->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                         _z_zbuf_compact(&ztm->_common._zbuf);
-                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         break;
                     }
@@ -69,11 +65,14 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
                 break;
             // Datagram capable links
             case Z_LINK_CAP_FLOW_DATAGRAM:
-                _z_zbuf_compact(&ztm->_common._zbuf);
-                to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
-                if (to_read == SIZE_MAX) {
-                    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
-                    ret = _Z_ERR_TRANSPORT_RX_FAILED;
+                if (_z_zbuf_len(&ztm->_common._zbuf) == 0) {
+                    _z_zbuf_compact(&ztm->_common._zbuf);
+                    *to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, &ztm->_zbuf_addr);
+                    if (*to_read == SIZE_MAX) {
+                        ret = _Z_ERR_TRANSPORT_RX_FAILED;
+                    }
+                } else {
+                    *to_read = _z_zbuf_len(&ztm->_common._zbuf);
                 }
                 break;
             default:
@@ -81,21 +80,35 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
         }
     } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
 
-    if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
-        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
-    }
     return ret;
 }
 
-z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
-    return _z_multicast_recv_t_msg_na(ztm, t_msg, addr);
+z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg) {
+    _Z_DEBUG(">> recv session msg");
+    size_t to_read = 0;
+
+    z_result_t ret = _z_multicast_recv_zbuf(ztm, &to_read);
+
+    if (ret == _Z_RES_OK) {
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
+
+        // Wrap the main buffer to_read bytes
+        _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_common._zbuf, to_read);
+        ret = _z_transport_message_decode(t_msg, &zbuf);
+        if (ret == _Z_RES_OK) {
+            _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) + _z_zbuf_get_rpos(&zbuf));
+        } else {
+            _Z_ERROR("Malformed transport message: %d", ret);
+            _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) + to_read);
+        }
+    }
+
+    return ret;
 }
 #else
-z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
-    _ZP_UNUSED(addr);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

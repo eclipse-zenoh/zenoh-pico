@@ -648,7 +648,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             if (!((a->sin_port == b->sin_port) && (a->sin_addr.s_addr == b->sin_addr.s_addr))) {
                 // If addr is not NULL, it means that the rep was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_slice_make(sizeof(in_addr_t) + sizeof(in_port_t));
+                    addr->len = sizeof(in_addr_t) + sizeof(in_port_t);
                     (void)memcpy((uint8_t *)addr->start, &b->sin_addr.s_addr, sizeof(in_addr_t));
                     (void)memcpy((uint8_t *)(addr->start + sizeof(in_addr_t)), &b->sin_port, sizeof(in_port_t));
                 }

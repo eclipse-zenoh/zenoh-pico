@@ -28,60 +28,31 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
-
-static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, _z_slice_t *addr) {
+static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) {
     size_t to_read = 0;
 
-    // Read bytes from socket to the main buffer
-    switch (ztm->_common._link->_cap._flow) {
-        case Z_LINK_CAP_FLOW_STREAM:
-            if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
-                if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_zbuf_compact(&ztm->_common._zbuf);
-                    return _Z_NO_DATA_PROCESSED;
-                }
-            }
-            // Get stream size
-            to_read = _z_read_stream_size(&ztm->_common._zbuf);
-            // Read data
-            if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
-                _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, NULL);
-                if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
-                    _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
-                    _z_zbuf_compact(&ztm->_common._zbuf);
-                    return _Z_NO_DATA_PROCESSED;
-                }
-            }
-            break;
-        case Z_LINK_CAP_FLOW_DATAGRAM:
-            _z_zbuf_compact(&ztm->_common._zbuf);
-            to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
-            if (to_read == SIZE_MAX) {
-                return _Z_NO_DATA_PROCESSED;
-            }
-            break;
-        default:
-            break;
+    z_result_t ret = _z_multicast_recv_zbuf(ztm, &to_read);
+    if (ret == _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES || ret == _Z_ERR_TRANSPORT_RX_FAILED) {
+        return _Z_NO_DATA_PROCESSED;
+    } else if (ret != _Z_RES_OK) {
+        return ret;
     }
+
     // Wrap the main buffer to_read bytes
     _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_common._zbuf, to_read);
-
     while (_z_zbuf_len(&zbuf) > 0) {
         // Decode one session message
         _z_transport_message_t t_msg;
-        z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf);
-        if (ret == _Z_RES_OK) {
-            ret = _z_multicast_handle_transport_message(ztm, &t_msg, addr);
-
-            if (ret != _Z_RES_OK) {
-                _Z_ERROR("Dropping message due to processing error: %d", ret);
-                return _Z_RES_OK;
-            }
-        } else {
+        ret = _z_transport_message_decode(&t_msg, &zbuf);
+        if (ret != _Z_RES_OK) {
             _Z_ERROR("Connection closed due to malformed message: %d", ret);
-            return ret;
+            break;
+        }
+
+        ret = _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
+        if (ret != _Z_RES_OK) {
+            _Z_ERROR("Dropping message due to processing error: %d", ret);
+            break;
         }
     }
     // Move the read position of the read buffer
@@ -90,23 +61,20 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
         _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    return _Z_RES_OK;
+    return ret;
 }
 
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
-    // Prepare address slice
-    static uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
-    _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
-
     // Read & process a single message
     if (single_read) {
         _z_transport_message_t t_msg;
-        _Z_RETURN_IF_ERR(_z_multicast_recv_t_msg(ztm, &t_msg, &addr));
-        _Z_CLEAN_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &addr), _z_t_msg_clear(&t_msg));
+        _Z_RETURN_IF_ERR(_z_multicast_recv_t_msg(ztm, &t_msg));
+        _Z_CLEAN_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr),
+                               _z_t_msg_clear(&t_msg));
         _z_t_msg_clear(&t_msg);
         return _z_multicast_update_rx_buffer(ztm);
     } else {
-        return _zp_multicast_process_messages(ztm, &addr);
+        return _zp_multicast_process_messages(ztm);
     }
 }
 
@@ -117,9 +85,7 @@ _z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *exec
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
         return _z_fut_fn_result_suspend();
     }
-    uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
-    _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
-    if (_zp_multicast_process_messages(ztm, &addr) < _Z_RES_OK) {
+    if (_zp_multicast_process_messages(ztm) < _Z_RES_OK) {
         // TODO: report failure and disconnect ?
         _Z_WARN("Multicast read task failed");
         return _zp_multicast_failed_result(ztm, executor);

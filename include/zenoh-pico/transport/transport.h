@@ -200,8 +200,14 @@ typedef struct {
     _z_transport_peer_unicast_slist_t *_peers;
 } _z_transport_unicast_t;
 
+#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
+
 typedef struct _z_transport_multicast_t {
     _z_transport_common_t _common;
+    // Persistent source address associated with the current contents of _zbuf.
+    // Required because datagram data may remain buffered across reads.
+    uint8_t _zbuf_addr_buf[_Z_MULTICAST_ADDR_BUFF_SIZE];
+    _z_slice_t _zbuf_addr;
     // Known valid peers
     _z_transport_peer_multicast_slist_t *_peers;
     // T message send function

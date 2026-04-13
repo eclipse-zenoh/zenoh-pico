@@ -51,7 +51,7 @@ z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _
 
 z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t rid);
 
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
 typedef _z_transport_common_t *(*_z_session_transport_override_fn)(_z_session_t *);
 void _z_session_set_transport_common_override(_z_session_transport_override_fn fn);
 

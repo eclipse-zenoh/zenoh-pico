@@ -49,6 +49,12 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
 z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
 z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
+#if defined(Z_TEST_HOOKS)
+typedef z_result_t (*_z_transport_message_encode_override_fn)(_z_wbuf_t *wbf, const _z_transport_message_t *msg,
+                                                              bool *handled);
+void _z_transport_set_message_encode_override(_z_transport_message_encode_override_fn fn);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

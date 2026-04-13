@@ -48,6 +48,9 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
+    // Initialize persistent address buffer
+    ztm->_zbuf_addr = _z_slice_alias_buf(ztm->_zbuf_addr_buf, sizeof(ztm->_zbuf_addr_buf));
+
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztm->_common._batch_state = _Z_BATCHING_IDLE;
@@ -175,6 +178,7 @@ void _z_multicast_transport_clear(_z_transport_multicast_t *ztm) {
     _z_transport_peer_multicast_slist_free(&ztm->_peers);
     _z_transport_common_clear(
         &ztm->_common);  // free common in the very end, as peers might access the link data in common while being freed
+    _z_slice_clear(&ztm->_zbuf_addr);
 }
 
 #else

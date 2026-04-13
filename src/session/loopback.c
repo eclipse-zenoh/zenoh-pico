@@ -25,9 +25,10 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/locality.h"
 
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
 static _z_session_transport_override_fn _z_transport_common_override = NULL;
 
 void _z_session_set_transport_common_override(_z_session_transport_override_fn fn) {
@@ -37,7 +38,7 @@ void _z_session_set_transport_common_override(_z_session_transport_override_fn f
 
 #if Z_FEATURE_SUBSCRIPTION == 1 || Z_FEATURE_QUERYABLE == 1
 static _z_transport_common_t *_z_session_get_transport_common(_z_session_t *zn) {
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
     if (_z_transport_common_override != NULL) {
         _z_transport_common_t *override = _z_transport_common_override(zn);
         if (override != NULL) {

@@ -25,7 +25,7 @@
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
 #include "zenoh-pico/session/loopback.h"
 
 static _z_session_send_override_fn _z_send_n_msg_override = NULL;
@@ -486,7 +486,7 @@ z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z
 
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                          z_congestion_control_t cong_ctrl, void *peer) {
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
     if (_z_send_n_msg_override != NULL) {
         bool handled = false;
         z_result_t override_ret = _z_send_n_msg_override(zn, z_msg, reliability, cong_ctrl, peer, &handled);
