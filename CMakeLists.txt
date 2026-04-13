@@ -678,7 +678,7 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   DESTINATION include
   COMPONENT Headers
-  PATTERN "config.h" EXCLUDE
+  PATTERN "include/zenoh-pico/config.h" EXCLUDE
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
   DESTINATION include/zenoh-pico
