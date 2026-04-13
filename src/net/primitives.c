@@ -548,6 +548,19 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         _Z_ERROR("Non-zero length string should not be NULL");
         return Z_EINVAL;
     }
+    bool allow_local = _z_locality_allows_local(allowed_destination);
+    bool allow_remote = _z_locality_allows_remote(allowed_destination);
+    size_t remote_targets = allow_remote ? _z_transport_get_peers_count(&zn->_tp) : 0;
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    size_t remaining_finals = (allow_local ? 1 : 0) + remote_targets;
+#else
+    _ZP_UNUSED(allow_local);
+    size_t remaining_finals = remote_targets;
+#endif
+    if (remaining_finals == 0) {
+        _z_drop_handler_execute(dropper, arg);
+        return _z_session_is_closed(zn) ? _Z_ERR_SESSION_CLOSED : _Z_RES_OK;
+    }
     _z_keyexpr_t ke_query;
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
@@ -558,10 +571,6 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
             consolidation = Z_CONSOLIDATION_MODE_LATEST;
         }
     }
-    bool allow_local = _z_locality_allows_local(allowed_destination);
-    bool allow_remote = _z_locality_allows_remote(allowed_destination);
-    _z_transport_common_t *common = _z_transport_get_common(&zn->_tp);
-    bool remote_possible = allow_remote && (common != NULL && common->_link != NULL);
 
     bool _anyke_in_parameters = _z_parameters_has_anyke(parameters, parameters_len);
     bool _anyke_option = accept_replies == Z_REPLY_KEYEXPR_ANY;
@@ -594,14 +603,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_arg = arg;
     pq->_timeout = timeout_ms;
     pq->_start_time = z_clock_now();
-    // Count how many finals we expect: one for the local path (if handled_locally)
-    // and one for the remote path (if remote is allowed). Keep at least 1 to avoid stuck pending.
-#if Z_FEATURE_LOCAL_QUERYABLE == 1
-    pq->_remaining_finals = (uint8_t)((allow_local ? 1 : 0) + (allow_remote ? 1 : 0));
-#else
-    _ZP_UNUSED(allow_local);
-    pq->_remaining_finals = 1;
-#endif
+    pq->_remaining_finals = (uint8_t)remaining_finals;
 #ifdef Z_FEATURE_UNSTABLE_API
     ret = _z_pending_query_register_cancellation(pq, opt_cancellation_token, session);
 #else
@@ -611,7 +613,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     // Send query message
     _z_slice_t params =
         (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
-    if (ret == _Z_RES_OK && remote_possible) {
+    if (ret == _Z_RES_OK && remote_targets > 0) {
         _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, &wireexpr, &params, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
