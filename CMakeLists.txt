@@ -19,7 +19,7 @@ project(zenohpico VERSION ${version} LANGUAGES C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(helpers)
-include(backends)
+include(transports)
 include(platforms)
 include(system)
 include(network)
@@ -50,10 +50,10 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 set(ZP_PLATFORM "" CACHE STRING "Built-in or external platform profile")
 set(ZP_EXTERNAL_PACKAGES "" CACHE STRING "Optional external CMake packages to load")
 set(ZP_NETWORK "" CACHE STRING "Override the selected network implementation")
-set(ZP_TCP_BACKEND "" CACHE STRING "Override the selected TCP transport backend")
-set(ZP_UDP_BACKEND "" CACHE STRING "Override the selected UDP transport backend")
-set(ZP_BT_BACKEND "" CACHE STRING "Override the selected BT transport backend")
-set(ZP_SERIAL_BACKEND "" CACHE STRING "Override the selected serial transport backend")
+set(ZP_TCP_TRANSPORT "" CACHE STRING "Override the selected TCP transport")
+set(ZP_UDP_TRANSPORT "" CACHE STRING "Override the selected UDP transport")
+set(ZP_BT_TRANSPORT "" CACHE STRING "Override the selected BT transport")
+set(ZP_SERIAL_TRANSPORT "" CACHE STRING "Override the selected serial transport")
 set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -74,14 +74,14 @@ find_package(zenohpico_platform CONFIG REQUIRED CONFIGS platformConfig.cmake PAT
              NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 find_package(zenohpico_network CONFIG REQUIRED CONFIGS networkConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
              NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_tcp_backend CONFIG REQUIRED CONFIGS tcp_backendConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_udp_backend CONFIG REQUIRED CONFIGS udp_backendConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_bt_backend CONFIG REQUIRED CONFIGS bt_backendConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_serial_backend CONFIG REQUIRED CONFIGS serial_backendConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/backends" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_tcp_transport CONFIG REQUIRED CONFIGS tcp_transportConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_udp_transport CONFIG REQUIRED CONFIGS udp_transportConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_bt_transport CONFIG REQUIRED CONFIGS bt_transportConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+find_package(zenohpico_serial_transport CONFIG REQUIRED CONFIGS serial_transportConfig.cmake
+             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 if(DEFINED ZP_SYSTEM_LAYER AND NOT "${ZP_SYSTEM_LAYER}" STREQUAL "")
   message(FATAL_ERROR "ZP_SYSTEM_LAYER is no longer supported. Use ZP_PLATFORM instead.")
 endif()
@@ -268,11 +268,11 @@ foreach(_zp_inline_component IN ITEMS NETWORK TCP UDP BT SERIAL)
   endforeach()
 endforeach()
 
-set(_zp_effective_tcp_backend "")
-set(_zp_selected_udp_backend "${ZP_UDP_BACKEND}")
-set(_zp_effective_udp_backend "")
-set(_zp_effective_bt_backend "")
-set(_zp_effective_serial_backend "")
+set(_zp_effective_tcp_transport "")
+set(_zp_selected_udp_transport "${ZP_UDP_TRANSPORT}")
+set(_zp_effective_udp_transport "")
+set(_zp_effective_bt_transport "")
+set(_zp_effective_serial_transport "")
 set(_zp_selected_network "${ZP_NETWORK}")
 if(_zp_selected_network STREQUAL "" AND NOT _zp_platform_has_inline_network)
   message(FATAL_ERROR
@@ -334,59 +334,59 @@ endif()
 set(ZP_NETWORK "${_zp_selected_network}")
 zp_resolve_system_layer("${ZP_PLATFORM_PROFILE_FILE}")
 
-if(ZP_TCP_BACKEND STREQUAL "")
+if(ZP_TCP_TRANSPORT STREQUAL "")
   if(_zp_platform_has_inline_tcp)
-    zp_resolve_inline_backend("ZP_PLATFORM_TCP" "TCP backend" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_TCP_BACKEND")
-    set(_zp_effective_tcp_backend "platform-inline")
+    zp_resolve_inline_transport("ZP_PLATFORM_TCP" "TCP transport" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_TCP_TRANSPORT")
+    set(_zp_effective_tcp_transport "platform-inline")
   endif()
 else()
-  zp_resolve_backend("${ZP_TCP_BACKEND}" "TCP backend" "ZP_TCP_BACKEND" ${ZP_TCP_BACKEND_DIRS})
-  set(_zp_effective_tcp_backend "${ZP_TCP_BACKEND}")
+  zp_resolve_transport("${ZP_TCP_TRANSPORT}" "TCP transport" "ZP_TCP_TRANSPORT" ${ZP_TCP_TRANSPORT_DIRS})
+  set(_zp_effective_tcp_transport "${ZP_TCP_TRANSPORT}")
 endif()
 
-if("${_zp_selected_udp_backend}" STREQUAL "")
+if("${_zp_selected_udp_transport}" STREQUAL "")
   if(_zp_platform_has_inline_udp)
-    zp_resolve_inline_backend("ZP_PLATFORM_UDP" "UDP transport backend" "${ZP_PLATFORM_PROFILE_FILE}"
-                              "ZP_UDP_BACKEND")
-    set(_zp_effective_udp_backend "platform-inline")
+    zp_resolve_inline_transport("ZP_PLATFORM_UDP" "UDP transport" "${ZP_PLATFORM_PROFILE_FILE}"
+                              "ZP_UDP_TRANSPORT")
+    set(_zp_effective_udp_transport "platform-inline")
   endif()
 else()
-  zp_resolve_backend("${_zp_selected_udp_backend}" "UDP transport backend" "ZP_UDP_BACKEND"
-                     ${ZP_UDP_BACKEND_DIRS})
-  set(_zp_effective_udp_backend "${_zp_selected_udp_backend}")
+  zp_resolve_transport("${_zp_selected_udp_transport}" "UDP transport" "ZP_UDP_TRANSPORT"
+                     ${ZP_UDP_TRANSPORT_DIRS})
+  set(_zp_effective_udp_transport "${_zp_selected_udp_transport}")
 endif()
 
-if(ZP_BT_BACKEND STREQUAL "")
+if(ZP_BT_TRANSPORT STREQUAL "")
   if(_zp_platform_has_inline_bt)
-    zp_resolve_inline_backend("ZP_PLATFORM_BT" "BT backend" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_BT_BACKEND")
-    set(_zp_effective_bt_backend "platform-inline")
+    zp_resolve_inline_transport("ZP_PLATFORM_BT" "BT transport" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_BT_TRANSPORT")
+    set(_zp_effective_bt_transport "platform-inline")
   endif()
 else()
-  zp_resolve_backend("${ZP_BT_BACKEND}" "BT backend" "ZP_BT_BACKEND"
-                     ${ZP_BT_BACKEND_DIRS})
-  set(_zp_effective_bt_backend "${ZP_BT_BACKEND}")
+  zp_resolve_transport("${ZP_BT_TRANSPORT}" "BT transport" "ZP_BT_TRANSPORT"
+                     ${ZP_BT_TRANSPORT_DIRS})
+  set(_zp_effective_bt_transport "${ZP_BT_TRANSPORT}")
 endif()
 
-if(ZP_SERIAL_BACKEND STREQUAL "")
+if(ZP_SERIAL_TRANSPORT STREQUAL "")
   if(_zp_platform_has_inline_serial)
-    zp_resolve_inline_backend("ZP_PLATFORM_SERIAL" "serial backend" "${ZP_PLATFORM_PROFILE_FILE}"
-                              "ZP_SERIAL_BACKEND")
-    set(_zp_effective_serial_backend "platform-inline")
+    zp_resolve_inline_transport("ZP_PLATFORM_SERIAL" "serial transport" "${ZP_PLATFORM_PROFILE_FILE}"
+                              "ZP_SERIAL_TRANSPORT")
+    set(_zp_effective_serial_transport "platform-inline")
   endif()
 else()
-  zp_resolve_backend("${ZP_SERIAL_BACKEND}" "serial backend" "ZP_SERIAL_BACKEND"
-                     ${ZP_SERIAL_BACKEND_DIRS})
-  set(_zp_effective_serial_backend "${ZP_SERIAL_BACKEND}")
+  zp_resolve_transport("${ZP_SERIAL_TRANSPORT}" "serial transport" "ZP_SERIAL_TRANSPORT"
+                     ${ZP_SERIAL_TRANSPORT_DIRS})
+  set(_zp_effective_serial_transport "${ZP_SERIAL_TRANSPORT}")
 endif()
 
-zp_validate_backend_selection(tcp "${_zp_effective_tcp_backend}"
-                              "${ZP_TCP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_backend_selection(udp "${_zp_effective_udp_backend}"
-                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_backend_selection(bt "${_zp_effective_bt_backend}"
-                              "${ZP_BT_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_backend_selection(serial "${_zp_effective_serial_backend}"
-                              "${ZP_SERIAL_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_transport_selection(tcp "${_zp_effective_tcp_transport}"
+                              "${ZP_TCP_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_transport_selection(udp "${_zp_effective_udp_transport}"
+                              "${ZP_UDP_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_transport_selection(bt "${_zp_effective_bt_transport}"
+                              "${ZP_BT_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_transport_selection(serial "${_zp_effective_serial_transport}"
+                              "${ZP_SERIAL_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
 set(_zp_selected_platform_glob_sources "")
 foreach(_zp_platform_source_glob IN LISTS ZP_PLATFORM_SOURCE_GLOBS)
   file(GLOB _zp_globbed_platform_sources ${_zp_platform_source_glob})
@@ -397,41 +397,41 @@ set(_zp_selected_component_sources
     ${ZP_PLATFORM_SOURCE_FILES}
     ${ZP_SYSTEM_SOURCE_FILES}
     ${ZP_NETWORK_SOURCE_FILES}
-    ${ZP_TCP_BACKEND_SOURCE_FILES}
-    ${ZP_UDP_BACKEND_SOURCE_FILES}
-    ${ZP_BT_BACKEND_SOURCE_FILES}
-    ${ZP_SERIAL_BACKEND_SOURCE_FILES})
+    ${ZP_TCP_TRANSPORT_SOURCE_FILES}
+    ${ZP_UDP_TRANSPORT_SOURCE_FILES}
+    ${ZP_BT_TRANSPORT_SOURCE_FILES}
+    ${ZP_SERIAL_TRANSPORT_SOURCE_FILES})
 set(_zp_selected_component_include_dirs
     ${ZP_PLATFORM_INCLUDE_DIRS}
     ${ZP_SYSTEM_INCLUDE_DIRS}
     ${ZP_NETWORK_INCLUDE_DIRS}
-    ${ZP_TCP_BACKEND_INCLUDE_DIRS}
-    ${ZP_UDP_BACKEND_INCLUDE_DIRS}
-    ${ZP_BT_BACKEND_INCLUDE_DIRS}
-    ${ZP_SERIAL_BACKEND_INCLUDE_DIRS})
+    ${ZP_TCP_TRANSPORT_INCLUDE_DIRS}
+    ${ZP_UDP_TRANSPORT_INCLUDE_DIRS}
+    ${ZP_BT_TRANSPORT_INCLUDE_DIRS}
+    ${ZP_SERIAL_TRANSPORT_INCLUDE_DIRS})
 set(_zp_selected_component_compile_definitions
     ${ZP_SYSTEM_COMPILE_DEFINITIONS}
     ${ZP_NETWORK_COMPILE_DEFINITIONS}
-    ${ZP_TCP_BACKEND_COMPILE_DEFINITIONS}
-    ${ZP_UDP_BACKEND_COMPILE_DEFINITIONS}
-    ${ZP_BT_BACKEND_COMPILE_DEFINITIONS}
-    ${ZP_SERIAL_BACKEND_COMPILE_DEFINITIONS})
+    ${ZP_TCP_TRANSPORT_COMPILE_DEFINITIONS}
+    ${ZP_UDP_TRANSPORT_COMPILE_DEFINITIONS}
+    ${ZP_BT_TRANSPORT_COMPILE_DEFINITIONS}
+    ${ZP_SERIAL_TRANSPORT_COMPILE_DEFINITIONS})
 set(_zp_selected_component_compile_options
     ${ZP_PLATFORM_COMPILE_OPTIONS}
     ${ZP_SYSTEM_COMPILE_OPTIONS}
     ${ZP_NETWORK_COMPILE_OPTIONS}
-    ${ZP_TCP_BACKEND_COMPILE_OPTIONS}
-    ${ZP_UDP_BACKEND_COMPILE_OPTIONS}
-    ${ZP_BT_BACKEND_COMPILE_OPTIONS}
-    ${ZP_SERIAL_BACKEND_COMPILE_OPTIONS})
+    ${ZP_TCP_TRANSPORT_COMPILE_OPTIONS}
+    ${ZP_UDP_TRANSPORT_COMPILE_OPTIONS}
+    ${ZP_BT_TRANSPORT_COMPILE_OPTIONS}
+    ${ZP_SERIAL_TRANSPORT_COMPILE_OPTIONS})
 set(_zp_selected_component_link_libraries
     ${ZP_PLATFORM_LINK_LIBRARIES}
     ${ZP_SYSTEM_LINK_LIBRARIES}
     ${ZP_NETWORK_LINK_LIBRARIES}
-    ${ZP_TCP_BACKEND_LINK_LIBRARIES}
-    ${ZP_UDP_BACKEND_LINK_LIBRARIES}
-    ${ZP_BT_BACKEND_LINK_LIBRARIES}
-    ${ZP_SERIAL_BACKEND_LINK_LIBRARIES})
+    ${ZP_TCP_TRANSPORT_LINK_LIBRARIES}
+    ${ZP_UDP_TRANSPORT_LINK_LIBRARIES}
+    ${ZP_BT_TRANSPORT_LINK_LIBRARIES}
+    ${ZP_SERIAL_TRANSPORT_LINK_LIBRARIES})
 set(_zp_public_imported_component_targets "")
 set(_zp_private_imported_component_targets "")
 if(NOT "${ZP_SYSTEM_IMPORTED_TARGET}" STREQUAL "")
@@ -439,10 +439,10 @@ if(NOT "${ZP_SYSTEM_IMPORTED_TARGET}" STREQUAL "")
 endif()
 foreach(_zp_component_target IN ITEMS
         "${ZP_NETWORK_IMPORTED_TARGET}"
-        "${ZP_TCP_BACKEND_IMPORTED_TARGET}"
-        "${ZP_UDP_BACKEND_IMPORTED_TARGET}"
-        "${ZP_BT_BACKEND_IMPORTED_TARGET}"
-        "${ZP_SERIAL_BACKEND_IMPORTED_TARGET}")
+        "${ZP_TCP_TRANSPORT_IMPORTED_TARGET}"
+        "${ZP_UDP_TRANSPORT_IMPORTED_TARGET}"
+        "${ZP_BT_TRANSPORT_IMPORTED_TARGET}"
+        "${ZP_SERIAL_TRANSPORT_IMPORTED_TARGET}")
   if(NOT "${_zp_component_target}" STREQUAL "")
     list(APPEND _zp_private_imported_component_targets "${_zp_component_target}")
   endif()
@@ -655,17 +655,17 @@ message(STATUS "System layer: ${ZP_SYSTEM_LAYER}")
 if(NOT ZP_NETWORK STREQUAL "")
   message(STATUS "Selected network: ${ZP_NETWORK}")
 endif()
-if(NOT "${_zp_effective_tcp_backend}" STREQUAL "")
-  message(STATUS "Selected TCP transport backend: ${_zp_effective_tcp_backend}")
+if(NOT "${_zp_effective_tcp_transport}" STREQUAL "")
+  message(STATUS "Selected TCP transport: ${_zp_effective_tcp_transport}")
 endif()
-if(NOT "${_zp_effective_udp_backend}" STREQUAL "")
-  message(STATUS "Selected UDP transport backend: ${_zp_effective_udp_backend}")
+if(NOT "${_zp_effective_udp_transport}" STREQUAL "")
+  message(STATUS "Selected UDP transport: ${_zp_effective_udp_transport}")
 endif()
-if(NOT "${_zp_effective_bt_backend}" STREQUAL "")
-  message(STATUS "Selected BT transport backend: ${_zp_effective_bt_backend}")
+if(NOT "${_zp_effective_bt_transport}" STREQUAL "")
+  message(STATUS "Selected BT transport: ${_zp_effective_bt_transport}")
 endif()
-if(NOT "${_zp_effective_serial_backend}" STREQUAL "")
-  message(STATUS "Selected serial transport backend: ${_zp_effective_serial_backend}")
+if(NOT "${_zp_effective_serial_transport}" STREQUAL "")
+  message(STATUS "Selected serial transport: ${_zp_effective_serial_transport}")
 endif()
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
@@ -787,16 +787,16 @@ file(GLOB LinkSources
   "src/link/config/*.c"
   "src/link/multicast/*.c"
   "src/link/unicast/*.c"
-  "src/link/backend/common/*.c"
+  "src/link/transport/common/*.c"
 )
 list(APPEND Sources ${LinkSources})
 list(APPEND Sources
   "${PROJECT_SOURCE_DIR}/src/link/link.c"
   "${PROJECT_SOURCE_DIR}/src/link/endpoint.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/address.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/udp/address.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/upper/serial_protocol.c"
-  "${PROJECT_SOURCE_DIR}/src/link/backend/upper/tls_stream.c"
+  "${PROJECT_SOURCE_DIR}/src/link/transport/tcp/address.c"
+  "${PROJECT_SOURCE_DIR}/src/link/transport/udp/address.c"
+  "${PROJECT_SOURCE_DIR}/src/link/transport/upper/serial_protocol.c"
+  "${PROJECT_SOURCE_DIR}/src/link/transport/upper/tls_stream.c"
 )
 list(APPEND Sources ${_zp_selected_component_sources})
 

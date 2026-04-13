@@ -17,8 +17,8 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/tcp.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/tcp.h"
 
 #if Z_FEATURE_LINK_TCP == 1
 

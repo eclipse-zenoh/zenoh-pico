@@ -6,4 +6,4 @@ set(ZP_PLATFORM_NETWORK_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/threadx/stm32/network.c")
 set(CHECK_THREADS OFF)
 set(ZP_PLATFORM_SERIAL_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_threadx_stm32.c")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/serial/uart_threadx_stm32.c")

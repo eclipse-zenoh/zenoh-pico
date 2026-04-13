@@ -6,10 +6,10 @@ set(ZP_PLATFORM_NETWORK_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/arduino/opencr/network.cpp")
 set(CHECK_THREADS OFF)
 set(ZP_PLATFORM_TCP_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/tcp_opencr.cpp")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/tcp/tcp_opencr.cpp")
 set(ZP_PLATFORM_UDP_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_opencr.cpp")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_opencr.cpp")
 if(ZP_UDP_MULTICAST_ENABLED)
   list(APPEND ZP_PLATFORM_UDP_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_opencr.cpp")
+       "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_multicast_opencr.cpp")
 endif()

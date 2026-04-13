@@ -16,23 +16,23 @@
 #define ZENOH_PICO_LINK_H
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/bt.h"
-#include "zenoh-pico/link/backend/raweth.h"
-#include "zenoh-pico/link/backend/tcp.h"
-#include "zenoh-pico/link/backend/udp_unicast.h"
-#include "zenoh-pico/link/backend/ws.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/link/transport/bt.h"
+#include "zenoh-pico/link/transport/raweth.h"
+#include "zenoh-pico/link/transport/tcp.h"
+#include "zenoh-pico/link/transport/udp_unicast.h"
+#include "zenoh-pico/link/transport/ws.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_LINK_SERIAL == 1
-#include "zenoh-pico/link/backend/serial_protocol.h"
+#include "zenoh-pico/link/transport/serial_protocol.h"
 #endif
 
 #if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/backend/tls_stream.h"
+#include "zenoh-pico/link/transport/tls_stream.h"
 #endif
 
 #include "zenoh-pico/utils/result.h"

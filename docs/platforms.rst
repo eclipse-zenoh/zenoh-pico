@@ -13,7 +13,7 @@
 ..
 
 **********************
-Platforms and Backends
+Platforms and Transports
 **********************
 
 ``ZP_PLATFORM`` selects a platform profile.
@@ -44,11 +44,11 @@ Explicit component overrides:
    cmake -S . -B build \
      -DZP_PLATFORM=linux \
      -DZP_NETWORK=posix \
-     -DZP_TCP_BACKEND=tcp_posix \
-     -DZP_UDP_BACKEND=posix \
-     -DZP_SERIAL_BACKEND=tty_posix
+     -DZP_TCP_TRANSPORT=tcp_posix \
+     -DZP_UDP_TRANSPORT=posix \
+     -DZP_SERIAL_TRANSPORT=tty_posix
 
-``ZP_NETWORK`` and ``ZP_*_BACKEND`` override the inline component definitions
+``ZP_NETWORK`` and ``ZP_*_TRANSPORT`` override the inline component definitions
 from the selected platform profile.
 
 One-File Platform Descriptors
@@ -89,18 +89,18 @@ Example platform profile:
        "${PROJECT_SOURCE_DIR}/src/system/socket/lwip.c")
 
    set(ZP_PLATFORM_TCP_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/tcp_lwip.c")
+       "${PROJECT_SOURCE_DIR}/src/link/transport/tcp/tcp_lwip.c")
 
    set(ZP_PLATFORM_UDP_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_lwip.c")
+       "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_lwip.c")
    if(ZP_UDP_MULTICAST_ENABLED)
      list(APPEND ZP_PLATFORM_UDP_SOURCE_FILES
-          "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_lwip.c"
-          "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_lwip_common.c")
+          "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_multicast_lwip.c"
+          "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_multicast_lwip_common.c")
    endif()
 
    set(ZP_PLATFORM_SERIAL_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_myrtos.c")
+       "${PROJECT_SOURCE_DIR}/src/link/transport/serial/uart_myrtos.c")
 
    # Optional platform-wide additions
    # list(APPEND ZP_PLATFORM_SOURCE_FILES
@@ -165,29 +165,29 @@ Add named descriptors only when a component:
 
 * is reused by more than one platform;
 * must be selected explicitly with ``-DZP_NETWORK=...`` or
-  ``-DZP_*_BACKEND=...``.
+  ``-DZP_*_TRANSPORT=...``.
 
 Directories:
 
 * ``cmake/network/`` for named network descriptors;
-* ``cmake/backends/tcp/`` for named TCP backends;
-* ``cmake/backends/udp/`` for named UDP backends;
-* ``cmake/backends/bt/`` for named BT backends;
-* ``cmake/backends/serial/`` for named serial backends.
+* ``cmake/transports/tcp/`` for named TCP transports;
+* ``cmake/transports/udp/`` for named UDP transports;
+* ``cmake/transports/bt/`` for named BT transports;
+* ``cmake/transports/serial/`` for named serial transports.
 
 Named network descriptors use ``ZP_NETWORK_*`` variables.
-Named transport backends use ``ZP_BACKEND_*`` variables.
+Named transport descriptors use ``ZP_TRANSPORT_*`` variables.
 
-Example named UDP backend:
+Example named UDP transport:
 
 .. code-block:: cmake
 
-   # cmake/backends/udp/myrtos.cmake
-   set(ZP_BACKEND_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_myrtos.c")
+   # cmake/transports/udp/myrtos.cmake
+   set(ZP_TRANSPORT_SOURCE_FILES
+       "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_myrtos.c")
    if(ZP_UDP_MULTICAST_ENABLED)
-     list(APPEND ZP_BACKEND_SOURCE_FILES
-          "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myrtos.c")
+     list(APPEND ZP_TRANSPORT_SOURCE_FILES
+          "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_multicast_myrtos.c")
    endif()
 
 Out-of-Tree Packages
@@ -209,7 +209,7 @@ Example:
 A package usually:
 
 * exports the library targets it owns;
-* registers any platform, network, or backend descriptor directories it
+* registers any platform, network, or transport descriptor directories it
   provides.
 
 Installed package descriptors should use imported targets instead of package
@@ -243,8 +243,8 @@ Example package config:
    # Optional: only when the package exports reusable named components
    list(APPEND ZP_NETWORK_DIRS
         "${CMAKE_CURRENT_LIST_DIR}/network")
-   list(APPEND ZP_TCP_BACKEND_DIRS
-        "${CMAKE_CURRENT_LIST_DIR}/backends/tcp")
+   list(APPEND ZP_TCP_TRANSPORT_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/transports/tcp")
 
 For a complete out-of-tree example, see
 ``examples/packages/zenohpico-mylinux/README.md``.

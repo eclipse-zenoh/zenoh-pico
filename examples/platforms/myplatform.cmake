@@ -22,21 +22,21 @@ set(ZP_PLATFORM_NETWORK_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/myplatform/network.c")
 
 set(ZP_PLATFORM_TCP_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/tcp/tcp_myplatform.c")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/tcp/tcp_myplatform.c")
 
 set(ZP_PLATFORM_UDP_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_myplatform.c")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_myplatform.c")
 if(ZP_UDP_MULTICAST_ENABLED)
   list(APPEND ZP_PLATFORM_UDP_SOURCE_FILES
-       "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myplatform.c")
+       "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_multicast_myplatform.c")
 endif()
 
 # Optional, when the platform provides a BT transport implementation.
 # set(ZP_PLATFORM_BT_SOURCE_FILES
-#     "${PROJECT_SOURCE_DIR}/src/link/backend/bt/bt_myplatform.c")
+#     "${PROJECT_SOURCE_DIR}/src/link/transport/bt/bt_myplatform.c")
 
 set(ZP_PLATFORM_SERIAL_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_myplatform.c")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/serial/uart_myplatform.c")
 
 # Optional
 

@@ -13,7 +13,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //   Błażej Sowa, <blazej@fictionlab.pl>
 
-#include "zenoh-pico/link/backend/socket.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"

@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/link/backend/socket.h"
+#include "zenoh-pico/link/transport/socket.h"
 
 #if defined(ZP_PLATFORM_SOCKET_LWIP)
 
@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "lwip/sockets.h"
-#include "zenoh-pico/link/backend/lwip_socket.h"
+#include "zenoh-pico/link/transport/lwip_socket.h"
 #endif
 
 #include "zenoh-pico/utils/logging.h"

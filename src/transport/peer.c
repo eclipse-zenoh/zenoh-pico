@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/link/backend/socket.h"
+#include "zenoh-pico/link/transport/socket.h"
 #if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/backend/tls_stream.h"
+#include "zenoh-pico/link/transport/tls_stream.h"
 #endif
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/session.h"

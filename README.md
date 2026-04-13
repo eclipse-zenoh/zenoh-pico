@@ -57,7 +57,7 @@ For other platforms - like RTOS for embedded systems / microcontrollers -, you w
 
 ## 2. How to build it
 
-For platform profiles, backend overrides, and adding a new platform, see [docs/platforms.rst](docs/platforms.rst).
+For platform profiles, transport overrides, and adding a new platform, see [docs/platforms.rst](docs/platforms.rst).
 
 ### 2.1 Unix Environments
 

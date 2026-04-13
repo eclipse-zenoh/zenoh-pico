@@ -6,4 +6,4 @@ set(ZP_PLATFORM_NETWORK_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/flipper/network.c")
 set(CHECK_THREADS OFF)
 set(ZP_PLATFORM_SERIAL_SOURCE_FILES
-    "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_flipper.c")
+    "${PROJECT_SOURCE_DIR}/src/link/transport/serial/uart_flipper.c")

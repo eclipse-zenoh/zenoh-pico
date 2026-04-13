@@ -18,8 +18,8 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/udp_unicast.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/udp_unicast.h"
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
 

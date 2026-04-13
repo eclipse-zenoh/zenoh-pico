@@ -18,9 +18,9 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/tcp.h"
-#include "zenoh-pico/link/backend/ws.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/tcp.h"
+#include "zenoh-pico/link/transport/ws.h"
 
 #if Z_FEATURE_LINK_WS == 1
 

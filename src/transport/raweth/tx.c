@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/raweth.h"
+#include "zenoh-pico/link/transport/raweth.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"

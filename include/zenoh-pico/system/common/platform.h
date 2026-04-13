@@ -25,10 +25,8 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/utils/result.h"
 
-/* Centralized built-in socket markers for the shared network-backed
- * lower backends. Out-of-tree generic platforms may also define the same
- * markers in their own platform header when they intentionally reuse one of
- * these backend families. */
+/* Centralized built-in socket markers for TCP/UDP/WS/TLS transports that use
+ * the platform socket layer. */
 #if !defined(ZP_PLATFORM_SOCKET_POSIX) && (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD))
 #define ZP_PLATFORM_SOCKET_POSIX 1
 #endif

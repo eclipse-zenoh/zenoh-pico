@@ -18,9 +18,9 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/raweth.h"
 #include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/raweth.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"

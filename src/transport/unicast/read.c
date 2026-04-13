@@ -19,8 +19,8 @@
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/socket.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"

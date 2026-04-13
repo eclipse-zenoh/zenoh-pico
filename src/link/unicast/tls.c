@@ -18,10 +18,10 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/tcp.h"
-#include "zenoh-pico/link/backend/tls_stream.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/tcp.h"
+#include "zenoh-pico/link/transport/tls_stream.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/string.h"

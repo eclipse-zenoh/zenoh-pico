@@ -30,7 +30,7 @@ target_compile_definitions(mylinux_system
                              ZENOH_MYLINUX
                              ZP_SYSTEM_PLATFORM_HEADER=\"zenoh_mylinux_platform.h\")
 
-add_library(mylinux_serial_uart STATIC "${ZENOH_PICO_SOURCE_DIR}/src/link/backend/serial/tty_posix.c")
+add_library(mylinux_serial_uart STATIC "${ZENOH_PICO_SOURCE_DIR}/src/link/transport/serial/tty_posix.c")
 set_target_properties(mylinux_serial_uart PROPERTIES
                       POSITION_INDEPENDENT_CODE ON
                       EXPORT_NAME serial_uart)

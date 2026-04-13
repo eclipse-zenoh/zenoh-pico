@@ -15,8 +15,8 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/serial_protocol.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/serial_protocol.h"
 
 #if Z_FEATURE_LINK_SERIAL == 1
 

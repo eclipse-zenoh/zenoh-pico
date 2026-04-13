@@ -13,7 +13,7 @@
 //
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/backend/socket.h"
+#include "zenoh-pico/link/transport/socket.h"
 
 #if defined(ZP_PLATFORM_SOCKET_ESP32)
 
