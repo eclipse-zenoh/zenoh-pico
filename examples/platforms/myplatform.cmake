@@ -31,6 +31,10 @@ if(ZP_UDP_MULTICAST_ENABLED)
        "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myplatform.c")
 endif()
 
+# Optional, when the platform provides a BT transport implementation.
+# set(ZP_PLATFORM_BT_SOURCE_FILES
+#     "${PROJECT_SOURCE_DIR}/src/link/backend/bt/bt_myplatform.c")
+
 set(ZP_PLATFORM_SERIAL_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/link/backend/serial/uart_myplatform.c")
 

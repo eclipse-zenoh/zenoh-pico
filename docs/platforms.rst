@@ -21,7 +21,7 @@ The profile defines:
 
 * the system layer;
 * the network layer;
-* the ``tcp``, ``udp`` and ``serial`` transport implementations.
+* the ``tcp``, ``udp``, ``bt`` and ``serial`` transport implementations.
 
 Built-in profiles are defined in ``cmake/platforms/<name>.cmake``.
 
@@ -173,6 +173,7 @@ Directories:
 * ``cmake/network/`` for named network descriptors;
 * ``cmake/backends/tcp/`` for named TCP backends;
 * ``cmake/backends/udp/`` for named UDP backends;
+* ``cmake/backends/bt/`` for named BT backends;
 * ``cmake/backends/serial/`` for named serial backends.
 
 Named network descriptors use ``ZP_NETWORK_*`` variables.

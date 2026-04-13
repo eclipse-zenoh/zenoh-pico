@@ -210,4 +210,5 @@ endfunction()
 
 set(ZP_TCP_BACKEND_DIRS "")
 set(ZP_UDP_BACKEND_DIRS "")
+set(ZP_BT_BACKEND_DIRS "")
 set(ZP_SERIAL_BACKEND_DIRS "")
