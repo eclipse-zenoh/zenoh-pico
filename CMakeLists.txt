@@ -274,18 +274,10 @@ set(_zp_effective_udp_backend "")
 set(_zp_effective_bt_backend "")
 set(_zp_effective_serial_backend "")
 set(_zp_selected_network "${ZP_NETWORK}")
-if(_zp_selected_network STREQUAL "")
-  if(NOT ZP_PLATFORM_NETWORK STREQUAL "")
-    set(_zp_selected_network "${ZP_PLATFORM_NETWORK}")
-  elseif(NOT _zp_platform_has_inline_network)
-    message(FATAL_ERROR
-            "Platform profile ${ZP_PLATFORM} does not define a network. "
-            "Set ZP_PLATFORM_NETWORK in the platform descriptor or pass -DZP_NETWORK=...")
-  endif()
-elseif(NOT ZP_PLATFORM_NETWORK STREQUAL "" AND NOT _zp_selected_network STREQUAL "${ZP_PLATFORM_NETWORK}")
+if(_zp_selected_network STREQUAL "" AND NOT _zp_platform_has_inline_network)
   message(FATAL_ERROR
-          "Network ${_zp_selected_network} does not match platform profile ${ZP_PLATFORM}. "
-          "Expected network: ${ZP_PLATFORM_NETWORK}")
+          "Platform profile ${ZP_PLATFORM} does not define a network. "
+          "Set ZP_PLATFORM_NETWORK_SOURCE_FILES in the platform descriptor or pass -DZP_NETWORK=...")
 endif()
 if(ZP_NETWORK STREQUAL "")
   if(_zp_platform_has_inline_network)
@@ -387,18 +379,14 @@ else()
   set(_zp_effective_serial_backend "${ZP_SERIAL_BACKEND}")
 endif()
 
-zp_validate_backend_selection(tcp "${_zp_effective_tcp_backend}" "${ZP_TCP_BACKEND_NETWORK}"
-                              "${ZP_TCP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}")
-zp_validate_backend_selection(udp "${_zp_effective_udp_backend}" "${ZP_UDP_BACKEND_NETWORK}"
-                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}")
-zp_validate_backend_selection(bt "${_zp_effective_bt_backend}" "${ZP_BT_BACKEND_NETWORK}"
-                              "${ZP_BT_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}")
-zp_validate_backend_selection(serial "${_zp_effective_serial_backend}" "${ZP_SERIAL_BACKEND_NETWORK}"
-                              "${ZP_SERIAL_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}"
-                              "${ZP_NETWORK}")
+zp_validate_backend_selection(tcp "${_zp_effective_tcp_backend}"
+                              "${ZP_TCP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_backend_selection(udp "${_zp_effective_udp_backend}"
+                              "${ZP_UDP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_backend_selection(bt "${_zp_effective_bt_backend}"
+                              "${ZP_BT_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
+zp_validate_backend_selection(serial "${_zp_effective_serial_backend}"
+                              "${ZP_SERIAL_BACKEND_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
 set(_zp_selected_platform_glob_sources "")
 foreach(_zp_platform_source_glob IN LISTS ZP_PLATFORM_SOURCE_GLOBS)
   file(GLOB _zp_globbed_platform_sources ${_zp_platform_source_glob})
@@ -602,7 +590,7 @@ if(ZP_NETWORK STREQUAL "" AND NOT _zp_platform_has_inline_network AND
     Z_FEATURE_LINK_UDP_MULTICAST OR Z_FEATURE_LINK_UDP_UNICAST))
   message(FATAL_ERROR
           "No network selected for platform profile ${ZP_PLATFORM}. "
-          "Set ZP_PLATFORM_NETWORK in the platform descriptor or pass -DZP_NETWORK=...")
+          "Set ZP_PLATFORM_NETWORK_SOURCE_FILES in the platform descriptor or pass -DZP_NETWORK=...")
 endif()
 
 if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_PUBLICATION OR NOT Z_FEATURE_LIVELINESS))

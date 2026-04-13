@@ -47,10 +47,6 @@ set(ZP_PLATFORM_SERIAL_SOURCE_FILES
 # custom header instead of a built-in one.
 # set(ZP_PLATFORM_SYSTEM_PLATFORM_HEADER "zenoh_myplatform_platform.h")
 
-# Only when named network or backend overrides should match a specific
-# network family such as posix, lwip, or esp32.
-# set(ZP_PLATFORM_NETWORK mynetwork)
-
 # list(APPEND ZP_PLATFORM_SOURCE_FILES
 #      "${PROJECT_SOURCE_DIR}/src/system/myplatform/platform_extra.c")
 # list(APPEND ZP_PLATFORM_INCLUDE_DIRS

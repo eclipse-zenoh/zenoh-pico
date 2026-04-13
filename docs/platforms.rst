@@ -121,10 +121,9 @@ Notes:
 * Set ``ZP_PLATFORM_SYSTEM_LAYER`` only when the logical system-layer name
   differs from the profile name. For example, ``opencr`` uses
   ``arduino_opencr``.
-* ``ZP_PLATFORM_NETWORK`` is optional for fully inline profiles.
-* Set ``ZP_PLATFORM_NETWORK`` only when the profile should declare a named
-  network family such as ``posix``, ``lwip`` or ``esp32`` for
-  ``-DZP_NETWORK=...`` and named backend overrides.
+* Network source files are provided inline via ``ZP_PLATFORM_NETWORK_SOURCE_FILES``.
+  Alternatively, pass ``-DZP_NETWORK=...`` to select a named network descriptor
+  from ``cmake/network/``.
 * Use ``ZP_UDP_MULTICAST_ENABLED`` when multicast sources depend on the current
   build configuration.
 
@@ -190,7 +189,6 @@ Example named UDP backend:
      list(APPEND ZP_BACKEND_SOURCE_FILES
           "${PROJECT_SOURCE_DIR}/src/link/backend/udp/udp_multicast_myrtos.c")
    endif()
-   set(ZP_BACKEND_NETWORK lwip)
 
 Out-of-Tree Packages
 ====================

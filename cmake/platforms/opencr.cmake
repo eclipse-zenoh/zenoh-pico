@@ -2,7 +2,6 @@ set(ZP_PLATFORM_SYSTEM_LAYER arduino_opencr)
 set(ZP_PLATFORM_SYSTEM_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/arduino/opencr/system.c")
 set(ZP_PLATFORM_SYSTEM_COMPILE_DEFINITIONS ZENOH_ARDUINO_OPENCR)
-set(ZP_PLATFORM_NETWORK opencr)
 set(ZP_PLATFORM_NETWORK_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/system/arduino/opencr/network.cpp")
 set(CHECK_THREADS OFF)

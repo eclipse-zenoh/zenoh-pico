@@ -24,8 +24,6 @@ function(zp_resolve_inline_backend input_prefix kind descriptor_label output_pre
   set(_zp_backend_source_files "")
   set(_zp_backend_include_dirs "")
   set(_zp_backend_compile_definitions "")
-  set(_zp_backend_network "")
-  set(_zp_backend_compatible_system_layers "")
   set(_zp_backend_has_builtin_component OFF)
 
   foreach(_zp_component_var IN ITEMS
@@ -70,16 +68,12 @@ function(zp_resolve_inline_backend input_prefix kind descriptor_label output_pre
     set(_zp_backend_include_dirs "${${input_prefix}_INCLUDE_DIRS}")
   endif()
 
-  set(_zp_backend_network "${${input_prefix}_NETWORK}")
-  set(_zp_backend_compatible_system_layers "${${input_prefix}_COMPATIBLE_SYSTEM_LAYERS}")
-
   set("${output_prefix}_IMPORTED_TARGET" "${_zp_backend_imported_target}" PARENT_SCOPE)
   set("${output_prefix}_SOURCE_FILES" "${_zp_backend_source_files}" PARENT_SCOPE)
   set("${output_prefix}_INCLUDE_DIRS" "${_zp_backend_include_dirs}" PARENT_SCOPE)
   set("${output_prefix}_COMPILE_DEFINITIONS" "${_zp_backend_compile_definitions}" PARENT_SCOPE)
   set("${output_prefix}_COMPILE_OPTIONS" "" PARENT_SCOPE)
   set("${output_prefix}_LINK_LIBRARIES" "" PARENT_SCOPE)
-  set("${output_prefix}_NETWORK" "${_zp_backend_network}" PARENT_SCOPE)
   set("${output_prefix}_COMPATIBLE_SYSTEM_LAYERS" "" PARENT_SCOPE)
 endfunction()
 
@@ -95,7 +89,6 @@ function(zp_resolve_backend name kind prefix)
     set(ZP_BACKEND_COMPILE_OPTIONS "")
     set(ZP_BACKEND_LINK_LIBRARIES "")
     set(ZP_BACKEND_IMPORTED_TARGET "")
-    set(ZP_BACKEND_NETWORK "")
     set(ZP_BACKEND_COMPATIBLE_SYSTEM_LAYERS "")
 
     zp_find_backend_descriptor_file("${name}" _zp_backend_descriptor_file ${_zp_backend_search_dirs})
@@ -111,7 +104,6 @@ function(zp_resolve_backend name kind prefix)
     set(_zp_backend_compile_definitions "${ZP_BACKEND_COMPILE_DEFINITIONS}")
     set(_zp_backend_compile_options "")
     set(_zp_backend_link_libraries "")
-    set(_zp_backend_network "${ZP_BACKEND_NETWORK}")
     set(_zp_backend_compatible_system_layers "${ZP_BACKEND_COMPATIBLE_SYSTEM_LAYERS}")
     set(_zp_backend_has_builtin_component OFF)
 
@@ -165,7 +157,6 @@ function(zp_resolve_backend name kind prefix)
     set("${prefix}_COMPILE_DEFINITIONS" "${_zp_backend_compile_definitions}" PARENT_SCOPE)
     set("${prefix}_COMPILE_OPTIONS" "${_zp_backend_compile_options}" PARENT_SCOPE)
     set("${prefix}_LINK_LIBRARIES" "${_zp_backend_link_libraries}" PARENT_SCOPE)
-    set("${prefix}_NETWORK" "${_zp_backend_network}" PARENT_SCOPE)
     set("${prefix}_COMPATIBLE_SYSTEM_LAYERS" "${_zp_backend_compatible_system_layers}" PARENT_SCOPE)
   else()
     set("${prefix}_IMPORTED_TARGET" "" PARENT_SCOPE)
@@ -174,27 +165,13 @@ function(zp_resolve_backend name kind prefix)
     set("${prefix}_COMPILE_DEFINITIONS" "" PARENT_SCOPE)
     set("${prefix}_COMPILE_OPTIONS" "" PARENT_SCOPE)
     set("${prefix}_LINK_LIBRARIES" "" PARENT_SCOPE)
-    set("${prefix}_NETWORK" "" PARENT_SCOPE)
     set("${prefix}_COMPATIBLE_SYSTEM_LAYERS" "" PARENT_SCOPE)
   endif()
 endfunction()
 
-function(zp_validate_backend_selection type name required_network compatible_system_layers system_layer selected_network)
+function(zp_validate_backend_selection type name compatible_system_layers system_layer)
   if("${name}" STREQUAL "")
     return()
-  endif()
-
-  if(NOT "${required_network}" STREQUAL "")
-    if("${selected_network}" STREQUAL "")
-      message(FATAL_ERROR
-              "Selected ${type} backend ${name} requires network "
-              "${required_network}, but no network is selected")
-    endif()
-    if(NOT "${required_network}" STREQUAL "${selected_network}")
-      message(FATAL_ERROR
-              "Selected ${type} backend ${name} requires network "
-              "${required_network}, but selected network is ${selected_network}")
-    endif()
   endif()
 
   if(NOT "${compatible_system_layers}" STREQUAL "")
