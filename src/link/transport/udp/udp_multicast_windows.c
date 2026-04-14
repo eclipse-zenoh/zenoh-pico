@@ -157,7 +157,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             laddr->ai_flags = 0;
             laddr->ai_family = rep._ep._iptcp->ai_family;
             laddr->ai_socktype = rep._ep._iptcp->ai_socktype;
-            laddr->ai_protocol = rep._ep._iptcp->ai_family;
+            laddr->ai_protocol = rep._ep._iptcp->ai_protocol;
             laddr->ai_addrlen = addrlen;
             laddr->ai_addr = lsockaddr;
             laddr->ai_canonname = NULL;
