@@ -57,6 +57,8 @@ static z_result_t _z_zephyr_uart_open_from_pins(_z_sys_net_socket_t *sock, uint3
     _ZP_UNUSED(txpin);
     _ZP_UNUSED(rxpin);
     _ZP_UNUSED(baudrate);
+
+    // @TODO: To be implemented
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 

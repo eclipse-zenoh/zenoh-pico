@@ -58,6 +58,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             c_laddr->sin6_family = AF_INET6;
             c_laddr->sin6_addr = in6addr_any;
             c_laddr->sin6_port = htons(INADDR_ANY);
+            //        c_laddr->sin6_scope_id; // Not needed to be defined
         } else {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
@@ -74,7 +75,9 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+                // FIXME: setting the setsockopt is consistently failing. Commenting it
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
+                // until further inspection. ret = _Z_ERR_GENERIC;
             }
 
             if ((ret == _Z_RES_OK) && (bind(sock->_fd, lsockaddr, addrlen) < 0)) {
@@ -82,6 +85,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                 ret = _Z_ERR_GENERIC;
             }
 
+            // Get the randomly assigned port used to discard loopback messages
             if ((ret == _Z_RES_OK) && (getsockname(sock->_fd, lsockaddr, &addrlen) < 0)) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
@@ -94,6 +98,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                 return ret;
             }
 
+            // Create lep endpoint
             struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
             if (laddr == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -160,6 +165,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             c_laddr->sin6_family = AF_INET6;
             c_laddr->sin6_addr = in6addr_any;
             c_laddr->sin6_port = ((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_port;
+            //        c_laddr->sin6_scope_id; // Not needed to be defined
         } else {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
@@ -182,7 +188,9 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            // FIXME: setting the setsockopt is consistently failing. Commenting it
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            // until further inspection. ret = _Z_ERR_GENERIC;
         }
 
         if ((ret == _Z_RES_OK) && (bind(sock->_fd, lsockaddr, addrlen) < 0)) {
@@ -190,10 +198,13 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             ret = _Z_ERR_GENERIC;
         }
 
+        // FIXME: iface passed into the locator is being ignored
+        //        default if used instead
         if (ret != _Z_RES_OK) {
             struct net_if *ifa = NULL;
             ifa = net_if_get_default();
             if (ifa != NULL) {
+                // Join the multicast group
                 if (rep._iptcp->ai_family == AF_INET) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
@@ -246,6 +257,8 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                             const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
     _ZP_UNUSED(lep);
     if (sockrecv->_fd >= 0) {
+        // FIXME: iface passed into the locator is being ignored
+        //        default if used instead
         struct net_if *ifa = NULL;
         ifa = net_if_get_default();
         if (ifa != NULL) {
@@ -259,6 +272,8 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                     net_if_ipv4_maddr_leave(mcast);
 #endif
                     net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
+                } else {
+                    // Do nothing. The socket will be closed in any case.
                 }
             } else if (rep._iptcp->ai_family == AF_INET6) {
                 mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
@@ -269,9 +284,12 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                     net_if_ipv6_maddr_leave(mcast);
 #endif
                     net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
+                } else {
+                    // Do nothing. The socket will be closed in any case.
                 }
             } else {
-                /* Do nothing. */
+                // Do nothing. It must never not enter here.
+                // Required to be compliant with MISRA 15.7 rule
             }
         }
     }
@@ -317,6 +335,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (!((a->sin6_port == b->sin6_port) &&
                   (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL) == 0))) {
+                // If addr is not NULL, it means that the raddr was requested by the
+                // upper-layers
                 if (addr != NULL) {
                     addr->len = (sizeof(uint32_t) * 4UL) + sizeof(uint16_t);
                     // flawfinder: ignore
@@ -327,7 +347,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                 break;
             }
         } else {
-            continue;
+            continue;  // FIXME: support error report on invalid packet to the upper
+                       // layer
         }
     } while (1);
 
