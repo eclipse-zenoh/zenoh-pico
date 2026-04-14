@@ -20,7 +20,9 @@
 #include "zenoh-pico/api/liveliness.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/advanced_cache.h"
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/seqnumber.h"
+#include "zenoh-pico/runtime/runtime.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,12 +54,13 @@ typedef enum {
 } ze_advanced_publisher_heartbeat_mode_t;
 #define ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_DEFAULT ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE
 
-typedef struct {
-    _z_seqnumber_t _seqnumber;
+typedef struct _ze_advanced_publisher_state_t {
+    _z_atomic_size_t _seqnumber;
     ze_advanced_publisher_heartbeat_mode_t _heartbeat_mode;
     _z_session_weak_t _zn;
     z_owned_publisher_t _publisher;
-    uint32_t _state_publisher_task_id;
+    _z_fut_handle_t _state_publisher_task_handle;
+    uint64_t _heartbeat_period_ms;
     uint32_t _last_published_sn;
 } _ze_advanced_publisher_state_t;
 
@@ -75,7 +78,7 @@ typedef struct {
 } _ze_advanced_publisher_t;
 
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_publisher_t, advanced_publisher)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(ze, advanced_publisher)
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1

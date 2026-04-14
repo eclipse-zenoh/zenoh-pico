@@ -39,6 +39,7 @@ typedef void *z_task_attr_t;  // Not used in Windows
 typedef SRWLOCK _z_mutex_t;
 typedef CRITICAL_SECTION _z_mutex_rec_t;
 typedef CONDITION_VARIABLE _z_condvar_t;
+typedef DWORD _z_task_id_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef LARGE_INTEGER z_clock_t;

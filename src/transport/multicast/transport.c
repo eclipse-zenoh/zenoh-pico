@@ -48,6 +48,9 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
+    // Initialize persistent address buffer
+    ztm->_zbuf_addr = _z_slice_alias_buf(ztm->_zbuf_addr_buf, sizeof(ztm->_zbuf_addr_buf));
+
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztm->_common._batch_state = _Z_BATCHING_IDLE;
@@ -58,14 +61,8 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     // Initialize the mutexes
     ret = _z_mutex_init(&ztm->_common._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztm->_common._mutex_rx);
-        if (ret == _Z_RES_OK) {
-            ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
-            if (ret != _Z_RES_OK) {
-                _z_mutex_drop(&ztm->_common._mutex_tx);
-                _z_mutex_drop(&ztm->_common._mutex_rx);
-            }
-        } else {
+        ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
+        if (ret != _Z_RES_OK) {
             _z_mutex_drop(&ztm->_common._mutex_tx);
         }
     }
@@ -86,7 +83,6 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 #if Z_FEATURE_MULTI_THREAD == 1
             _z_mutex_drop(&ztm->_common._mutex_tx);
-            _z_mutex_drop(&ztm->_common._mutex_rx);
             _z_mutex_rec_drop(&ztm->_common._mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
@@ -105,15 +101,6 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
         // Initialize peer list
         ztm->_peers = _z_transport_peer_multicast_slist_new();
-
-#if Z_FEATURE_MULTI_THREAD == 1
-        // Tasks
-        ztm->_common._accept_task_running = NULL;
-        ztm->_common._read_task_running = false;
-        ztm->_common._read_task = NULL;
-        ztm->_common._lease_task_running = false;
-        ztm->_common._lease_task = NULL;
-#endif  // Z_FEATURE_MULTI_THREAD == 1
 
         ztm->_common._lease = Z_TRANSPORT_LEASE;
 
@@ -187,9 +174,11 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     return _z_multicast_send_close(ztm, reason, false);
 }
 
-void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
-    _z_common_transport_clear(&ztm->_common, detach_tasks);
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm) {
     _z_transport_peer_multicast_slist_free(&ztm->_peers);
+    _z_transport_common_clear(
+        &ztm->_common);  // free common in the very end, as peers might access the link data in common while being freed
+    _z_slice_clear(&ztm->_zbuf_addr);
 }
 
 #else
@@ -231,8 +220,5 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
-void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
-    _ZP_UNUSED(ztm);
-    _ZP_UNUSED(detach_tasks);
-}
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1

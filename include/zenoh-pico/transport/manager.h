@@ -17,6 +17,7 @@
 
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
@@ -29,7 +30,7 @@ enum _z_peer_op_e {
 };
 
 z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_string_t *locator, z_whatami_t mode,
-                            int peer_op, const _z_config_t *session_cfg);
+                            int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime);
 z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_string_t *locator,
                        const _z_config_t *session_cfg);
 void _z_free_transport(_z_transport_t **zt);

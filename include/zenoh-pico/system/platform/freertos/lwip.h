@@ -67,6 +67,8 @@ typedef struct {
     StaticSemaphore_t sem_buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
 } _z_condvar_t;
+
+typedef TaskHandle_t _z_task_id_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef TickType_t z_clock_t;

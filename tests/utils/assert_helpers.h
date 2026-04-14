@@ -147,4 +147,15 @@
         }                                                                                                             \
     } while (0)
 
+// Expect a non null pointer
+#define ASSERT_NOT_NULL(ptr)                                                         \
+    do {                                                                             \
+        const void *_zp_p_ = (const void *)(ptr);                                    \
+        if (_zp_p_ == NULL) {                                                        \
+            fprintf(stderr, "[FAIL] %s:%d: %s is NULL\n", __FILE__, __LINE__, #ptr); \
+            fflush(stderr);                                                          \
+            _ZP_TEST_TRAP();                                                         \
+        }                                                                            \
+    } while (0)
+
 #endif  // ZP_ASSERT_HELPERS_H

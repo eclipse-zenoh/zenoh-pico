@@ -62,15 +62,16 @@ z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_se
 void _z_transport_clear(_z_transport_t *zt) {
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _z_unicast_transport_clear(&zt->_transport._unicast, false);
+            _z_unicast_transport_clear(&zt->_transport._unicast);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _z_multicast_transport_clear(&zt->_transport._multicast, false);
+            _z_multicast_transport_clear(&zt->_transport._multicast);
             break;
         default:
-            break;
+            return;
     }
+    _z_transport_get_common(zt)->_state = _Z_TRANSPORT_STATE_CLOSED;
     zt->_type = _Z_TRANSPORT_NONE;
 }
 

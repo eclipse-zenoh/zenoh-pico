@@ -256,12 +256,10 @@ static z_result_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *
     char *p_start = &entry[0];
     char *p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
     size_t ke_len = (uintptr_t)p_end - (uintptr_t)p_start;
-    char *ke_suffix = (char *)z_malloc(ke_len);
-    if (ke_suffix == NULL) {
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    storage->_keyexpr = _z_string_copy_from_substr(p_start, ke_len);
+    if (!_z_string_check(&storage->_keyexpr)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    memcpy(ke_suffix, p_start, ke_len);
-    storage->_keyexpr = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, ke_suffix);
 
     // Check second entry (address)
     p_start = p_end;

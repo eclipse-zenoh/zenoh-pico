@@ -700,6 +700,62 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const z_loaned_closure_matching_status_t * z_closure_matching_status_loan(const z_owned_closure_matching_status_t * closure)
 .. c:function:: void z_closure_matching_status_drop(z_moved_closure_matching_status_t * closure) 
 
+Connectivity closures
+---------------------
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_closure_transport_t
+.. c:type:: z_loaned_closure_transport_t
+.. c:type:: z_moved_closure_transport_t
+
+.. c:type:: z_owned_closure_link_t
+.. c:type:: z_loaned_closure_link_t
+.. c:type:: z_moved_closure_link_t
+
+.. c:type:: z_owned_closure_transport_event_t
+.. c:type:: z_loaned_closure_transport_event_t
+.. c:type:: z_moved_closure_transport_event_t
+
+.. c:type:: z_owned_closure_link_event_t
+.. c:type:: z_loaned_closure_link_event_t
+.. c:type:: z_moved_closure_link_event_t
+
+.. c:type:: void (* z_closure_transport_callback_t)(z_loaned_transport_t * transport, void * arg);
+.. c:type:: void (* z_closure_link_callback_t)(z_loaned_link_t * link, void * arg);
+.. c:type:: void (* z_closure_transport_event_callback_t)(z_loaned_transport_event_t * event, void * arg);
+.. c:type:: void (* z_closure_link_event_callback_t)(z_loaned_link_event_t * event, void * arg);
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_closure_transport
+.. autocfunction:: primitives.h::z_closure_transport_call
+.. autocfunction:: primitives.h::z_closure_link
+.. autocfunction:: primitives.h::z_closure_link_call
+.. autocfunction:: primitives.h::z_closure_transport_event
+.. autocfunction:: primitives.h::z_closure_transport_event_call
+.. autocfunction:: primitives.h::z_closure_link_event
+.. autocfunction:: primitives.h::z_closure_link_event_call
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_closure_transport_t * z_closure_transport_loan(const z_owned_closure_transport_t * closure)
+.. c:function:: void z_closure_transport_drop(z_moved_closure_transport_t * closure)
+.. c:function:: const z_loaned_closure_link_t * z_closure_link_loan(const z_owned_closure_link_t * closure)
+.. c:function:: void z_closure_link_drop(z_moved_closure_link_t * closure)
+.. c:function:: const z_loaned_closure_transport_event_t * z_closure_transport_event_loan(const z_owned_closure_transport_event_t * closure)
+.. c:function:: void z_closure_transport_event_drop(z_moved_closure_transport_event_t * closure)
+.. c:function:: const z_loaned_closure_link_event_t * z_closure_link_event_loan(const z_owned_closure_link_event_t * closure)
+.. c:function:: void z_closure_link_event_drop(z_moved_closure_link_event_t * closure)
+
 Sample miss closure
 -------------------
 
@@ -1054,6 +1110,7 @@ Functions
 .. autocfunction:: primitives.h::z_close
 .. autocfunction:: primitives.h::z_session_is_closed
 .. autocfunction:: primitives.h::z_session_id
+.. autocfunction:: primitives.h::zp_spin_once
 
 .. autocfunction:: primitives.h::z_info_zid
 .. autocfunction:: primitives.h::z_info_routers_zid
@@ -1067,6 +1124,86 @@ See details at :ref:`owned_types_concept`
 
 .. c:function:: const z_loaned_session_t * z_session_loan(const z_owned_session_t * closure)
 .. c:function:: void z_session_drop(z_moved_session_t * closure) 
+
+Connectivity
+------------
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+The connectivity API is available only when both ``Z_FEATURE_UNSTABLE_API`` and
+``Z_FEATURE_CONNECTIVITY`` are enabled.
+
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_transport_t
+.. c:type:: z_loaned_transport_t
+.. c:type:: z_moved_transport_t
+
+.. c:type:: z_owned_link_t
+.. c:type:: z_loaned_link_t
+.. c:type:: z_moved_link_t
+
+.. c:type:: z_owned_transport_event_t
+.. c:type:: z_loaned_transport_event_t
+.. c:type:: z_moved_transport_event_t
+
+.. c:type:: z_owned_link_event_t
+.. c:type:: z_loaned_link_event_t
+.. c:type:: z_moved_link_event_t
+
+.. c:type:: z_owned_transport_events_listener_t
+.. c:type:: z_loaned_transport_events_listener_t
+.. c:type:: z_moved_transport_events_listener_t
+
+.. c:type:: z_owned_link_events_listener_t
+.. c:type:: z_loaned_link_events_listener_t
+.. c:type:: z_moved_link_events_listener_t
+
+Option Types
+^^^^^^^^^^^^
+
+.. autoctype:: types.h::z_info_links_options_t
+.. autoctype:: types.h::z_transport_events_listener_options_t
+.. autoctype:: types.h::z_link_events_listener_options_t
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_info_transports
+.. autocfunction:: primitives.h::z_info_links_options_default
+.. autocfunction:: primitives.h::z_info_links
+
+.. autocfunction:: primitives.h::z_transport_events_listener_options_default
+.. autocfunction:: primitives.h::z_declare_transport_events_listener
+.. autocfunction:: primitives.h::z_declare_background_transport_events_listener
+.. autocfunction:: primitives.h::z_undeclare_transport_events_listener
+
+.. autocfunction:: primitives.h::z_link_events_listener_options_default
+.. autocfunction:: primitives.h::z_declare_link_events_listener
+.. autocfunction:: primitives.h::z_declare_background_link_events_listener
+.. autocfunction:: primitives.h::z_undeclare_link_events_listener
+
+.. autocfunction:: primitives.h::z_transport_zid
+.. autocfunction:: primitives.h::z_transport_whatami
+.. autocfunction:: primitives.h::z_transport_is_qos
+.. autocfunction:: primitives.h::z_transport_is_multicast
+.. autocfunction:: primitives.h::z_transport_is_shm
+
+.. autocfunction:: primitives.h::z_link_zid
+.. autocfunction:: primitives.h::z_link_src
+.. autocfunction:: primitives.h::z_link_dst
+.. autocfunction:: primitives.h::z_link_mtu
+.. autocfunction:: primitives.h::z_link_is_streamed
+.. autocfunction:: primitives.h::z_link_is_reliable
+
+.. autocfunction:: primitives.h::z_transport_event_kind
+.. autocfunction:: primitives.h::z_transport_event_transport
+.. autocfunction:: primitives.h::z_transport_event_transport_mut
+.. autocfunction:: primitives.h::z_link_event_kind
+.. autocfunction:: primitives.h::z_link_event_link
+.. autocfunction:: primitives.h::z_link_event_link_mut
 
 
 Matching
@@ -1353,6 +1490,7 @@ Functions
 .. autocfunction:: primitives.h::z_query_reply_err
 .. autocfunction:: primitives.h::z_query_reply_del
 .. autocfunction:: primitives.h::z_query_source_info
+.. autocfunction:: primitives.h::z_query_accepts_replies
 
 Ownership Functions
 -------------------
@@ -1386,6 +1524,7 @@ Option Types
 .. autoctype:: types.h::z_get_options_t
 .. autocenum:: constants.h::z_query_target_t
 .. autocenum:: constants.h::z_consolidation_mode_t
+.. autocenum:: constants.h::z_reply_keyexpr_t
 .. autoctype:: types.h::z_query_consolidation_t
 
 Functions
@@ -1401,6 +1540,7 @@ Functions
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_latest
 .. autocfunction:: primitives.h::z_query_target_default
+.. autocfunction:: primitives.h::z_reply_keyexpr_default
 
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
@@ -1654,15 +1794,6 @@ See details at :ref:`owned_types_concept`
 Others
 ======
 
-Data Structures
----------------
-
-.. autoctype:: types.h::zp_task_read_options_t
-.. autoctype:: types.h::zp_task_lease_options_t
-.. autoctype:: types.h::zp_read_options_t
-.. autoctype:: types.h::zp_send_keep_alive_options_t
-.. autoctype:: types.h::zp_send_join_options_t
-
 Constants
 ---------
 
@@ -1675,34 +1806,6 @@ Macros
 .. autocmacro:: macros.h::z_clone
 .. autocmacro:: macros.h::z_drop
 .. autocmacro:: macros.h::z_closure
-
-Functions
----------
-
-.. autocfunction:: primitives.h::zp_task_read_options_default
-.. autocfunction:: primitives.h::zp_start_read_task
-.. autocfunction:: primitives.h::zp_stop_read_task
-.. autocfunction:: primitives.h::zp_read_task_is_running
-
-.. autocfunction:: primitives.h::zp_task_lease_options_default
-.. autocfunction:: primitives.h::zp_start_lease_task
-.. autocfunction:: primitives.h::zp_stop_lease_task
-.. autocfunction:: primitives.h::zp_lease_task_is_running
-
-.. autocfunction:: primitives.h::zp_task_periodic_scheduler_options_default
-.. autocfunction:: primitives.h::zp_start_periodic_scheduler_task
-.. autocfunction:: primitives.h::zp_stop_periodic_scheduler_task
-.. autocfunction:: primitives.h::zp_periodic_scheduler_task_is_running
-
-.. autocfunction:: primitives.h::zp_read_options_default
-.. autocfunction:: primitives.h::zp_read
-
-.. autocfunction:: primitives.h::zp_send_keep_alive_options_default
-.. autocfunction:: primitives.h::zp_send_keep_alive
-.. autocfunction:: primitives.h::zp_send_join_options_default
-.. autocfunction:: primitives.h::zp_send_join
-  
-.. autocfunction:: primitives.h::zp_process_periodic_tasks
 
 Logging
 =======
@@ -1746,3 +1849,60 @@ By default, logging use `printf`, but it can be overridden by setting `ZENOH_LOG
 .. code-block:: bash
 
     ZENOH_LOG_PRINT=my_print make  # build zenoh-pico using `my_print` instead of `printf` for logging
+
+Admin Space
+===========
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+The *Admin Space* exposes internal runtime information of a Zenoh-Pico session
+through a queryable namespace. It allows external Zenoh applications to inspect
+session state such as transports, links, peers, and capabilities using standard
+Zenoh queries.
+
+The Admin Space is primarily intended for diagnostics, debugging, and tooling.
+
+Enabling the Admin Space
+------------------------
+
+The Admin Space is an **optional feature** and must be explicitly enabled at
+build time by defining the ``Z_FEATURE_ADMIN_SPACE`` configuration flag.
+It requires both ``Z_FEATURE_UNSTABLE_API`` and ``Z_FEATURE_QUERYABLE``.
+When ``Z_FEATURE_CONNECTIVITY`` and ``Z_FEATURE_PUBLICATION`` are enabled,
+Admin Space also publishes transport/link connectivity events and includes
+connectivity-specific fields in replies.
+
+When building Zenoh-Pico with CMake, this can be enabled via:
+
+.. code-block:: bash
+
+    -DZ_FEATURE_ADMIN_SPACE=1
+
+If the feature is not enabled, all Admin Space APIs will be unavailable and
+attempts to start the Admin Space will have no effect.
+
+Starting and Stopping the Admin Space
+-------------------------------------
+
+The Admin Space is implemented as a queryable attached to a session. It can be
+started and stopped explicitly using the following functions:
+
+.. autocfunction:: admin_space.h::zp_start_admin_space
+.. autocfunction:: admin_space.h::zp_stop_admin_space
+
+Automatic Startup
+-----------------
+
+The Admin Space can also be started automatically when opening a session by
+configuring the appropriate option in ``z_open_options_t``.
+
+When the ``auto_start_admin_space`` field is set to ``true``, the Admin Space
+is started immediately after the session is opened.
+
+.. code-block:: c
+
+    z_open_options_t opts;
+    z_open_options_default(&opts);
+    opts.auto_start_admin_space = true;
+
+    z_open(&session, config, &opts);

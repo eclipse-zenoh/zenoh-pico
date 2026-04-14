@@ -33,7 +33,7 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/system/platform/unix.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
@@ -43,7 +43,7 @@
 #else
 #include <linux/if_packet.h>
 
-void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry) { _z_keyexpr_clear(&entry->_keyexpr); }
+void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry) { _z_string_clear(&entry->_keyexpr); }
 
 z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     z_result_t ret = _Z_RES_OK;

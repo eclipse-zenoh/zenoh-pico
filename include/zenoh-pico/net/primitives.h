@@ -57,13 +57,14 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
  *
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to map to a numerical id. The callee gets
+ *     key: The resource key to map to a numerical id. The callee gets
  *             the ownership of any allocated value.
+ *     out_id: The memory location where to store the numerical id of the declared resource.
  *
  * Returns:
- *     A numerical id of the declared resource.
+ *     0 in case of success, or a negative value identifying the error.
  */
-uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
+z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -99,18 +100,19 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
  * if matching subscribers exist in the system.
  *
  * Parameters:
+ *     publisher: The publisher to initialize.
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr:  The resource key to publish. The callee gets the ownership
- *              of any allocated value.
+ *     keyexpr:  The resource key to publish.
  *     encoding: The optional default encoding to use during put. The callee gets the ownership.
  *     reliability: The reliability of the publisher messages
  *
  * Returns:
- *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
+ *    0 in case of success, negative error code otherwise.
  */
-_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
-                                    z_reliability_t reliability, z_locality_t allowed_destination);
+z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, _z_encoding_t *encoding,
+                                z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
+                                z_reliability_t reliability, z_locality_t allowed_destination);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -145,9 +147,9 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                    const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                    bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                    _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
                     z_reliability_t reliability, const _z_source_info_t *source_info, z_locality_t allowed_destination);
 #endif
 
@@ -156,18 +158,24 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *p
  * Declare a :c:type:`_z_subscriber_t` for the given resource key.
  *
  * Parameters:
+ *     subscriber: The subscriber to initialize.
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to subscribe. The callee gets the ownership
- *             of any allocated value.
+ *     keyexpr: The resource key to subscribe.
  *     callback: The callback function that will be called each time a data matching the subscribed resource is
- * received. arg: A pointer that will be passed to the **callback** on each call.
+ * received.
+ *     dropper: A function that will be called once subscriber is undeclared.
+ *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
+ *    0 in case of success, negative error code otherwise.
  */
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                      _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                                      z_locality_t allowed_origin);
+z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                 _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin);
+
+z_result_t _z_register_subscriber(uint32_t *out_sub_id, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
+                                  _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                  z_locality_t allowed_origin, const _z_sync_group_t *opt_callback_drop_sync_group);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -186,19 +194,25 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Declare a :c:type:`_z_queryable_t` for the given resource key.
  *
  * Parameters:
+ *     queryable: The queryable to initialize.
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key the :c:type:`_z_queryable_t` will reply to.
- *             The callee gets the ownership of any allocated value.
  *     complete: The complete of :c:type:`_z_queryable_t`.
  *     callback: The callback function that will be called each time a matching query is received.
  *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_queryable_t` (in null state if the declaration failed)..
+ *    0 in case of success, negative error code otherwise.
  */
-_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, bool complete,
-                                    _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                                    z_locality_t allowed_origin);
+z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                z_locality_t allowed_origin);
+
+z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                 _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                 z_locality_t allowed_origin, const _z_sync_group_t *sync_group);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -225,15 +239,12 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     payload: The value of this reply, the caller keeps ownership.
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
- *     cong_ctrl: The congestion control to apply when routing the reply.
- *     priority: The priority of the reply.
  *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *     timestamp: The timestamp of this reply. The API level timestamp (e.g. of the data when it was created).
  *     source_info: The message source info.
  */
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
-                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
-                         const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_declared_keyexpr_t *keyexpr,
+                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind, bool is_express,
                          const _z_timestamp_t *timestamp, _z_bytes_t *attachment, _z_source_info_t *source_info);
 /**
  * Send a reply error to a query.
@@ -257,22 +268,27 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
  * Declare a :c:type:`_z_querier_t` for the given resource key.
  *
  * Parameters:
+ *     querier: The querie to initialize.
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to query. The callee gets the ownership of any
- *              allocated value.
+ *     keyexpr: The resource key to query.
  *     consolidation_mode: The kind of consolidation that should be applied on replies.
  *     congestion_control: The congestion control to apply when routing the querier queries.
  *     target: The kind of queryables that should be target of this query.
  *     priority: The priority of the query.
  *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *     timeout_ms: The timeout value of this query.
+ *     encoding: The optional default encoding to use during query. The callee gets the ownership.
+ *     reliability: The reliability of the querier messages.
+ *     allowed_destination: Locality restrictions for delivery.
+ *     accept_replies: The accepted replies for this querier.
  * Returns:
- *    The created :c:type:`_z_querier_t` (in null state if the declaration failed)..
+ *    0 in case of success, negative error code otherwise.
  */
-_z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
-                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
-                                _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination);
+z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
+                              z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
+                              z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
+                              _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination,
+                              z_reply_keyexpr_t accept_replies);
 
 /**
  * Undeclare a :c:type:`_z_querier_t`.
@@ -289,9 +305,9 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  * Query data from the matching queryables in the system.
  *
  * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to query. The callee gets the ownership of any
- *              allocated value.
+ *     session: The zenoh-net session.
+ *     querier_id: Optional id of querier.
+ *     keyexpr: The resource key to query.
  *     parameters: An indication to matching queryables about the queried data.
  *     parameters_len: Length of the parameters string.
  *     target: The kind of queryables that should be target of this query.
@@ -303,21 +319,24 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     timeout_ms: The timeout value of this query.
  *     attachment: An optional attachment to this query.
  *     qos: QoS to apply when routing this query.
- *     allowed_destination: Locality restrictions for delivery.
  *     source_info: Querier source info.
- *     out_id: In case of success the query id will be written to it.
+ *     accept_replies: The accepted replies for this query.
+ *     allowed_destination: Locality restrictions for delivery.
+ *     opt_cancellation_token: Optional cancellation token to cancel the query, can be null.
  *
  */
-z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
-                    z_query_target_t target, z_consolidation_mode_t consolidation, _z_bytes_t *payload,
-                    _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                    uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
-                    z_locality_t allowed_destination, _z_zint_t *out_id);
+z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id, const _z_declared_keyexpr_t *keyexpr,
+                    const char *parameters, size_t parameters_len, z_query_target_t target,
+                    z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
+                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
+                    _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
+                    z_reply_keyexpr_t accept_replies, z_locality_t allowed_destination,
+                    _z_cancellation_token_rc_t *opt_cancellation_token);
 #endif
 
 #if Z_FEATURE_INTEREST == 1
-uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
-                         _z_void_rc_t *arg);
+uint32_t _z_add_interest(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_interest_handler_t callback,
+                         uint8_t flags, _z_void_rc_t *arg);
 z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
 #endif
 

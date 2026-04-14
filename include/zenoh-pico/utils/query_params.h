@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_UTILS_QUERY_PARAMS_H
 #define ZENOH_PICO_UTILS_QUERY_PARAMS_H
 
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/utils/string.h"
 
 #ifdef __cplusplus
@@ -54,6 +55,8 @@ typedef struct {
  * After invocation `str` will point to the remainder of the string.
  */
 _z_query_param_t _z_query_params_next(_z_str_se_t *str);
+
+bool _z_parameters_has_anyke(const char *parameters, size_t parameters_len);
 
 #ifdef __cplusplus
 }

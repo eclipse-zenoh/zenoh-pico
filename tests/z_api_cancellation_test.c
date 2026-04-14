@@ -56,11 +56,6 @@ void test_cancel_get(void) {
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
 
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
-
     z_owned_queryable_t queryable;
     z_owned_closure_query_t query_callback;
     z_owned_fifo_handler_query_t query_handler;
@@ -121,7 +116,8 @@ void test_cancel_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts);
+    assert(z_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts) ==
+           Z_ERR_CANCELLED);
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
 
@@ -149,11 +145,6 @@ void test_cancel_querier_get(void) {
 
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
-
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
 
     z_owned_queryable_t queryable;
     z_owned_closure_query_t query_callback;
@@ -219,7 +210,8 @@ void test_cancel_querier_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_querier_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_querier_get(z_querier_loan(&querier), "", z_closure_reply_move(&reply_callback), &opts);
+    assert(z_querier_get(z_querier_loan(&querier), "", z_closure_reply_move(&reply_callback), &opts) ==
+           Z_ERR_CANCELLED);
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
 
@@ -248,11 +240,6 @@ void test_cancel_does_not_prevent_session_close_on_drop(void) {
 
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
-
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
 
     z_owned_queryable_t queryable;
     z_owned_closure_query_t query_callback;
@@ -315,11 +302,6 @@ void test_liveliness_get(void) {
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
 
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
-
     z_owned_liveliness_token_t token;
     z_liveliness_declare_token(z_session_loan(&s1), &token, z_view_keyexpr_loan(&ke), NULL);
     z_sleep_s(2);
@@ -346,7 +328,8 @@ void test_liveliness_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_liveliness_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_liveliness_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), z_closure_reply_move(&reply_callback), &opts);
+    assert(z_liveliness_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), z_closure_reply_move(&reply_callback),
+                            &opts) == Z_ERR_CANCELLED);
     z_owned_reply_t reply;
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));

@@ -26,7 +26,9 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -54,21 +56,26 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 /*------------------ Init/Free/Close session ------------------*/
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
-
+    _z_atomic_bool_init(&zn->_is_closed, true);
+    _z_runtime_null(&zn->_runtime);
 #if Z_FEATURE_MULTI_THREAD == 1
-    zn->_mutex_inner_initialized = false;
-    ret = _z_mutex_init(&zn->_mutex_inner);
+    _Z_RETURN_IF_ERR(_z_mutex_init(&zn->_mutex_inner));
+    ret = _z_mutex_rec_init(&zn->_mutex_transport);
     if (ret != _Z_RES_OK) {
-        return ret;
+        _z_mutex_drop(&zn->_mutex_inner);
+        _Z_ERROR_RETURN(ret);
     }
-    zn->_mutex_inner_initialized = true;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    ret = _z_mutex_init(&zn->_mutex_admin_space);
+    if (ret != _Z_RES_OK) {
+        _z_mutex_rec_drop(&zn->_mutex_transport);
+        _z_mutex_drop(&zn->_mutex_inner);
+        _Z_ERROR_RETURN(ret);
+    }
+#endif
 #endif
     zn->_mode = Z_WHATAMI_CLIENT;
     zn->_tp._type = _Z_TRANSPORT_NONE;
-#if Z_FEATURE_MULTI_THREAD == 1
-    zn->_read_task_should_run = false;
-    zn->_lease_task_should_run = false;
-#endif
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;
@@ -107,108 +114,135 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-#if Z_FEATURE_MULTI_THREAD == 1
-    zn->_periodic_scheduler_task = NULL;
-    zn->_periodic_task_should_run = false;
-    zn->_periodic_scheduler_task_attr = NULL;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    zn->_admin_space_queryable_id = 0;
+#if Z_FEATURE_CONNECTIVITY == 1
+#if Z_FEATURE_QUERYABLE == 1
+    zn->_admin_space_session_queryable_id = 0;
 #endif
-    ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
-    if (ret != _Z_RES_OK) {
-        zn->_mutex_inner_initialized = false;
-        _z_mutex_drop(&zn->_mutex_inner);
-        _Z_ERROR_RETURN(ret);
+#if Z_FEATURE_PUBLICATION == 1
+    zn->_admin_space_transport_listener_id = 0;
+    zn->_admin_space_link_listener_id = 0;
+#endif
+#endif
+#endif
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    zn->_connectivity_next_listener_id = 1;
+    _z_connectivity_transport_listener_intmap_init(&zn->_connectivity_transport_event_listeners);
+    _z_connectivity_link_listener_intmap_init(&zn->_connectivity_link_event_listeners);
+#endif
+#endif
+    zn->_callback_drop_sync_group = _z_sync_group_null();
+    _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
+    _Z_SET_IF_OK(ret, _z_runtime_init(&zn->_runtime));
+#if Z_FEATURE_QUERY
+    if (ret == _Z_RES_OK) {
+        _z_fut_t fut = _z_fut_null();
+        fut._fut_fn = _z_pending_query_process_timeout_task_fn;
+        fut._fut_arg = zn;
+        ret = _z_fut_handle_is_null(_z_runtime_spawn(&zn->_runtime, &fut)) ? _Z_ERR_FAILED_TO_SPAWN_TASK : _Z_RES_OK;
     }
 #endif
+    if (ret != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+#if Z_FEATURE_ADMIN_SPACE == 1
+        _z_mutex_drop(&zn->_mutex_admin_space);
 #endif
+        _z_mutex_rec_drop(&zn->_mutex_transport);
+        _z_mutex_drop(&zn->_mutex_inner);
+#endif
+        _z_sync_group_drop(&zn->_callback_drop_sync_group);
+        _z_runtime_clear(&zn->_runtime);
+        _Z_ERROR_RETURN(ret);
+    }
 
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
-
+    _z_atomic_bool_store(&zn->_is_closed, false, _z_memory_order_release);
     return ret;
+}
+
+z_result_t _z_session_close(_z_session_t *zn) {
+    // Need to run close sequence unconditionally, since
+    // this is the only way to guarantee that after _z_session_close returns,
+    // no more callbacks will be running
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
+    _z_atomic_bool_store(&zn->_is_closed, true, _z_memory_order_release);
+    _z_session_mutex_unlock(zn);
+    // stop the runtime to prevent spawning new tasks
+    // this will also ensure that no callbacks can be called in response to message reception inside read task,
+    // session sync group at the end of the call might still be needed in case there are any historical
+    // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
+    // events
+    _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_network_message_slist_free(&zn->_declaration_cache);
+#endif
+    _z_session_mutex_unlock(zn);
+    _z_flush_local_resources(zn);
+#if Z_FEATURE_SUBSCRIPTION == 1
+    _z_flush_subscriptions(zn);
+#endif
+#if Z_FEATURE_QUERYABLE == 1
+    // Admin space querable cleanup will occur as part of queryable cleanup
+    _z_flush_session_queryable(zn);
+#endif
+#if Z_FEATURE_QUERY == 1
+    _z_flush_pending_queries(zn);
+#endif
+#if Z_FEATURE_LIVELINESS == 1
+    _z_liveliness_clear(zn);
+#endif
+    _z_flush_interest(zn);
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_CONNECTIVITY == 1
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
+    _z_connectivity_transport_listener_intmap_clear(&zn->_connectivity_transport_event_listeners);
+    _z_connectivity_link_listener_intmap_clear(&zn->_connectivity_link_event_listeners);
+    zn->_connectivity_next_listener_id = 1;
+    _z_session_mutex_unlock(zn);
+#endif
+#if Z_FEATURE_ADMIN_SPACE == 1
+    _z_session_admin_space_mutex_lock(zn);
+    zn->_admin_space_queryable_id = 0;
+#if Z_FEATURE_CONNECTIVITY == 1
+#if Z_FEATURE_QUERYABLE == 1
+    zn->_admin_space_session_queryable_id = 0;
+#endif
+#if Z_FEATURE_PUBLICATION == 1
+    zn->_admin_space_transport_listener_id = 0;
+    zn->_admin_space_link_listener_id = 0;
+#endif
+#endif
+    _z_session_admin_space_mutex_unlock(zn);
+#endif
+#endif
+    // Despite stopping runtime at the very beginning, we still need to wait for possible historical callbacks
+    // from liveliness subscribers, matching listeners, connectivity events listeners, etc
+    // to finish
+    _z_sync_group_wait(&zn->_callback_drop_sync_group);
+    return _Z_RES_OK;
 }
 
 void _z_session_clear(_z_session_t *zn) {
-    if (!_z_session_is_closed(zn)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        _zp_stop_read_task(zn);
-        _zp_stop_lease_task(zn);
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-        _zp_stop_periodic_scheduler_task(zn);
-#endif
-#endif
-#endif
-
+    _z_session_close(zn);
+    _z_runtime_clear(&zn->_runtime);
 #if Z_FEATURE_AUTO_RECONNECT == 1
-        _z_config_clear(&zn->_config);
-        _z_network_message_slist_free(&zn->_declaration_cache);
+    _z_config_clear(&zn->_config);
 #endif
-
-        _z_close(zn);
-        // Clear Zenoh PID
-        // Clean up transports
-        _z_transport_clear(&zn->_tp);
-
-        // Clean up the entities
-        _z_flush_local_resources(zn);
-#if Z_FEATURE_SUBSCRIPTION == 1
-        _z_flush_subscriptions(zn);
-#if Z_FEATURE_RX_CACHE == 1
-        _z_subscription_lru_cache_delete(&zn->_subscription_cache);
-#endif
-#endif
-#if Z_FEATURE_QUERYABLE == 1
-        _z_flush_session_queryable(zn);
-#if Z_FEATURE_RX_CACHE == 1
-        _z_queryable_lru_cache_delete(&zn->_queryable_cache);
-#endif
-#endif
-#if Z_FEATURE_QUERY == 1
-        _z_flush_pending_queries(zn);
-#endif
-#if Z_FEATURE_LIVELINESS == 1
-        _z_liveliness_clear(zn);
-#endif
-
-        _z_flush_interest(zn);
-    }
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-    if (_zp_periodic_scheduler_check(&zn->_periodic_scheduler)) {
-        _zp_periodic_scheduler_clear(&zn->_periodic_scheduler);
-    }
-#endif
-#endif
+    _z_session_transport_mutex_lock(zn);
+    _z_transport_clear(&zn->_tp);
+    _z_session_transport_mutex_unlock(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zn->_read_task_should_run = false;
-    zn->_lease_task_should_run = false;
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-    zn->_periodic_task_should_run = false;
-    zn->_periodic_scheduler_task_attr = NULL;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    _z_mutex_drop(&zn->_mutex_admin_space);
 #endif
-#endif  // Z_FEATURE_UNSTABLE_API
+    _z_mutex_rec_drop(&zn->_mutex_transport);
+    _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    if (zn->_mutex_inner_initialized) {
-        zn->_mutex_inner_initialized = false;
-        _z_mutex_drop(&zn->_mutex_inner);
-    }
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-}
-
-z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    _Z_ERROR_LOG(_Z_ERR_GENERIC);
-    z_result_t ret = _Z_ERR_GENERIC;
-
-    if (zn != NULL) {
-        ret = _z_transport_close(&zn->_tp, reason);
-    }
-
-    return ret;
+    _z_sync_group_drop(&zn->_callback_drop_sync_group);
 }

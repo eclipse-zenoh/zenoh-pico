@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks);
+void _z_transport_common_clear(_z_transport_common_t *ztc);
 
 #ifdef __cplusplus
 }

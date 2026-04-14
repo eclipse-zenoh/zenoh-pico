@@ -239,9 +239,12 @@ set(BATCH_MULTICAST_SIZE 2048 CACHE STRING "Use this to override the maximum mul
 set(Z_CONFIG_SOCKET_TIMEOUT 100 CACHE STRING "Default socket timeout in milliseconds")
 set(Z_TRANSPORT_LEASE 10000 CACHE STRING "Link lease duration in milliseconds to announce to other zenoh nodes")
 set(Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3 CACHE STRING "Default session lease expire factor.")
-set(ZP_PERIODIC_SCHEDULER_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in the periodic scheduler")
+set(Z_RUNTIME_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in zenoh-pico's runtime")
+set(Z_TRANSPORT_ACCEPT_TIMEOUT 1000 CACHE STRING "Link accept timeout in P2P mode in milliseconds")
+set(Z_TRANSPORT_CONNECT_TIMEOUT 10000 CACHE STRING "Link connect timeout in P2P mode inmilliseconds")
 
 set(Z_FEATURE_UNSTABLE_API 0 CACHE STRING "Toggle unstable Zenoh-C API")
+set(Z_FEATURE_CONNECTIVITY 0 CACHE STRING "Toggle connectivity status/events API (unstable)")
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
@@ -277,8 +280,8 @@ set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 set(Z_FEATURE_UNICAST_PEER 1 CACHE STRING "Toggle Unicast peer mode")
 set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 set(Z_FEATURE_MULTICAST_DECLARATIONS 0 CACHE STRING "Toggle multicast resource declarations")
-set(Z_FEATURE_PERIODIC_TASKS 0 CACHE STRING "Toggle periodic task support")
 set(Z_FEATURE_LOCAL_QUERYABLE 0 CACHE STRING "Toggle local queriables")
+set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support")
 
 # Add a warning message if someone tries to enable Z_FEATURE_LINK_SERIAL_USB directly
 if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
@@ -286,9 +289,9 @@ if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links" FORCE)
 endif()
 
-if(Z_FEATURE_UNICAST_PEER AND NOT Z_FEATURE_MULTI_THREAD)
-  message(WARNING "Z_FEATURE_UNICAST_PEER can only be enabled when Z_FEATURE_MULTI_THREAD is also enabled. Disabling Z_FEATURE_UNICAST_PEER.")
-  set(Z_FEATURE_UNICAST_PEER 0 CACHE STRING "Toggle Unicast peer mode" FORCE)
+if(Z_FEATURE_CONNECTIVITY AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_CONNECTIVITY can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_CONNECTIVITY.")
+  set(Z_FEATURE_CONNECTIVITY 0 CACHE STRING "Toggle connectivity status/events API (unstable)" FORCE)
 endif()
 
 if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_INTEREST)
@@ -306,35 +309,34 @@ if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATU
   set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature" FORCE)
 endif()
 
-if(Z_FEATURE_ADVANCED_SUBSCRIPTION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_SUBSCRIPTION OR NOT Z_FEATURE_LIVELINESS OR NOT Z_FEATURE_MULTI_THREAD))
-  message(WARNING "Z_FEATURE_ADVANCED_SUBSCRIPTION can only be enabled when Z_FEATURE_UNSTABLE_API, Z_FEATURE_SUBSCRIPTION, Z_FEATURE_LIVELINESS and Z_FEATURE_MULTI_THREAD is also enabled. Disabling Z_FEATURE_ADVANCED_SUBSCRIPTION.")
-  set(Z_FEATURE_ADVANCED_SUBSCRIPTION 0 CACHE STRING "Toggle advanced subscription feature" FORCE)
+
+if(Z_FEATURE_ADMIN_SPACE AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_ADMIN_SPACE can only be enabled when Z_FEATURE_UNSTABLE_API is enabled. Disabling Z_FEATURE_ADMIN_SPACE.")
+  set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support" FORCE)
 endif()
 
-if(Z_FEATURE_PERIODIC_TASKS AND NOT Z_FEATURE_UNSTABLE_API)
-  message(WARNING "Z_FEATURE_PERIODIC_TASKS can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_PERIODIC_TASKS.")
-  set(Z_FEATURE_PERIODIC_TASKS 0 CACHE STRING "Toggle periodic task support" FORCE)
-endif()
-
-if(Z_FEATURE_ADVANCED_PUBLICATION OR Z_FEATURE_ADVANCED_SUBSCRIPTION)
-  set(Z_FEATURE_PERIODIC_TASKS 1 CACHE STRING "Toggle periodic task support" FORCE)
+if(Z_FEATURE_ADMIN_SPACE AND NOT Z_FEATURE_QUERYABLE)
+  message(WARNING "Z_FEATURE_ADMIN_SPACE can only be enabled when Z_FEATURE_QUERYABLE is enabled. Disabling Z_FEATURE_ADMIN_SPACE.")
+  set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support" FORCE)
 endif()
 
 
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
+* CONNECTIVITY: ${Z_FEATURE_CONNECTIVITY}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
+* SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * ADVANCED PUBLICATION: ${Z_FEATURE_ADVANCED_PUBLICATION}\n\
 * ADVANCED SUBSCRIPTION: ${Z_FEATURE_ADVANCED_SUBSCRIPTION}\n\
-* SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
 * LIVELINESS: ${Z_FEATURE_LIVELINESS}\n\
 * INTEREST: ${Z_FEATURE_INTEREST}\n\
 * AUTO_RECONNECT: ${Z_FEATURE_AUTO_RECONNECT}\n\
 * MATCHING: ${Z_FEATURE_MATCHING}\n\
-* RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
+* RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}\n\
+* ADMIN SPACE: ${Z_FEATURE_ADMIN_SPACE}")
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
@@ -470,6 +472,7 @@ file(GLOB_RECURSE Sources
   "src/link/*.c"
   "src/net/*.c"
   "src/protocol/*.c"
+  "src/runtime/*.c"
   "src/session/*.c"
   "src/transport/*.c"
   "src/utils/*.c"
@@ -647,13 +650,18 @@ if(UNIX OR MSVC)
     add_executable(z_test_peer_unicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_unicast.c)
     add_executable(z_test_peer_multicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_multicast.c)
     add_executable(z_utils_test ${PROJECT_SOURCE_DIR}/tests/z_utils_test.c)
-    add_executable(z_scheduler_test ${PROJECT_SOURCE_DIR}/tests/z_scheduler_test.c)
     add_executable(z_tls_test ${PROJECT_SOURCE_DIR}/tests/z_tls_test.c)
     add_executable(z_tls_config_test ${PROJECT_SOURCE_DIR}/tests/z_tls_config_test.c)
     add_executable(z_condvar_wait_until_test ${PROJECT_SOURCE_DIR}/tests/z_condvar_wait_until_test.c)
     add_executable(z_sync_group_test ${PROJECT_SOURCE_DIR}/tests/z_sync_group_test.c)
     add_executable(z_cancellation_token_test ${PROJECT_SOURCE_DIR}/tests/z_cancellation_token_test.c)
     add_executable(z_local_loopback_test ${PROJECT_SOURCE_DIR}/tests/z_local_loopback_test.c)
+    add_executable(z_json_encoder_test ${PROJECT_SOURCE_DIR}/tests/z_json_encoder_test.c)
+    add_executable(z_executor_test ${PROJECT_SOURCE_DIR}/tests/z_executor_test.c)
+    add_executable(z_background_executor_test ${PROJECT_SOURCE_DIR}/tests/z_background_executor_test.c)
+    add_executable(z_hashmap_test ${PROJECT_SOURCE_DIR}/tests/z_hashmap_test.c)
+    add_executable(z_pqueue_test ${PROJECT_SOURCE_DIR}/tests/z_pqueue_test.c)
+    add_executable(z_test_fragment_decode_error_transport_zbuf ${PROJECT_SOURCE_DIR}/tests/z_test_fragment_decode_error_transport_zbuf.c)
 
     target_link_libraries(z_data_struct_test zenohpico::lib)
     target_link_libraries(z_channels_test zenohpico::lib)
@@ -676,7 +684,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_test_peer_unicast zenohpico::lib)
     target_link_libraries(z_test_peer_multicast zenohpico::lib)
     target_link_libraries(z_utils_test zenohpico::lib)
-    target_link_libraries(z_scheduler_test zenohpico::lib)
     target_link_libraries(z_tls_test zenohpico::lib)
     target_link_libraries(z_tls_config_test zenohpico::lib)
     target_link_libraries(z_condvar_wait_until_test zenohpico::lib)
@@ -684,13 +691,21 @@ if(UNIX OR MSVC)
     target_link_libraries(z_cancellation_token_test zenohpico::lib)
     target_link_libraries(z_local_loopback_test zenohpico::lib)
     target_include_directories(z_local_loopback_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
-    target_compile_definitions(z_local_loopback_test PRIVATE Z_LOOPBACK_TESTING=1)
+    target_compile_definitions(z_local_loopback_test PRIVATE Z_TEST_HOOKS=1)
     if(PICO_SHARED)
-      target_compile_definitions(${Libname}_shared PRIVATE Z_LOOPBACK_TESTING=1)
+      target_compile_definitions(${Libname}_shared PRIVATE Z_TEST_HOOKS=1)
     endif()
     if(PICO_STATIC)
-      target_compile_definitions(${Libname}_static PRIVATE Z_LOOPBACK_TESTING=1)
+      target_compile_definitions(${Libname}_static PRIVATE Z_TEST_HOOKS=1)
     endif()
+    target_link_libraries(z_json_encoder_test zenohpico::lib)
+    target_link_libraries(z_executor_test zenohpico::lib)
+    target_link_libraries(z_background_executor_test zenohpico::lib)
+    target_link_libraries(z_hashmap_test zenohpico::lib)
+    target_link_libraries(z_pqueue_test zenohpico::lib)
+    target_link_libraries(z_test_fragment_decode_error_transport_zbuf zenohpico::lib)
+    target_include_directories(z_test_fragment_decode_error_transport_zbuf PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_definitions(z_test_fragment_decode_error_transport_zbuf PRIVATE Z_TEST_HOOKS=1)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
@@ -719,13 +734,18 @@ if(UNIX OR MSVC)
     add_test(z_refcount_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_refcount_test)
     add_test(z_lru_cache_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_lru_cache_test)
     add_test(z_utils_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_utils_test)
-    add_test(z_scheduler_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_scheduler_test)
     add_test(z_tls_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_tls_test)
     add_test(z_tls_config_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_tls_config_test)
     add_test(z_condvar_wait_until_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_condvar_wait_until_test)
     add_test(z_sync_group_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_sync_group_test)
     add_test(z_cancellation_token_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_cancellation_token_test)
     add_test(z_local_loopback_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_local_loopback_test)
+    add_test(z_json_encoder_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_json_encoder_test)
+    add_test(z_executor_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_executor_test)
+    add_test(z_background_executor_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_background_executor_test)
+    add_test(z_hashmap_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_hashmap_test)
+    add_test(z_pqueue_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_pqueue_test)
+    add_test(z_test_fragment_decode_error_transport_zbuf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_test_fragment_decode_error_transport_zbuf)
   endif()
 
   if(BUILD_INTEGRATION)
@@ -734,37 +754,45 @@ if(UNIX OR MSVC)
     if(CMAKE_C_STANDARD MATCHES "11")
       add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
       add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
-      add_executable(z_session_test ${PROJECT_SOURCE_DIR}/tests/z_session_test.c)
       add_executable(z_wildcard_subscription_test ${PROJECT_SOURCE_DIR}/tests/z_wildcard_subscription_test.c)
       add_executable(z_api_liveliness_test ${PROJECT_SOURCE_DIR}/tests/z_api_liveliness_test.c)
       add_executable(z_api_matching_test ${PROJECT_SOURCE_DIR}/tests/z_api_matching_test.c)
       add_executable(z_api_source_info_test ${PROJECT_SOURCE_DIR}/tests/z_api_source_info_test.c)
+      add_executable(z_api_connectivity_test ${PROJECT_SOURCE_DIR}/tests/z_api_connectivity_test.c)
       add_executable(z_api_queryable_test ${PROJECT_SOURCE_DIR}/tests/z_api_queryable_test.c)
-      add_executable(z_api_scheduler_test ${PROJECT_SOURCE_DIR}/tests/z_api_scheduler_test.c)
       add_executable(z_api_cancellation_test ${PROJECT_SOURCE_DIR}/tests/z_api_cancellation_test.c)
       add_executable(z_api_local_queryable_test ${PROJECT_SOURCE_DIR}/tests/z_api_local_queryable_test.c)
       add_executable(z_api_local_subscriber_test ${PROJECT_SOURCE_DIR}/tests/z_api_local_subscriber_test.c)
+      add_executable(z_api_admin_space_test ${PROJECT_SOURCE_DIR}/tests/z_api_admin_space_test.c)
+      add_executable(z_multi_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_multi_pubsub_test.c)
+      add_executable(z_multi_queryable_test ${PROJECT_SOURCE_DIR}/tests/z_multi_queryable_test.c)
 if(UNIX)
       add_executable(z_api_advanced_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_api_advanced_pubsub_test.c
+                                                ${PROJECT_SOURCE_DIR}/tests/utils/tcp_proxy.c)
+      add_executable(z_api_callback_drop_on_undeclare_test ${PROJECT_SOURCE_DIR}/tests/z_api_callback_drop_on_undeclare_test.c
                                                 ${PROJECT_SOURCE_DIR}/tests/utils/tcp_proxy.c)
       add_compile_definitions(Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY)
 else()
       add_executable(z_api_advanced_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_api_advanced_pubsub_test.c)
+      add_executable(z_api_callback_drop_on_undeclare_test ${PROJECT_SOURCE_DIR}/tests/z_api_callback_drop_on_undeclare_test.c)
 endif()
 
       target_link_libraries(z_client_test zenohpico::lib)
       target_link_libraries(z_api_alignment_test zenohpico::lib)
-      target_link_libraries(z_session_test zenohpico::lib)
       target_link_libraries(z_wildcard_subscription_test zenohpico::lib)
       target_link_libraries(z_api_liveliness_test zenohpico::lib)
       target_link_libraries(z_api_matching_test zenohpico::lib)
       target_link_libraries(z_api_source_info_test zenohpico::lib)
+      target_link_libraries(z_api_connectivity_test zenohpico::lib)
       target_link_libraries(z_api_queryable_test zenohpico::lib)
-      target_link_libraries(z_api_scheduler_test zenohpico::lib)
       target_link_libraries(z_api_advanced_pubsub_test zenohpico::lib)
       target_link_libraries(z_api_cancellation_test zenohpico::lib)
       target_link_libraries(z_api_local_queryable_test zenohpico::lib)
       target_link_libraries(z_api_local_subscriber_test zenohpico::lib)
+      target_link_libraries(z_api_admin_space_test zenohpico::lib)
+      target_link_libraries(z_multi_pubsub_test zenohpico::lib)
+      target_link_libraries(z_multi_queryable_test zenohpico::lib)
+      target_link_libraries(z_api_callback_drop_on_undeclare_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/tls_verify.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh COPYONLY)
@@ -778,17 +806,20 @@ endif()
         add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
       endif()
       add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
-      add_test(z_session_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_session_test)
       add_test(z_wildcard_subscription_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_wildcard_subscription_test)
       add_test(z_api_liveliness_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_liveliness_test)
       add_test(z_api_cancellation_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_cancellation_test)
       add_test(z_api_matching_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_matching_test)
       add_test(z_api_source_info_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_source_info_test)
+      add_test(z_api_connectivity_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_connectivity_test)
       add_test(z_api_queryable_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_queryable_test)
-      add_test(z_api_scheduler_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_scheduler_test)
       add_test(z_api_advanced_pubsub_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_advanced_pubsub_test)
       add_test(z_api_local_queryable_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_local_queryable_test)
       add_test(z_api_local_subscriber_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_local_subscriber_test)
+      add_test(z_api_admin_space_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_admin_space_test)
+      add_test(z_multi_pubsub_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_multi_pubsub_test)
+      add_test(z_multi_queryable_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_multi_queryable_test)
+      add_test(z_api_callback_drop_on_undeclare_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_callback_drop_on_undeclare_test)
     endif()
   endif()
 endif()

@@ -18,7 +18,6 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
 #ifdef __cplusplus
@@ -38,7 +37,7 @@ extern "C" {
 
 // Endpoint config types
 typedef struct {
-    _z_keyexpr_t _keyexpr;
+    _z_string_t _keyexpr;
     uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     bool _has_vlan;

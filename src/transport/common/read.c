@@ -23,38 +23,24 @@
 z_result_t _z_read(_z_transport_t *zt, bool single_read) {
     z_result_t ret = _Z_RES_OK;
     switch (zt->_type) {
+#if Z_FEATURE_UNICAST_TRANSPORT == 1
         case _Z_TRANSPORT_UNICAST_TYPE:
             ret = _zp_unicast_read(&zt->_transport._unicast, single_read);
             break;
+#endif
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _zp_multicast_read(&zt->_transport._multicast, single_read);
             break;
+#endif
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
         case _Z_TRANSPORT_RAWETH_TYPE:
             ret = _zp_raweth_read(&zt->_transport._raweth, single_read);
             break;
+#endif
         default:
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-            break;
-    }
-    return ret;
-}
-
-void *_zp_read_task(void *zt_arg) {
-    void *ret = NULL;
-    _z_transport_t *zt = (_z_transport_t *)zt_arg;
-    switch (zt->_type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            ret = _zp_unicast_read_task(&zt->_transport._unicast);
-            break;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _zp_multicast_read_task(&zt->_transport._multicast);
-            break;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            ret = _zp_raweth_read_task(&zt->_transport._raweth);
-            break;
-        default:
-            ret = NULL;
             break;
     }
     return ret;

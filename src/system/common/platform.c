@@ -13,6 +13,14 @@
 
 #include "zenoh-pico/system/common/platform.h"
 
+#include <stdio.h>
+#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
+#include <arpa/inet.h>
+#endif
+#if defined(ZENOH_FREERTOS_LWIP)
+#include "lwip/inet.h"
+#endif
+
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -62,3 +70,75 @@ z_result_t z_condvar_wait_until(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, con
 }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#if defined(ZENOH_WINDOWS) || defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || \
+    defined(ZENOH_FREERTOS_LWIP)
+static z_result_t _z_ipv4_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (inet_ntop(AF_INET, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "%s:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_ipv6_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET6_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (inet_ntop(AF_INET6, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "[%s]:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+#endif
+
+#if defined(ZENOH_WINDOWS) || defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || \
+    defined(ZENOH_FREERTOS_LWIP)
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
+                                  size_t dst_len) {
+    if (address == NULL || dst == NULL || dst_len == 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    if (address_len == sizeof(uint32_t)) {
+        return _z_ipv4_port_to_endpoint(address, port, dst, dst_len);
+    } else if (address_len == 16) {
+        return _z_ipv6_port_to_endpoint(address, port, dst, dst_len);
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+}
+#elif !defined(ZENOH_ZEPHYR)
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
+                                  size_t dst_len) {
+    _ZP_UNUSED(address);
+    _ZP_UNUSED(address_len);
+    _ZP_UNUSED(port);
+    _ZP_UNUSED(dst);
+    _ZP_UNUSED(dst_len);
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+}
+#endif
+
+#if !defined(ZENOH_WINDOWS) && !defined(ZENOH_LINUX) && !defined(ZENOH_MACOS) && !defined(ZENOH_BSD) && \
+    !defined(ZENOH_ZEPHYR)
+z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
+                                   size_t remote_len) {
+    _ZP_UNUSED(sock);
+    _ZP_UNUSED(local);
+    _ZP_UNUSED(local_len);
+    _ZP_UNUSED(remote);
+    _ZP_UNUSED(remote_len);
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+}
+#endif

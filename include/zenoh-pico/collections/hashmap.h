@@ -74,6 +74,7 @@ void *_z_hashmap_insert(_z_hashmap_t *map, void *key, void *val, z_element_free_
 void *_z_hashmap_get(const _z_hashmap_t *map, const void *key);
 _z_list_t *_z_hashmap_get_all(const _z_hashmap_t *map, const void *key);
 void _z_hashmap_remove(_z_hashmap_t *map, const void *key, z_element_free_f f);
+_z_hashmap_entry_t _z_hashmap_extract(_z_hashmap_t *map, const void *key);
 
 size_t _z_hashmap_capacity(const _z_hashmap_t *map);
 size_t _z_hashmap_len(const _z_hashmap_t *map);
@@ -142,6 +143,13 @@ void *_z_hashmap_iterator_value(const _z_hashmap_iterator_t *iter);
     }                                                                                                                 \
     static inline void map_name##_hashmap_remove(map_name##_hashmap_t *m, const key_type *k) {                        \
         _z_hashmap_remove(m, k, map_name##_hashmap_entry_elem_free);                                                  \
+    }                                                                                                                 \
+    static inline map_name##_hashmap_entry_t map_name##_hashmap_extract(map_name##_hashmap_t *m, const key_type *k) { \
+        map_name##_hashmap_entry_t out;                                                                               \
+        _z_hashmap_entry_t e = _z_hashmap_extract(m, k);                                                              \
+        out._key = e._key;                                                                                            \
+        out._val = e._val;                                                                                            \
+        return out;                                                                                                   \
     }                                                                                                                 \
     static inline size_t map_name##_hashmap_capacity(map_name##_hashmap_t *m) { return _z_hashmap_capacity(m); }      \
     static inline size_t map_name##_hashmap_len(map_name##_hashmap_t *m) { return _z_hashmap_len(m); }                \

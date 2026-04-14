@@ -451,7 +451,33 @@ void int_map_iterator_deletion_test(void) {
     _z_str_intmap_clear(&map);
 }
 
+void int_map_extract_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
+
+    assert(_z_str_intmap_extract(&map, 100) == NULL);
+    char *item_c = _z_str_intmap_extract(&map, 30);
+    assert(strcmp(item_c, "C") == 0);
+    z_free(item_c);
+    assert(_z_str_intmap_len(&map) == 3);
+    assert(_z_str_intmap_get(&map, 30) == NULL);
+
+    assert(_z_str_intmap_extract(&map, 30) == NULL);
+
+    _z_str_intmap_clear(&map);
+}
+
 static bool slist_eq_f(const void *left, const void *right) { return strcmp((char *)left, (char *)right) == 0; }
+static bool slist_starts_with_f(const void *left, const void *right) {
+    // SAFETY: left and right are guaranteed to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
+    return strncmp((char *)left, (char *)right, strlen((char *)left)) == 0;
+}
 
 void slist_test(void) {
     char *values[] = {"test1", "test2", "test3"};
@@ -531,6 +557,42 @@ void slist_test(void) {
     elem = _z_slist_find(slist, slist_eq_f, values[2]);
     assert(elem != NULL);
     _z_slist_free(&slist, _z_noop_clear);
+
+    // Extract test
+    char *values2[] = {"test1", "tes2", "test3"};
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        // SAFETY: values2[i] only contains null-terminated strings.
+        // Flawfinder: ignore [CWE-126]
+        slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
+    }
+    _z_slist_t *extracted = NULL;
+    slist = _z_slist_extract_filter(slist, slist_starts_with_f, "test", &extracted, false);
+
+    assert(_z_slist_len(slist) == 1);
+    assert(_z_slist_len(extracted) == 2);
+    elem = NULL;
+    elem = _z_slist_find(extracted, slist_eq_f, "test1");
+    assert(elem != NULL);
+    elem = _z_slist_find(extracted, slist_eq_f, "test3");
+    assert(elem != NULL);
+    elem = _z_slist_find(slist, slist_eq_f, "tes2");
+    assert(elem != NULL);
+    _z_slist_free(&slist, _z_noop_clear);
+    _z_slist_free(&extracted, _z_noop_clear);
+
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        // SAFETY: values2[i] only contains null-terminated strings.
+        // Flawfinder: ignore [CWE-126]
+        slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
+    }
+    slist = _z_slist_extract_filter(slist, slist_starts_with_f, "test", &extracted, true);
+
+    assert(_z_slist_len(slist) == 2);
+    assert(_z_slist_len(extracted) == 1);
+    elem = _z_slist_find(slist, slist_eq_f, "tes2");
+    assert(elem != NULL);
+    _z_slist_free(&slist, _z_noop_clear);
+    _z_slist_free(&extracted, _z_noop_clear);
 
     // Clone test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
@@ -707,6 +769,80 @@ void sorted_map_stress_test(void) {
     _z_str__z_str_sortedmap_clear(&map);
 }
 
+size_t destroyed_elts = 0;
+typedef struct {
+    int id;
+} _z_elt_t;
+
+void _z_elt_destroy(_z_elt_t *elt) {
+    (void)elt;
+    destroyed_elts++;
+}
+
+void _z_elt_move(_z_elt_t *dst, _z_elt_t *src) {
+    dst->id = src->id;
+    src->id = -1;  // Invalidate source to detect use-after-move
+}
+
+#define _ZP_DEQUE_TEMPLATE_ELEM_TYPE _z_elt_t
+#define _ZP_DEQUE_TEMPLATE_NAME _z_elt_deque
+#define _ZP_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME _z_elt_destroy
+#define _ZP_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME _z_elt_move
+#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_elt_compare
+#define _ZP_DEQUE_TEMPLATE_SIZE 4
+#include "zenoh-pico/collections/deque_template.h"
+
+void deque_test(void) {
+    destroyed_elts = 0;
+    _z_elt_deque_t deque = _z_elt_deque_new();
+    assert(_z_elt_deque_size(&deque) == 0);
+    assert(_z_elt_deque_is_empty(&deque));
+    assert(_z_elt_deque_front(&deque) == NULL);
+    assert(_z_elt_deque_back(&deque) == NULL);
+    _z_elt_t elt0 = {.id = 0};
+
+    assert(_z_elt_deque_push_front(&deque, &elt0));
+
+    assert(_z_elt_deque_front(&deque)->id == 0);
+    assert(_z_elt_deque_back(&deque)->id == 0);
+    _z_elt_t elt1 = {.id = 1};
+    assert(_z_elt_deque_push_front(&deque, &elt1));
+
+    _z_elt_t elt2 = {.id = 2};
+    assert(_z_elt_deque_push_back(&deque, &elt2));
+    assert(_z_elt_deque_front(&deque)->id == 1);
+    assert(_z_elt_deque_back(&deque)->id == 2);
+
+    _z_elt_t elt3 = {.id = 3};
+    assert(_z_elt_deque_push_back(&deque, &elt3));
+    assert(_z_elt_deque_front(&deque)->id == 1);
+    assert(_z_elt_deque_back(&deque)->id == 3);
+
+    assert(_z_elt_deque_size(&deque) == 4);
+    assert(!_z_elt_deque_is_empty(&deque));
+
+    _z_elt_t elt4 = {.id = 4};
+    assert(!_z_elt_deque_push_back(&deque, &elt4));
+    assert(_z_elt_deque_front(&deque)->id == 1);
+    assert(_z_elt_deque_back(&deque)->id == 3);
+
+    _z_elt_t out;
+    assert(_z_elt_deque_pop_front(&deque, &out));
+    assert(out.id == 1);
+    assert(_z_elt_deque_front(&deque)->id == 0);
+    assert(_z_elt_deque_back(&deque)->id == 3);
+    assert(_z_elt_deque_pop_back(&deque, &out));
+    assert(out.id == 3);
+    assert(_z_elt_deque_front(&deque)->id == 0);
+    assert(_z_elt_deque_back(&deque)->id == 2);
+    assert(_z_elt_deque_size(&deque) == 2);
+
+    // Clean up remaining elements
+    _z_elt_deque_destroy(&deque);
+    assert(_z_elt_deque_size(&deque) == 0);
+    assert(destroyed_elts == 2);
+}
+
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -717,6 +853,7 @@ int main(void) {
 
     int_map_iterator_test();
     int_map_iterator_deletion_test();
+    int_map_extract_test();
     ring_iterator_test();
 
     slist_test();
@@ -730,4 +867,6 @@ int main(void) {
     sorted_map_copy_move_test();
     sorted_map_free_test();
     sorted_map_stress_test();
+
+    deque_test();
 }

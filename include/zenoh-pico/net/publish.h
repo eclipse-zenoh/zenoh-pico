@@ -28,7 +28,7 @@ extern "C" {
  * Return type when declaring a publisher.
  */
 typedef struct _z_publisher_t {
-    _z_keyexpr_t _key;
+    _z_declared_keyexpr_t _key;
     _z_zint_t _id;
     _z_session_weak_t _zn;
     _z_encoding_t _encoding;

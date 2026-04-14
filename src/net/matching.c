@@ -27,13 +27,23 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_MATCHING == 1
-_z_matching_listener_t _z_matching_listener_declare(const _z_write_filter_ctx_rc_t *ctx, uint32_t id,
-                                                    _z_closure_matching_status_t *callback) {
-    if (_z_write_filter_ctx_add_callback(_Z_RC_IN_VAL(ctx), id, callback) == _Z_RES_OK) {
-        return (_z_matching_listener_t){._id = id, ._write_filter_ctx = _z_write_filter_ctx_rc_clone_as_weak(ctx)};
-    } else {
-        return _z_matching_listener_null();
-    }
+z_result_t _z_matching_listener_register(uint32_t *listener_id, _z_session_t *s, const _z_write_filter_ctx_rc_t *ctx,
+                                         _z_closure_matching_status_t *callback) {
+    *listener_id = _z_get_entity_id(s);
+    _z_closure_matching_status_t c;
+    c = *callback;
+    *callback = (_z_closure_matching_status_t){NULL, NULL, NULL};
+
+    return _z_write_filter_ctx_add_callback(_Z_RC_IN_VAL(ctx), *listener_id, &c);
+}
+
+z_result_t _z_matching_listener_declare(_z_matching_listener_t *listener, _z_session_t *s,
+                                        const _z_write_filter_ctx_rc_t *ctx, _z_closure_matching_status_t *callback) {
+    *listener = _z_matching_listener_null();
+    listener->_write_filter_ctx = _z_write_filter_ctx_rc_clone_as_weak(ctx);
+    _Z_CLEAN_RETURN_IF_ERR(_z_matching_listener_register(&listener->_id, s, ctx, callback),
+                           _z_matching_listener_clear(listener));
+    return _Z_RES_OK;
 }
 
 z_result_t _z_matching_listener_undeclare(_z_matching_listener_t *listener) {

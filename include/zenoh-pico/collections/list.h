@@ -52,6 +52,8 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f f_f, const void *e);
 _z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free_f f_f);
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, const void *left,
                                bool only_first);
+_z_list_t *_z_list_extract_filter(_z_list_t *xs, z_element_eq_f c_f, const void *left, _z_list_t **extracted,
+                                  bool only_first);
 
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f);
 void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
@@ -86,6 +88,14 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline name##_list_t *name##_list_drop_all_filter(name##_list_t *l, name##_eq_f c_f, const type *e) {      \
         return _z_list_drop_filter(l, name##_elem_free, (z_element_eq_f)c_f, e, false);                               \
     }                                                                                                                 \
+    static inline name##_list_t *name##_list_extract_all_filter(name##_list_t *l, name##_list_t **extracted,          \
+                                                                name##_eq_f c_f, const type *e) {                     \
+        return _z_list_extract_filter(l, (z_element_eq_f)c_f, e, extracted, false);                                   \
+    }                                                                                                                 \
+    static inline name##_list_t *name##_list_extract_first_filter(name##_list_t *l, name##_list_t **extracted,        \
+                                                                  name##_eq_f c_f, const type *e) {                   \
+        return _z_list_extract_filter(l, (z_element_eq_f)c_f, e, extracted, true);                                    \
+    }                                                                                                                 \
     static inline name##_list_t *name##_list_clone(name##_list_t *l) { return _z_list_clone(l, name##_elem_clone); }  \
     static inline void name##_list_free(name##_list_t **l) { _z_list_free(l, name##_elem_free); }
 
@@ -114,6 +124,8 @@ _z_slist_t *_z_slist_find(const _z_slist_t *node, z_element_eq_f c_f, const void
 _z_slist_t *_z_slist_drop_element(_z_slist_t *list, _z_slist_t *prev, z_element_clear_f f_f);
 _z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_element_eq_f c_f, const void *target_val,
                                  bool only_first);
+_z_slist_t *_z_slist_extract_filter(_z_slist_t *head, z_element_eq_f c_f, const void *target_val,
+                                    _z_slist_t **extracted, bool only_first);
 _z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_copy_f d_f, bool use_elem_f);
 void _z_slist_free(_z_slist_t **node, z_element_clear_f f);
 
@@ -145,6 +157,14 @@ void _z_slist_free(_z_slist_t **node, z_element_clear_f f);
     }                                                                                                                 \
     static inline name##_slist_t *name##_slist_drop_first_filter(name##_slist_t *l, name##_eq_f c_f, const type *e) { \
         return _z_slist_drop_filter(l, name##_elem_clear, (z_element_eq_f)c_f, e, true);                              \
+    }                                                                                                                 \
+    static inline name##_slist_t *name##_slist_extract_all_filter(name##_slist_t *l, name##_slist_t **extracted,      \
+                                                                  name##_eq_f c_f, const type *e) {                   \
+        return _z_slist_extract_filter(l, (z_element_eq_f)c_f, e, extracted, false);                                  \
+    }                                                                                                                 \
+    static inline name##_slist_t *name##_slist_extract_first_filter(name##_slist_t *l, name##_slist_t **extracted,    \
+                                                                    name##_eq_f c_f, const type *e) {                 \
+        return _z_slist_extract_filter(l, (z_element_eq_f)c_f, e, extracted, true);                                   \
     }                                                                                                                 \
     static inline name##_slist_t *name##_slist_clone(name##_slist_t *l) {                                             \
         return _z_slist_clone(l, sizeof(type), name##_elem_copy, use_elem_f);                                         \

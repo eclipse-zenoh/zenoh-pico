@@ -19,11 +19,10 @@
 
 void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
-    printf(" ");
-    for (int i = 15; i >= 0; i--) {
-        printf("%02X", id->id[i]);
-    }
-    printf("\n");
+    z_owned_string_t id_str;
+    z_id_to_string(id, &id_str);
+    printf(" %.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
+    z_drop(z_move(id_str));
 }
 
 int main(int argc, char **argv) {
@@ -43,13 +42,6 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        return -1;
-    }
-
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
         return -1;
     }
 

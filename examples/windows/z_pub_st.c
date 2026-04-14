@@ -20,7 +20,7 @@
 
 #define N 2147483647  // max int value by default
 
-#if Z_FEATURE_PUBLICATION == 1
+#if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_MULTI_THREAD == 0
 int main(int argc, char **argv) {
     (void)(argc);
     (void)(argv);
@@ -54,8 +54,6 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
-    // Read received declaration
-    zp_read(z_loan(s), NULL);
 
     printf("Press CTRL-C to quit...\n");
     char *buf = (char *)malloc(256);
@@ -75,9 +73,8 @@ int main(int argc, char **argv) {
             now = z_clock_now();
         }
 
-        zp_read(z_loan(s), NULL);
-        zp_send_keep_alive(z_loan(s), NULL);
-        zp_send_join(z_loan(s), NULL);
+        z_sleep_ms(50);
+        zp_spin_once(z_loan(s));
     }
 
     z_drop(z_move(pub));
@@ -89,7 +86,9 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_PUBLICATION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
     return -2;
 }
 #endif

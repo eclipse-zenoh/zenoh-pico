@@ -17,17 +17,18 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/reply.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/locality.h"
 
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
 static _z_session_transport_override_fn _z_transport_common_override = NULL;
 
 void _z_session_set_transport_common_override(_z_session_transport_override_fn fn) {
@@ -37,7 +38,7 @@ void _z_session_set_transport_common_override(_z_session_transport_override_fn f
 
 #if Z_FEATURE_SUBSCRIPTION == 1 || Z_FEATURE_QUERYABLE == 1
 static _z_transport_common_t *_z_session_get_transport_common(_z_session_t *zn) {
-#if defined(Z_LOOPBACK_TESTING)
+#if defined(Z_TEST_HOOKS)
     if (_z_transport_common_override != NULL) {
         _z_transport_common_t *override = _z_transport_common_override(zn);
         if (override != NULL) {
@@ -75,7 +76,7 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
@@ -83,12 +84,12 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT: {
-            _z_n_msg_make_push_put(&msg, &keyexpr2, &payload2, &encoding2, qos, timestamp, &attachment2, reliability,
+            _z_n_msg_make_push_put(&msg, &wireexpr, &payload2, &encoding2, qos, timestamp, &attachment2, reliability,
                                    source_info);
             break;
         }
         case Z_SAMPLE_KIND_DELETE: {
-            _z_n_msg_make_push_del(&msg, &keyexpr2, qos, timestamp, reliability, source_info);
+            _z_n_msg_make_push_del(&msg, &wireexpr, qos, timestamp, reliability, source_info);
             break;
         }
         default:
@@ -121,21 +122,21 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
                                             const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
-                                            _z_n_qos_t qos) {
+                                            _z_n_qos_t qos, bool implicit_anyke) {
     _z_transport_common_t *transport = _z_session_get_transport_common(zn);
     if (transport == NULL) {
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr);
     _z_slice_t parameters2 = parameters == NULL ? _z_slice_null() : _z_slice_alias(*parameters);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
 
     _z_zenoh_message_t msg;
-    _z_n_msg_make_query(&msg, &keyexpr2, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
-                        timeout_ms, &attachment2, qos, source_info);
+    _z_n_msg_make_query(&msg, &wireexpr, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
+                        timeout_ms, &attachment2, qos, source_info, implicit_anyke);
 
     return _z_handle_network_message(transport, &msg, NULL);
 }
@@ -144,7 +145,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
                                             const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
-                                            _z_n_qos_t qos) {
+                                            _z_n_qos_t qos, bool implicit_anyke) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(parameters);
@@ -156,25 +157,23 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     _ZP_UNUSED(qid);
     _ZP_UNUSED(timeout_ms);
     _ZP_UNUSED(qos);
+    _ZP_UNUSED(implicit_anyke);
     return _Z_RES_OK;
 }
 #endif  // Z_FEATURE_QUERYABLE == 1
 
 #if Z_FEATURE_QUERY == 1
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *zn,
-                                            const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                                            z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, const _z_source_info_t *source_info) {
-    if (_z_get_pending_query_by_id(_Z_RC_IN_VAL(zn), query->_request_id) == NULL) {
-        return _Z_ERR_ENTITY_UNKNOWN;
-    }
-
+                                            const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
+                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+                                            const _z_source_info_t *source_info) {
     _z_transport_common_t *transport = _z_session_get_transport_common(_Z_RC_IN_VAL(zn));
     if (transport == NULL) {
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
@@ -182,12 +181,12 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
-            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
+            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &wireexpr,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
                                        &payload2, &encoding2, &attachment2);
             break;
         case Z_SAMPLE_KIND_DELETE:
-            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
+            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &wireexpr,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
                                        &attachment2);
             break;
@@ -200,10 +199,6 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
 
 z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn, _z_bytes_t *payload,
                                                 _z_encoding_t *encoding, _z_n_qos_t qos) {
-    if (_z_get_pending_query_by_id(_Z_RC_IN_VAL(zn), query->_request_id) == NULL) {
-        return _Z_ERR_ENTITY_UNKNOWN;
-    }
-
     _z_transport_common_t *transport = _z_session_get_transport_common(_Z_RC_IN_VAL(zn));
     if (transport == NULL) {
         return _Z_ERR_INVALID;
@@ -222,17 +217,14 @@ z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t ri
     if (zn == NULL) {
         return _Z_ERR_INVALID;
     }
-    _z_pending_query_t *pending = _z_get_pending_query_by_id(zn, rid);
-    if (pending == NULL) {
-        return _Z_ERR_INVALID;
-    }
     return _z_trigger_query_reply_final(zn, rid);
 }
 #else
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *responder,
-                                            const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                                            z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, const _z_source_info_t *source_info) {
+                                            const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
+                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+                                            const _z_source_info_t *source_info) {
     _ZP_UNUSED(query);
     _ZP_UNUSED(responder);
     _ZP_UNUSED(keyexpr);

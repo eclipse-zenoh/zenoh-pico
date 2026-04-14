@@ -33,11 +33,6 @@ void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowe
     assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
     assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
 
-    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
-
     z_owned_queryable_t queryable1, queryable2;
     z_queryable_options_t opts1, opts2;
     z_queryable_options_default(&opts1);
@@ -140,11 +135,6 @@ void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowe
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
     z_fifo_handler_query_drop(z_fifo_handler_query_move(&query_handler1));
     z_fifo_handler_query_drop(z_fifo_handler_query_move(&query_handler2));
-
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s2));
 
     z_queryable_drop(z_queryable_move(&queryable1));
     z_queryable_drop(z_queryable_move(&queryable2));

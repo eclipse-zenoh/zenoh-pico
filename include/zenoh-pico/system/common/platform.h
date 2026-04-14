@@ -133,6 +133,7 @@ typedef void *_z_mutex_t;
 typedef void *_z_mutex_rec_t;
 typedef void *_z_condvar_t;
 typedef void *z_task_attr_t;
+typedef void *_z_task_id_t;
 #endif
 
 /*------------------ Thread ------------------*/
@@ -145,6 +146,9 @@ z_result_t _z_task_detach(_z_task_t *task);
 z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_exit(void);
 void _z_task_free(_z_task_t **task);
+_z_task_id_t _z_task_get_id(const _z_task_t *task);
+_z_task_id_t _z_task_current_id(void);
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r);
 
 /**
  * Constructs a new task.
@@ -381,6 +385,10 @@ z_result_t z_sleep_s(size_t time);
  */
 z_clock_t z_clock_now(void);
 
+unsigned long zp_clock_elapsed_us_since(z_clock_t *instant, z_clock_t *epoch);
+unsigned long zp_clock_elapsed_ms_since(z_clock_t *instant, z_clock_t *epoch);
+unsigned long zp_clock_elapsed_s_since(z_clock_t *instant, z_clock_t *epoch);
+
 /**
  * Returns the elapsed time in microseconds since a given clock time.
  *
@@ -502,8 +510,11 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t);
 
 /*------------------ P2p unicast internal functions ------------------*/
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock);
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking);
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst, size_t dst_len);
+z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
+                                   size_t remote_len);
 void _z_socket_close(_z_sys_net_socket_t *sock);
 z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex);
 

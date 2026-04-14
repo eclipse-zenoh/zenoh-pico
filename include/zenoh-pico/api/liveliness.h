@@ -27,7 +27,6 @@ extern "C" {
 
 typedef struct {
     uint32_t _id;
-    _z_keyexpr_t _key;
     _z_session_weak_t _zn;
 } _z_liveliness_token_t;
 

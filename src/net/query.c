@@ -21,7 +21,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 static void _z_query_clear_inner(_z_query_t *q) {
-    _z_keyexpr_clear(&q->_key);
+    _z_declared_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
     _z_bytes_drop(&q->_attachment);
     _z_string_clear(&q->_parameters);
@@ -72,6 +72,7 @@ void _z_query_free(_z_query_t **query) {
 #if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
     _z_session_weak_drop(&qbl->_zn);
+    _z_sync_group_drop(&qbl->_callback_drop_sync_group);
     *qbl = _z_queryable_null();
 }
 

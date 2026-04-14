@@ -18,7 +18,6 @@
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +25,7 @@ extern "C" {
 
 typedef struct {
     uint16_t _id;
-    _z_keyexpr_t _keyexpr;
+    _z_wireexpr_t _keyexpr;
 } _z_decl_kexpr_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_decl_kexpr_t _z_decl_kexpr_null(void) { return (_z_decl_kexpr_t){0}; }
@@ -37,20 +36,20 @@ typedef struct {
 static inline _z_undecl_kexpr_t _z_undecl_kexpr_null(void) { return (_z_undecl_kexpr_t){0}; }
 
 typedef struct {
-    _z_keyexpr_t _keyexpr;
+    _z_wireexpr_t _keyexpr;
     uint32_t _id;
 } _z_decl_subscriber_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_decl_subscriber_t _z_decl_subscriber_null(void) { return (_z_decl_subscriber_t){0}; }
 typedef struct {
     uint32_t _id;
-    _z_keyexpr_t _ext_keyexpr;
+    _z_wireexpr_t _ext_keyexpr;
 } _z_undecl_subscriber_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_undecl_subscriber_t _z_undecl_subscriber_null(void) { return (_z_undecl_subscriber_t){0}; }
 
 typedef struct {
-    _z_keyexpr_t _keyexpr;
+    _z_wireexpr_t _keyexpr;
     uint32_t _id;
     struct {
         bool _complete;
@@ -61,20 +60,20 @@ typedef struct {
 static inline _z_decl_queryable_t _z_decl_queryable_null(void) { return (_z_decl_queryable_t){0}; }
 typedef struct {
     uint32_t _id;
-    _z_keyexpr_t _ext_keyexpr;
+    _z_wireexpr_t _ext_keyexpr;
 } _z_undecl_queryable_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_undecl_queryable_t _z_undecl_queryable_null(void) { return (_z_undecl_queryable_t){0}; }
 
 typedef struct {
-    _z_keyexpr_t _keyexpr;
+    _z_wireexpr_t _keyexpr;
     uint32_t _id;
 } _z_decl_token_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_decl_token_t _z_decl_token_null(void) { return (_z_decl_token_t){0}; }
 typedef struct {
     uint32_t _id;
-    _z_keyexpr_t _ext_keyexpr;
+    _z_wireexpr_t _ext_keyexpr;
 } _z_undecl_token_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_undecl_token_t _z_undecl_token_null(void) { return (_z_undecl_token_t){0}; }
@@ -111,17 +110,17 @@ typedef struct {
 } _z_declaration_t;
 void _z_declaration_clear(_z_declaration_t* decl);
 
-_z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
+_z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_wireexpr_t) key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 
-_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
-_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_wireexpr_t) key, uint32_t id);
+_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
 
-_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, bool complete, uint16_t distance);
-_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_wireexpr_t) key, uint32_t id, bool complete, uint16_t distance);
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
 
-_z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
-_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
+_z_declaration_t _z_make_decl_token(_Z_MOVE(_z_wireexpr_t) key, uint32_t id);
+_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
 
 _z_declaration_t _z_make_decl_final(void);
 

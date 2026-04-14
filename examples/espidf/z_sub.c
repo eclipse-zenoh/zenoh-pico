@@ -149,10 +149,6 @@ void app_main() {
     }
     printf("OK\n");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan_mut(s), NULL);
-    zp_start_lease_task(z_loan_mut(s), NULL);
-
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler, NULL, NULL);

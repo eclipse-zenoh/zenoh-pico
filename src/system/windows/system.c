@@ -111,6 +111,10 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
+_z_task_id_t _z_task_get_id(const _z_task_t *task) { return GetThreadId(*task); }
+_z_task_id_t _z_task_current_id(void) { return GetCurrentThreadId(); }
+bool _z_task_id_equal(const _z_task_id_t *l, const _z_task_id_t *r) { return *l == *r; }
+
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) {
     z_result_t ret = _Z_RES_OK;
@@ -261,48 +265,60 @@ z_clock_t z_clock_now(void) {
     return now;
 }
 
-unsigned long z_clock_elapsed_us(z_clock_t *instant) {
-    z_clock_t now;
+unsigned long zp_clock_elapsed_us_since(z_clock_t *instant, z_clock_t *epoch) {
     LARGE_INTEGER frequency;
-    QueryPerformanceCounter(&now);
     QueryPerformanceFrequency(&frequency);  // ticks per second
 
     // Hardware not supporting QueryPerformanceFrequency
     if (frequency.QuadPart == 0) {
         return 0;
     }
-    double elapsed = (double)(now.QuadPart - instant->QuadPart) * 1000000.0;
+    double elapsed = (double)(instant->QuadPart - epoch->QuadPart) * 1000000.0;
     elapsed /= frequency.QuadPart;
-    return (unsigned long)elapsed;
+    return elapsed > 0 ? (unsigned long)elapsed : 0;
+}
+
+unsigned long zp_clock_elapsed_ms_since(z_clock_t *instant, z_clock_t *epoch) {
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return 0;
+    }
+    double elapsed = (double)(instant->QuadPart - epoch->QuadPart) * 1000.0;
+    elapsed /= frequency.QuadPart;
+    return elapsed > 0 ? (unsigned long)elapsed : 0;
+}
+
+unsigned long zp_clock_elapsed_s_since(z_clock_t *instant, z_clock_t *epoch) {
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return 0;
+    }
+    double elapsed = (double)(instant->QuadPart - epoch->QuadPart) / frequency.QuadPart;
+    return elapsed > 0 ? (unsigned long)elapsed : 0;
+}
+
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
+    z_clock_t now;
+    QueryPerformanceCounter(&now);
+    return zp_clock_elapsed_us_since(&now, instant);
 }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
-    LARGE_INTEGER frequency;
     QueryPerformanceCounter(&now);
-    QueryPerformanceFrequency(&frequency);  // ticks per second
-
-    // Hardware not supporting QueryPerformanceFrequency
-    if (frequency.QuadPart == 0) {
-        return 0;
-    }
-    double elapsed = (double)(now.QuadPart - instant->QuadPart) * 1000.0;
-    elapsed /= frequency.QuadPart;
-    return (unsigned long)elapsed;
+    return zp_clock_elapsed_ms_since(&now, instant);
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
-    LARGE_INTEGER frequency;
     QueryPerformanceCounter(&now);
-    QueryPerformanceFrequency(&frequency);  // ticks per second
-
-    // Hardware not supporting QueryPerformanceFrequency
-    if (frequency.QuadPart == 0) {
-        return 0;
-    }
-    double elapsed = (double)(now.QuadPart - instant->QuadPart) / frequency.QuadPart;
-    return (unsigned long)elapsed;
+    return zp_clock_elapsed_s_since(&now, instant);
 }
 
 void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {

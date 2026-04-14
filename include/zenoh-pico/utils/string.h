@@ -81,6 +81,8 @@ static inline void _z_str_append(char *str, const char c) {
  */
 bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
 
+void *_z_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len);
+
 /*
  * Safely copies a block of memory into a destination buffer at a given offset, if bounds allow.
  *

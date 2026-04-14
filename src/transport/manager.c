@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/unicast/accept.h"
@@ -78,7 +79,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
 }
 
 static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *locator, const _z_id_t *local_zid,
-                                        int peer_op, const _z_config_t *session_cfg) {
+                                        int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime) {
     z_result_t ret = _Z_RES_OK;
     // Init link
     _z_link_t *zl = (_z_link_t *)z_malloc(sizeof(_z_link_t));
@@ -106,18 +107,23 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                 return ret;
             }
             ret = _z_unicast_transport_create(zt, zl, &tp_param);
+            _Z_SET_IF_OK(ret, _z_socket_set_blocking(_z_link_get_socket(zl), false));
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
-                    ret = _z_socket_set_non_blocking(_z_link_get_socket(zl));
-                    if (ret == _Z_RES_OK) {
-                        _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
-                                                      false, NULL);
-                    }
+                    ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
+                                                        false, NULL);
                 } else {
-                    _zp_unicast_start_accept_task(&zt->_transport._unicast);
+                    _z_fut_t f = _z_fut_null();
+                    f._fut_arg = &zt->_transport._unicast;
+                    f._fut_fn = _zp_unicast_accept_task_fn;
+                    if (_z_fut_handle_is_null(_z_runtime_spawn(runtime, &f))) {
+                        _Z_ERROR("Failed to spawn unicast accept task after transport creation.");
+                        ret = _Z_ERR_FAILED_TO_SPAWN_TASK;
+                    }
                 }
             }
 #else
+            _ZP_UNUSED(runtime);
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
 #endif
@@ -144,13 +150,13 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
 }
 
 z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_string_t *locator, z_whatami_t mode,
-                            int peer_op, const _z_config_t *session_cfg) {
+                            int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime) {
     z_result_t ret;
 
     if (mode == Z_WHATAMI_CLIENT) {
         ret = _z_new_transport_client(zt, locator, bs, session_cfg);
     } else {
-        ret = _z_new_transport_peer(zt, locator, bs, peer_op, session_cfg);
+        ret = _z_new_transport_peer(zt, locator, bs, peer_op, session_cfg, runtime);
     }
 
     return ret;
@@ -170,7 +176,7 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
                 _z_socket_close(&socket);
                 return ret;
             }
-            ret = _z_socket_set_non_blocking(&socket);
+            ret = _z_socket_set_blocking(&socket, false);
             if (ret != _Z_RES_OK) {
                 _z_socket_close(&socket);
                 return ret;

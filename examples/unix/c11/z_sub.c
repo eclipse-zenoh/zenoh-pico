@@ -57,12 +57,14 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
+#if Z_FEATURE_ADMIN_SPACE == 1
+    // Start admin space
+    if (zp_start_admin_space(z_loan_mut(s)) < 0) {
+        printf("Unable to start admin space\n");
+        z_drop(z_move(s));
         return -1;
     }
+#endif
 
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler, NULL, NULL);

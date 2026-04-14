@@ -33,8 +33,9 @@ extern "C" {
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
+    _ZP_UNUSED(blocking);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
@@ -83,7 +84,6 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
-
     if ((ret == _Z_RES_OK) && (sock->_tcp->connect(*rep._iptcp) < 0)) {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
@@ -138,7 +138,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -231,7 +231,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -358,7 +358,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;

@@ -16,179 +16,39 @@
 
 #include <string.h>
 
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 #define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
-
-#if Z_FEATURE_MULTI_THREAD == 1
-#if ZENOH_C_STANDARD != 99
-
-#ifndef __cplusplus
-#include <stdatomic.h>
-#define _z_atomic(X) _Atomic X
-#define _z_atomic_store_explicit atomic_store_explicit
-#define _z_atomic_fetch_add_explicit atomic_fetch_add_explicit
-#define _z_atomic_fetch_sub_explicit atomic_fetch_sub_explicit
-#define _z_atomic_load_explicit atomic_load_explicit
-#define _z_atomic_compare_exchange_strong atomic_compare_exchange_strong
-#define _z_atomic_compare_exchange_weak_explicit atomic_compare_exchange_weak_explicit
-#define _z_memory_order_acquire memory_order_acquire
-#define _z_memory_order_release memory_order_release
-#define _z_memory_order_relaxed memory_order_relaxed
-#else
-#include <atomic>
-#define _z_atomic(X) std::atomic<X>
-#define _z_atomic_store_explicit std::atomic_store_explicit
-#define _z_atomic_fetch_add_explicit std::atomic_fetch_add_explicit
-#define _z_atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
-#define _z_atomic_load_explicit std::atomic_load_explicit
-#define _z_atomic_compare_exchange_strong std::atomic_compare_exchange_strong
-#define _z_atomic_compare_exchange_weak_explicit std::atomic_compare_exchange_weak_explicit
-#define _z_memory_order_acquire std::memory_order_acquire
-#define _z_memory_order_release std::memory_order_release
-#define _z_memory_order_relaxed std::memory_order_relaxed
-#endif  // __cplusplus
-
-// c11 atomic variant
-#define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_STRONG_CNT(p) \
-    _z_atomic_store_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INIT_WEAK_CNT(p) _z_atomic_store_explicit(&(p)->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_STRONG_CNT(p) \
-    _z_atomic_fetch_add_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) \
-    _z_atomic_fetch_add_explicit(&(p)->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed) >= x
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) \
-    _z_atomic_fetch_sub_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)x
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) \
-    _z_atomic_fetch_sub_explicit(&(p)->_weak_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)x
-#define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) _z_atomic_compare_exchange_strong(&(p)->_strong_cnt, &x, x)
-#define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                                    \
-    z_result_t _upgrade(_z_inner_rc_t* cnt) {                                                                         \
-        if (cnt == NULL) {                                                                                            \
-            _Z_ERROR_RETURN(_Z_ERR_INVALID);                                                                          \
-        }                                                                                                             \
-        unsigned int prev = _z_atomic_load_explicit(&cnt->_strong_cnt, _z_memory_order_relaxed);                      \
-        while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                                                             \
-            if (_z_atomic_compare_exchange_weak_explicit(&cnt->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire, \
-                                                         _z_memory_order_relaxed)) {                                  \
-                if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {                                              \
-                    _Z_ERROR("Rc weak count overflow");                                                               \
-                    _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                                                 \
-                }                                                                                                     \
-                return _Z_RES_OK;                                                                                     \
-            }                                                                                                         \
-        }                                                                                                             \
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);                                                                              \
-    }
-
-#else  // ZENOH_C_STANDARD == 99
-#ifdef ZENOH_COMPILER_GCC
-
-// c99 gcc sync builtin variant
-#define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT(p)                          \
-    __sync_fetch_and_and(&(p)->_strong_cnt, (unsigned int)0); \
-    __sync_fetch_and_add(&(p)->_strong_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INIT_WEAK_CNT(p)                          \
-    __sync_fetch_and_and(&(p)->_weak_cnt, (unsigned int)0); \
-    __sync_fetch_and_add(&(p)->_weak_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INCR_STRONG_CNT(p) __sync_fetch_and_add(&(p)->_strong_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) __sync_fetch_and_add(&(p)->_weak_cnt, (unsigned int)1) >= x
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) __sync_fetch_and_sub(&(p)->_strong_cnt, (unsigned int)1) > (unsigned int)x
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) __sync_fetch_and_sub(&(p)->_weak_cnt, (unsigned int)1) > (unsigned int)x
-#define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) __sync_bool_compare_and_swap(&(p)->_strong_cnt, x, x)
-#define _ZP_RC_OP_SYNC __sync_synchronize();
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                    \
-    z_result_t _upgrade(_z_inner_rc_t* cnt) {                                         \
-        unsigned int prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0); \
-        while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                             \
-            if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {    \
-                if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {              \
-                    _Z_ERROR("Rc weak count overflow");                               \
-                    _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                 \
-                }                                                                     \
-                                                                                      \
-                return _Z_RES_OK;                                                     \
-            } else {                                                                  \
-                prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);      \
-            }                                                                         \
-        }                                                                             \
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);                                              \
-    }
-
-#else  // !ZENOH_COMPILER_GCC
-
-// None variant
-#error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
-#define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT(p)
-#define _ZP_RC_OP_INIT_WEAK_CNT(p)
-#define _ZP_RC_OP_INCR_STRONG_CNT(p)
-#define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) (x == 0)
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) (x == 0)
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) (x == 0)
-#define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) (x == 0) && (p != NULL)
-#define _ZP_RC_OP_SYNC
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP            \
-    z_result_t _upgrade(_z_inner_rc_t* cnt) { \
-        (void)cnt;                            \
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);      \
-    }
-
-#endif  // ZENOH_COMPILER_GCC
-#endif  // ZENOH_C_STANDARD != 99
-#else   // Z_FEATURE_MULTI_THREAD == 0
-
-// Single thread variant
-#define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT(p) (p)->_strong_cnt = (unsigned int)1;
-#define _ZP_RC_OP_INIT_WEAK_CNT(p) (p)->_weak_cnt = (unsigned int)1;
-#define _ZP_RC_OP_INCR_STRONG_CNT(p) p->_strong_cnt++;
-#define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) p->_weak_cnt++ >= x
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) p->_strong_cnt-- > (unsigned int)x
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) p->_weak_cnt-- > (unsigned int)x
-#define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) (p->_strong_cnt == x)
-#define _ZP_RC_OP_SYNC
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                             \
-    z_result_t _upgrade(_z_inner_rc_t* cnt) {                                  \
-        if ((cnt->_strong_cnt != 0) && (cnt->_strong_cnt < _Z_RC_MAX_COUNT)) { \
-            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {           \
-                _Z_ERROR("Rc weak count overflow");                            \
-                _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                              \
-            }                                                                  \
-            _ZP_RC_OP_INCR_STRONG_CNT(cnt)                                     \
-            return _Z_RES_OK;                                                  \
-        }                                                                      \
-        _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                      \
-    }
-
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
 typedef struct {
-    _ZP_RC_CNT_TYPE _strong_cnt;
-    _ZP_RC_CNT_TYPE _weak_cnt;
+    _z_atomic_size_t _strong_cnt;
+    _z_atomic_size_t _weak_cnt;
 } _z_inner_rc_t;
+
+static inline _z_inner_rc_t* _z_rc_inner(void* rc) { return (_z_inner_rc_t*)rc; }
 
 z_result_t _z_rc_init(void** cnt) {
     *cnt = z_malloc(sizeof(_z_inner_rc_t));
     if ((*cnt) == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    _ZP_RC_OP_INIT_STRONG_CNT((_z_inner_rc_t*)*cnt)
-    _ZP_RC_OP_INIT_WEAK_CNT((_z_inner_rc_t*)*cnt)
+    _z_inner_rc_t* rc = *cnt;
+    _z_atomic_size_init(&rc->_strong_cnt, 1);
+    _z_atomic_size_init(&rc->_weak_cnt, 1);
+    // Note we increase weak count by 1 when creating a new rc, to take ownership of counter.
     return _Z_RES_OK;
 }
 
 z_result_t _z_rc_increase_strong(void* cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
-    if (_ZP_RC_OP_INCR_AND_CMP_WEAK(c, _Z_RC_MAX_COUNT)) {
-        _Z_ERROR("Rc weak count overflow");
+    if (c == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    if (_z_atomic_size_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
+        _Z_ERROR("Rc strong count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
-    _ZP_RC_OP_INCR_STRONG_CNT(c);
     return _Z_RES_OK;
 }
 
@@ -197,7 +57,7 @@ z_result_t _z_rc_increase_weak(void* cnt) {
     if (c == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
-    if (_ZP_RC_OP_INCR_AND_CMP_WEAK(c, _Z_RC_MAX_COUNT)) {
+    if (_z_atomic_size_fetch_add(&c->_weak_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
         _Z_ERROR("Rc weak count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
@@ -206,34 +66,59 @@ z_result_t _z_rc_increase_weak(void* cnt) {
 
 bool _z_rc_decrease_strong(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
-    if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
-        return _z_rc_decrease_weak(cnt);
+    if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
+        return false;
     }
+    // destroy fake weak that we created during strong init
     _z_rc_decrease_weak(cnt);
     return true;
 }
 
 bool _z_rc_decrease_weak(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
-    if (_ZP_RC_OP_DECR_AND_CMP_WEAK(c, 1)) {
+    if (_z_atomic_size_fetch_sub(&c->_weak_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
-    _ZP_RC_OP_SYNC
+    _z_atomic_thread_fence(
+        _z_memory_order_acquire);  // ensure we see the latest state of strong count before we free the counter
     z_free(*cnt);
     *cnt = NULL;
     return true;
 }
 
-_ZP_RC_OP_UPGRADE_CAS_LOOP
+z_result_t _z_rc_weak_upgrade(void* cnt) {
+    if (cnt == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
+    size_t prev = _z_atomic_size_load(&c->_strong_cnt, _z_memory_order_relaxed);
+    while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {
+        if (_z_atomic_size_compare_exchange_weak(&c->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire,
+                                                 _z_memory_order_relaxed)) {
+            return _Z_RES_OK;
+        }
+    }
+    _Z_ERROR_RETURN(_Z_ERR_INVALID);
+}
 
-z_result_t _z_rc_weak_upgrade(void* cnt) { return _upgrade((_z_inner_rc_t*)cnt); }
+size_t _z_rc_weak_count(void* rc) {
+    if (rc == NULL) {
+        return 0;
+    }
+    size_t strong_count = _z_atomic_size_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
+    size_t weak_count = _z_atomic_size_load(&_z_rc_inner(rc)->_weak_cnt, _z_memory_order_relaxed);
+    if (weak_count == 0) {
+        return 0;
+    }
+    return (strong_count > 0) ? weak_count - 1 : weak_count;  // substruct 1 weak ref that we added during strong init
+}
 
-size_t _z_rc_weak_count(void* cnt) { return ((_z_inner_rc_t*)cnt)->_weak_cnt; }
-
-size_t _z_rc_strong_count(void* cnt) { return ((_z_inner_rc_t*)cnt)->_strong_cnt; }
+size_t _z_rc_strong_count(void* rc) {
+    return rc == NULL ? 0 : _z_atomic_size_load(&_z_rc_inner(rc)->_strong_cnt, _z_memory_order_relaxed);
+}
 
 typedef struct {
-    _ZP_RC_CNT_TYPE _strong_cnt;
+    _z_atomic_size_t _strong_cnt;
 } _z_inner_simple_rc_t;
 
 #define RC_CNT_SIZE sizeof(_z_inner_simple_rc_t)
@@ -248,22 +133,29 @@ z_result_t _z_simple_rc_init(void** rc, const void* val, size_t val_size) {
         _Z_ERROR("Failed to allocate rc");
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    _ZP_RC_OP_INIT_STRONG_CNT(_z_simple_rc_inner(*rc))
+    _z_inner_simple_rc_t* inner = _z_simple_rc_inner(*rc);
+    _z_atomic_size_init(&inner->_strong_cnt, 1);
     memcpy(_z_simple_rc_value(*rc), val, val_size);
     return _Z_RES_OK;
 }
 
-void _z_simple_rc_increase(void* rc) {
+z_result_t _z_simple_rc_increase(void* rc) {
     _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
-    _ZP_RC_OP_INCR_STRONG_CNT(c);
+    if (_z_atomic_size_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
+        _Z_ERROR("Rc strong count overflow");
+        _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
+    }
+    return _Z_RES_OK;
 }
 
 bool _z_simple_rc_decrease(void* rc) {
     _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
-    if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
+    if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
     return true;
 }
 
-size_t _z_simple_rc_strong_count(void* rc) { return (_z_simple_rc_inner(rc))->_strong_cnt; }
+size_t _z_simple_rc_strong_count(void* rc) {
+    return rc == NULL ? 0 : _z_atomic_size_load(&(_z_simple_rc_inner(rc)->_strong_cnt), _z_memory_order_relaxed);
+}

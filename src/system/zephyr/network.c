@@ -24,9 +24,11 @@
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/net/socket.h>
 #include <zephyr/posix/sys/select.h>
 
 #include "zenoh-pico/collections/string.h"
@@ -37,14 +39,15 @@
 #include "zenoh-pico/utils/checksum.h"
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/mutex.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    if (fcntl(sock->_fd, F_SETFL, blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK)) == -1) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
@@ -80,6 +83,87 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     return _Z_RES_OK;
 }
 
+static z_result_t _z_ipv4_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (zsock_inet_ntop(AF_INET, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "%s:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_ipv6_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET6_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (zsock_inet_ntop(AF_INET6, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "[%s]:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
+                                  size_t dst_len) {
+    if (address == NULL || dst == NULL || dst_len == 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    if (address_len == sizeof(uint32_t)) {
+        return _z_ipv4_port_to_endpoint(address, port, dst, dst_len);
+    } else if (address_len == 16) {
+        return _z_ipv6_port_to_endpoint(address, port, dst, dst_len);
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+}
+
+static z_result_t _z_sockaddr_to_endpoint(const struct sockaddr *addr, char *dst, size_t dst_len) {
+    if (addr->sa_family == AF_INET) {
+        const struct sockaddr_in *addr4 = (const struct sockaddr_in *)addr;
+        const uint8_t *bytes = (const uint8_t *)&addr4->sin_addr;
+        return _z_ip_port_to_endpoint(bytes, sizeof(addr4->sin_addr), ntohs(addr4->sin_port), dst, dst_len);
+    } else if (addr->sa_family == AF_INET6) {
+        const struct sockaddr_in6 *addr6 = (const struct sockaddr_in6 *)addr;
+        const uint8_t *bytes = (const uint8_t *)&addr6->sin6_addr;
+        return _z_ip_port_to_endpoint(bytes, sizeof(addr6->sin6_addr), ntohs(addr6->sin6_port), dst, dst_len);
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+}
+
+z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
+                                   size_t remote_len) {
+    struct sockaddr_storage local_addr = {0};
+    struct sockaddr_storage remote_addr = {0};
+    socklen_t local_addr_len = sizeof(local_addr);
+    socklen_t remote_addr_len = sizeof(remote_addr);
+
+    if (sock == NULL || local == NULL || remote == NULL || local_len == 0 || remote_len == 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    if (sock->_fd < 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    if (getsockname(sock->_fd, (struct sockaddr *)&local_addr, &local_addr_len) != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    if (getpeername(sock->_fd, (struct sockaddr *)&remote_addr, &remote_addr_len) != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    _Z_RETURN_IF_ERR(_z_sockaddr_to_endpoint((const struct sockaddr *)&local_addr, local, local_len));
+    _Z_RETURN_IF_ERR(_z_sockaddr_to_endpoint((const struct sockaddr *)&remote_addr, remote, remote_len));
+    return _Z_RES_OK;
+}
+
 void _z_socket_close(_z_sys_net_socket_t *sock) {
     if (sock->_fd >= 0) {
         close(sock->_fd);
@@ -87,13 +171,12 @@ void _z_socket_close(_z_sys_net_socket_t *sock) {
     }
 }
 
-#if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     // Create select mask
     _z_transport_peer_unicast_slist_t **peers = (_z_transport_peer_unicast_slist_t **)v_peers;
-    _z_mutex_rec_lock(mutex);
+    _z_mutex_rec_mt_lock(mutex);
     _z_transport_peer_unicast_slist_t *curr = *peers;
     int max_fd = 0;
     while (curr != NULL) {
@@ -104,7 +187,7 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         }
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_mutex_rec_unlock(mutex);
+    _z_mutex_rec_mt_unlock(mutex);
     // Wait for events
     struct timeval timeout;
     timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
@@ -114,7 +197,7 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Mark sockets that are pending
-    _z_mutex_rec_lock(mutex);
+    _z_mutex_rec_mt_lock(mutex);
     curr = *peers;
     while (curr != NULL) {
         _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
@@ -123,16 +206,9 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         }
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_mutex_rec_unlock(mutex);
+    _z_mutex_rec_mt_unlock(mutex);
     return _Z_RES_OK;
 }
-#else
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
-    _ZP_UNUSED(peers);
-    _ZP_UNUSED(mutex);
-    return _Z_RES_OK;
-}
-#endif
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
@@ -290,7 +366,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -395,7 +471,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -742,7 +818,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;

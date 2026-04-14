@@ -42,13 +42,6 @@ void app_main(void) {
         return;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
-        z_drop(z_move(s));
-        return;
-    }
-
     printf("Declaring publisher for '%s'...\n", KEYEXPR);
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;

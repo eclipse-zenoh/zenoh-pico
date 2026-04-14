@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_MULTI_THREAD == 0
 
 static int msg_nb = 0;
 
@@ -108,9 +108,8 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (msg_nb < n) {
-        zp_read(z_session_loan(&s), NULL);
-        zp_send_keep_alive(z_session_loan(&s), NULL);
-        zp_send_join(z_session_loan(&s), NULL);
+        z_sleep_ms(50);
+        zp_spin_once(z_session_loan(&s));
     }
     z_subscriber_drop(z_subscriber_move(&sub));
     z_session_drop(z_session_move(&s));
@@ -118,7 +117,9 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico must be compiled with Z_FEATURE_SUBSCRIPTION = 1 and Z_FEATURE_MULTI_THREAD = 0 to run this "
+        "example.\n");
     return -2;
 }
 #endif

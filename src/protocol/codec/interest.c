@@ -28,7 +28,7 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/system/platform.h"
 
@@ -51,16 +51,16 @@ z_result_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, boo
     // Process restricted flag
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
         // Set Named & Mapping flags
-        bool has_kesuffix = _z_keyexpr_has_suffix(&interest->_keyexpr);
+        bool has_kesuffix = _z_wireexpr_has_suffix(&interest->_keyexpr);
         if (has_kesuffix) {
             _Z_SET_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N);
         }
-        if (_z_keyexpr_is_local(&interest->_keyexpr)) {
+        if (_z_wireexpr_is_local(&interest->_keyexpr)) {
             _Z_SET_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M);
         }
         // Set decl flags & keyexpr
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, flags));
-        _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &interest->_keyexpr));
+        _Z_RETURN_IF_ERR(_z_wireexpr_encode(wbf, has_kesuffix, &interest->_keyexpr));
     } else {
         // Set decl flags
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, flags));
@@ -78,8 +78,8 @@ z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_f
         // Process restricted flag
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
             // Decode ke
-            _Z_RETURN_IF_ERR(_z_keyexpr_decode(&interest->_keyexpr, zbf, _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N),
-                                               _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M), mapping));
+            _Z_RETURN_IF_ERR(_z_wireexpr_decode(&interest->_keyexpr, zbf, _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N),
+                                                _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M), mapping));
         }
         // Store interest flags (current and future already processed)
         interest->flags = (uint8_t)(interest->flags | (flags & _Z_INTEREST_FLAG_COPY_MASK));

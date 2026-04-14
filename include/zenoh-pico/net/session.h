@@ -17,18 +17,19 @@
 
 #include <stdint.h>
 
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/matching.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
-#include "zenoh-pico/utils/scheduler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,20 +40,96 @@ extern "C" {
  */
 struct _z_write_filter_registration_t;
 
+#if Z_FEATURE_CONNECTIVITY == 1
+typedef struct {
+    _z_void_rc_t _callback;
+} _z_connectivity_transport_listener_t;
+
+static inline size_t _z_connectivity_transport_listener_size(const _z_connectivity_transport_listener_t *listener) {
+    _ZP_UNUSED(listener);
+    return sizeof(_z_connectivity_transport_listener_t);
+}
+
+static inline void _z_connectivity_transport_listener_clear(_z_connectivity_transport_listener_t *listener) {
+    _z_void_rc_drop(&listener->_callback);
+    listener->_callback = _z_void_rc_null();
+}
+
+static inline void _z_connectivity_transport_listener_copy(_z_connectivity_transport_listener_t *dst,
+                                                           const _z_connectivity_transport_listener_t *src) {
+    dst->_callback = _z_void_rc_clone(&src->_callback);
+}
+
+static inline void _z_connectivity_transport_listener_move(_z_connectivity_transport_listener_t *dst,
+                                                           _z_connectivity_transport_listener_t *src) {
+    dst->_callback = src->_callback;
+    src->_callback = _z_void_rc_null();
+}
+
+_Z_ELEM_DEFINE(_z_connectivity_transport_listener, _z_connectivity_transport_listener_t,
+               _z_connectivity_transport_listener_size, _z_connectivity_transport_listener_clear,
+               _z_connectivity_transport_listener_copy, _z_connectivity_transport_listener_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
+_Z_INT_MAP_DEFINE(_z_connectivity_transport_listener, _z_connectivity_transport_listener_t)
+
+typedef struct {
+    _z_void_rc_t _callback;
+    bool _has_transport_filter;
+    _z_id_t _transport_zid;
+    bool _transport_is_multicast;
+} _z_connectivity_link_listener_t;
+
+static inline size_t _z_connectivity_link_listener_size(const _z_connectivity_link_listener_t *listener) {
+    _ZP_UNUSED(listener);
+    return sizeof(_z_connectivity_link_listener_t);
+}
+
+static inline void _z_connectivity_link_listener_clear(_z_connectivity_link_listener_t *listener) {
+    _z_void_rc_drop(&listener->_callback);
+    listener->_callback = _z_void_rc_null();
+    listener->_has_transport_filter = false;
+    listener->_transport_zid = (_z_id_t){0};
+    listener->_transport_is_multicast = false;
+}
+
+static inline void _z_connectivity_link_listener_copy(_z_connectivity_link_listener_t *dst,
+                                                      const _z_connectivity_link_listener_t *src) {
+    dst->_callback = _z_void_rc_clone(&src->_callback);
+    dst->_has_transport_filter = src->_has_transport_filter;
+    dst->_transport_zid = src->_transport_zid;
+    dst->_transport_is_multicast = src->_transport_is_multicast;
+}
+
+static inline void _z_connectivity_link_listener_move(_z_connectivity_link_listener_t *dst,
+                                                      _z_connectivity_link_listener_t *src) {
+    dst->_callback = src->_callback;
+    dst->_has_transport_filter = src->_has_transport_filter;
+    dst->_transport_zid = src->_transport_zid;
+    dst->_transport_is_multicast = src->_transport_is_multicast;
+    src->_callback = _z_void_rc_null();
+    src->_has_transport_filter = false;
+    src->_transport_zid = (_z_id_t){0};
+    src->_transport_is_multicast = false;
+}
+
+_Z_ELEM_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t, _z_connectivity_link_listener_size,
+               _z_connectivity_link_listener_clear, _z_connectivity_link_listener_copy,
+               _z_connectivity_link_listener_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t)
+#endif
+
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
-    bool _mutex_inner_initialized;
     _z_mutex_t _mutex_inner;
+    _z_mutex_rec_t _mutex_transport;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    _z_mutex_t _mutex_admin_space;
+#endif
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
     z_whatami_t _mode;
     _z_transport_t _tp;
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    bool _read_task_should_run;
-    bool _lease_task_should_run;
-#endif
 
     // Zenoh PID
     _z_id_t _local_zid;
@@ -70,8 +147,6 @@ typedef struct _z_session_t {
     // Information for session restoring
     _z_config_t _config;
     _z_network_message_slist_t *_declaration_cache;
-    z_task_attr_t *_lease_task_attr;
-    z_task_attr_t *_read_task_attr;
 #endif
 
     // Session subscriptions
@@ -84,7 +159,7 @@ typedef struct _z_session_t {
 #endif
 
 #if Z_FEATURE_LIVELINESS == 1
-    _z_keyexpr_intmap_t _local_tokens;
+    _z_declared_keyexpr_intmap_t _local_tokens;
     _z_keyexpr_intmap_t _remote_tokens;
 #if Z_FEATURE_QUERY == 1
     uint32_t _liveliness_query_id;
@@ -110,24 +185,34 @@ typedef struct _z_session_t {
     struct _z_write_filter_registration_t *_write_filters;
 #endif
 
-#ifdef Z_FEATURE_UNSTABLE_API
-    // Periodic task scheduler
-#if Z_FEATURE_PERIODIC_TASKS == 1
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_task_t *_periodic_scheduler_task;
-    bool _periodic_task_should_run;
-    z_task_attr_t *_periodic_scheduler_task_attr;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    // entity Id for admin space queryable (0 if not started)
+    uint32_t _admin_space_queryable_id;
+#if Z_FEATURE_CONNECTIVITY == 1
+    // entity Id for session connectivity queryable (0 if not started)
+    uint32_t _admin_space_session_queryable_id;
+#if Z_FEATURE_PUBLICATION == 1
+    // listener ids for admin-space connectivity event bridge (0 if not started)
+    size_t _admin_space_transport_listener_id;
+    size_t _admin_space_link_listener_id;
 #endif
-    _zp_periodic_scheduler_t _periodic_scheduler;
 #endif
 #endif
+#if Z_FEATURE_CONNECTIVITY == 1
+    size_t _connectivity_next_listener_id;
+    _z_connectivity_transport_listener_intmap_t _connectivity_transport_event_listeners;
+    _z_connectivity_link_listener_intmap_t _connectivity_link_event_listeners;
+#endif
+    _z_sync_group_t _callback_drop_sync_group;
+    _z_atomic_bool_t _is_closed;
+    _z_runtime_t _runtime;
 } _z_session_t;
 
 /**
  * Open a zenoh-net session
  *
  * Parameters:
- *     zn: A pointer of A :c:type:`_z_session_rc_t` used as a return value.
+ *     zn: A pointer of A :c:type:`_z_session_t` used as a return value.
  *     config: A set of properties. The caller keeps its ownership.
  *     zid: A pointer to Zenoh ID.
  *
@@ -136,16 +221,10 @@ typedef struct _z_session_t {
  */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
 
-/**
- * Reopen a disconnected zenoh-net session
- *
- * Parameters:
- *     zn: Existing zenoh-net session.
- *
- * Returns:
- *     ``0`` in case of success, or a ``negative value`` in case of failure.
- */
-z_result_t _z_reopen(_z_session_rc_t *zn);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+void _z_client_reopen_task_drop(void *ztc_arg);
+_z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);
+#endif
 
 /**
  * Store declaration network message to cache for resend it after session restore
@@ -166,14 +245,6 @@ void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 
 /**
- * Close a zenoh-net session.
- *
- * Parameters:
- *     session: A zenoh-net session. The callee releases session upon successful return.
- */
-void _z_close(_z_session_t *session);
-
-/**
  * Return true is session and all associated transports were closed.
  */
 bool _z_session_is_closed(const _z_session_t *session);
@@ -184,10 +255,9 @@ bool _z_session_is_closed(const _z_session_t *session);
 bool _z_session_has_router_peer(const _z_session_t *session);
 
 /**
- * Upgrades weak session session, than resets it to null if session is closed.
+ * Upgrade a weak session reference to a strong one if the session is open, otherwise return null.
  */
-_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session);
-
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *weak);
 /**
  * Get informations about an zenoh-net session.
  *
@@ -232,124 +302,15 @@ z_result_t _zp_send_keep_alive(_z_session_t *z);
  */
 z_result_t _zp_send_join(_z_session_t *z);
 
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-/**
- * Process periodic tasks.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_process_periodic_tasks(_z_session_t *z);
-
-/*
- * Register a periodic task with the sessions task scheduler.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- *     closure: The task to run periodically.
- *     period_ms: The period of the task in ms.
- *     id: Placeholder which will contain the ID of the task if successfully scheduled.
- * Returns:
- *     ``0`` in case of success, ``negative`` in case of failure.
- */
-z_result_t _zp_periodic_task_add(_z_session_t *z, const _zp_closure_periodic_task_t *closure, uint64_t period_ms,
-                                 uint32_t *id);
-
-/*
- * Unregisters a periodic task with the sessions task scheduler.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- *     id: The ID of the task to unregister.
- * Returns:
- *     ``0`` in case of success, ``negative`` in case of failure.
- */
-z_result_t _zp_periodic_task_remove(_z_session_t *z, uint32_t id);
-#endif  // Z_FEATURE_PERIODIC_TASKS == 1
-#endif  // Z_FEATURE_UNSTABLE_API
-
-#if Z_FEATURE_MULTI_THREAD == 1
-/**
- * Start a separate task to read from the network and process the messages
- * as soon as they are received. Note that the task can be implemented in
- * form of thread, process, etc. and its implementation is platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the read task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_read_task(_z_session_t *z);
-
-/**
- * Start a separate task to handle the session lease. This task will send ``KeepAlive``
- * messages when needed and will close the session when the lease is expired. Note that
- * the task can be implemented in form of thread, process, etc. and its implementation
- * is platform-dependent.
- *
- * In case of a multicast transport, this task will also send periodic ``Join``
- * messages.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the lease task. This may result in stopping a thread or a process depending
- * on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_lease_task(_z_session_t *z);
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
-
-/**
- * Start a separate task to handle periodic tasks. Note that the task can be
- * implemented in form of thread, process, etc. and its implementation is
- * platform-dependent.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_start_periodic_scheduler_task(_z_session_t *z, z_task_attr_t *attr);
-
-/**
- * Stop the task to handle periodic tasks. This may result in stopping a thread
- * or a process depending on the target platform.
- *
- * Parameters:
- *     session: The zenoh-net session. The caller keeps its ownership.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
-#endif  // Z_FEATURE_PERIODIC_TASKS == 1
-#endif  // Z_FEATURE_UNSTABLE_API
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+z_result_t _zp_start_transport_tasks(_z_session_t *z);
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_connectivity_peer_connected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                    bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
+void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
+                                       bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
+void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, const _z_transport_common_t *transport,
+                                                      const _z_connectivity_peer_event_data_t *peer, bool is_multicast);
+#endif
 
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {
     // the session should always outlive the transport, so it should be safe

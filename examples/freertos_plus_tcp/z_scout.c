@@ -72,7 +72,7 @@ void callback(z_loaned_hello_t *hello, void *context) {
 
 void drop(void *context) {
     int count = *(int *)context;
-    free(context);
+    vPortFree(context);
     if (!count) {
         printf("Did not find any zenoh process.\n");
     } else {

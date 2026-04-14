@@ -96,15 +96,6 @@ void setup() {
         }
     }
     Serial.println("OK");
-
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
-        Serial.println("Unable to start read and lease tasks\n");
-        z_session_drop(z_session_move(&s));
-        while (1) {
-            ;
-        }
-    }
     Serial.println("Zenoh setup finished!");
 
     delay(300);
