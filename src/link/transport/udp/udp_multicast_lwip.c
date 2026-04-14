@@ -29,19 +29,22 @@ static unsigned long __get_ip_from_iface(const char *iface, int sa_family, struc
     _ZP_UNUSED(sa_family);
 
     struct netif *netif = netif_find(iface);
-    if (netif != NULL && netif_is_up(netif)) {
-        struct sockaddr_in *lsockaddr_in = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
-        if (lsockaddr != NULL) {
-            (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
-            const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);
-            inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, ip_2_ip4(ip4_addr));
-            lsockaddr_in->sin_family = AF_INET;
-            lsockaddr_in->sin_port = htons(0);
-
-            addrlen = sizeof(struct sockaddr_in);
-            *lsockaddr = (struct sockaddr *)lsockaddr_in;
-        }
+    if (netif == NULL || !netif_is_up(netif)) {
+        return 0;
     }
+
+    struct sockaddr_in *lsockaddr_in = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
+    if (lsockaddr_in == NULL) {
+        return 0;
+    }
+    (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
+    const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);
+    inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, ip_2_ip4(ip4_addr));
+    lsockaddr_in->sin_family = AF_INET;
+    lsockaddr_in->sin_port = htons(0);
+
+    addrlen = sizeof(struct sockaddr_in);
+    *lsockaddr = (struct sockaddr *)lsockaddr_in;
 
     return addrlen;
 }
