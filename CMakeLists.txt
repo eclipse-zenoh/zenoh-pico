@@ -19,10 +19,7 @@ project(zenohpico VERSION ${version} LANGUAGES C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(helpers)
-include(transports)
 include(platforms)
-include(system)
-include(network)
 
 # Configure header file to define the project version
 set(ZENOH_PICO ${PROJECT_VERSION})
@@ -49,11 +46,6 @@ include(GNUInstallDirs)
 option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static libraries" ON)
 set(ZP_PLATFORM "" CACHE STRING "Built-in or external platform profile")
 set(ZP_EXTERNAL_PACKAGES "" CACHE STRING "Optional external CMake packages to load")
-set(ZP_NETWORK "" CACHE STRING "Override the selected network implementation")
-set(ZP_TCP_TRANSPORT "" CACHE STRING "Override the selected TCP transport")
-set(ZP_UDP_TRANSPORT "" CACHE STRING "Override the selected UDP transport")
-set(ZP_BT_TRANSPORT "" CACHE STRING "Override the selected BT transport")
-set(ZP_SERIAL_TRANSPORT "" CACHE STRING "Override the selected serial transport")
 set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -72,16 +64,6 @@ if(NOT ZP_EXTERNAL_PACKAGES STREQUAL "")
 endif()
 find_package(zenohpico_platform CONFIG REQUIRED CONFIGS platformConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
              NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_network CONFIG REQUIRED CONFIGS networkConfig.cmake PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-             NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_tcp_transport CONFIG REQUIRED CONFIGS tcp_transportConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_udp_transport CONFIG REQUIRED CONFIGS udp_transportConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_bt_transport CONFIG REQUIRED CONFIGS bt_transportConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-find_package(zenohpico_serial_transport CONFIG REQUIRED CONFIGS serial_transportConfig.cmake
-             PATHS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/transports" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
 if(DEFINED ZP_SYSTEM_LAYER AND NOT "${ZP_SYSTEM_LAYER}" STREQUAL "")
   message(FATAL_ERROR "ZP_SYSTEM_LAYER is no longer supported. Use ZP_PLATFORM instead.")
 endif()
@@ -113,6 +95,7 @@ if(NOT ZP_PLATFORM_SYSTEM_LAYER STREQUAL "")
 else()
   set(ZP_SYSTEM_LAYER "${ZP_PLATFORM}")
 endif()
+set(ZP_SYSTEM_PLATFORM_HEADER "${ZP_PLATFORM_SYSTEM_PLATFORM_HEADER}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   if (BUILD_SHARED_LIBS) 
@@ -216,31 +199,6 @@ function(pico_target_link_library value)
   endif()
 endfunction()
 
-function(zp_target_link_imported_component scope component_target)
-  if("${component_target}" STREQUAL "" OR NOT TARGET "${component_target}")
-    return()
-  endif()
-
-  if("${scope}" STREQUAL "PUBLIC")
-    get_target_property(_zp_component_type "${component_target}" TYPE)
-    if(_zp_component_type STREQUAL "INTERFACE_LIBRARY")
-      get_target_property_if_set(_zp_interface_sources "${component_target}" INTERFACE_SOURCES)
-      if(NOT "${_zp_interface_sources}" STREQUAL "")
-        message(FATAL_ERROR
-                "External component target ${component_target} is linked PUBLIC and must not "
-                "use INTERFACE_SOURCES. Define a real library target instead.")
-      endif()
-    endif()
-  endif()
-
-  if(PICO_STATIC)
-    target_link_libraries(zenohpico_static ${scope} "${component_target}")
-  endif()
-  if(PICO_SHARED)
-    target_link_libraries(zenohpico_shared ${scope} "${component_target}")
-  endif()
-endfunction()
-
 pico_add_compile_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 if (NOT CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release") 
@@ -253,212 +211,54 @@ if(ZP_SYSTEM_LAYER STREQUAL "macos")
   set(MACOSX_RPATH "ON")
 endif()
 
-foreach(_zp_inline_component IN ITEMS NETWORK TCP UDP BT SERIAL)
-  string(TOLOWER "${_zp_inline_component}" _zp_inline_component_lc)
-  set("_zp_platform_has_inline_${_zp_inline_component_lc}" OFF)
-  foreach(_zp_component_var IN ITEMS
-          IMPORTED_TARGET
-          SOURCE_FILES
-          INCLUDE_DIRS
-          COMPILE_DEFINITIONS)
-    if(NOT "${ZP_PLATFORM_${_zp_inline_component}_${_zp_component_var}}" STREQUAL "")
-      set("_zp_platform_has_inline_${_zp_inline_component_lc}" ON)
-      break()
-    endif()
-  endforeach()
-endforeach()
-
-set(_zp_effective_tcp_transport "")
-set(_zp_selected_udp_transport "${ZP_UDP_TRANSPORT}")
-set(_zp_effective_udp_transport "")
-set(_zp_effective_bt_transport "")
-set(_zp_effective_serial_transport "")
-set(_zp_selected_network "${ZP_NETWORK}")
-if(_zp_selected_network STREQUAL "" AND NOT _zp_platform_has_inline_network)
-  message(FATAL_ERROR
-          "Platform profile ${ZP_PLATFORM} does not define a network. "
-          "Set ZP_PLATFORM_NETWORK_SOURCE_FILES in the platform descriptor or pass -DZP_NETWORK=...")
-endif()
-if(ZP_NETWORK STREQUAL "")
-  if(_zp_platform_has_inline_network)
-    set(ZP_NETWORK_IMPORTED_TARGET "")
-    set(ZP_NETWORK_SOURCE_FILES "")
-    set(ZP_NETWORK_INCLUDE_DIRS "")
-    set(ZP_NETWORK_COMPILE_DEFINITIONS "${ZP_PLATFORM_NETWORK_COMPILE_DEFINITIONS}")
-    set(_zp_network_has_builtin_component OFF)
-    foreach(_zp_component_var IN ITEMS SOURCE_FILES INCLUDE_DIRS)
-      if(NOT "${ZP_PLATFORM_NETWORK_${_zp_component_var}}" STREQUAL "")
-        set(_zp_network_has_builtin_component ON)
-        break()
-      endif()
-    endforeach()
-
-    if(NOT "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" STREQUAL "" AND _zp_network_has_builtin_component)
-      message(FATAL_ERROR
-              "Network from ${ZP_PLATFORM_PROFILE_FILE} may not define both "
-              "ZP_PLATFORM_NETWORK_IMPORTED_TARGET and built-in source/include variables")
-    endif()
-
-    if(NOT "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" STREQUAL "")
-      if(NOT TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
-        message(FATAL_ERROR
-                "Network from ${ZP_PLATFORM_PROFILE_FILE} references missing target "
-                "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
-      endif()
-      get_property(_zp_is_imported TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}" PROPERTY IMPORTED)
-      if(NOT _zp_is_imported)
-        message(FATAL_ERROR
-                "Network from ${ZP_PLATFORM_PROFILE_FILE} requires "
-                "ZP_PLATFORM_NETWORK_IMPORTED_TARGET to name an imported/exported package target. "
-                "Local targets created directly inside package config files are not supported "
-                "because they break static install/export paths.")
-      endif()
-      set(ZP_NETWORK_IMPORTED_TARGET "${ZP_PLATFORM_NETWORK_IMPORTED_TARGET}")
-    else()
-      if("${ZP_PLATFORM_NETWORK_SOURCE_FILES}" STREQUAL "")
-        message(FATAL_ERROR
-                "Network from ${ZP_PLATFORM_PROFILE_FILE} must define either "
-                "ZP_PLATFORM_NETWORK_IMPORTED_TARGET or ZP_PLATFORM_NETWORK_SOURCE_FILES")
-      endif()
-      set(ZP_NETWORK_SOURCE_FILES "${ZP_PLATFORM_NETWORK_SOURCE_FILES}")
-      set(ZP_NETWORK_INCLUDE_DIRS "${ZP_PLATFORM_NETWORK_INCLUDE_DIRS}")
-      set(ZP_NETWORK_COMPILE_OPTIONS "")
-      set(ZP_NETWORK_LINK_LIBRARIES "")
-    endif()
-  else()
-    zp_resolve_network("${_zp_selected_network}")
-  endif()
-else()
-  zp_resolve_network("${_zp_selected_network}")
-endif()
-set(ZP_NETWORK "${_zp_selected_network}")
-zp_resolve_system_layer("${ZP_PLATFORM_PROFILE_FILE}")
-
-if(ZP_TCP_TRANSPORT STREQUAL "")
-  if(_zp_platform_has_inline_tcp)
-    zp_resolve_inline_transport("ZP_PLATFORM_TCP" "TCP transport" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_TCP_TRANSPORT")
-    set(_zp_effective_tcp_transport "platform-inline")
-  endif()
-else()
-  zp_resolve_transport("${ZP_TCP_TRANSPORT}" "TCP transport" "ZP_TCP_TRANSPORT" ${ZP_TCP_TRANSPORT_DIRS})
-  set(_zp_effective_tcp_transport "${ZP_TCP_TRANSPORT}")
-endif()
-
-if("${_zp_selected_udp_transport}" STREQUAL "")
-  if(_zp_platform_has_inline_udp)
-    zp_resolve_inline_transport("ZP_PLATFORM_UDP" "UDP transport" "${ZP_PLATFORM_PROFILE_FILE}"
-                              "ZP_UDP_TRANSPORT")
-    set(_zp_effective_udp_transport "platform-inline")
-  endif()
-else()
-  zp_resolve_transport("${_zp_selected_udp_transport}" "UDP transport" "ZP_UDP_TRANSPORT"
-                     ${ZP_UDP_TRANSPORT_DIRS})
-  set(_zp_effective_udp_transport "${_zp_selected_udp_transport}")
-endif()
-
-if(ZP_BT_TRANSPORT STREQUAL "")
-  if(_zp_platform_has_inline_bt)
-    zp_resolve_inline_transport("ZP_PLATFORM_BT" "BT transport" "${ZP_PLATFORM_PROFILE_FILE}" "ZP_BT_TRANSPORT")
-    set(_zp_effective_bt_transport "platform-inline")
-  endif()
-else()
-  zp_resolve_transport("${ZP_BT_TRANSPORT}" "BT transport" "ZP_BT_TRANSPORT"
-                     ${ZP_BT_TRANSPORT_DIRS})
-  set(_zp_effective_bt_transport "${ZP_BT_TRANSPORT}")
-endif()
-
-if(ZP_SERIAL_TRANSPORT STREQUAL "")
-  if(_zp_platform_has_inline_serial)
-    zp_resolve_inline_transport("ZP_PLATFORM_SERIAL" "serial transport" "${ZP_PLATFORM_PROFILE_FILE}"
-                              "ZP_SERIAL_TRANSPORT")
-    set(_zp_effective_serial_transport "platform-inline")
-  endif()
-else()
-  zp_resolve_transport("${ZP_SERIAL_TRANSPORT}" "serial transport" "ZP_SERIAL_TRANSPORT"
-                     ${ZP_SERIAL_TRANSPORT_DIRS})
-  set(_zp_effective_serial_transport "${ZP_SERIAL_TRANSPORT}")
-endif()
-
-zp_validate_transport_selection(tcp "${_zp_effective_tcp_transport}"
-                              "${ZP_TCP_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_transport_selection(udp "${_zp_effective_udp_transport}"
-                              "${ZP_UDP_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_transport_selection(bt "${_zp_effective_bt_transport}"
-                              "${ZP_BT_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-zp_validate_transport_selection(serial "${_zp_effective_serial_transport}"
-                              "${ZP_SERIAL_TRANSPORT_COMPATIBLE_SYSTEM_LAYERS}" "${ZP_SYSTEM_LAYER}")
-set(_zp_selected_platform_glob_sources "")
+set(_zp_platform_globbed_sources "")
 foreach(_zp_platform_source_glob IN LISTS ZP_PLATFORM_SOURCE_GLOBS)
   file(GLOB _zp_globbed_platform_sources ${_zp_platform_source_glob})
-  list(APPEND _zp_selected_platform_glob_sources ${_zp_globbed_platform_sources})
+  list(APPEND _zp_platform_globbed_sources ${_zp_globbed_platform_sources})
 endforeach()
-set(_zp_selected_component_sources
-    ${_zp_selected_platform_glob_sources}
-    ${ZP_PLATFORM_SOURCE_FILES}
-    ${ZP_SYSTEM_SOURCE_FILES}
-    ${ZP_NETWORK_SOURCE_FILES}
-    ${ZP_TCP_TRANSPORT_SOURCE_FILES}
-    ${ZP_UDP_TRANSPORT_SOURCE_FILES}
-    ${ZP_BT_TRANSPORT_SOURCE_FILES}
-    ${ZP_SERIAL_TRANSPORT_SOURCE_FILES})
-set(_zp_selected_component_include_dirs
-    ${ZP_PLATFORM_INCLUDE_DIRS}
-    ${ZP_SYSTEM_INCLUDE_DIRS}
-    ${ZP_NETWORK_INCLUDE_DIRS}
-    ${ZP_TCP_TRANSPORT_INCLUDE_DIRS}
-    ${ZP_UDP_TRANSPORT_INCLUDE_DIRS}
-    ${ZP_BT_TRANSPORT_INCLUDE_DIRS}
-    ${ZP_SERIAL_TRANSPORT_INCLUDE_DIRS})
-set(_zp_selected_component_compile_definitions
-    ${ZP_SYSTEM_COMPILE_DEFINITIONS}
-    ${ZP_NETWORK_COMPILE_DEFINITIONS}
-    ${ZP_TCP_TRANSPORT_COMPILE_DEFINITIONS}
-    ${ZP_UDP_TRANSPORT_COMPILE_DEFINITIONS}
-    ${ZP_BT_TRANSPORT_COMPILE_DEFINITIONS}
-    ${ZP_SERIAL_TRANSPORT_COMPILE_DEFINITIONS})
-set(_zp_selected_component_compile_options
-    ${ZP_PLATFORM_COMPILE_OPTIONS}
-    ${ZP_SYSTEM_COMPILE_OPTIONS}
-    ${ZP_NETWORK_COMPILE_OPTIONS}
-    ${ZP_TCP_TRANSPORT_COMPILE_OPTIONS}
-    ${ZP_UDP_TRANSPORT_COMPILE_OPTIONS}
-    ${ZP_BT_TRANSPORT_COMPILE_OPTIONS}
-    ${ZP_SERIAL_TRANSPORT_COMPILE_OPTIONS})
-set(_zp_selected_component_link_libraries
-    ${ZP_PLATFORM_LINK_LIBRARIES}
-    ${ZP_SYSTEM_LINK_LIBRARIES}
-    ${ZP_NETWORK_LINK_LIBRARIES}
-    ${ZP_TCP_TRANSPORT_LINK_LIBRARIES}
-    ${ZP_UDP_TRANSPORT_LINK_LIBRARIES}
-    ${ZP_BT_TRANSPORT_LINK_LIBRARIES}
-    ${ZP_SERIAL_TRANSPORT_LINK_LIBRARIES})
-set(_zp_public_imported_component_targets "")
-set(_zp_private_imported_component_targets "")
-if(NOT "${ZP_SYSTEM_IMPORTED_TARGET}" STREQUAL "")
-  list(APPEND _zp_public_imported_component_targets "${ZP_SYSTEM_IMPORTED_TARGET}")
-endif()
-foreach(_zp_component_target IN ITEMS
-        "${ZP_NETWORK_IMPORTED_TARGET}"
-        "${ZP_TCP_TRANSPORT_IMPORTED_TARGET}"
-        "${ZP_UDP_TRANSPORT_IMPORTED_TARGET}"
-        "${ZP_BT_TRANSPORT_IMPORTED_TARGET}"
-        "${ZP_SERIAL_TRANSPORT_IMPORTED_TARGET}")
-  if(NOT "${_zp_component_target}" STREQUAL "")
-    list(APPEND _zp_private_imported_component_targets "${_zp_component_target}")
+set(_zp_platform_sources
+    ${_zp_platform_globbed_sources}
+    ${ZP_PLATFORM_SOURCE_FILES})
+set(_zp_platform_include_dirs ${ZP_PLATFORM_INCLUDE_DIRS})
+set(_zp_platform_compile_definitions ${ZP_PLATFORM_COMPILE_DEFINITIONS})
+set(_zp_platform_compile_options ${ZP_PLATFORM_COMPILE_OPTIONS})
+set(_zp_platform_link_libraries ${ZP_PLATFORM_LINK_LIBRARIES})
+set(_zp_platform_imported_targets "")
+foreach(_zp_platform_target IN LISTS _zp_platform_link_libraries)
+  if(NOT TARGET "${_zp_platform_target}")
+    continue()
   endif()
+
+  get_property(_zp_is_imported TARGET "${_zp_platform_target}" PROPERTY IMPORTED)
+  if(NOT _zp_is_imported)
+    message(FATAL_ERROR
+            "Platform from ${ZP_PLATFORM_PROFILE_FILE} requires "
+            "ZP_PLATFORM_LINK_LIBRARIES targets to be imported/exported package targets. "
+            "Local targets created directly inside package config files are not supported "
+            "because they break static install/export paths.")
+  endif()
+
+  get_target_property(_zp_platform_target_type "${_zp_platform_target}" TYPE)
+  if(_zp_platform_target_type STREQUAL "INTERFACE_LIBRARY")
+    get_target_property_if_set(_zp_interface_sources "${_zp_platform_target}" INTERFACE_SOURCES)
+    if(NOT "${_zp_interface_sources}" STREQUAL "")
+      message(FATAL_ERROR
+              "External platform target ${_zp_platform_target} must not use INTERFACE_SOURCES. "
+              "Define a real library target instead.")
+    endif()
+  endif()
+
+  list(APPEND _zp_platform_imported_targets "${_zp_platform_target}")
 endforeach()
-set(_zp_selected_imported_component_targets
-    ${_zp_public_imported_component_targets}
-    ${_zp_private_imported_component_targets})
-list(REMOVE_DUPLICATES _zp_selected_imported_component_targets)
-zp_source_list_requires_cxx(_zp_platform_uses_cxx ${_zp_selected_component_sources})
+list(REMOVE_DUPLICATES _zp_platform_imported_targets)
+zp_source_list_requires_cxx(_zp_platform_uses_cxx ${_zp_platform_sources})
 if(_zp_platform_uses_cxx)
   set(ZP_USES_CXX ON)
 else()
   set(ZP_USES_CXX OFF)
-  foreach(_zp_component_target IN LISTS _zp_selected_imported_component_targets)
-    zp_target_requires_cxx("${_zp_component_target}" _zp_component_uses_cxx)
-    if(_zp_component_uses_cxx)
+  foreach(_zp_platform_target IN LISTS _zp_platform_imported_targets)
+    zp_target_requires_cxx("${_zp_platform_target}" _zp_platform_target_uses_cxx)
+    if(_zp_platform_target_uses_cxx)
       set(ZP_USES_CXX ON)
       break()
     endif()
@@ -467,7 +267,7 @@ endif()
 if(ZP_USES_CXX)
   enable_language(CXX)
 endif()
-foreach(_zp_platform_definition IN LISTS ZP_PLATFORM_COMPILE_DEFINITIONS)
+foreach(_zp_platform_definition IN LISTS _zp_platform_compile_definitions)
   pico_add_compile_definition(${_zp_platform_definition})
 endforeach()
 
@@ -585,14 +385,6 @@ if(ZP_SYSTEM_LAYER STREQUAL "freertos_plus_tcp" AND Z_FEATURE_LINK_UDP_MULTICAST
   set(Z_FEATURE_LINK_UDP_MULTICAST 0 CACHE STRING "Toggle UDP multicast links" FORCE)
 endif()
 
-if(ZP_NETWORK STREQUAL "" AND NOT _zp_platform_has_inline_network AND
-   (Z_FEATURE_LINK_TCP OR Z_FEATURE_LINK_TLS OR Z_FEATURE_LINK_WS OR
-    Z_FEATURE_LINK_UDP_MULTICAST OR Z_FEATURE_LINK_UDP_UNICAST))
-  message(FATAL_ERROR
-          "No network selected for platform profile ${ZP_PLATFORM}. "
-          "Set ZP_PLATFORM_NETWORK_SOURCE_FILES in the platform descriptor or pass -DZP_NETWORK=...")
-endif()
-
 if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_PUBLICATION OR NOT Z_FEATURE_LIVELINESS))
   message(WARNING "Z_FEATURE_ADVANCED_PUBLICATION can only be enabled when Z_FEATURE_UNSTABLE_API, Z_FEATURE_PUBLICATION and Z_FEATURE_LIVELINESS is also enabled. Disabling Z_FEATURE_ADVANCED_PUBLICATION.")
   set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature" FORCE)
@@ -652,21 +444,6 @@ else()
   message(STATUS "Platform profile: none")
 endif()
 message(STATUS "System layer: ${ZP_SYSTEM_LAYER}")
-if(NOT ZP_NETWORK STREQUAL "")
-  message(STATUS "Selected network: ${ZP_NETWORK}")
-endif()
-if(NOT "${_zp_effective_tcp_transport}" STREQUAL "")
-  message(STATUS "Selected TCP transport: ${_zp_effective_tcp_transport}")
-endif()
-if(NOT "${_zp_effective_udp_transport}" STREQUAL "")
-  message(STATUS "Selected UDP transport: ${_zp_effective_udp_transport}")
-endif()
-if(NOT "${_zp_effective_bt_transport}" STREQUAL "")
-  message(STATUS "Selected BT transport: ${_zp_effective_bt_transport}")
-endif()
-if(NOT "${_zp_effective_serial_transport}" STREQUAL "")
-  message(STATUS "Selected serial transport: ${_zp_effective_serial_transport}")
-endif()
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
 
 if(SKBUILD)
@@ -798,7 +575,7 @@ list(APPEND Sources
   "${PROJECT_SOURCE_DIR}/src/link/transport/upper/serial_protocol.c"
   "${PROJECT_SOURCE_DIR}/src/link/transport/upper/tls_stream.c"
 )
-list(APPEND Sources ${_zp_selected_component_sources})
+list(APPEND Sources ${_zp_platform_sources})
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
@@ -809,43 +586,41 @@ endif()
 if(PICO_SHARED)
   target_sources(zenohpico_shared PRIVATE ${Sources})
 endif()
-list(REMOVE_DUPLICATES _zp_selected_component_include_dirs)
-if(NOT "${_zp_selected_component_include_dirs}" STREQUAL "")
+list(REMOVE_DUPLICATES _zp_platform_include_dirs)
+if(NOT "${_zp_platform_include_dirs}" STREQUAL "")
+  set(_zp_build_interface_platform_include_dirs "")
+  foreach(_zp_platform_include_dir IN LISTS _zp_platform_include_dirs)
+    list(APPEND _zp_build_interface_platform_include_dirs
+         "$<BUILD_INTERFACE:${_zp_platform_include_dir}>")
+  endforeach()
   if(PICO_STATIC)
-    target_include_directories(zenohpico_static PRIVATE ${_zp_selected_component_include_dirs})
+    target_include_directories(zenohpico_static PUBLIC ${_zp_build_interface_platform_include_dirs})
   endif()
   if(PICO_SHARED)
-    target_include_directories(zenohpico_shared PRIVATE ${_zp_selected_component_include_dirs})
+    target_include_directories(zenohpico_shared PUBLIC ${_zp_build_interface_platform_include_dirs})
   endif()
 endif()
-list(REMOVE_DUPLICATES _zp_selected_component_compile_definitions)
-foreach(_zp_component_definition IN LISTS _zp_selected_component_compile_definitions)
-  pico_add_compile_definition(${_zp_component_definition})
+list(REMOVE_DUPLICATES _zp_platform_compile_definitions)
+foreach(_zp_platform_definition IN LISTS _zp_platform_compile_definitions)
+  pico_add_compile_definition(${_zp_platform_definition})
 endforeach()
-list(REMOVE_DUPLICATES _zp_selected_component_compile_options)
-if(NOT "${_zp_selected_component_compile_options}" STREQUAL "")
+list(REMOVE_DUPLICATES _zp_platform_compile_options)
+if(NOT "${_zp_platform_compile_options}" STREQUAL "")
   if(PICO_STATIC)
-    target_compile_options(zenohpico_static PRIVATE ${_zp_selected_component_compile_options})
+    target_compile_options(zenohpico_static PRIVATE ${_zp_platform_compile_options})
   endif()
   if(PICO_SHARED)
-    target_compile_options(zenohpico_shared PRIVATE ${_zp_selected_component_compile_options})
+    target_compile_options(zenohpico_shared PRIVATE ${_zp_platform_compile_options})
   endif()
 endif()
-list(REMOVE_DUPLICATES _zp_selected_component_link_libraries)
-foreach(_zp_component_link_library IN LISTS _zp_selected_component_link_libraries)
-  pico_target_link_library("${_zp_component_link_library}")
+list(REMOVE_DUPLICATES _zp_platform_link_libraries)
+foreach(_zp_platform_link_library IN LISTS _zp_platform_link_libraries)
+  pico_target_link_library("${_zp_platform_link_library}")
 endforeach()
 
 if(CHECK_THREADS)
   pico_target_link_library(Threads::Threads)
 endif()
-
-foreach(_zp_component_target IN LISTS _zp_public_imported_component_targets)
-  zp_target_link_imported_component(PUBLIC "${_zp_component_target}")
-endforeach()
-foreach(_zp_component_target IN LISTS _zp_private_imported_component_targets)
-  zp_target_link_imported_component(PRIVATE "${_zp_component_target}")
-endforeach()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   pico_target_link_library(rt)
@@ -879,9 +654,9 @@ if(PICO_SHARED)
   list(APPEND PICO_LIBS zenohpico_shared)
 endif()
 
-set(_zp_required_dependency_targets ${_zp_public_imported_component_targets})
+set(_zp_required_dependency_targets "")
 if(PICO_STATIC)
-  list(APPEND _zp_required_dependency_targets ${_zp_private_imported_component_targets})
+  list(APPEND _zp_required_dependency_targets ${_zp_platform_imported_targets})
 endif()
 list(REMOVE_DUPLICATES _zp_required_dependency_targets)
 zp_collect_target_packages(ZP_PACKAGE_DEPENDENCY_PACKAGES

@@ -1,19 +1,20 @@
 # zenohpico-mylinux
 
-This directory contains a runnable out-of-tree package example for Zenoh-Pico.
+This directory contains a full out-of-tree package example for Zenoh-Pico.
 It exports:
 
 - `mylinux::system`
 - `mylinux::serial_uart`
 
-and provides descriptor files for:
+and provides:
 
 - `platforms/mylinux.cmake`
 
-The example reuses Zenoh-Pico's built-in `network`, `tcp`, and `udp` pieces and
-adds only an external system layer and serial transport target. The system
-layer uses a custom platform marker, `ZENOH_MYLINUX`, and provides the
-corresponding platform header, `zenoh_mylinux_platform.h`.
+The example defines one `mylinux` platform profile. The profile sets one
+`ZP_PLATFORM_SOURCE_FILES` list with the reused POSIX network/TCP/UDP sources,
+adds the package include directory for `zenoh_mylinux_platform.h`, and links
+the exported `mylinux::system` and `mylinux::serial_uart` targets through
+`ZP_PLATFORM_LINK_LIBRARIES`.
 
 ## Package layout
 
@@ -39,12 +40,9 @@ examples/packages/zenohpico-mylinux/
 - `include/zenoh_mylinux_platform.h` defines the platform-specific types used
   when `ZENOH_MYLINUX` is selected.
 - `cmake/zenohpico-mylinuxConfig.cmake` loads the exported targets file and
-  registers the package descriptor directories.
-- `cmake/platforms/mylinux.cmake` defines the `mylinux` platform profile and
-  inlines the system-layer metadata for `mylinux::system` with plain
-  `ZP_PLATFORM_*` variables, including the `ZENOH_MYLINUX` platform marker,
-  custom platform header, reused POSIX network/TCP/UDP sources, and the
-  imported `mylinux::serial_uart` target.
+  registers the package platform descriptor directory.
+- `cmake/platforms/mylinux.cmake` defines the `mylinux` platform profile with
+  `ZP_PLATFORM_*` variables.
 - `consumer/` is a minimal downstream project that uses an installed
   `zenohpico::static`.
 
