@@ -25,6 +25,10 @@
 
 #include "zenoh-pico/config.h"
 
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#include <netdb.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
