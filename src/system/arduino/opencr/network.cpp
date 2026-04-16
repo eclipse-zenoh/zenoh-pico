@@ -48,12 +48,6 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
-    _ZP_UNUSED(sock);
-    _Z_ERROR("Function not yet supported on this system");
-    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-}
-
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
 static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,

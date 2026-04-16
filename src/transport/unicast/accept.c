@@ -126,7 +126,7 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
         return _z_fut_fn_result_continue();
     }
 
-    if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
+    if (_z_socket_set_blocking(&con_socket, false) != _Z_RES_OK) {
         _Z_INFO("Failed to set socket non blocking");
 #if Z_FEATURE_LINK_TLS == 1
         _z_close_tls_socket(&con_socket);

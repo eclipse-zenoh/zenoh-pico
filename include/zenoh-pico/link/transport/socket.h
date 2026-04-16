@@ -28,7 +28,6 @@ z_result_t _z_socket_wait_readable(const _z_sys_net_socket_t *sockets, size_t co
                                    uint32_t timeout_ms);
 
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking);
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock);
 z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst, size_t dst_len);
 z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
                                    size_t remote_len);
