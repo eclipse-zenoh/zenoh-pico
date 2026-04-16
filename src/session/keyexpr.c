@@ -562,9 +562,9 @@ z_result_t _z_declared_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs
     }
 }
 
-#define _ZP_KE_MATCH_TEMPLATE_INTERSECTS true
+#define _ZP_KE_MATCH_TEMPLATE_INTERSECTS 1
 #include "zenoh-pico/session/keyexpr_match_template.h"
-#define _ZP_KE_MATCH_TEMPLATE_INTERSECTS false
+#define _ZP_KE_MATCH_TEMPLATE_INTERSECTS 0
 #include "zenoh-pico/session/keyexpr_match_template.h"
 
 bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
