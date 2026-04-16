@@ -252,9 +252,7 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
 
 cleanup:
     z_free(hostname);
-    if (sys_endpoint._iptcp != NULL) {
-        _z_tcp_endpoint_clear(&sys_endpoint);
-    }
+    _z_tcp_endpoint_clear(&sys_endpoint);
     return ret;
 }
 

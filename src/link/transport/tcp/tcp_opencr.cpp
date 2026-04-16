@@ -51,6 +51,10 @@ static z_result_t _z_tcp_opencr_endpoint_init(_z_sys_net_endpoint_t *ep, const c
 }
 
 static void _z_tcp_opencr_endpoint_clear(_z_sys_net_endpoint_t *ep) {
+    if ((ep == NULL) || (ep->_iptcp._addr == NULL)) {
+        return;
+    }
+
     delete ep->_iptcp._addr;
     ep->_iptcp._addr = NULL;
 }

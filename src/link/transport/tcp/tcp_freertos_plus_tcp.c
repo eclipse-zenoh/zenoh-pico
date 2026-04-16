@@ -47,7 +47,14 @@ static z_result_t _z_tcp_freertos_plus_tcp_endpoint_init(_z_sys_net_endpoint_t *
     return ret;
 }
 
-static void _z_tcp_freertos_plus_tcp_endpoint_clear(_z_sys_net_endpoint_t *ep) { FreeRTOS_freeaddrinfo(ep->_iptcp); }
+static void _z_tcp_freertos_plus_tcp_endpoint_clear(_z_sys_net_endpoint_t *ep) {
+    if ((ep == NULL) || (ep->_iptcp == NULL)) {
+        return;
+    }
+
+    FreeRTOS_freeaddrinfo(ep->_iptcp);
+    ep->_iptcp = NULL;
+}
 
 static z_result_t _z_tcp_freertos_plus_tcp_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint,
                                                 uint32_t tout) {

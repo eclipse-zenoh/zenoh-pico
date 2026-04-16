@@ -28,10 +28,10 @@ static WSADATA _z_tcp_windows_wsa_data;
 
 static z_result_t _z_tcp_windows_endpoint_init(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     z_result_t ret = _Z_RES_OK;
+    ep->_ep._iptcp = NULL;
 
     if (WSAStartup(MAKEWORD(2, 2), &_z_tcp_windows_wsa_data) == 0) {
         ADDRINFOA hints;
-        ep->_ep._iptcp = NULL;
         (void)memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
@@ -40,6 +40,7 @@ static z_result_t _z_tcp_windows_endpoint_init(_z_sys_net_endpoint_t *ep, const 
 
         if (getaddrinfo(s_address, s_port, &hints, &ep->_ep._iptcp) != 0) {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            WSACleanup();
             ret = _Z_ERR_GENERIC;
         }
     } else {
@@ -51,7 +52,12 @@ static z_result_t _z_tcp_windows_endpoint_init(_z_sys_net_endpoint_t *ep, const 
 }
 
 static void _z_tcp_windows_endpoint_clear(_z_sys_net_endpoint_t *ep) {
+    if ((ep == NULL) || (ep->_ep._iptcp == NULL)) {
+        return;
+    }
+
     freeaddrinfo(ep->_ep._iptcp);
+    ep->_ep._iptcp = NULL;
     WSACleanup();
 }
 
