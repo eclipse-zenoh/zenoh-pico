@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
@@ -186,6 +187,9 @@ typedef struct {
     // Here we assume the value is set only by the session _z_open
     // and after it only read by the transport tasks, so we don't need to make it atomic or protect it with mutexes.
     _z_transport_state_t _state;
+    // Atomic flag checked by send path before touching _mutex_tx.
+    // Set to false in _z_transport_common_clear to prevent use-after-destroy of mutex during reconnect.
+    _z_atomic_bool_t _tx_ready;
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_transport_tasks_t _tasks;
 #endif
@@ -293,6 +297,13 @@ static inline bool _z_transport_batch_hold_peer_mutex(void) {
 #endif
 }
 #endif  // Z_FEATURE_BATCHING == 1
+
+static inline z_result_t _z_transport_tx_check_ready(_z_transport_common_t *ztc) {
+    if (!_z_atomic_bool_load(&ztc->_tx_ready, _z_memory_order_acquire)) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    return _Z_RES_OK;
+}
 
 #if Z_FEATURE_MULTI_THREAD == 1
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {

@@ -69,6 +69,9 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     ztu->_common._link = zl;
 
     ztu->_peers = _z_transport_peer_unicast_slist_new();
+
+    // Mark TX as ready only after all init is complete
+    _z_atomic_bool_init(&ztu->_common._tx_ready, true);
     return _Z_RES_OK;
 }
 

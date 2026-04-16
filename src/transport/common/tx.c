@@ -270,6 +270,12 @@ z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_trans
                                       _z_transport_peer_unicast_slist_t *peers) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send session message");
+
+    ret = _z_transport_tx_check_ready(ztc);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because transport is not ready");
+        return ret;
+    }
     // If sending to a peer list, make sure the peer mutex is locked
     _z_transport_tx_mutex_lock(ztc, true);
 
@@ -288,6 +294,12 @@ static z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _
                                              _z_transport_peer_unicast_slist_t *peers) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send network message");
+
+    ret = _z_transport_tx_check_ready(ztc);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because transport is not ready");
+        return ret;
+    }
 
     // Acquire the lock and drop the message if needed
     if (!_z_transport_batch_hold_tx_mutex()) {
@@ -309,6 +321,13 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
                                                _z_transport_peer_unicast_slist_t *peers) {
 #if Z_FEATURE_BATCHING == 1
     z_result_t ret = _Z_RES_OK;
+
+    ret = _z_transport_tx_check_ready(ztc);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because transport is not ready");
+        return ret;
+    }
+
     // Check batch size
     if (ztc->_batch_count > 0) {
         // Acquire the lock and drop the message if needed

@@ -109,6 +109,9 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
         // Transport link for multicast
         ztm->_common._link = zl;
+
+        // Mark TX as ready only after all init is complete
+        _z_atomic_bool_init(&ztm->_common._tx_ready, true);
     }
     return ret;
 }

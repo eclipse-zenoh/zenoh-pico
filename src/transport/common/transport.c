@@ -21,7 +21,13 @@
 #include "zenoh-pico/utils/result.h"
 
 void _z_transport_common_clear(_z_transport_common_t *ztc) {
+    // Prevent any further TX access before destroying the mutex
+    _z_atomic_bool_store(&ztc->_tx_ready, false, _z_memory_order_release);
 #if Z_FEATURE_MULTI_THREAD == 1
+    // Drain: _tx_ready=false prevents new lock attempts, so this only waits
+    // for at most one in-flight TX to release the mutex before we destroy it.
+    _z_mutex_lock(&ztc->_mutex_tx);
+    _z_mutex_unlock(&ztc->_mutex_tx);
     // Clean up the mutexes
     _z_mutex_drop(&ztc->_mutex_tx);
     _z_mutex_rec_drop(&ztc->_mutex_peer);
