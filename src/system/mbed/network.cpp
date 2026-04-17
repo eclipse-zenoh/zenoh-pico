@@ -32,17 +32,6 @@ extern "C" {
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) {
-#if Z_FEATURE_LINK_TCP == 1
-    return (uintptr_t)sock->_tcp;
-#elif Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
-    return (uintptr_t)sock->_udp;
-#else
-    _ZP_UNUSED(sock);
-    return 0;
-#endif
-}
-
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     _ZP_UNUSED(sock);
     _ZP_UNUSED(blocking);
@@ -52,21 +41,11 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                               uint32_t timeout_ms) {
-    _ZP_UNUSED(sockets);
-    _ZP_UNUSED(count);
-    _ZP_UNUSED(ready);
+z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout_ms) {
+    _ZP_UNUSED(iter);
     _ZP_UNUSED(timeout_ms);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-}
-
-uintptr_t _z_socket_id(const _z_sys_net_socket_t *sock) { return _z_socket_id_impl(sock); }
-
-z_result_t _z_socket_wait_readable(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                   uint32_t timeout_ms) {
-    return _z_socket_wait_readable_impl(sockets, count, ready, timeout_ms);
 }
 
 #if Z_FEATURE_LINK_BLUETOOTH == 1

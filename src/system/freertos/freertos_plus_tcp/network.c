@@ -23,8 +23,6 @@
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) { return (uintptr_t)sock->_socket; }
-
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     TickType_t option_value = blocking ? pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT) : 0;
     BaseType_t result =
@@ -38,19 +36,24 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
-static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                               uint32_t timeout_ms) {
+z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout_ms) {
     z_result_t ret = _Z_RES_OK;
-    size_t i = 0;
+
+    _z_socket_wait_iter_reset(iter);
+    if (!_z_socket_wait_iter_next(iter)) {
+        return _Z_RES_OK;
+    }
+
     SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
     if (socketSet == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 
-    for (i = 0; i < count; i++) {
-        ready[i] = 0;
-        FreeRTOS_FD_SET(sockets[i]._socket, socketSet, eSELECT_READ);
-    }
+    do {
+        const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
+        _z_socket_wait_iter_set_ready(iter, false);
+        FreeRTOS_FD_SET(sock->_socket, socketSet, eSELECT_READ);
+    } while (_z_socket_wait_iter_next(iter));
 
     BaseType_t result = FreeRTOS_select(socketSet, pdMS_TO_TICKS(timeout_ms));
     if (result != 0) {
@@ -58,21 +61,14 @@ static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *socket
         ret = _Z_ERR_GENERIC;
     }
 
-    for (i = 0; i < count; i++) {
-        if (FreeRTOS_FD_ISSET(sockets[i]._socket, socketSet)) {
-            ready[i] = 1;
-        }
+    _z_socket_wait_iter_reset(iter);
+    while (_z_socket_wait_iter_next(iter)) {
+        const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
+        _z_socket_wait_iter_set_ready(iter, FreeRTOS_FD_ISSET(sock->_socket, socketSet) != 0);
     }
 
     FreeRTOS_DeleteSocketSet(socketSet);
     return ret;
-}
-
-uintptr_t _z_socket_id(const _z_sys_net_socket_t *sock) { return _z_socket_id_impl(sock); }
-
-z_result_t _z_socket_wait_readable(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                   uint32_t timeout_ms) {
-    return _z_socket_wait_readable_impl(sockets, count, ready, timeout_ms);
 }
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1

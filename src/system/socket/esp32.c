@@ -28,15 +28,6 @@
 
 #include "zenoh-pico/utils/logging.h"
 
-static uintptr_t _z_socket_id_impl(const _z_sys_net_socket_t *sock) {
-#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
-    return (uintptr_t)sock->_fd;
-#else
-    _ZP_UNUSED(sock);
-    return 0;
-#endif
-}
-
 #if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
@@ -57,23 +48,25 @@ void _z_socket_close(_z_sys_net_socket_t *sock) {
     }
 }
 
-static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                               uint32_t timeout_ms) {
+z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout_ms) {
     fd_set read_fds;
-    size_t i = 0;
     int max_fd = 0;
+    bool has_sockets = false;
 
     FD_ZERO(&read_fds);
-    if (count == 0) {
-        return _Z_RES_OK;
+    _z_socket_wait_iter_reset(iter);
+    while (_z_socket_wait_iter_next(iter)) {
+        const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
+        _z_socket_wait_iter_set_ready(iter, false);
+        FD_SET(sock->_fd, &read_fds);
+        if (sock->_fd > max_fd) {
+            max_fd = sock->_fd;
+        }
+        has_sockets = true;
     }
 
-    for (i = 0; i < count; i++) {
-        ready[i] = 0;
-        FD_SET(sockets[i]._fd, &read_fds);
-        if (sockets[i]._fd > max_fd) {
-            max_fd = sockets[i]._fd;
-        }
+    if (!has_sockets) {
+        return _Z_RES_OK;
     }
 
     struct timeval timeout = {
@@ -84,10 +77,10 @@ static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *socket
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
-    for (i = 0; i < count; i++) {
-        if (FD_ISSET(sockets[i]._fd, &read_fds)) {
-            ready[i] = 1;
-        }
+    _z_socket_wait_iter_reset(iter);
+    while (_z_socket_wait_iter_next(iter)) {
+        const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
+        _z_socket_wait_iter_set_ready(iter, FD_ISSET(sock->_fd, &read_fds));
     }
 
     return _Z_RES_OK;
@@ -102,22 +95,12 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-static z_result_t _z_socket_wait_readable_impl(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                               uint32_t timeout_ms) {
-    _ZP_UNUSED(sockets);
-    _ZP_UNUSED(count);
-    _ZP_UNUSED(ready);
+z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout_ms) {
+    _ZP_UNUSED(iter);
     _ZP_UNUSED(timeout_ms);
     _Z_ERROR("Function not yet supported on this system");
     _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 #endif
-
-uintptr_t _z_socket_id(const _z_sys_net_socket_t *sock) { return _z_socket_id_impl(sock); }
-
-z_result_t _z_socket_wait_readable(const _z_sys_net_socket_t *sockets, size_t count, uint8_t *ready,
-                                   uint32_t timeout_ms) {
-    return _z_socket_wait_readable_impl(sockets, count, ready, timeout_ms);
-}
 
 #endif /* defined(ZP_PLATFORM_SOCKET_ESP32) */
