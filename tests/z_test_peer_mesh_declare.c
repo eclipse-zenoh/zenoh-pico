@@ -255,8 +255,8 @@ static bool test_new_peer_outbound_declare_push(void) {
 static atomic_bool g_block_passive_push = false;
 
 static z_result_t passive_push_block_hook(_z_session_t *zn, const _z_network_message_t *n_msg,
-                                           z_reliability_t reliability, z_congestion_control_t cong_ctrl,
-                                           void *peer, bool *handled) {
+                                          z_reliability_t reliability, z_congestion_control_t cong_ctrl, void *peer,
+                                          bool *handled) {
     (void)zn;
     (void)reliability;
     (void)cong_ctrl;
