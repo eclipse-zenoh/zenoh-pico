@@ -532,8 +532,8 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
                                         _z_transport_peer_common_t *peer) {
     // Check transport type
     if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        // On unicast, respond to CURRENT interests by pushing matching declarations to the requesting peer
-        if (!_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT) || peer == NULL) {
+        // On unicast peer mode, respond to CURRENT interests by pushing matching declarations to the requesting peer
+        if (zn->_mode != Z_WHATAMI_PEER || !_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT) || peer == NULL) {
             return _Z_RES_OK;
         }
         _z_keyexpr_t restr_key = _z_keyexpr_null();
