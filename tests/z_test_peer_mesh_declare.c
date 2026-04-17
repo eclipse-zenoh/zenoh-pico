@@ -50,11 +50,11 @@
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_MULTI_THREAD == 1 && \
     Z_FEATURE_UNICAST_PEER == 1 && Z_FEATURE_LOCAL_SUBSCRIBER == 0
 
-#define PORT_A "tcp/127.0.0.1:7460"
-#define PORT_B "tcp/127.0.0.1:7461"
+static const char *PORT_A = "tcp/127.0.0.1:7460";
+static const char *PORT_B = "tcp/127.0.0.1:7461";
 
-#define TX_NB 5
-#define RX_NB TX_NB
+static const int TX_NB = 5;
+static const int RX_NB = 5;
 
 // ---------------------------------------------------------------------------
 // Shared helpers
