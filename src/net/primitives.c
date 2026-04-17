@@ -603,7 +603,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     pq->_arg = arg;
     pq->_timeout = timeout_ms;
     pq->_start_time = z_clock_now();
-    pq->_remaining_finals = (uint8_t)remaining_finals;
+    pq->_remaining_finals = (uint32_t)remaining_finals;
 #ifdef Z_FEATURE_UNSTABLE_API
     ret = _z_pending_query_register_cancellation(pq, opt_cancellation_token, session);
 #else
