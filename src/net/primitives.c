@@ -652,10 +652,13 @@ uint32_t _z_add_interest(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr,
         return 0;
     }
     // Build the interest message to send on the wire (only needed in client mode or multicast transport or when
-    // connected to a router in peer mode)
+    // connected to a router in peer mode, or in unicast peer mode to pull current state from connected peers)
     if (zn->_mode == Z_WHATAMI_CLIENT || _z_session_has_router_peer(zn)
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
         || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
+#endif
+#if Z_FEATURE_UNICAST_PEER == 1
+        || (zn->_mode == Z_WHATAMI_PEER && zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE)
 #endif
     ) {
         _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
