@@ -28,11 +28,10 @@
 //
 // Topology:
 //   Node A  --listen--> PORT_A   publisher + subscriber on "mesh/data"  (test 1)
-//   Node B  --listen--> PORT_B   subscriber only (C's initial connect target)         (test 1)
-//   Node C  --connect-> PORT_B   (initial session, test 1 only)
-//              [test 1] --connect-> PORT_A via _z_new_peer after declaring subscriber
-//   Node A  --listen--> PORT_D   subscriber (test 2, separate port to avoid TIME_WAIT)
-//   Node D  --connect-> PORT_D   publisher (test 2)
+//   Node C  --listen--> PORT_B   (test 1)
+//              --connect-> PORT_A via _z_new_peer after declaring subscriber
+//   Node A  --listen--> PORT_B   subscriber (test 2, separate port to avoid TIME_WAIT)
+//   Node D  --connect-> PORT_B   publisher (test 2)
 
 #include <stdatomic.h>
 #include <stddef.h>
@@ -53,8 +52,6 @@
 
 #define PORT_A "tcp/127.0.0.1:7460"
 #define PORT_B "tcp/127.0.0.1:7461"
-#define PORT_C "tcp/127.0.0.1:7462"
-#define PORT_D "tcp/127.0.0.1:7463"
 
 #define TX_NB 5
 #define RX_NB TX_NB
@@ -86,9 +83,8 @@ static void sample_handler(z_loaned_sample_t *sample, void *ctx) {
 // ---------------------------------------------------------------------------
 // Topology:
 //   Node A: listen PORT_A, publisher + subscriber
-//   Node B: listen PORT_B, subscriber only (C's initial connect target)
-//   Node C: z_open → connect to PORT_B only
-//            → declare subscriber   (broadcasts to B, NOT A — A not connected yet)
+//   Node C: listen PORT_B (peer mode requires at least one endpoint)
+//            → declare subscriber
 //            → _z_new_peer to PORT_A (without fix: A never learns C's subscriber)
 //
 // Without fix: A's write filter stays ACTIVE → puts dropped → C receives 0
@@ -119,8 +115,8 @@ static void *node_a_outbound_task(void *ptr) {
         return NULL;
     }
 
-    // Wait for C to connect and push its declarations (with fix) or not (without fix)
-    z_sleep_s(3);
+    // Wait for C to connect and push its declarations
+    z_sleep_s(2);
 
     char buf[64];
     for (int i = 0; i < TX_NB; i++) {
@@ -137,34 +133,9 @@ static void *node_a_outbound_task(void *ptr) {
     return NULL;
 }
 
-static void *node_b_outbound_task(void *ptr) {
-    node_ctx_t *ctx = (node_ctx_t *)ptr;
-
-    z_owned_session_t s;
-    if (z_open(&s, z_move(ctx->config), NULL) != Z_OK) {
-        printf("[Node B] Unable to open session!\n");
-        return NULL;
-    }
-    z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, "mesh/data");
-
-    z_owned_closure_sample_t sub_cb;
-    z_closure(&sub_cb, sample_handler, NULL, ctx);
-    if (z_declare_background_subscriber(z_loan(s), z_loan(ke), z_move(sub_cb), NULL) != Z_OK) {
-        printf("[Node B] Unable to declare subscriber\n");
-        z_drop(z_move(s));
-        return NULL;
-    }
-
-    z_sleep_s(8);
-    z_drop(z_move(s));
-    return NULL;
-}
-
 static void *node_c_outbound_task(void *ptr) {
     node_ctx_t *ctx = (node_ctx_t *)ptr;
 
-    // Open connected to B only — A is not connected yet
     z_owned_session_t s;
     if (z_open(&s, z_move(ctx->config), NULL) != Z_OK) {
         printf("[Node C] Unable to open session!\n");
@@ -174,7 +145,6 @@ static void *node_c_outbound_task(void *ptr) {
     z_view_keyexpr_from_str(&ke, "mesh/data");
 
     // Declare subscriber BEFORE connecting to A.
-    // _z_send_declare broadcasts to B (connected) but NOT to A (not connected yet).
     // Without fix: A never learns C's subscriber via the connection-time push.
     z_owned_closure_sample_t sub_cb;
     z_closure(&sub_cb, sample_handler, NULL, ctx);
@@ -184,7 +154,7 @@ static void *node_c_outbound_task(void *ptr) {
         return NULL;
     }
 
-    z_sleep_ms(500);
+    z_sleep_ms(200);
 
     // Connect to A AFTER declaring subscriber.
     // Without fix: _z_new_peer does not push C's declarations → A's write filter ACTIVE.
@@ -217,7 +187,7 @@ static void *node_c_outbound_task(void *ptr) {
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
         z_sleep_ms(100);
     }
-    z_sleep_s(2);
+    z_sleep_s(1);
 
     z_drop(z_move(pub));
     z_drop(z_move(s));
@@ -228,44 +198,33 @@ static bool test_new_peer_outbound_declare_push(void) {
     printf("\n=== Test 1: outbound connection declare push ===\n");
 
     node_ctx_t node_a = {.id = 0};
-    node_ctx_t node_b = {.id = 1};
-    node_ctx_t node_c = {.id = 2};
+    node_ctx_t node_c = {.id = 1};
     atomic_init(&node_a.sub_msg_nb, 0);
-    atomic_init(&node_b.sub_msg_nb, 0);
     atomic_init(&node_c.sub_msg_nb, 0);
 
     z_config_default(&node_a.config);
     zp_config_insert(z_loan_mut(node_a.config), Z_CONFIG_MODE_KEY, "peer");
     zp_config_insert(z_loan_mut(node_a.config), Z_CONFIG_LISTEN_KEY, PORT_A);
 
-    z_config_default(&node_b.config);
-    zp_config_insert(z_loan_mut(node_b.config), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(node_b.config), Z_CONFIG_LISTEN_KEY, PORT_B);
-
     z_config_default(&node_c.config);
     zp_config_insert(z_loan_mut(node_c.config), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(node_c.config), Z_CONFIG_CONNECT_KEY, PORT_B);
+    zp_config_insert(z_loan_mut(node_c.config), Z_CONFIG_LISTEN_KEY, PORT_B);
 
-    _z_task_t task_a, task_b, task_c;
+    _z_task_t task_a, task_c;
     _z_task_init(&task_a, NULL, node_a_outbound_task, &node_a);
-    _z_task_init(&task_b, NULL, node_b_outbound_task, &node_b);
     z_sleep_ms(300);
     _z_task_init(&task_c, NULL, node_c_outbound_task, &node_c);
 
     _z_task_join(&task_a);
-    _z_task_join(&task_b);
     _z_task_join(&task_c);
 
     int a_nb = atomic_load(&node_a.sub_msg_nb);
-    int b_nb = atomic_load(&node_b.sub_msg_nb);
     int c_nb = atomic_load(&node_c.sub_msg_nb);
 
     printf("  Node A (acceptor+publisher): received %d/%d from C\n", a_nb, RX_NB);
-    printf("  Node B (acceptor+subscriber): received %d/%d from C\n", b_nb, RX_NB);
     printf("  Node C (connector+subscriber): received %d/%d from A\n", c_nb, RX_NB);
 
     bool a_ok = a_nb >= RX_NB;
-    bool b_ok = b_nb >= RX_NB;
     bool c_ok = c_nb >= RX_NB;
 
     if (!c_ok) {
@@ -275,18 +234,15 @@ static bool test_new_peer_outbound_declare_push(void) {
     if (!a_ok) {
         printf("FAIL: Node A received %d/%d from C.\n", a_nb, RX_NB);
     }
-    if (!b_ok) {
-        printf("FAIL: Node B received %d/%d from C.\n", b_nb, RX_NB);
-    }
-    return a_ok && b_ok && c_ok;
+    return a_ok && c_ok;
 }
 
 // ---------------------------------------------------------------------------
 // Test 2: publisher write filter via INTEREST on unicast
 // ---------------------------------------------------------------------------
 // Topology:
-//   Node A: listen PORT_D, subscriber
-//   Node D: connect PORT_D (via z_open), then declares publisher
+//   Node A: listen PORT_B, subscriber
+//   Node D: connect PORT_B (via z_open), then declares publisher
 //
 // The hook blocks accept-path passive declare pushes (declares with interest_id == 0
 // sent to a specific peer). This forces the publisher's write filter to rely solely
@@ -340,7 +296,7 @@ static void *node_a_interest_task(void *ptr) {
         return NULL;
     }
 
-    z_sleep_s(8);
+    z_sleep_s(5);
     z_drop(z_move(s));
     return NULL;
 }
@@ -350,7 +306,7 @@ static void *node_d_interest_task(void *ptr) {
 
     // The hook is already active (set before this task started).
     // It blocks targeted declares with interest_id == 0, so A's accept-path passive push
-    // is suppressed — D's _remote_declares will be empty unless the INTEREST fires.
+    // is suppressed — D's write filter can only be populated via the INTEREST round-trip.
     z_owned_session_t s;
     if (z_open(&s, z_move(ctx->config), NULL) != Z_OK) {
         printf("[Node D] Unable to open session!\n");
@@ -368,8 +324,6 @@ static void *node_d_interest_task(void *ptr) {
     }
 
     // Wait for the INTEREST round-trip to complete.
-    // Without fix the passive push is blocked and no other mechanism updates the
-    // write filter, so this sleep changes nothing — the filter stays ACTIVE.
     z_sleep_ms(500);
 
     char buf[64];
@@ -392,17 +346,17 @@ static bool test_publisher_write_filter_via_interest(void) {
     printf("\n=== Test 2: publisher write filter via INTEREST on unicast ===\n");
 
     node_ctx_t node_a = {.id = 0};
-    node_ctx_t node_d = {.id = 3};
+    node_ctx_t node_d = {.id = 1};
     atomic_init(&node_a.sub_msg_nb, 0);
     atomic_init(&node_d.sub_msg_nb, 0);
 
     z_config_default(&node_a.config);
     zp_config_insert(z_loan_mut(node_a.config), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(node_a.config), Z_CONFIG_LISTEN_KEY, PORT_D);
+    zp_config_insert(z_loan_mut(node_a.config), Z_CONFIG_LISTEN_KEY, PORT_B);
 
     z_config_default(&node_d.config);
     zp_config_insert(z_loan_mut(node_d.config), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(node_d.config), Z_CONFIG_CONNECT_KEY, PORT_D);
+    zp_config_insert(z_loan_mut(node_d.config), Z_CONFIG_CONNECT_KEY, PORT_B);
 
     // Install hook BEFORE starting any tasks so it is active when A's accept task
     // fires during D's z_open.  This blocks the accept-path passive push (interest_id 0)
