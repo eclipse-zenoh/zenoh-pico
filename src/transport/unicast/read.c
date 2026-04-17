@@ -168,7 +168,6 @@ static z_result_t _z_unicast_socket_wait_snapshot_make(_z_transport_unicast_t *z
 
     *snapshot = (_z_unicast_socket_wait_snapshot_t){0};
 
-    _z_transport_peer_mutex_lock(&ztu->_common);
     curr = ztu->_peers;
     while (curr != NULL) {
         snapshot->count += 1;
@@ -176,7 +175,6 @@ static z_result_t _z_unicast_socket_wait_snapshot_make(_z_transport_unicast_t *z
     }
 
     if (snapshot->count == 0) {
-        _z_transport_peer_mutex_unlock(&ztu->_common);
         return _Z_RES_OK;
     }
 
@@ -184,7 +182,6 @@ static z_result_t _z_unicast_socket_wait_snapshot_make(_z_transport_unicast_t *z
     snapshot->ids = (uintptr_t *)z_malloc(snapshot->count * sizeof(uintptr_t));
     snapshot->ready = (uint8_t *)z_malloc(snapshot->count * sizeof(uint8_t));
     if ((snapshot->sockets == NULL) || (snapshot->ids == NULL) || (snapshot->ready == NULL)) {
-        _z_transport_peer_mutex_unlock(&ztu->_common);
         _z_unicast_socket_wait_snapshot_clear(snapshot);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
@@ -198,7 +195,6 @@ static z_result_t _z_unicast_socket_wait_snapshot_make(_z_transport_unicast_t *z
         index += 1;
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_transport_peer_mutex_unlock(&ztu->_common);
 
     return _Z_RES_OK;
 }
@@ -211,7 +207,6 @@ static void _z_unicast_mark_ready_peers(_z_transport_unicast_t *ztu,
         return;
     }
 
-    _z_transport_peer_mutex_lock(&ztu->_common);
     curr = ztu->_peers;
     while (curr != NULL) {
         _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
@@ -224,7 +219,6 @@ static void _z_unicast_mark_ready_peers(_z_transport_unicast_t *ztu,
         }
         curr = _z_transport_peer_unicast_slist_next(curr);
     }
-    _z_transport_peer_mutex_unlock(&ztu->_common);
 }
 
 static z_result_t _z_unicast_wait_peer_event(_z_transport_unicast_t *ztu) {
@@ -464,9 +458,7 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
     }
 #if Z_FEATURE_UNICAST_PEER == 1
     if (mode == Z_WHATAMI_PEER) {
-        _z_transport_peer_mutex_lock(&ztu->_common);
         bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
-        _z_transport_peer_mutex_unlock(&ztu->_common);
         if (!has_peers) {
             return _z_fut_fn_result_wake_up_after(100);
         }
