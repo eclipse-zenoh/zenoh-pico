@@ -129,7 +129,7 @@ static inline const char *_z_keyexpr_get_next_verbatim_chunk(const char *begin, 
 #error "_ZP_KE_MATCH_TEMPLATE_INTERSECTS must be defined before including keyexpr_match_template.h"
 #endif
 
-#if _ZP_KE_MATCH_TEMPLATE_INTERSECTS == true
+#if _ZP_KE_MATCH_TEMPLATE_INTERSECTS == 1
 #define _ZP_KE_MATCH_OP intersects
 #define _ZP_KE_MATCH_TYPE_INTERSECTS true
 #define _ZP_KE_MATCH_TYPE_INCLUDES false
