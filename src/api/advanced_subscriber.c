@@ -882,6 +882,16 @@ void _ze_advanced_subscriber_query_drop_handler(void *ctx) {
     z_free(ctx);
 }
 
+static void _ze_advanced_subscriber_query_ctx_free(_ze_advanced_subscriber_query_ctx_t *ctx) {
+    if (ctx == NULL) {
+        return;
+    }
+    if (!_Z_RC_IS_NULL(&ctx->_statesref)) {
+        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
+    }
+    z_free(ctx);
+}
+
 static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_query_ctx_t *ctx,
                                                     _ze_advanced_subscriber_state_rc_t *rc_state,
                                                     const z_loaned_keyexpr_t *keyexpr, const char *params) {
@@ -904,14 +914,14 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     get_opts.timeout_ms = state->_query_timeout;
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
+        _ze_advanced_subscriber_query_ctx_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
 
     z_owned_cancellation_token_t ct;
     _Z_CLEAN_RETURN_IF_ERR(z_cancellation_token_clone(&ct, z_cancellation_token_loan(&state->_cancellation_token)),
                            _z_session_rc_drop(&sess_rc);
-                           _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref));
+                           _ze_advanced_subscriber_query_ctx_free(ctx));
     get_opts.cancellation_token = z_cancellation_token_move(&ct);
     z_result_t ret = z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts);
     _z_session_rc_drop(&sess_rc);
@@ -926,8 +936,7 @@ static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subs
     }
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_INITIAL;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_subscriber_state_rc_t *state,
@@ -940,8 +949,7 @@ static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_su
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_SEQUENCED;
     ctx->_source_id = *source_id;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_subscriber_state_rc_t *state,
@@ -954,8 +962,7 @@ static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_TIMESTAMPED;
     ctx->_id = *id;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 typedef struct {
