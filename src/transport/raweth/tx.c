@@ -202,12 +202,12 @@ z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_m
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
-    ret = _z_transport_tx_check_ready(ztc);
+    ret = _z_transport_tx_mutex_lock(ztc, true);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Dropping zenoh message because transport is not ready");
         return ret;
     }
-    _z_transport_tx_mutex_lock(ztc, true);
+
     // Reset wbuf
     _z_wbuf_reset(&ztc->_wbuf);
     // Set socket info
@@ -233,16 +233,14 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
     _z_transport_multicast_t *ztm = &zn->_tp._transport._raweth;
     _Z_DEBUG(">> send network message");
 
-    ret = _z_transport_tx_check_ready(&ztm->_common);
-    if (ret != _Z_RES_OK) {
-        _Z_INFO("Dropping zenoh message because transport is not ready");
-        return ret;
-    }
-
     // Acquire the lock and drop the message if needed
     ret = _z_transport_tx_mutex_lock(&ztm->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
     if (ret != _Z_RES_OK) {
-        _Z_INFO("Dropping zenoh message because of congestion control");
+        if (ret == _Z_ERR_TRANSPORT_TX_FAILED) {
+            _Z_INFO("Dropping zenoh message because transport is not ready");
+        } else {
+            _Z_INFO("Dropping zenoh message because of congestion control");
+        }
         return ret;
     }
     const _z_keyexpr_t *keyexpr = NULL;

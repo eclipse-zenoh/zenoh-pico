@@ -24,8 +24,11 @@ void _z_transport_common_clear(_z_transport_common_t *ztc) {
     // Prevent any further TX access before destroying the mutex
     _z_atomic_bool_store(&ztc->_tx_ready, false, _z_memory_order_release);
 #if Z_FEATURE_MULTI_THREAD == 1
-    // Drain: _tx_ready=false prevents new lock attempts, so this only waits
-    // for at most one in-flight TX to release the mutex before we destroy it.
+    // Wait until no thread can still call into _mutex_tx lock path.
+    while (_z_atomic_size_load(&ztc->_tx_lock_attempts, _z_memory_order_acquire) > 0) {
+        z_sleep_us(10);
+    }
+    // Drain current TX critical section (if any) before dropping mutexes.
     _z_mutex_lock(&ztc->_mutex_tx);
     _z_mutex_unlock(&ztc->_mutex_tx);
     // Clean up the mutexes
