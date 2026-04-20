@@ -236,23 +236,44 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
 
     bool do_finalize = (pen_qry->_remaining_finals == 0);
 
-    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST && do_finalize) {
-        while (pen_qry->_pending_replies != NULL) {
-            _z_pending_reply_t *pen_rep = _z_pending_reply_slist_value(pen_qry->_pending_replies);
+    // Extract pending callbacks under lock and dispatch afterwards
+    _z_pending_reply_slist_t *pending_replies = NULL;
+    _z_closure_reply_callback_t reply_cb = NULL;
+    _z_drop_handler_t drop_cb = NULL;
+    void *cb_arg = NULL;
 
-            // Trigger the query handler
-            _Z_DEBUG("deliver pending reply in final id=%jd", (intmax_t)id);
-            pen_qry->_callback(&pen_rep->_reply, pen_qry->_arg);
-            pen_qry->_pending_replies = _z_pending_reply_slist_pop(pen_qry->_pending_replies);
-        }
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST && do_finalize) {
+        // Steal the buffered replies; we own this list now.
+        pending_replies = pen_qry->_pending_replies;
+        pen_qry->_pending_replies = NULL;
+        reply_cb = pen_qry->_callback;
     }
+
     // Finalize query if requested: drop pending query and trigger dropper callback,
     // which is equivalent to a reply with FINAL.
     if (do_finalize) {
+        // Steal dropper callback for invocation after session lock
+        drop_cb = pen_qry->_dropper;
+        pen_qry->_dropper = NULL;
+        cb_arg = pen_qry->_arg;
+
         zn->_pending_queries =
             _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     }
     _z_session_mutex_unlock(zn);
+
+    // Dispatch user callbacks WITHOUT holding the mutex.
+    while (pending_replies != NULL) {
+        _z_pending_reply_t *pen_rep = _z_pending_reply_slist_value(pending_replies);
+
+        // Trigger the query handler
+        _Z_DEBUG("deliver pending reply in final id=%jd", (intmax_t)id);
+        reply_cb(&pen_rep->_reply, cb_arg);
+        pending_replies = _z_pending_reply_slist_pop(pending_replies);
+    }
+    if (drop_cb != NULL) {
+        drop_cb(cb_arg);
+    }
     return _Z_RES_OK;
 }
 
