@@ -1206,11 +1206,6 @@ void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
         }
         // signal undeclaring state to prevent new queries or miss handlers from being added
         state->_is_undeclaring = true;
-        // clear miss handlers to release user callbacks
-        _ze_closure_miss_intmap_clear(&state->_miss_handlers);
-        // clear sequenced state to remove any periodic query tasks
-        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
-        _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
         _ze_advanced_subscriber_state_unlock_mutex(state);
         if (z_internal_cancellation_token_check(&state->_cancellation_token)) {
             z_cancellation_token_cancel(z_cancellation_token_loan_mut(&state->_cancellation_token));
