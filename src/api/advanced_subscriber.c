@@ -897,11 +897,14 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
                                                     const z_loaned_keyexpr_t *keyexpr, const char *params) {
     if (_Z_RC_IS_NULL(rc_state)) {
         _Z_ERROR("Failed to run query - state is NULL");
+        // Query context is still locally owned until the reply closure is handed to z_get().
+        _ze_advanced_subscriber_query_ctx_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(rc_state);
-    _Z_RETURN_IF_ERR(_ze_advanced_subscriber_state_rc_copy(&ctx->_statesref, rc_state));
+    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_rc_copy(&ctx->_statesref, rc_state),
+                           _ze_advanced_subscriber_query_ctx_free(ctx));
 
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, _ze_advanced_subscriber_query_reply_handler, _ze_advanced_subscriber_query_drop_handler,
@@ -923,6 +926,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
                            _z_session_rc_drop(&sess_rc);
                            _ze_advanced_subscriber_query_ctx_free(ctx));
     get_opts.cancellation_token = z_cancellation_token_move(&ct);
+    // From this point on, the reply closure owns ctx and the drop handler must free it.
     z_result_t ret = z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts);
     _z_session_rc_drop(&sess_rc);
     return ret;
