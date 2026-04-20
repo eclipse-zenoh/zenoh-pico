@@ -882,16 +882,29 @@ void _ze_advanced_subscriber_query_drop_handler(void *ctx) {
     z_free(ctx);
 }
 
+static void _ze_advanced_subscriber_query_ctx_free(_ze_advanced_subscriber_query_ctx_t *ctx) {
+    if (ctx == NULL) {
+        return;
+    }
+    if (!_Z_RC_IS_NULL(&ctx->_statesref)) {
+        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
+    }
+    z_free(ctx);
+}
+
 static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_query_ctx_t *ctx,
                                                     _ze_advanced_subscriber_state_rc_t *rc_state,
                                                     const z_loaned_keyexpr_t *keyexpr, const char *params) {
     if (_Z_RC_IS_NULL(rc_state)) {
         _Z_ERROR("Failed to run query - state is NULL");
+        // Query context is still locally owned until the reply closure is handed to z_get().
+        _ze_advanced_subscriber_query_ctx_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(rc_state);
-    _Z_RETURN_IF_ERR(_ze_advanced_subscriber_state_rc_copy(&ctx->_statesref, rc_state));
+    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_rc_copy(&ctx->_statesref, rc_state),
+                           _ze_advanced_subscriber_query_ctx_free(ctx));
 
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, _ze_advanced_subscriber_query_reply_handler, _ze_advanced_subscriber_query_drop_handler,
@@ -904,15 +917,16 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     get_opts.timeout_ms = state->_query_timeout;
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
+        _ze_advanced_subscriber_query_ctx_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
 
     z_owned_cancellation_token_t ct;
     _Z_CLEAN_RETURN_IF_ERR(z_cancellation_token_clone(&ct, z_cancellation_token_loan(&state->_cancellation_token)),
                            _z_session_rc_drop(&sess_rc);
-                           _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref));
+                           _ze_advanced_subscriber_query_ctx_free(ctx));
     get_opts.cancellation_token = z_cancellation_token_move(&ct);
+    // From this point on, the reply closure owns ctx and the drop handler must free it.
     z_result_t ret = z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts);
     _z_session_rc_drop(&sess_rc);
     return ret;
@@ -926,8 +940,7 @@ static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subs
     }
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_INITIAL;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_subscriber_state_rc_t *state,
@@ -940,8 +953,7 @@ static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_su
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_SEQUENCED;
     ctx->_source_id = *source_id;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_subscriber_state_rc_t *state,
@@ -954,8 +966,7 @@ static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_
     *ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx->_kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_TIMESTAMPED;
     ctx->_id = *id;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_run_query(ctx, state, keyexpr, params), z_free(ctx));
-    return _Z_RES_OK;
+    return _ze_advanced_subscriber_run_query(ctx, state, keyexpr, params);
 }
 
 typedef struct {
@@ -1206,11 +1217,6 @@ void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
         }
         // signal undeclaring state to prevent new queries or miss handlers from being added
         state->_is_undeclaring = true;
-        // clear miss handlers to release user callbacks
-        _ze_closure_miss_intmap_clear(&state->_miss_handlers);
-        // clear sequenced state to remove any periodic query tasks
-        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
-        _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
         _ze_advanced_subscriber_state_unlock_mutex(state);
         if (z_internal_cancellation_token_check(&state->_cancellation_token)) {
             z_cancellation_token_cancel(z_cancellation_token_loan_mut(&state->_cancellation_token));
