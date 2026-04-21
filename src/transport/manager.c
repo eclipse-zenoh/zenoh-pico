@@ -18,7 +18,9 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/runtime/runtime.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/unicast/accept.h"
@@ -181,7 +183,12 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
                 _z_socket_close(&socket);
                 return ret;
             }
-            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, socket, true, NULL);
+            _z_transport_peer_unicast_t *new_peer = NULL;
+            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, socket, true, &new_peer);
+            if ((ret == _Z_RES_OK) && (new_peer != NULL)) {
+                (void)_z_interest_push_declarations_to_peer(
+                    _z_transport_common_get_session(&zt->_transport._unicast._common), (void *)new_peer);
+            }
         } break;
 
         default:

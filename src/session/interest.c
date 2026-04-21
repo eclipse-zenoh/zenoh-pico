@@ -532,7 +532,31 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
                                         _z_transport_peer_common_t *peer) {
     // Check transport type
     if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        return _Z_RES_OK;  // Nothing to do on unicast
+        // On unicast peer mode, respond to CURRENT interests by pushing matching declarations to the requesting peer
+        if (zn->_mode != Z_WHATAMI_PEER || !_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT) || peer == NULL) {
+            return _Z_RES_OK;
+        }
+        _z_keyexpr_t restr_key = _z_keyexpr_null();
+        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
+            _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &restr_key, wireexpr, peer, true));
+        }
+        _z_keyexpr_t *restr_key_opt = _z_keyexpr_check(&restr_key) ? &restr_key : NULL;
+        z_result_t ret = _Z_RES_OK;
+        // Always send resource declarations first so the receiver can resolve wireexprs
+        // that use resource IDs (regardless of whether KEYEXPRS flag is set).
+        ret = _z_interest_send_decl_resource(zn, id, peer, restr_key_opt);
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_SUBSCRIBERS)) {
+            ret = _z_interest_send_decl_subscriber(zn, id, peer, restr_key_opt);
+        }
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_QUERYABLES)) {
+            ret = _z_interest_send_decl_queryable(zn, id, peer, restr_key_opt);
+        }
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
+            ret = _z_interest_send_decl_token(zn, id, peer, restr_key_opt);
+        }
+        _Z_SET_IF_OK(ret, _z_interest_send_declare_final(zn, id, peer));
+        _z_keyexpr_clear(&restr_key);
+        return ret;
     }
     // Push a join in case it's a new node
     _Z_RETURN_IF_ERR(_zp_multicast_send_join(&zn->_tp._transport._multicast));
