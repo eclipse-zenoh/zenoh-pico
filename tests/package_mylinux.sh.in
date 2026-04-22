@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="@PROJECT_SOURCE_DIR@"
+WORK_DIR="$(mktemp -d "${PWD}/zenoh-pico-package-mylinux-XXXXXX")"
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+EXAMPLE_DIR="$SOURCE_DIR/examples/packages/zenohpico-mylinux"
+PREFIX_DIR="$WORK_DIR/prefix"
+PACKAGE_BUILD_DIR="$WORK_DIR/package-build"
+SHARED_BUILD_DIR="$WORK_DIR/shared-build"
+STATIC_BUILD_DIR="$WORK_DIR/static-build"
+INSTALL_DIR="$WORK_DIR/install"
+CONSUMER_BUILD_DIR="$WORK_DIR/consumer-build"
+
+cmake -S "$EXAMPLE_DIR" -B "$PACKAGE_BUILD_DIR" \
+  -DZENOH_PICO_SOURCE_DIR="$SOURCE_DIR"
+cmake --build "$PACKAGE_BUILD_DIR" -j
+cmake --install "$PACKAGE_BUILD_DIR" --prefix "$PREFIX_DIR"
+
+cmake -S "$SOURCE_DIR" -B "$SHARED_BUILD_DIR" \
+  -DZ_FEATURE_MULTI_THREAD=@Z_FEATURE_MULTI_THREAD@ \
+  -DZ_FEATURE_LINK_SERIAL=@Z_FEATURE_LINK_SERIAL@ \
+  -DBUILD_EXAMPLES=OFF \
+  -DZP_EXTERNAL_PACKAGES=zenohpico-mylinux \
+  -DCMAKE_PREFIX_PATH="$PREFIX_DIR" \
+  -DZP_PLATFORM=mylinux
+
+cmake --build "$SHARED_BUILD_DIR" -j --target \
+  z_endpoint_test \
+  z_tls_test \
+  z_executor_test \
+  z_background_executor_test \
+  z_local_loopback_test
+
+ctest --test-dir "$SHARED_BUILD_DIR" --output-on-failure \
+  -R '^z_endpoint_test$|^z_tls_test$|^z_executor_test$|^z_background_executor_test$|^z_local_loopback_test$' \
+  --timeout 420
+
+cmake -S "$SOURCE_DIR" -B "$STATIC_BUILD_DIR" \
+  -DZ_FEATURE_MULTI_THREAD=@Z_FEATURE_MULTI_THREAD@ \
+  -DZ_FEATURE_LINK_SERIAL=@Z_FEATURE_LINK_SERIAL@ \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_TESTING=OFF \
+  -DZP_EXTERNAL_PACKAGES=zenohpico-mylinux \
+  -DCMAKE_PREFIX_PATH="$PREFIX_DIR" \
+  -DZP_PLATFORM=mylinux
+
+cmake --build "$STATIC_BUILD_DIR" -j --target zenohpico_static
+cmake --install "$STATIC_BUILD_DIR" --prefix "$INSTALL_DIR"
+
+cmake -S "$EXAMPLE_DIR/consumer" -B "$CONSUMER_BUILD_DIR" \
+  -DCMAKE_PREFIX_PATH="$INSTALL_DIR;$PREFIX_DIR"
+cmake --build "$CONSUMER_BUILD_DIR" -j --target consumer

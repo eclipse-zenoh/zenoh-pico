@@ -25,7 +25,49 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/utils/result.h"
 
-#if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
+/* Centralized built-in socket markers for TCP/UDP/WS/TLS transports that use
+ * the platform socket layer. */
+#if !defined(ZP_PLATFORM_SOCKET_POSIX) && (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD))
+#define ZP_PLATFORM_SOCKET_POSIX 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_WINDOWS) && defined(ZENOH_WINDOWS)
+#define ZP_PLATFORM_SOCKET_WINDOWS 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_ZEPHYR) && defined(ZENOH_ZEPHYR)
+#define ZP_PLATFORM_SOCKET_ZEPHYR 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP) && defined(ZENOH_FREERTOS_PLUS_TCP)
+#define ZP_PLATFORM_SOCKET_FREERTOS_PLUS_TCP 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_LWIP) && (defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_RPI_PICO))
+#define ZP_PLATFORM_SOCKET_LWIP 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_ESP32) && (defined(ZENOH_ESPIDF) || defined(ZENOH_ARDUINO_ESP32))
+#define ZP_PLATFORM_SOCKET_ESP32 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_MBED) && defined(ZENOH_MBED)
+#define ZP_PLATFORM_SOCKET_MBED 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_OPENCR) && defined(ZENOH_ARDUINO_OPENCR)
+#define ZP_PLATFORM_SOCKET_OPENCR 1
+#endif
+
+#if !defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED) &&                                    \
+    (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1 || Z_FEATURE_LINK_WS == 1 || \
+     Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1)
+#define ZP_PLATFORM_SOCKET_LINKS_ENABLED 1
+#endif
+
+#ifdef ZP_SYSTEM_PLATFORM_HEADER
+#include ZP_SYSTEM_PLATFORM_HEADER
+#elif defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_WINDOWS)
 #define NOMINMAX
@@ -511,13 +553,10 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t);
 /*------------------ P2p unicast internal functions ------------------*/
 
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking);
-z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
 z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst, size_t dst_len);
 z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
                                    size_t remote_len);
 void _z_socket_close(_z_sys_net_socket_t *sock);
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex);
-
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="@PROJECT_SOURCE_DIR@"
+WORK_DIR="$(mktemp -d "${PWD}/zenoh-pico-package-myrtos-XXXXXX")"
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+PREFIX_DIR="$WORK_DIR/prefix"
+PACKAGE_DIR="$PREFIX_DIR/lib/cmake/zenohpico-myrtos"
+PLATFORM_DIR="$PACKAGE_DIR/platforms"
+LIB_DIR="$PREFIX_DIR/lib"
+BUILD_DIR="$WORK_DIR/build"
+
+mkdir -p "$PLATFORM_DIR" "$LIB_DIR"
+
+cat >"$PLATFORM_DIR/myrtos.cmake" <<'EOF'
+set(ZP_PLATFORM_COMPILE_DEFINITIONS ZENOH_FREERTOS_LWIP)
+set(ZP_PLATFORM_SOURCE_FILES
+    "@PROJECT_SOURCE_DIR@/src/system/socket/lwip.c"
+    "@PROJECT_SOURCE_DIR@/src/link/transport/tcp/tcp_lwip.c"
+    "@PROJECT_SOURCE_DIR@/src/link/transport/udp/udp_lwip.c")
+if(ZP_UDP_MULTICAST_ENABLED)
+  list(APPEND ZP_PLATFORM_SOURCE_FILES
+       "@PROJECT_SOURCE_DIR@/src/link/transport/udp/udp_multicast_lwip.c"
+       "@PROJECT_SOURCE_DIR@/src/link/transport/udp/udp_multicast_lwip_common.c")
+endif()
+list(APPEND ZP_PLATFORM_LINK_LIBRARIES myrtos::system myrtos::serial_uart)
+EOF
+
+: >"$LIB_DIR/libmyrtos_system.a"
+: >"$LIB_DIR/libmyrtos_serial_uart.a"
+
+cat >"$PACKAGE_DIR/zenohpico-myrtosConfig.cmake" <<'EOF'
+if(COMMAND zp_add_platform_dir)
+  zp_add_platform_dir("${CMAKE_CURRENT_LIST_DIR}/platforms")
+endif()
+add_library(myrtos::system STATIC IMPORTED GLOBAL)
+set_target_properties(myrtos::system PROPERTIES
+                      IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../libmyrtos_system.a")
+
+add_library(myrtos::serial_uart STATIC IMPORTED GLOBAL)
+set_target_properties(myrtos::serial_uart PROPERTIES
+                      IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../libmyrtos_serial_uart.a")
+EOF
+
+cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
+  -DZ_FEATURE_MULTI_THREAD=@Z_FEATURE_MULTI_THREAD@ \
+  -DZ_FEATURE_LINK_SERIAL=@Z_FEATURE_LINK_SERIAL@ \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_TESTING=OFF \
+  -DZ_FEATURE_LINK_UDP_MULTICAST=0 \
+  -DZ_FEATURE_MULTICAST_TRANSPORT=0 \
+  -DZP_EXTERNAL_PACKAGES=zenohpico-myrtos \
+  -DCMAKE_PREFIX_PATH="$PREFIX_DIR" \
+  -DZP_PLATFORM=myrtos

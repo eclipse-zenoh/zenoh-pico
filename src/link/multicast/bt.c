@@ -19,34 +19,29 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/system/link/bt.h"
+#include "zenoh-pico/link/transport/bt.h"
 
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
 z_result_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
-    z_result_t ret = _Z_RES_OK;
-
     _z_string_t bt_str = _z_string_alias_str(BT_SCHEMA);
     if (!_z_string_equals(&ep->_locator._protocol, &bt_str)) {
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    if (ret == _Z_RES_OK) {
-        if (_z_string_len(&ep->_locator._address) == (size_t)0) {
-            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-            ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-        }
+    if (_z_string_len(&ep->_locator._address) == (size_t)0) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    return ret;
+    return _Z_RES_OK;
 }
 
 static char *__z_convert_address_bt(_z_string_t *address) {
-    char *ret = NULL;
-    ret = (char *)z_malloc(_z_string_len(address) + 1);
+    char *ret = (char *)z_malloc(_z_string_len(address) + 1);
     if (ret != NULL) {
         _z_str_n_copy(ret, _z_string_data(address), _z_string_len(address) + 1);
     }
@@ -54,8 +49,6 @@ static char *__z_convert_address_bt(_z_string_t *address) {
 }
 
 z_result_t _z_f_link_open_bt(_z_link_t *self) {
-    z_result_t ret = _Z_RES_OK;
-
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
@@ -67,14 +60,10 @@ z_result_t _z_f_link_open_bt(_z_link_t *self) {
     }
 
     self->_socket._bt._gname = __z_convert_address_bt(&self->_endpoint._locator._address);
-    ret = _z_open_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
-
-    return ret;
+    return _z_open_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
 }
 
 z_result_t _z_f_link_listen_bt(_z_link_t *self) {
-    z_result_t ret = _Z_RES_OK;
-
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
     const char *profile_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_PROFILE_KEY);
@@ -86,9 +75,7 @@ z_result_t _z_f_link_listen_bt(_z_link_t *self) {
     }
 
     self->_socket._bt._gname = __z_convert_address_bt(&self->_endpoint._locator._address);
-    ret = _z_listen_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
-
-    return ret;
+    return _z_listen_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
 }
 
 void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(&self->_socket._bt._sock); }
@@ -129,7 +116,6 @@ size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, 
 uint16_t _z_get_link_mtu_bt(void) { return SPP_MAXIMUM_PAYLOAD; }
 
 z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
-    z_result_t ret = _Z_RES_OK;
     zl->_type = _Z_LINK_TYPE_BT;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_MULTICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_STREAM;
@@ -150,6 +136,6 @@ z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_read_exact_f = _z_f_link_read_exact_bt;
     zl->_read_socket_f = _z_noop_link_read_socket;
 
-    return ret;
+    return _Z_RES_OK;
 }
 #endif

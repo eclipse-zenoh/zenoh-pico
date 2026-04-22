@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"

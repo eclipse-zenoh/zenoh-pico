@@ -1,0 +1,7 @@
+set(ZP_PLATFORM_SYSTEM_LAYER freertos_plus_tcp)
+set(ZP_PLATFORM_COMPILE_DEFINITIONS ZENOH_FREERTOS_PLUS_TCP)
+set(ZP_PLATFORM_SOURCE_FILES
+    "${PROJECT_SOURCE_DIR}/src/system/freertos/system.c"
+    "${PROJECT_SOURCE_DIR}/src/system/freertos/freertos_plus_tcp/network.c"
+    "${PROJECT_SOURCE_DIR}/src/link/transport/tcp/tcp_freertos_plus_tcp.c"
+    "${PROJECT_SOURCE_DIR}/src/link/transport/udp/udp_freertos_plus_tcp.c")

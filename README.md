@@ -57,6 +57,8 @@ For other platforms - like RTOS for embedded systems / microcontrollers -, you w
 
 ## 2. How to build it
 
+For platform profiles and adding a new platform, see [docs/platforms.rst](docs/platforms.rst).
+
 ### 2.1 Unix Environments
 
 To build the **zenoh-pico** library, you need to ensure that [cmake](https://cmake.org) is available

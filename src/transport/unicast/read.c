@@ -15,10 +15,12 @@
 #include "zenoh-pico/transport/unicast/read.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
@@ -142,6 +144,43 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
 }
 
 #if Z_FEATURE_UNICAST_PEER == 1
+static void _z_unicast_wait_iter_reset(_z_socket_wait_iter_t *iter) { iter->_current_entry = NULL; }
+
+static bool _z_unicast_wait_iter_next(_z_socket_wait_iter_t *iter) {
+    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)iter->_ctx;
+    if (iter->_current_entry == NULL) {
+        iter->_current_entry = ztu->_peers;
+    } else {
+        iter->_current_entry =
+            _z_transport_peer_unicast_slist_next((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+    }
+    return iter->_current_entry != NULL;
+}
+
+static const _z_sys_net_socket_t *_z_unicast_wait_iter_get_socket(const _z_socket_wait_iter_t *iter) {
+    _z_transport_peer_unicast_t *peer =
+        _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+    return &peer->_socket;
+}
+
+static void _z_unicast_wait_iter_set_ready(_z_socket_wait_iter_t *iter, bool ready) {
+    _z_transport_peer_unicast_t *peer =
+        _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+    peer->_pending = ready;
+}
+
+static z_result_t _z_unicast_wait_peer_event(_z_transport_unicast_t *ztu) {
+    _z_socket_wait_iter_t iter = {
+        ._ctx = ztu,
+        ._current_entry = NULL,
+        ._reset = _z_unicast_wait_iter_reset,
+        ._next = _z_unicast_wait_iter_next,
+        ._get_socket = _z_unicast_wait_iter_get_socket,
+        ._set_ready = _z_unicast_wait_iter_set_ready,
+    };
+    return _z_socket_wait_readable(&iter, Z_CONFIG_SOCKET_TIMEOUT);
+}
+
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
@@ -359,23 +398,15 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
     }
 #if Z_FEATURE_UNICAST_PEER == 1
     if (mode == Z_WHATAMI_PEER) {
-        _z_transport_peer_mutex_lock(&ztu->_common);
         bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
-        _z_transport_peer_mutex_unlock(&ztu->_common);
         if (!has_peers) {
-            // TODO: suspend or finish the task and restart it when a new connection is established.
             return _z_fut_fn_result_wake_up_after(100);
-        } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer);
-#else
-            z_result_t wait_res = _z_socket_wait_event(&ztu->_peers, NULL);
-#endif
-            if (wait_res == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
-                // TODO: Close transport on error. Probably we should just close the failed peer and
-                // initiate reconnection task
-                return _z_fut_fn_result_ready();
-            }
+        }
+
+        if (_z_unicast_wait_peer_event(ztu) == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+            // TODO: Close transport on error. Probably we should just close the failed peer and
+            // initiate reconnection task.
+            return _z_fut_fn_result_ready();
         }
     }
 #endif
