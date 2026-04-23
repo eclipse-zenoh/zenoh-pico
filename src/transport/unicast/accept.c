@@ -79,7 +79,11 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
             _Z_INFO("Accept socket was closed");
             return _z_fut_fn_result_ready();
         }
-        return _z_fut_fn_result_wake_up_after(1000);
+        // Sleep interval is configurable via Z_TRANSPORT_ACCEPT_EAGAIN_INTERVAL (default 1000ms).
+        // In multi-peer deployments where many SYNs may arrive during the sleep window, the
+        // build can lower this (e.g. to 10ms) to keep the accept task hot and avoid serialising
+        // N handshakes at ~1s each.
+        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_ACCEPT_EAGAIN_INTERVAL);
     }
 
     if (_z_transport_peer_unicast_slist_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
@@ -88,7 +92,7 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
         _z_close_tls_socket(&con_socket);
 #endif
         _z_socket_close(&con_socket);
-        return _z_fut_fn_result_wake_up_after(1000);
+        return _z_fut_fn_result_wake_up_after(Z_TRANSPORT_ACCEPT_EAGAIN_INTERVAL);
     }
 
     ret = _z_socket_set_blocking(&con_socket, true);
