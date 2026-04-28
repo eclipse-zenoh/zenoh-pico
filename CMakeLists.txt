@@ -712,8 +712,8 @@ install(
   COMPONENT Dev)
 
 if(UNIX)
-  configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_BINARY_DIR}/zenohpico.pc" @ONLY)
-  install(FILES "${CMAKE_BINARY_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/zenohpico.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
 endif()
 
 if(ASAN AND NOT MSVC)
