@@ -38,12 +38,6 @@ configure_file(
   @ONLY
 )
 
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
-  @ONLY
-)
-
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
