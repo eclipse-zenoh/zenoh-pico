@@ -394,6 +394,10 @@ z_result_t _z_open_locators_peer(_z_session_rc_t *zn, _z_string_t *listen_locato
     return _Z_RES_OK;
 }
 
+static inline z_result_t _z_validate_open_timeout(int32_t timeout_ms) {
+    return (timeout_ms >= -1) ? _Z_RES_OK : _Z_ERR_CONFIG_INVALID_VALUE;
+}
+
 z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_locators,
                             const _z_string_svec_t *connect_locators, const _z_id_t *zid, _z_config_t *config,
                             z_whatami_t mode) {
@@ -418,6 +422,7 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
     int32_t listen_timeout_ms;
     _Z_RETURN_IF_ERR(_z_config_get_i32_default(config, Z_CONFIG_LISTEN_TIMEOUT_KEY, Z_CONFIG_LISTEN_TIMEOUT_DEFAULT,
                                                &listen_timeout_ms));
+    _Z_RETURN_IF_ERR(_z_validate_open_timeout(listen_timeout_ms));
 
     bool listen_exit_on_failure;
     _Z_RETURN_IF_ERR(_z_config_get_bool_default(config, Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY,
@@ -428,6 +433,7 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
     int32_t connect_timeout_ms;
     _Z_RETURN_IF_ERR(
         _z_config_get_i32_default(config, Z_CONFIG_CONNECT_TIMEOUT_KEY, connect_timeout_default, &connect_timeout_ms));
+    _Z_RETURN_IF_ERR(_z_validate_open_timeout(connect_timeout_ms));
 
     const char *connect_exit_default = (mode == Z_WHATAMI_CLIENT) ? Z_CONFIG_CONNECT_EXIT_ON_FAILURE_CLIENT_DEFAULT
                                                                   : Z_CONFIG_CONNECT_EXIT_ON_FAILURE_PEER_DEFAULT;
