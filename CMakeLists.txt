@@ -454,17 +454,6 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
 endif()
 
-file(GLOB_RECURSE PublicHeaders
-  "include/zenoh-pico/api/*.h"
-  "include/zenoh-pico/collections/*.h"
-  "include/zenoh-pico/link/*.h"
-  "include/zenoh-pico/net/*.h"
-  "include/zenoh-pico/protocol/*.h"
-  "include/zenoh-pico/session/*.h"
-  "include/zenoh-pico/transport/*.h"
-  "include/zenoh-pico/utils/*.h"
-  "include/zenoh-pico/config.h"
-)
 if(PICO_STATIC)
   target_include_directories(${Libname}_static
     PUBLIC
@@ -796,7 +785,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_sync_group_test zenohpico::lib)
     target_link_libraries(z_cancellation_token_test zenohpico::lib)
     target_link_libraries(z_local_loopback_test zenohpico::lib)
-    target_include_directories(z_local_loopback_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_definitions(z_local_loopback_test PRIVATE Z_TEST_HOOKS=1)
     if(PICO_SHARED)
       target_compile_definitions(${Libname}_shared PRIVATE Z_TEST_HOOKS=1)
@@ -810,7 +798,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_hashmap_test zenohpico::lib)
     target_link_libraries(z_pqueue_test zenohpico::lib)
     target_link_libraries(z_test_fragment_decode_error_transport_zbuf zenohpico::lib)
-    target_include_directories(z_test_fragment_decode_error_transport_zbuf PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_definitions(z_test_fragment_decode_error_transport_zbuf PRIVATE Z_TEST_HOOKS=1)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
