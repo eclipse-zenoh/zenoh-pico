@@ -16,6 +16,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -70,6 +71,74 @@ z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, 
         cfg_list = _z_list_next(cfg_list);
     }
     return _Z_RES_OK;
+}
+
+static z_result_t _z_parse_i32(const char *s, int32_t *out) {
+    bool is_negative = false;
+    uint32_t value = 0;
+    const uint32_t limit = ((uint32_t)INT32_MAX) + 1u;
+
+    if (s == NULL || *s == '\0') {
+        return _Z_ERR_CONFIG_INVALID_VALUE;
+    }
+
+    if (*s == '-' || *s == '+') {
+        is_negative = *s == '-';
+        s++;
+    }
+
+    if (*s == '\0') {
+        return _Z_ERR_CONFIG_INVALID_VALUE;
+    }
+
+    uint32_t max_value = is_negative ? limit : (uint32_t)INT32_MAX;
+    while (*s != '\0') {
+        if (*s < '0' || *s > '9') {
+            return _Z_ERR_CONFIG_INVALID_VALUE;
+        }
+
+        uint32_t digit = (uint32_t)(*s - '0');
+        if (value > ((max_value - digit) / 10u)) {
+            return _Z_ERR_CONFIG_INVALID_VALUE;
+        }
+
+        value = (value * 10u) + digit;
+        s++;
+    }
+
+    if (is_negative) {
+        *out = (value == limit) ? INT32_MIN : -(int32_t)value;
+    } else {
+        *out = (int32_t)value;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_config_get_i32_default(_z_config_t *config, uint8_t key, const char *default_val, int32_t *out) {
+    const char *s = _z_config_get(config, key);
+    if (s == NULL) {
+        s = default_val;
+    }
+
+    return _z_parse_i32(s, out);
+}
+
+z_result_t _z_config_get_bool_default(_z_config_t *config, uint8_t key, const char *default_val, bool *out) {
+    const char *s = _z_config_get(config, key);
+    if (s == NULL) {
+        s = default_val;
+    }
+
+    if (strcmp(s, "true") == 0) {
+        *out = true;
+        return _Z_RES_OK;
+    }
+    if (strcmp(s, "false") == 0) {
+        *out = false;
+        return _Z_RES_OK;
+    }
+
+    return _Z_ERR_CONFIG_INVALID_VALUE;
 }
 
 /*------------------ int-string map ------------------*/

@@ -81,8 +81,8 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     zn->_resource_id = 1;
     zn->_query_id = 1;
 
-#if Z_FEATURE_AUTO_RECONNECT == 1
     _z_config_init(&zn->_config);
+#if Z_FEATURE_AUTO_RECONNECT == 1
     zn->_declaration_cache = NULL;
 #endif
 
@@ -230,9 +230,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
 void _z_session_clear(_z_session_t *zn) {
     _z_session_close(zn);
     _z_runtime_clear(&zn->_runtime);
-#if Z_FEATURE_AUTO_RECONNECT == 1
     _z_config_clear(&zn->_config);
-#endif
     _z_session_transport_mutex_lock(zn);
     _z_transport_clear(&zn->_tp);
     _z_session_transport_mutex_unlock(zn);

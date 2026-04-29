@@ -176,6 +176,82 @@
 #define Z_CONFIG_TLS_CONNECT_CERTIFICATE_BASE64_KEY 0x55
 #define Z_CONFIG_TLS_VERIFY_NAME_ON_CONNECT_KEY 0x56
 
+/*------------------ Connect behaviour properties ------------------*/
+
+/**
+ * The timeout dedicated to establishing connections to configured
+ * connect locators.
+ *
+ * Accepted values : `<int in milliseconds>`.
+ * - `0`  : no retry, try each locator once
+ * - `>0` : retry retryable locators until timeout expires
+ * - `-1` : retry indefinitely until a connection is established
+ *
+ * In client mode, this applies to the initial connection attempt and
+ * requires at least one locator to succeed.
+ *
+ * In peer mode, this applies to the initial connection phase for
+ * configured locators.
+ *
+ * Default value : `"0"` in client mode, `"-1"` in peer mode.
+ */
+#define Z_CONFIG_CONNECT_TIMEOUT_KEY 0x57
+#define Z_CONFIG_CONNECT_TIMEOUT_CLIENT_DEFAULT "0"
+#define Z_CONFIG_CONNECT_TIMEOUT_PEER_DEFAULT "-1"
+
+/**
+ * Indicates whether the application should fail if connection attempts
+ * to configured connect locators do not succeed.
+ *
+ * Accepted values : `false`, `true`.
+ * - `true`  : fail if the connection phase does not establish the required connectivity
+ * - `false` : allow the session to continue even if some connections fail
+ *
+ * In client mode, this requires at least one locator to be successfully connected.
+ *
+ * In peer mode, this applies to the initial connection phase for
+ * configured locators.
+ *
+ * Default value : `"true"` in client mode, `"false"` in peer mode.
+ */
+#define Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY 0x58
+#define Z_CONFIG_CONNECT_EXIT_ON_FAILURE_CLIENT_DEFAULT "true"
+#define Z_CONFIG_CONNECT_EXIT_ON_FAILURE_PEER_DEFAULT "false"
+
+/*------------------ Listen behaviour properties ------------------*/
+
+/**
+ * The timeout dedicated to opening configured listen locators.
+ *
+ * Accepted values : `<int in milliseconds>`.
+ * - `0`  : no retry, try each locator once
+ * - `>0` : retry retryable locators until timeout expires
+ * - `-1` : retry indefinitely until a listener is established
+ *
+ * In peer mode, this applies to the initial listen phase for
+ * configured locators.
+ *
+ * Default value : `"0"`.
+ */
+#define Z_CONFIG_LISTEN_TIMEOUT_KEY 0x59
+#define Z_CONFIG_LISTEN_TIMEOUT_DEFAULT "0"
+
+/**
+ * Indicates whether the application should fail if configured listen
+ * locators cannot be opened.
+ *
+ * Accepted values : `false`, `true`.
+ * - `true`  : fail if the listen phase does not establish the required listeners
+ * - `false` : allow the session to continue even if listen attempts fail
+ *
+ * In peer mode, this applies to the initial listen phase for
+ * configured locators.
+ *
+ * Default value : `"true"`.
+ */
+#define Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY 0x5A
+#define Z_CONFIG_LISTEN_EXIT_ON_FAILURE_DEFAULT "true"
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.
