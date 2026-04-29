@@ -14,9 +14,12 @@
 
 #include "zenoh-pico/net/session.h"
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
@@ -41,6 +44,7 @@
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/utils/sleep.h"
 #include "zenoh-pico/utils/uuid.h"
 
 #if Z_FEATURE_SCOUTING == 1
@@ -84,37 +88,29 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
 }
 #endif
 
-static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *locators, int *peer_op) {
-    char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
-    char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
-    if (connect == NULL && listen == NULL) {
+static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *listen_locators,
+                                        _z_string_svec_t *connect_locators) {
+    _Z_RETURN_IF_ERR(_z_config_get_all(config, listen_locators, Z_CONFIG_LISTEN_KEY));
+    _Z_RETURN_IF_ERR(_z_config_get_all(config, connect_locators, Z_CONFIG_CONNECT_KEY));
+
+    size_t listen_len = _z_string_svec_len(listen_locators);
+    size_t connect_len = _z_string_svec_len(connect_locators);
+
+    if ((listen_len == 0) && (connect_len == 0)) {
         return _Z_RES_OK;
     }
-#if Z_FEATURE_UNICAST_PEER == 1
-    if (listen != NULL) {
-        // Add listen as first endpoint
-        _z_string_t s = _z_string_copy_from_str(listen);
-        _Z_RETURN_IF_ERR(_z_string_svec_append(locators, &s, true));
-        _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-    } else {
-        *peer_op = _Z_PEER_OP_OPEN;
+
+#if Z_FEATURE_UNICAST_PEER == 0
+    if ((listen_len > 0) && (connect_len > 0)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    // Add open endpoints
-    return _z_config_get_all(config, locators, Z_CONFIG_CONNECT_KEY);
-#else
-    uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
-    if (listen != NULL) {
-        if (connect == NULL) {
-            key = Z_CONFIG_LISTEN_KEY;
-            _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-        } else {
-            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-        }
-    } else {
-        *peer_op = _Z_PEER_OP_OPEN;
-    }
-    return _z_config_get_all(config, locators, key);
 #endif
+
+    if (listen_len > 0) {
+        _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+    }
+
+    return _Z_RES_OK;
 }
 
 static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mode) {
@@ -154,58 +150,378 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     return ret;
 }
 
+static int32_t _z_get_remaining_timeout_ms(z_clock_t *start, int32_t timeout_ms) {
+    if (timeout_ms < 0) {
+        return -1;
+    }
+
+    if (timeout_ms == 0) {
+        return 0;
+    }
+
+    unsigned long elapsed = z_clock_elapsed_ms(start);
+    if (elapsed >= (unsigned long)timeout_ms) {
+        return 0;
+    }
+
+    return timeout_ms - (int32_t)elapsed;
+}
+
+typedef struct {
+    bool transport_opened;
+    int32_t remaining_timeout_ms;
+} _z_open_connect_result_t;
+
+/*
+ * Attempt connect locators whose bits are set in retry_mask.
+ *
+ * The retry_mask is both input and output:
+ * - a set bit marks a locator that may still be attempted;
+ * - a locator that succeeds as the primary transport has its bit cleared;
+ * - a locator that fails with a non-retryable error has its bit cleared;
+ * - retryable failures keep their bit set for another attempt or for later peer addition.
+ *
+ * On success, out reports that the primary transport is open and how much of the
+ * original timeout remains. In peer mode, the remaining retry_mask bits are used
+ * to decide which connect locators still need to be added as peers.
+ */
+static z_result_t _z_open_connect_locator(_z_session_rc_t *zn, const _z_string_svec_t *connect_locators,
+                                          const _z_id_t *zid, _z_config_t *config, int32_t timeout_ms,
+                                          bool exit_on_non_retryable_failure, uint64_t *retry_mask,
+                                          _z_open_connect_result_t *out) {
+    size_t connect_len = _z_string_svec_len(connect_locators);
+    z_result_t last_retryable_ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+    z_result_t last_non_retryable_ret = _Z_RES_OK;
+
+    out->transport_opened = false;
+    out->remaining_timeout_ms = timeout_ms;
+
+    if (connect_len == 0) {
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    z_result_t ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+    z_clock_t now = z_clock_now();
+    uint32_t sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+
+    while (!out->transport_opened) {
+        bool any_retryable = false;
+
+        _Z_DEBUG("Attempting to open %zu connect locator(s)", connect_len);
+
+        for (size_t i = 0; i < connect_len; i++) {
+            uint64_t bit = UINT64_C(1) << i;
+            if ((*retry_mask & bit) == 0u) {
+                continue;
+            }
+
+            any_retryable = true;
+
+            _z_string_t *locator = _z_string_svec_get(connect_locators, i);
+
+            ret = _z_open_inner(zn, locator, zid, _Z_PEER_OP_OPEN, config);
+            if (ret == _Z_RES_OK) {
+                out->transport_opened = true;
+                *retry_mask &= ~bit;
+                _Z_DEBUG("Successfully opened connect locator [%zu]: %.*s", i, (int)_z_string_len(locator),
+                         _z_string_data(locator));
+                out->remaining_timeout_ms = _z_get_remaining_timeout_ms(&now, timeout_ms);
+                return _Z_RES_OK;
+            }
+
+            _Z_DEBUG("Failed to open connect locator [%zu]: %.*s (ret=%d)", i, (int)_z_string_len(locator),
+                     _z_string_data(locator), ret);
+
+            if (_z_transport_open_error_is_retryable(ret)) {
+                last_retryable_ret = ret;
+                continue;
+            }
+
+            // Non-retryable error.
+            last_non_retryable_ret = ret;
+            *retry_mask &= ~bit;
+
+            if (exit_on_non_retryable_failure) {
+                out->remaining_timeout_ms = _z_get_remaining_timeout_ms(&now, timeout_ms);
+                return ret;
+            }
+
+            _Z_DEBUG("Removing connect locator [%zu] from pending set due to non-retryable error", i);
+        }
+
+        if (!any_retryable || *retry_mask == 0u) {
+            break;
+        }
+
+        if (!_z_backoff_sleep(&now, timeout_ms, &sleep_ms)) {
+            break;
+        }
+
+        _Z_DEBUG("Retrying connect locators");
+    }
+
+    out->remaining_timeout_ms = _z_get_remaining_timeout_ms(&now, timeout_ms);
+
+    if (last_non_retryable_ret != _Z_RES_OK) {
+        return last_non_retryable_ret;
+    }
+
+    return last_retryable_ret;
+}
+
+static inline uint64_t _z_init_retry_mask(size_t count) {
+    return (count == 64u) ? UINT64_MAX : ((UINT64_C(1) << count) - 1u);
+}
+
+z_result_t _z_open_locators_client(_z_session_rc_t *zn, const _z_string_svec_t *connect_locators, const _z_id_t *zid,
+                                   _z_config_t *config, int32_t timeout_ms) {
+    size_t connect_len = _z_string_svec_len(connect_locators);
+
+    if (connect_len == 0) {
+        _Z_ERROR("No connect locators configured in client mode");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    // This implementation uses a bitmask to track which connect locators remain retryable.
+    if (connect_len > (sizeof(uint64_t) * 8u)) {
+        _Z_ERROR("Too many connect locators configured");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    _z_open_connect_result_t connect_result;
+    uint64_t retry_mask = _z_init_retry_mask(connect_len);
+    return _z_open_connect_locator(zn, connect_locators, zid, config, timeout_ms, false, &retry_mask, &connect_result);
+}
+
+z_result_t _z_open_bind_listener(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, _z_config_t *config,
+                                 int32_t timeout_ms) {
+    z_result_t ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+    z_clock_t now = z_clock_now();
+    uint32_t sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+
+    while (ret != _Z_RES_OK) {
+        ret = _z_open_inner(zn, locator, zid, _Z_PEER_OP_LISTEN, config);
+        if (ret == _Z_RES_OK) {
+            return _Z_RES_OK;
+        }
+
+        if (!_z_transport_open_error_is_retryable(ret)) {
+            break;
+        }
+
+        if (!_z_backoff_sleep(&now, timeout_ms, &sleep_ms)) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+z_result_t _z_open_locators_peer(_z_session_rc_t *zn, _z_string_t *listen_locator,
+                                 const _z_string_svec_t *connect_locators, const _z_id_t *zid, _z_config_t *config,
+                                 int32_t listen_timeout_ms, bool listen_exit_on_failure, int32_t connect_timeout_ms,
+                                 bool connect_exit_on_failure) {
+    size_t connect_len = _z_string_svec_len(connect_locators);
+
+    bool transport_opened = false;
+
+#if Z_FEATURE_UNICAST_PEER == 0
+    if ((listen_locator != NULL && connect_len > 0) || (connect_len > 1)) {
+        _Z_ERROR("Multiple connect locators, or combined listen and connect locators, require peer support");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+#endif
+
+    // This implementation uses a bitmask to track which connect locators remain retryable.
+    if (connect_len > (sizeof(uint64_t) * 8u)) {
+        _Z_ERROR("Too many connect locators configured");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    // First, try to open the optional listen locator.
+    if (listen_locator != NULL) {
+        z_result_t ret = _z_open_bind_listener(zn, listen_locator, zid, config, listen_timeout_ms);
+        if (ret == _Z_RES_OK) {
+            transport_opened = true;
+            _Z_DEBUG("Successfully opened listen locator: %.*s", (int)_z_string_len(listen_locator),
+                     _z_string_data(listen_locator));
+        } else {
+            _Z_DEBUG("Failed to open listen locator: %.*s (ret=%d)", (int)_z_string_len(listen_locator),
+                     _z_string_data(listen_locator), ret);
+
+            if (listen_exit_on_failure) {
+                return ret;
+            }
+        }
+    }
+
+    uint64_t retry_mask = _z_init_retry_mask(connect_len);
+    int32_t remaining_timeout_ms = connect_timeout_ms;
+    if (!transport_opened && (connect_len > 0)) {
+        _z_open_connect_result_t connect_result;
+        _Z_RETURN_IF_ERR(_z_open_connect_locator(zn, connect_locators, zid, config, connect_timeout_ms,
+                                                 connect_exit_on_failure, &retry_mask, &connect_result));
+        transport_opened = connect_result.transport_opened;
+        remaining_timeout_ms = connect_result.remaining_timeout_ms;
+    }
+
+    if (!transport_opened) {
+        _Z_ERROR("Failed to establish primary transport via listen or connect locators");
+        return _Z_ERR_TRANSPORT_OPEN_FAILED;
+    }
+
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (retry_mask != 0u) {
+        _z_pending_peers_t pending_peers = _z_pending_peers_null();
+
+        pending_peers._retry_mask = retry_mask;
+        pending_peers._timeout_ms = remaining_timeout_ms;
+        pending_peers._start = z_clock_now();
+        pending_peers._sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+        _Z_CLEAN_RETURN_IF_ERR(_z_string_svec_copy(&pending_peers._locators, connect_locators, true),
+                               _z_pending_peers_clear(&pending_peers));
+
+        // Ownership of pending_peers._locators is transferred to _z_add_peers()
+        z_result_t ret = _z_add_peers(&_Z_RC_IN_VAL(zn)->_tp, zid, &pending_peers, config, connect_exit_on_failure);
+        if (connect_exit_on_failure) {
+            if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED) {
+                return _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY;
+            }
+            return ret;
+        }
+    }
+#endif
+    return _Z_RES_OK;
+}
+
+z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_locators,
+                            const _z_string_svec_t *connect_locators, const _z_id_t *zid, _z_config_t *config,
+                            z_whatami_t mode) {
+    size_t listen_len = _z_string_svec_len(listen_locators);
+    size_t connect_len = _z_string_svec_len(connect_locators);
+
+    if ((listen_len == 0) && (connect_len == 0)) {
+        _Z_ERROR("No listen or connect locators configured");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    if (listen_len > 1) {
+        _Z_ERROR("Multiple listen locators are not supported in zenoh-pico");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    if ((mode == Z_WHATAMI_CLIENT) && (listen_len > 0)) {
+        _Z_ERROR("Listen locators are not supported in client mode");
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    int32_t listen_timeout_ms;
+    _Z_RETURN_IF_ERR(_z_config_get_i32_default(config, Z_CONFIG_LISTEN_TIMEOUT_KEY, Z_CONFIG_LISTEN_TIMEOUT_DEFAULT,
+                                               &listen_timeout_ms));
+
+    bool listen_exit_on_failure;
+    _Z_RETURN_IF_ERR(_z_config_get_bool_default(config, Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY,
+                                                Z_CONFIG_LISTEN_EXIT_ON_FAILURE_DEFAULT, &listen_exit_on_failure));
+
+    const char *connect_timeout_default =
+        (mode == Z_WHATAMI_CLIENT) ? Z_CONFIG_CONNECT_TIMEOUT_CLIENT_DEFAULT : Z_CONFIG_CONNECT_TIMEOUT_PEER_DEFAULT;
+    int32_t connect_timeout_ms;
+    _Z_RETURN_IF_ERR(
+        _z_config_get_i32_default(config, Z_CONFIG_CONNECT_TIMEOUT_KEY, connect_timeout_default, &connect_timeout_ms));
+
+    const char *connect_exit_default = (mode == Z_WHATAMI_CLIENT) ? Z_CONFIG_CONNECT_EXIT_ON_FAILURE_CLIENT_DEFAULT
+                                                                  : Z_CONFIG_CONNECT_EXIT_ON_FAILURE_PEER_DEFAULT;
+    bool connect_exit_on_failure;
+    _Z_RETURN_IF_ERR(_z_config_get_bool_default(config, Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY, connect_exit_default,
+                                                &connect_exit_on_failure));
+
+    switch (mode) {
+        case Z_WHATAMI_CLIENT:
+            return _z_open_locators_client(zn, connect_locators, zid, config, connect_timeout_ms);
+
+        case Z_WHATAMI_PEER: {
+            _z_string_t *listen_locator = (listen_len == 1) ? _z_string_svec_get(listen_locators, 0) : NULL;
+            return _z_open_locators_peer(zn, listen_locator, connect_locators, zid, config, listen_timeout_ms,
+                                         listen_exit_on_failure, connect_timeout_ms, connect_exit_on_failure);
+        }
+
+        default:
+            return _Z_ERR_CONFIG_INVALID_MODE;
+    }
+}
+
+/**
+ * Open transports based on the configured listen and connect locators.
+ *
+ * Semantics:
+ * - A "primary transport" must be established before this function returns.
+ *   This is achieved by either:
+ *     - successfully binding a listen locator, or
+ *     - successfully opening one connect locator.
+ *
+ * - In peer mode:
+ *     - If a listen locator is provided, it is attempted first.
+ *       A successful bind satisfies the primary transport requirement.
+ *     - If no primary transport is established via listen, connect locators
+ *       are attempted in order, with retry/backoff applied to retryable failures.
+ *
+ * - In client mode:
+ *     - Only connect locators are used.
+ *     - Connect locators are alternatives and at least one must succeed.
+ *
+ * - Connect locator behaviour:
+ *     - Locators are attempted in sequence.
+ *     - Retryable failures are retried with exponential backoff until timeout.
+ *     - Non-retryable failures permanently exclude the locator from further attempts.
+ *     - If configured, a non-retryable failure may cause immediate exit.
+ *
+ * - Once a primary transport is established in peer mode:
+ *     - Remaining connect locators are treated as additional peers and may be added.
+ *     - Peer addition may retry synchronously or be continued by a background task, depending on configuration.
+ *     - If not all peers are added:
+ *         - either an error is returned, or
+ *         - partial connectivity is accepted, depending on configuration.
+ *
+ * - Timeout semantics:
+ *     - A timeout of 0 disables retries.
+ *     - A timeout of -1 allows infinite retry.
+ *
+ * Returns:
+ * - _Z_RES_OK on success (primary transport established, and peer policy satisfied).
+ * - An error if no primary transport could be established, or if peer policy requires
+ *   failure (e.g. exit-on-failure with incomplete connectivity).
+ */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
     _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
 
-    int peer_op = _Z_PEER_OP_LISTEN;
-    _z_string_svec_t locators = _z_string_svec_null();
-    // Try getting locators from config
-    _Z_RETURN_IF_ERR(_z_locators_by_config(config, &locators, &peer_op));
-    size_t len = _z_string_svec_len(&locators);
+    _z_string_svec_t listen_locators = _z_string_svec_null();
+    _z_string_svec_t connect_locators = _z_string_svec_null();
 
-    z_whatami_t mode;
-    ret = _z_config_get_mode(config, &mode);
-    if (ret != _Z_RES_OK) {
-        return ret;
-    }
-    _Z_RC_IN_VAL(zn)->_mode = mode;
+    ret = _z_locators_by_config(config, &listen_locators, &connect_locators);
+    if (ret == _Z_RES_OK) {
+        z_whatami_t mode;
+        ret = _z_config_get_mode(config, &mode);
+        if (ret == _Z_RES_OK) {
+            _Z_RC_IN_VAL(zn)->_mode = mode;
 
-    if (len > 0) {
-        // Use first locator to open session
-        _z_string_t *locator = _z_string_svec_get(&locators, 0);
-        ret = _z_open_inner(zn, locator, zid, peer_op, config);
-#if Z_FEATURE_UNICAST_PEER == 1
-        // Add other locators as peers if applicable
-        if ((ret == _Z_RES_OK) && (mode == Z_WHATAMI_PEER)) {
-            for (size_t i = 1; i < len; i++) {
-                // Add peer
-                locator = _z_string_svec_get(&locators, i);
-                ret = _z_new_peer(&_Z_RC_IN_VAL(zn)->_tp, &_Z_RC_IN_VAL(zn)->_local_zid, locator, config);
-                if (ret != _Z_RES_OK) {
-                    break;
+            if ((_z_string_svec_len(&listen_locators) > 0) || (_z_string_svec_len(&connect_locators) > 0)) {
+                ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode);
+            } else {
+                ret = _z_locators_by_scout(config, zid, &connect_locators);
+                if (ret == _Z_RES_OK) {
+                    if (_z_string_svec_len(&connect_locators) == 0) {
+                        ret = _Z_ERR_SCOUT_NO_RESULTS;
+                    } else {
+                        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode);
+                    }
                 }
             }
         }
-#endif
-    } else {  // No locators in config, scout
-        _Z_RETURN_IF_ERR(_z_locators_by_scout(config, zid, &locators));
-        len = _z_string_svec_len(&locators);
-        if (len == 0) {
-            _Z_ERROR_RETURN(_Z_ERR_SCOUT_NO_RESULTS);
-        }
-        // We can only open on scout locators
-        peer_op = _Z_PEER_OP_OPEN;
-        // Loop on locators until we successfully open one
-        for (size_t i = 0; i < len; i++) {
-            _z_string_t *locator = _z_string_svec_get(&locators, i);
-            ret = _z_open_inner(zn, locator, zid, peer_op, config);
-            if (ret == _Z_RES_OK) {
-                break;
-            }
-        }
     }
-    _z_string_svec_clear(&locators);
+
+    _z_string_svec_clear(&listen_locators);
+    _z_string_svec_clear(&connect_locators);
     return ret;
 }
 
@@ -420,6 +736,9 @@ z_result_t _zp_start_transport_tasks(_z_session_t *zn) {
             tasks[_Z_TRANSPORT_TASK_KEEP_ALIVE] = _zp_unicast_keep_alive_task_fn;
             tasks[_Z_TRANSPORT_TASK_LEASE] = _zp_unicast_lease_task_fn;
             tasks[_Z_TRANSPORT_TASK_READ] = _zp_unicast_read_task_fn;
+#if Z_FEATURE_UNICAST_PEER == 1
+            tasks[_Z_TRANSPORT_TASK_ADD_PEERS] = _zp_add_peers_task_fn;
+#endif
 
             for (size_t i = 0; i < _ZP_ARRAY_SIZE(tasks); i++) {
                 if (tasks[i] == NULL) continue;

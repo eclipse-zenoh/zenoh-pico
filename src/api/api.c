@@ -908,36 +908,30 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     }
 
     ret = _z_open(&zs->_rc, cfg, &zid);
+
+    // Move config ownership into the session before starting any background tasks,
+    // as reconnect and async peer-add logic may access it.
+    _Z_OWNED_RC_IN_VAL(zs)->_config = config->_this._val;
+    z_internal_config_null(&config->_this);
+
     _Z_SET_IF_OK(ret, _zp_start_transport_tasks(_Z_RC_IN_VAL(&zs->_rc)));
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
-        z_config_drop(config);
         return ret;
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     if (opts.auto_start_read_task) {
         _Z_CLEAN_RETURN_IF_ERR(_z_runtime_start(&_Z_RC_IN_VAL(&zs->_rc)->_runtime, opts.executor_task_attributes),
-                               z_session_drop(z_session_move(zs));
-                               z_config_drop(config));
+                               z_session_drop(z_session_move(zs)));
     }
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADMIN_SPACE == 1
     if (opts.auto_start_admin_space) {
-        _Z_CLEAN_RETURN_IF_ERR(zp_start_admin_space(z_session_loan_mut(zs)), z_session_drop(z_session_move(zs));
-                               z_config_drop(config));
+        _Z_CLEAN_RETURN_IF_ERR(zp_start_admin_space(z_session_loan_mut(zs)), z_session_drop(z_session_move(zs)));
     }
 #endif
 #endif
-
-    // Clean up
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _Z_OWNED_RC_IN_VAL(zs)->_config = config->_this._val;
-    z_internal_config_null(&config->_this);
-#else
-    z_config_drop(config);
-#endif
-
     return _Z_RES_OK;
 }
 

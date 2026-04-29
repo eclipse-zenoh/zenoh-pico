@@ -33,7 +33,14 @@ z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_stri
                             int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime);
 z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_string_t *locator,
                        const _z_config_t *session_cfg);
+bool _z_transport_open_error_is_retryable(z_result_t ret);
 void _z_free_transport(_z_transport_t **zt);
+
+#if Z_FEATURE_UNICAST_PEER == 1
+z_result_t _z_add_peers(_z_transport_t *zt, const _z_id_t *session_id, _z_pending_peers_t *pending_peers,
+                        const _z_config_t *session_cfg, bool exit_on_failure);
+_z_fut_fn_result_t _zp_add_peers_task_fn(void *ztu_arg, _z_executor_t *executor);
+#endif
 
 #ifdef __cplusplus
 }

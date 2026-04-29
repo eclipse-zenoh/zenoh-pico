@@ -23,6 +23,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/sleep.h"
 
 size_t _z_transport_get_peers_count(_z_transport_t *zt) {
     size_t count = 0;
@@ -135,3 +136,35 @@ void _z_transport_stop_batching(_z_transport_t *zt) {
     ztc->_batch_state = _Z_BATCHING_IDLE;
 }
 #endif
+
+_z_pending_peers_t _z_pending_peers_null(void) {
+    _z_pending_peers_t pending_peers;
+
+    pending_peers._locators = _z_string_svec_null();
+    pending_peers._retry_mask = 0u;
+    pending_peers._timeout_ms = 0;
+    pending_peers._start = (z_clock_t){0};
+    pending_peers._sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+
+    return pending_peers;
+}
+
+void _z_pending_peers_clear(_z_pending_peers_t *pending_peers) {
+    if (pending_peers == NULL) {
+        return;
+    }
+
+    _z_string_svec_clear(&pending_peers->_locators);
+    *pending_peers = _z_pending_peers_null();
+}
+
+void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src) {
+    if ((dst == NULL) || (src == NULL) || (dst == src)) {
+        return;
+    }
+
+    _z_pending_peers_clear(dst);
+
+    *dst = *src;
+    *src = _z_pending_peers_null();
+}
