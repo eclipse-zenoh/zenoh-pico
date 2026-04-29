@@ -41,6 +41,33 @@ Connect
 Defines one or multiple endpoints a node will connect to.
 
 * `Z_CONFIG_CONNECT_KEY`: The index of the option in the config table.
+* `Z_CONFIG_CONNECT_TIMEOUT_KEY`: Timeout, in milliseconds, dedicated to establishing configured connect locators.
+* `Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY`: Whether `z_open` should fail when configured connect locators cannot all be
+  established.
+
+`Z_CONFIG_CONNECT_TIMEOUT_KEY` accepts the following values:
+
+* `0`: no retry, try each locator once.
+* `>0`: retry retryable connect failures until the timeout expires.
+* `-1`: retry indefinitely.
+
+The default connect timeout is `0` in client mode and `-1` in peer mode.
+
+`Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY` accepts `true` or `false`.
+Its default value is `true` in client mode and `false` in peer mode.
+
+In client mode, configured connect locators are alternatives.
+Zenoh-Pico tries them until one succeeds or the configured timeout expires.
+Client mode always requires at least one connect locator to succeed before `z_open` returns successfully.
+Setting `Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY` to `false` does not allow a client session to open without a transport.
+
+In peer mode, `z_open` also requires a primary transport before returning successfully.
+The primary transport is established either by opening the configured listen locator or by connecting to one configured connect locator.
+Once the primary transport is open, remaining connect locators are added as peers.
+If `Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY` is `false`, peer connections that are still failing may continue retrying from
+the transport task until the configured connect timeout expires.
+With `Z_FEATURE_MULTI_THREAD` enabled this task runs in the background; otherwise it progresses when the application
+spins the session tasks.
 
 Listen
 ------
@@ -48,6 +75,27 @@ Listen
 Defines a single endpoint a node will listen on.
 
 * `Z_CONFIG_LISTEN_KEY`: The index of the option in the config table.
+* `Z_CONFIG_LISTEN_TIMEOUT_KEY`: Timeout, in milliseconds, dedicated to opening the configured listen locator.
+* `Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY`: Whether `z_open` should fail when the configured listen locator cannot be
+  opened.
+
+Zenoh-Pico supports a single configured listen locator.
+Configuring more than one listen locator causes `z_open` to fail.
+
+`Z_CONFIG_LISTEN_TIMEOUT_KEY` accepts the following values:
+
+* `0`: no retry, try opening the listen locator once.
+* `>0`: retry retryable listen failures until the timeout expires.
+* `-1`: retry indefinitely.
+
+The default listen timeout is `0`.
+
+`Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY` accepts `true` or `false`.
+Its default value is `true`.
+
+In peer mode, if listening fails and `Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY` is `false`, Zenoh-Pico may still open the
+session by connecting to a configured connect locator.
+If no listen or connect locator establishes a primary transport, `z_open` fails.
 
 TLS
 ---
