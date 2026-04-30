@@ -143,9 +143,10 @@ typedef struct _z_session_t {
     // Session declarations
     _z_resource_slist_t *_local_resources;
 
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    // Information for session restoring
+    // Information for session restoring and asynchronous peer connection
     _z_config_t _config;
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_t *_declaration_cache;
 #endif
 

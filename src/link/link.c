@@ -35,8 +35,8 @@ z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session
         ret = _z_new_peer_tls(&ep, socket, session_cfg);
 #endif
     } else {
-        _Z_ERROR_LOG(_Z_ERR_GENERIC);
-        ret = _Z_ERR_GENERIC;
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
+        ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
     }
     _z_endpoint_clear(&ep);
     return ret;

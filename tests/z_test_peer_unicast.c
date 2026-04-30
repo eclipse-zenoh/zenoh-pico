@@ -171,6 +171,7 @@ void *node_task(void *ptr) {
     }
     // Wait for sub & queryable data
     z_sleep_s(5);
+    printf("Node %d: Received %d subs, %d queries\n", ctx->id, ctx->sub_msg_nb, ctx->qybl_msg_nb);
     assert(ctx->sub_msg_nb >= rx_nb);
     assert(ctx->qybl_msg_nb >= rx_nb);
     // Clean up

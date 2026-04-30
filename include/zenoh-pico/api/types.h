@@ -173,7 +173,7 @@ typedef struct {
 } z_subscriber_options_t;
 
 /**
- * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
+ * Represents the configuration used to configure a zenoh session upon opening :c:func:`z_open`.
  *
  * Members:
  *   bool auto_start_read_task: Deprecated, if Z_FEATURE_MULTI_THREAD is enabled background tasks are
