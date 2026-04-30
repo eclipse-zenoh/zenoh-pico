@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
@@ -186,6 +187,12 @@ typedef struct {
     // Here we assume the value is set only by the session _z_open
     // and after it only read by the transport tasks, so we don't need to make it atomic or protect it with mutexes.
     _z_transport_state_t _state;
+    // Atomic flag checked by send path before touching _mutex_tx.
+    // Set to false in _z_transport_common_clear to prevent use-after-destroy of mutex during reconnect.
+    _z_atomic_bool_t _tx_ready;
+    // Number of threads that may still attempt to lock _mutex_tx.
+    // Used by _z_transport_common_clear to wait before dropping mutexes.
+    _z_atomic_size_t _tx_lock_attempts;
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_transport_tasks_t _tasks;
 #endif
@@ -294,16 +301,46 @@ static inline bool _z_transport_batch_hold_peer_mutex(void) {
 }
 #endif  // Z_FEATURE_BATCHING == 1
 
+static inline z_result_t _z_transport_tx_check_ready(_z_transport_common_t *ztc) {
+    if (!_z_atomic_bool_load(&ztc->_tx_ready, _z_memory_order_acquire)) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    return _Z_RES_OK;
+}
+
 #if Z_FEATURE_MULTI_THREAD == 1
+static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
+
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {
+    _z_atomic_size_fetch_add(&ztc->_tx_lock_attempts, 1, _z_memory_order_acq_rel);
+
+    // Re-check after registering the lock attempt so clear path can wait safely.
+    if (!_z_atomic_bool_load(&ztc->_tx_ready, _z_memory_order_acquire)) {
+        _z_atomic_size_fetch_sub(&ztc->_tx_lock_attempts, 1, _z_memory_order_acq_rel);
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+
+    z_result_t ret = _Z_RES_OK;
     if (block) {
         _z_mutex_lock(&ztc->_mutex_tx);
-        return _Z_RES_OK;
     } else {
-        return _z_mutex_try_lock(&ztc->_mutex_tx);
+        ret = _z_mutex_try_lock(&ztc->_mutex_tx);
     }
+
+    _z_atomic_size_fetch_sub(&ztc->_tx_lock_attempts, 1, _z_memory_order_acq_rel);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    // Re-check after lock acquisition: transport may become not-ready while this
+    // thread is blocked on mutex lock, so abort before entering TX critical section.
+    if (!_z_atomic_bool_load(&ztc->_tx_ready, _z_memory_order_acquire)) {
+        _z_transport_tx_mutex_unlock(ztc);
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+
+    return _Z_RES_OK;
 }
-static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
 static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) {
     (void)_z_mutex_rec_lock(&ztc->_mutex_peer);
 }
