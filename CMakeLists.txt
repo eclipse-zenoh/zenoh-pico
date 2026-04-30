@@ -26,17 +26,15 @@ set(ZENOH_PICO ${PROJECT_VERSION})
 set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
 set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
 set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
-set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+if(PROJECT_VERSION_TWEAK STREQUAL "")
+  set(ZENOH_PICO_TWEAK 0)
+else()
+  set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+endif()
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-  @ONLY
-)
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
   @ONLY
 )
 
@@ -420,14 +418,8 @@ message(STATUS "Building with feature config:\n\
 * ADMIN SPACE: ${Z_FEATURE_ADMIN_SPACE}")
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-  @ONLY
-)
-
-configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
   @ONLY
 )
 
@@ -462,26 +454,17 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
 endif()
 
-file(GLOB_RECURSE PublicHeaders
-  "include/zenoh-pico/api/*.h"
-  "include/zenoh-pico/collections/*.h"
-  "include/zenoh-pico/link/*.h"
-  "include/zenoh-pico/net/*.h"
-  "include/zenoh-pico/protocol/*.h"
-  "include/zenoh-pico/session/*.h"
-  "include/zenoh-pico/transport/*.h"
-  "include/zenoh-pico/utils/*.h"
-  "include/zenoh-pico/config.h"
-)
 if(PICO_STATIC)
   target_include_directories(${Libname}_static
     PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
 endif()
 if(PICO_SHARED)
   target_include_directories(${Libname}_shared
     PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
 endif()
@@ -678,6 +661,11 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   DESTINATION include
   COMPONENT Headers
+  PATTERN "include/zenoh-pico/config.h" EXCLUDE
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
+  DESTINATION include/zenoh-pico
+  COMPONENT Headers
 )
 if(BUILD_SHARED_LIBS)
   set(LIBNAME ${CMAKE_SHARED_LIBRARY_PREFIX}${Libname}${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -713,8 +701,8 @@ install(
   COMPONENT Dev)
 
 if(UNIX)
-  configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
-  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/zenohpico.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
 endif()
 
 if(ASAN AND NOT MSVC)
@@ -797,7 +785,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_sync_group_test zenohpico::lib)
     target_link_libraries(z_cancellation_token_test zenohpico::lib)
     target_link_libraries(z_local_loopback_test zenohpico::lib)
-    target_include_directories(z_local_loopback_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_definitions(z_local_loopback_test PRIVATE Z_TEST_HOOKS=1)
     if(PICO_SHARED)
       target_compile_definitions(${Libname}_shared PRIVATE Z_TEST_HOOKS=1)
@@ -811,7 +798,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_hashmap_test zenohpico::lib)
     target_link_libraries(z_pqueue_test zenohpico::lib)
     target_link_libraries(z_test_fragment_decode_error_transport_zbuf zenohpico::lib)
-    target_include_directories(z_test_fragment_decode_error_transport_zbuf PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_definitions(z_test_fragment_decode_error_transport_zbuf PRIVATE Z_TEST_HOOKS=1)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)

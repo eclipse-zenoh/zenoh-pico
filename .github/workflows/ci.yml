@@ -38,6 +38,14 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
+      - name: Check in-tree generated files are in sync with version.txt
+        run: |
+          if ! git diff --exit-code -- include/zenoh-pico.h library.json; then
+            echo "::error::include/zenoh-pico.h or library.json is out of sync with version.txt."
+            echo "Run a local CMake configure (e.g. 'cmake -S . -B build') and commit the refreshed files."
+            exit 1
+          fi
+
   run_windows_test:
     name: Run peer unicast test on windows-latest
     runs-on: windows-latest

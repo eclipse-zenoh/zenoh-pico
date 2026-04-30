@@ -129,6 +129,10 @@ for default in default_args:
 source_dir = os.getcwd()
 build_dir = os.path.join(source_dir, "build")
 os.makedirs(build_dir, exist_ok=True)
+generated_include_dir = os.path.join(build_dir, "include")
+for build_env in (env, projenv, global_env):  # pylint: disable=undefined-variable
+    build_env.Prepend(CPPPATH=[generated_include_dir])
+    build_env.Prepend(CCFLAGS=[f"-I{generated_include_dir}"])
 # Run the CMake command with the source and binary directories
 print("Run command: cmake", source_dir, cmake_extra_args_list)
 subprocess.run(["cmake", source_dir] + cmake_extra_args_list, cwd=build_dir, check=True)

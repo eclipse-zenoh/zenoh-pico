@@ -51,8 +51,12 @@ examples/packages/zenohpico-mylinux/
 From the Zenoh-Pico source tree root:
 
 ```bash
+cmake -S . -B /tmp/zenohpico-config \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_TESTING=OFF
 cmake -S examples/packages/zenohpico-mylinux -B /tmp/zenohpico-mylinux-pkg \
-  -DZENOH_PICO_SOURCE_DIR="$PWD"
+  -DZENOH_PICO_SOURCE_DIR="$PWD" \
+  -DZENOH_PICO_CONFIG_INCLUDE_DIR=/tmp/zenohpico-config/include
 cmake --build /tmp/zenohpico-mylinux-pkg -j
 cmake --install /tmp/zenohpico-mylinux-pkg --prefix /tmp/zenohpico-mylinux-prefix
 ```

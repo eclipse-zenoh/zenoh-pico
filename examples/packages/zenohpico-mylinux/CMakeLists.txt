@@ -8,11 +8,21 @@ set(ZENOH_PICO_SOURCE_DIR
     CACHE PATH
     "Path to the zenoh-pico source tree")
 get_filename_component(ZENOH_PICO_SOURCE_DIR "${ZENOH_PICO_SOURCE_DIR}" ABSOLUTE)
+set(ZENOH_PICO_CONFIG_INCLUDE_DIR
+    "${ZENOH_PICO_SOURCE_DIR}/build/include"
+    CACHE PATH
+    "Path to the configured zenoh-pico include directory with zenoh-pico/config.h")
+get_filename_component(ZENOH_PICO_CONFIG_INCLUDE_DIR "${ZENOH_PICO_CONFIG_INCLUDE_DIR}" ABSOLUTE)
 
 if(NOT EXISTS "${ZENOH_PICO_SOURCE_DIR}/include/zenoh-pico.h")
   message(FATAL_ERROR
           "ZENOH_PICO_SOURCE_DIR must point to a zenoh-pico source tree; "
           "missing include/zenoh-pico.h in ${ZENOH_PICO_SOURCE_DIR}")
+endif()
+if(NOT EXISTS "${ZENOH_PICO_CONFIG_INCLUDE_DIR}/zenoh-pico/config.h")
+  message(FATAL_ERROR
+          "ZENOH_PICO_CONFIG_INCLUDE_DIR must point to a configured zenoh-pico include tree; "
+          "missing zenoh-pico/config.h in ${ZENOH_PICO_CONFIG_INCLUDE_DIR}")
 endif()
 
 add_library(mylinux_system STATIC "${ZENOH_PICO_SOURCE_DIR}/src/system/unix/system.c")
@@ -24,6 +34,7 @@ target_include_directories(mylinux_system
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
                              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
                            PRIVATE
+                             "${ZENOH_PICO_CONFIG_INCLUDE_DIR}"
                              "${ZENOH_PICO_SOURCE_DIR}/include")
 target_compile_definitions(mylinux_system
                            PRIVATE
@@ -36,6 +47,7 @@ set_target_properties(mylinux_serial_uart PROPERTIES
                       EXPORT_NAME serial_uart)
 target_include_directories(mylinux_serial_uart
                            PRIVATE
+                             "${ZENOH_PICO_CONFIG_INCLUDE_DIR}"
                              "${ZENOH_PICO_SOURCE_DIR}/include"
                              "${CMAKE_CURRENT_LIST_DIR}/include")
 target_compile_definitions(mylinux_serial_uart
