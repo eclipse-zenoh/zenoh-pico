@@ -253,8 +253,6 @@ static bool test_peer_connection(void) {
     z_config_default(&cfg_array[Z_LISTEN_MAX_CONNECTION_NB]);
     zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_MODE_KEY, "peer");
     zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
-    // Disable infinite retry behaviour
-    zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_CONNECT_TIMEOUT_KEY, "0");
     if (z_open(&sess_array[Z_LISTEN_MAX_CONNECTION_NB], z_move(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), NULL) == Z_OK) {
         printf("Should not have been able to open this session\n");
         return false;

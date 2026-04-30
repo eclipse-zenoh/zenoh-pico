@@ -51,7 +51,7 @@ Defines one or multiple endpoints a node will connect to.
 * `>0`: retry retryable connect failures until the timeout expires.
 * `-1`: retry indefinitely.
 
-The default connect timeout is `0` in client mode and `-1` in peer mode.
+The default connect timeout is `0`.
 
 `Z_CONFIG_CONNECT_EXIT_ON_FAILURE_KEY` accepts `true` or `false`.
 Its default value is `true` in client mode and `false` in peer mode.
