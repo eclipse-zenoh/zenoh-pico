@@ -428,11 +428,9 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
     _Z_RETURN_IF_ERR(_z_config_get_bool_default(config, Z_CONFIG_LISTEN_EXIT_ON_FAILURE_KEY,
                                                 Z_CONFIG_LISTEN_EXIT_ON_FAILURE_DEFAULT, &listen_exit_on_failure));
 
-    const char *connect_timeout_default =
-        (mode == Z_WHATAMI_CLIENT) ? Z_CONFIG_CONNECT_TIMEOUT_CLIENT_DEFAULT : Z_CONFIG_CONNECT_TIMEOUT_PEER_DEFAULT;
     int32_t connect_timeout_ms;
-    _Z_RETURN_IF_ERR(
-        _z_config_get_i32_default(config, Z_CONFIG_CONNECT_TIMEOUT_KEY, connect_timeout_default, &connect_timeout_ms));
+    _Z_RETURN_IF_ERR(_z_config_get_i32_default(config, Z_CONFIG_CONNECT_TIMEOUT_KEY, Z_CONFIG_CONNECT_TIMEOUT_DEFAULT,
+                                               &connect_timeout_ms));
     _Z_RETURN_IF_ERR(_z_validate_open_timeout(connect_timeout_ms));
 
     const char *connect_exit_default = (mode == Z_WHATAMI_CLIENT) ? Z_CONFIG_CONNECT_EXIT_ON_FAILURE_CLIENT_DEFAULT

@@ -193,11 +193,10 @@
  * In peer mode, this applies to the initial connection phase for
  * configured locators.
  *
- * Default value : `"0"` in client mode, `"-1"` in peer mode.
+ * Default value : `"0"`.
  */
 #define Z_CONFIG_CONNECT_TIMEOUT_KEY 0x57
-#define Z_CONFIG_CONNECT_TIMEOUT_CLIENT_DEFAULT "0"
-#define Z_CONFIG_CONNECT_TIMEOUT_PEER_DEFAULT "-1"
+#define Z_CONFIG_CONNECT_TIMEOUT_DEFAULT "0"
 
 /**
  * Indicates whether the application should fail if connection attempts
