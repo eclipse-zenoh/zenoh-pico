@@ -17,11 +17,11 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#define ZENOH_PICO "1.9.0"
+#define ZENOH_PICO "1.9.0.10"
 #define ZENOH_PICO_MAJOR 1
 #define ZENOH_PICO_MINOR 9
 #define ZENOH_PICO_PATCH 0
-#define ZENOH_PICO_TWEAK 0
+#define ZENOH_PICO_TWEAK 10
 
 #include "zenoh-pico/api/admin_space.h"
 #include "zenoh-pico/api/advanced_publisher.h"
