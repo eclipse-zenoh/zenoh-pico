@@ -1690,6 +1690,8 @@ void z_scout_options_default(z_scout_options_t *options);
 /**
  * Opens a Zenoh session.
  *
+ * See :doc:`/config` for the configuration options that affect this operation.
+ *
  * Parameters:
  *   zs: Pointer to an uninitialized :c:type:`z_owned_session_t` to store the session info.
  *   config: Moved :c:type:`z_owned_config_t` to configure the session with.

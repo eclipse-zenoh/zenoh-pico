@@ -128,7 +128,7 @@ static void open_test_spin_once(z_owned_session_t *session) {
 #endif
 }
 
-#if Z_FEATURE_MULTI_THREAD == 0
+#if Z_FEATURE_MULTI_THREAD == 0 && defined(Z_FEATURE_UNSTABLE_API)
 static open_test_task_ret_t OPEN_TEST_TASK_CALL open_test_async_spin_task(void *arg) {
     open_test_async_spin_t *ctx = (open_test_async_spin_t *)arg;
     while (!ctx->done) {
@@ -204,6 +204,7 @@ static void open_test_wait_for_async_open(open_test_async_open_t *ctx, z_owned_s
     ASSERT_TRUE(ctx->done);
 }
 
+#if defined(Z_FEATURE_UNSTABLE_API)
 static void test_open_timeout_single_locator(void) {
     printf("Running test_open_timeout_single_locator() ...\n");
 
@@ -314,6 +315,7 @@ static void test_open_rejects_negative_listen_timeout_below_minus_one(void) {
     z_owned_session_t s;
     ASSERT_ERR(z_open(&s, z_move(c), NULL), _Z_ERR_CONFIG_INVALID_VALUE);
 }
+#endif
 
 static void test_open_multiple_listen_locators_are_rejected(void) {
     printf("Running test_open_multiple_listen_locators_are_rejected() ...\n");
@@ -358,7 +360,9 @@ static void test_open_peer_uses_next_connect_locator_for_primary_transport(void)
     zp_config_insert(z_loan_mut(c2), Z_CONFIG_MODE_KEY, "peer");
     zp_config_insert(z_loan_mut(c2), Z_CONFIG_CONNECT_KEY, OPEN_TEST_UNUSED_LOCATOR_1);
     zp_config_insert(z_loan_mut(c2), Z_CONFIG_CONNECT_KEY, OPEN_TEST_ALT_LOCATOR);
+#if defined(Z_FEATURE_UNSTABLE_API)
     zp_config_insert(z_loan_mut(c2), Z_CONFIG_CONNECT_TIMEOUT_KEY, "1000");
+#endif
 
     z_owned_session_t s1;
     ASSERT_OK(z_open(&s1, z_move(c1), NULL));
@@ -379,7 +383,7 @@ static void test_open_peer_uses_next_connect_locator_for_primary_transport(void)
     z_drop(z_move(s1));
 }
 
-#if Z_FEATURE_UNICAST_PEER == 1
+#if Z_FEATURE_UNICAST_PEER == 1 && defined(Z_FEATURE_UNSTABLE_API)
 static void _test_open_timeout_partial_connectivity(const char *connect_exit_on_failure, z_result_t expected_ret,
                                                     const char *good_locator, const char *bad_locator) {
     z_owned_config_t c1;
@@ -506,7 +510,7 @@ static void test_open_peer_listen_failure_can_fallback_to_connect(void) {
 }
 #endif
 
-#if Z_FEATURE_UNICAST_PEER == 1
+#if Z_FEATURE_UNICAST_PEER == 1 && defined(Z_FEATURE_UNSTABLE_API)
 static void test_open_pending_peer_progresses_after_partial_connectivity(void) {
     printf("Running test_open_pending_peer_progresses_after_partial_connectivity() ...\n");
 
@@ -579,6 +583,7 @@ static void test_open_pending_peer_progresses_after_partial_connectivity(void) {
 }
 #endif
 
+#if defined(Z_FEATURE_UNSTABLE_API)
 static void test_open_late_joining_endpoint(void) {
     printf("Running test_open_late_joining_endpoint() ...\n");
 
@@ -614,8 +619,10 @@ static void test_open_late_joining_endpoint(void) {
     z_drop(z_move(ctx.session));
     z_drop(z_move(s1));
 }
+#endif
 
 int main(void) {
+#if defined(Z_FEATURE_UNSTABLE_API)
     test_open_timeout_single_locator();
     test_open_client_connect_exit_on_failure_false_still_requires_transport();
     test_open_invalid_timeout_value();
@@ -623,11 +630,12 @@ int main(void) {
     test_open_invalid_bool_value();
     test_open_rejects_negative_connect_timeout_below_minus_one();
     test_open_rejects_negative_listen_timeout_below_minus_one();
+#endif
     test_open_multiple_listen_locators_are_rejected();
     test_open_peer_listen_succeeds();
     test_open_peer_uses_next_connect_locator_for_primary_transport();
 
-#if Z_FEATURE_UNICAST_PEER == 1
+#if Z_FEATURE_UNICAST_PEER == 1 && defined(Z_FEATURE_UNSTABLE_API)
     test_open_timeout_partial_connectivity_exit_on_failure_false();
     test_open_timeout_partial_connectivity_exit_on_failure_true();
     test_open_peer_listen_failure_strict_fails_before_connect();
@@ -635,7 +643,9 @@ int main(void) {
     test_open_pending_peer_progresses_after_partial_connectivity();
 #endif
 
+#if defined(Z_FEATURE_UNSTABLE_API)
     test_open_late_joining_endpoint();
+#endif
 
     return 0;
 }

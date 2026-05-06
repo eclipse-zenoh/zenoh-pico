@@ -178,6 +178,64 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result) {
     return true;
 }
 
+bool _z_str_parse_i32(const char *s, int32_t *out) {
+    bool is_negative = false;
+    uint32_t value = 0;
+    const uint32_t limit = ((uint32_t)INT32_MAX) + 1u;
+
+    if (s == NULL || *s == '\0') {
+        return false;
+    }
+
+    if (*s == '-' || *s == '+') {
+        is_negative = *s == '-';
+        s++;
+    }
+
+    if (*s == '\0') {
+        return false;
+    }
+
+    uint32_t max_value = is_negative ? limit : (uint32_t)INT32_MAX;
+    while (*s != '\0') {
+        if (*s < '0' || *s > '9') {
+            return false;
+        }
+
+        uint32_t digit = (uint32_t)(*s - '0');
+        if (value > ((max_value - digit) / 10u)) {
+            return false;
+        }
+
+        value = (value * 10u) + digit;
+        s++;
+    }
+
+    if (is_negative) {
+        *out = (value == limit) ? INT32_MIN : -(int32_t)value;
+    } else {
+        *out = (int32_t)value;
+    }
+    return true;
+}
+
+bool _z_str_parse_bool(const char *s, bool *out) {
+    if (s == NULL) {
+        return false;
+    }
+
+    if (strcmp(s, "true") == 0) {
+        *out = true;
+        return true;
+    }
+    if (strcmp(s, "false") == 0) {
+        *out = false;
+        return true;
+    }
+
+    return false;
+}
+
 void *_z_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len) {
     if (haystack == NULL || needle == NULL || haystack_len < needle_len) {
         return NULL;

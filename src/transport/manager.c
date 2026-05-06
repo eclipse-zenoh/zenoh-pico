@@ -227,16 +227,13 @@ bool _z_transport_open_error_is_retryable(z_result_t ret) {
 
 #if Z_FEATURE_UNICAST_PEER == 1
 /*
- * Attempt to add all peers currently marked in pending_peers->_retry_mask.
- *
- * Each bit in pending_peers->_retry_mask corresponds to an index in
- * pending_peers->_locators.
+ * Attempt to add all peers currently marked as pending.
  *
  * Behaviour:
  * - Each locator is attempted once per call.
- * - On success, the corresponding bit is cleared.
- * - On non-retryable error, the corresponding bit is cleared.
- * - On retryable error, the bit remains set for future attempts.
+ * - On success, the locator is marked done.
+ * - On non-retryable error, the locator is marked failed.
+ * - On retryable error, the locator remains pending for future attempts.
  *
  * Return values:
  * - _Z_RES_OK:
@@ -256,26 +253,25 @@ bool _z_transport_open_error_is_retryable(z_result_t ret) {
  */
 static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_id, _z_pending_peers_t *pending_peers,
                                     const _z_config_t *config) {
-    size_t len = _z_string_svec_len(&pending_peers->_locators);
-
-    if ((len == 0) || (pending_peers->_retry_mask == 0u)) {
+    if (!_z_pending_peers_has_pending(pending_peers)) {
         return _Z_RES_OK;
     }
 
     z_result_t last_non_retryable_ret = _Z_RES_OK;
     bool peer_added = false;
 
+    size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
     for (size_t i = 0; i < len; i++) {
-        uint64_t bit = UINT64_C(1) << i;
-        if ((pending_peers->_retry_mask & bit) == 0u) {
+        _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, i);
+        if (peer->_state != _Z_PENDING_PEER_STATE_PENDING) {
             continue;
         }
 
-        _z_string_t *locator = _z_string_svec_get(&pending_peers->_locators, i);
+        _z_string_t *locator = &peer->_locator;
         z_result_t peer_ret = _z_new_peer(zt, session_id, locator, config);
 
         if (peer_ret == _Z_RES_OK) {
-            pending_peers->_retry_mask &= ~bit;
+            peer->_state = _Z_PENDING_PEER_STATE_DONE;
             peer_added = true;
             _Z_DEBUG("Successfully added peer locator [%zu]: %.*s", i, (int)_z_string_len(locator),
                      _z_string_data(locator));
@@ -286,8 +282,7 @@ static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_i
                  peer_ret);
 
         if (!_z_transport_open_error_is_retryable(peer_ret)) {
-            // Non-retryable peer error: remove from the pending set
-            pending_peers->_retry_mask &= ~bit;
+            peer->_state = _Z_PENDING_PEER_STATE_FAILED;
             last_non_retryable_ret = peer_ret;
 
             _Z_WARN("Peer locator [%zu] (%.*s) removed from pending set due to non-retryable error", i,
@@ -298,7 +293,7 @@ static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_i
     if (last_non_retryable_ret != _Z_RES_OK) {
         return last_non_retryable_ret;
     }
-    if (pending_peers->_retry_mask != 0u) {
+    if (_z_pending_peers_has_pending(pending_peers)) {
         return peer_added ? _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY : _Z_ERR_TRANSPORT_OPEN_FAILED;
     }
     return _Z_RES_OK;
@@ -362,7 +357,7 @@ z_result_t _z_add_peers(_z_transport_t *zt, const _z_id_t *session_id, _z_pendin
         z_result_t ret = _z_add_peers_impl(zt, session_id, pending_peers, session_cfg);
 
         if (ret == _Z_RES_OK) {
-            assert(pending_peers->_retry_mask == 0u);
+            assert(!_z_pending_peers_has_pending(pending_peers));
             _z_pending_peers_clear(pending_peers);
             return _Z_RES_OK;
         }
@@ -376,7 +371,7 @@ z_result_t _z_add_peers(_z_transport_t *zt, const _z_id_t *session_id, _z_pendin
                 return ret;
             }
 
-            if (pending_peers->_retry_mask == 0u) {
+            if (!_z_pending_peers_has_pending(pending_peers)) {
                 _z_pending_peers_clear(pending_peers);
                 return _Z_RES_OK;
             }
@@ -407,7 +402,7 @@ z_result_t _z_add_peers(_z_transport_t *zt, const _z_id_t *session_id, _z_pendin
 /*
  * Continue peer addition after z_open() accepted partial connectivity.
  *
- * The task owns ztu->_pending_peers while its retry mask is non-zero. It clears
+ * The task owns ztu->_pending_peers while pending locators remain. It clears
  * that state when the transport/session can no longer accept peers, when all
  * pending peers have been added, or when the configured timeout expires. During
  * transport reconnection it suspends so reconnection can re-establish the base
@@ -425,7 +420,7 @@ _z_fut_fn_result_t _zp_add_peers_task_fn(void *ztu_arg, _z_executor_t *executor)
         return _z_fut_fn_result_suspend();
     }
 
-    if (pending_peers->_retry_mask == 0u) {
+    if (!_z_pending_peers_has_pending(pending_peers)) {
         return _z_add_peers_task_ready(pending_peers);
     }
 
@@ -439,7 +434,7 @@ _z_fut_fn_result_t _zp_add_peers_task_fn(void *ztu_arg, _z_executor_t *executor)
 
     _z_session_rc_drop(&session_rc);
 
-    if (pending_peers->_retry_mask == 0u) {
+    if (!_z_pending_peers_has_pending(pending_peers)) {
         return _z_add_peers_task_ready(pending_peers);
     }
 

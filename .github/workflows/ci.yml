@@ -326,8 +326,11 @@ jobs:
 
   st_build:
     needs: zenoh_build
-    name: Build and test in single thread on ubuntu-latest
+    name: Build and test in single thread on ubuntu-latest (unstable=${{ matrix.unstable_api }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        unstable_api: [0, 1]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -355,6 +358,7 @@ jobs:
         timeout-minutes: 15
         env:
           Z_FEATURE_MULTI_THREAD: 0
+          Z_FEATURE_UNSTABLE_API: ${{ matrix.unstable_api }}
 
       - name: Kill Zenoh router
         if: always()
