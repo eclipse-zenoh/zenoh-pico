@@ -40,7 +40,10 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+        run: |
+          # Temporary workaround: PlatformIO 6.1.19 exposes the platform source-selection issue.
+          # Remove this pin once PlatformIO/CMake platform source selection is fixed properly.
+          pip install "platformio==6.1.18"
 
       - name: Set up project
         run: |
