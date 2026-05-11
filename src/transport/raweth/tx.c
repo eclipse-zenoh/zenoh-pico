@@ -203,6 +203,13 @@ z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_m
     _Z_DEBUG(">> send session message");
 
     _z_transport_tx_mutex_lock(ztc, true);
+    ret = _z_transport_tx_check_ready(ztc);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because transport is not ready");
+        _z_transport_tx_mutex_unlock(ztc);
+        return ret;
+    }
+
     // Reset wbuf
     _z_wbuf_reset(&ztc->_wbuf);
     // Set socket info
@@ -232,6 +239,12 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
     ret = _z_transport_tx_mutex_lock(&ztm->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Dropping zenoh message because of congestion control");
+        return ret;
+    }
+    ret = _z_transport_tx_check_ready(&ztm->_common);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because transport is not ready");
+        _z_transport_tx_mutex_unlock(&ztm->_common);
         return ret;
     }
     const _z_keyexpr_t *keyexpr = NULL;

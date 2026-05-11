@@ -30,7 +30,7 @@
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu, _z_link_t *zl,
-                                                    _z_transport_unicast_establish_param_t *param) {
+                                                    _z_transport_unicast_establish_param_t *param, bool init_mutex) {
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztu->_common._batch_state = _Z_BATCHING_IDLE;
@@ -38,9 +38,13 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    // Initialize the mutexes
-    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
-    _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
+    if (init_mutex) {
+        // Initialize the mutexes
+        _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
+        _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
+    }
+#else
+    _ZP_UNUSED(init_mutex);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
@@ -69,6 +73,9 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     ztu->_common._link = zl;
 
     ztu->_peers = _z_transport_peer_unicast_slist_new();
+
+    // Mark TX as ready only after all init is complete
+    _z_atomic_bool_init(&ztu->_common._tx_ready, true);
     return _Z_RES_OK;
 }
 
@@ -76,14 +83,20 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
                                        _z_transport_unicast_establish_param_t *param) {
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
     _z_transport_unicast_t *ztu = &zt->_transport._unicast;
-    memset(ztu, 0, sizeof(_z_transport_unicast_t));
+    // If transport is reconnecting, mutexes are already initialized in previous call of this function
+    bool init_mutex = ztu->_common._state != _Z_TRANSPORT_STATE_RECONNECTING;
+    if (init_mutex) {
+        memset(ztu, 0, sizeof(_z_transport_unicast_t));
+    }
 
-    z_result_t ret = _z_unicast_transport_create_inner(ztu, zl, param);
+    z_result_t ret = _z_unicast_transport_create_inner(ztu, zl, param, init_mutex);
     if (ret != _Z_RES_OK) {
         // Clear alloc data
 #if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_drop(&ztu->_common._mutex_tx);
-        _z_mutex_rec_drop(&ztu->_common._mutex_peer);
+        if (init_mutex) {
+            _z_mutex_drop(&ztu->_common._mutex_tx);
+            _z_mutex_rec_drop(&ztu->_common._mutex_peer);
+        }
 #endif
         _z_wbuf_clear(&ztu->_common._wbuf);
         _z_zbuf_clear(&ztu->_common._zbuf);

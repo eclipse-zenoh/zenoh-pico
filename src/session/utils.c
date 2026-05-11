@@ -75,6 +75,8 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
 #endif
     zn->_mode = Z_WHATAMI_CLIENT;
+    // Zero transport storage so reconnect-state checks never read uninitialized union bytes.
+    memset(&zn->_tp, 0, sizeof(_z_transport_t));
     zn->_tp._type = _Z_TRANSPORT_NONE;
     // Initialize the counters to 1
     zn->_entity_id = 1;
@@ -234,7 +236,16 @@ void _z_session_clear(_z_session_t *zn) {
     _z_config_clear(&zn->_config);
 #endif
     _z_session_transport_mutex_lock(zn);
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_transport_common_t *ztc = _z_transport_get_common(&zn->_tp);
+#endif
     _z_transport_clear(&zn->_tp);
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (ztc != NULL) {
+        _z_mutex_drop(&ztc->_mutex_tx);
+        _z_mutex_rec_drop(&ztc->_mutex_peer);
+    }
+#endif
     _z_session_transport_mutex_unlock(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1

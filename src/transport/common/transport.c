@@ -21,10 +21,12 @@
 #include "zenoh-pico/utils/result.h"
 
 void _z_transport_common_clear(_z_transport_common_t *ztc) {
+    // Prevent any further TX access before clearing transport resources.
+    _z_atomic_bool_store(&ztc->_tx_ready, false, _z_memory_order_release);
 #if Z_FEATURE_MULTI_THREAD == 1
-    // Clean up the mutexes
-    _z_mutex_drop(&ztc->_mutex_tx);
-    _z_mutex_rec_drop(&ztc->_mutex_peer);
+    // Drain current TX critical section (if any) before clearing buffers/link.
+    _z_mutex_lock(&ztc->_mutex_tx);
+    _z_mutex_unlock(&ztc->_mutex_tx);
 #endif
     // Clean up the buffers
     _z_wbuf_clear(&ztc->_wbuf);

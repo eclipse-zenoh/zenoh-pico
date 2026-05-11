@@ -58,12 +58,16 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    // Initialize the mutexes
-    ret = _z_mutex_init(&ztm->_common._mutex_tx);
-    if (ret == _Z_RES_OK) {
-        ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
-        if (ret != _Z_RES_OK) {
-            _z_mutex_drop(&ztm->_common._mutex_tx);
+    // If transport is reconnecting, mutexes are already initialized in previous call of this function
+    bool init_mutex = zt->_transport._multicast._common._state != _Z_TRANSPORT_STATE_RECONNECTING;
+    if (init_mutex) {
+        // Initialize the mutexes
+        ret = _z_mutex_init(&ztm->_common._mutex_tx);
+        if (ret == _Z_RES_OK) {
+            ret = _z_mutex_rec_init(&ztm->_common._mutex_peer);
+            if (ret != _Z_RES_OK) {
+                _z_mutex_drop(&ztm->_common._mutex_tx);
+            }
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -82,8 +86,10 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&ztm->_common._mutex_tx);
-            _z_mutex_rec_drop(&ztm->_common._mutex_peer);
+            if (init_mutex) {
+                _z_mutex_drop(&ztm->_common._mutex_tx);
+                _z_mutex_rec_drop(&ztm->_common._mutex_peer);
+            }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&ztm->_common._wbuf);
@@ -109,6 +115,9 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
         // Transport link for multicast
         ztm->_common._link = zl;
+
+        // Mark TX as ready only after all init is complete
+        _z_atomic_bool_init(&ztm->_common._tx_ready, true);
     }
     return ret;
 }
