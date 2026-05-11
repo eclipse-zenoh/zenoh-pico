@@ -324,6 +324,68 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
     return _z_unicast_send_close(ztu, reason, false);
 }
 
+static void __unsafe_z_unicast_transport_clear_connection(_z_transport_unicast_t *ztu) {
+    _z_transport_peer_unicast_slist_free(&ztu->_peers);
+    _z_wbuf_clear(&ztu->_common._wbuf);
+    _z_zbuf_clear(&ztu->_common._zbuf);
+    _z_link_free(&ztu->_common._link);
+
+    ztu->_common._sn_res = 0;
+    ztu->_common._sn_tx_reliable = 0;
+    ztu->_common._sn_tx_best_effort = 0;
+    ztu->_common._lease = 0;
+    ztu->_common._transmitted = false;
+#if Z_FEATURE_BATCHING == 1
+    ztu->_common._batch_state = _Z_BATCHING_IDLE;
+    ztu->_common._batch_count = 0;
+#endif
+}
+
+void _z_unicast_transport_clear_connection(_z_transport_unicast_t *ztu) {
+    _z_transport_tx_mutex_lock(&ztu->_common, true);
+    ztu->_common._state = _Z_TRANSPORT_STATE_RECONNECTING;
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    __unsafe_z_unicast_transport_clear_connection(ztu);
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+    _z_transport_tx_mutex_unlock(&ztu->_common);
+}
+
+void _z_unicast_transport_replace_connection(_z_transport_unicast_t *dst, _z_transport_unicast_t *src) {
+    _z_transport_tx_mutex_lock(&dst->_common, true);
+    _z_transport_peer_mutex_lock(&dst->_common);
+
+    __unsafe_z_unicast_transport_clear_connection(dst);
+
+    dst->_common._link = src->_common._link;
+    dst->_common._wbuf = src->_common._wbuf;
+    dst->_common._zbuf = src->_common._zbuf;
+    dst->_common._sn_res = src->_common._sn_res;
+    dst->_common._sn_tx_reliable = src->_common._sn_tx_reliable;
+    dst->_common._sn_tx_best_effort = src->_common._sn_tx_best_effort;
+    dst->_common._lease = src->_common._lease;
+    dst->_common._transmitted = src->_common._transmitted;
+#if Z_FEATURE_BATCHING == 1
+    dst->_common._batch_state = src->_common._batch_state;
+    dst->_common._batch_count = src->_common._batch_count;
+#endif
+    dst->_peers = src->_peers;
+    dst->_common._state = _Z_TRANSPORT_STATE_OPEN;
+
+    src->_common._link = NULL;
+    src->_common._wbuf = _z_wbuf_null();
+    src->_common._zbuf = _z_zbuf_null();
+    src->_peers = NULL;
+
+    _z_transport_peer_mutex_unlock(&dst->_common);
+    _z_transport_tx_mutex_unlock(&dst->_common);
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_drop(&src->_common._mutex_tx);
+    _z_mutex_rec_drop(&src->_common._mutex_peer);
+#endif
+    _z_session_weak_drop(&src->_common._session);
+}
+
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu) {
     _z_transport_peer_unicast_slist_free(&ztu->_peers);
     _z_pending_peers_clear(&ztu->_pending_peers);
@@ -372,6 +434,11 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
+void _z_unicast_transport_clear_connection(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
+void _z_unicast_transport_replace_connection(_z_transport_unicast_t *dst, _z_transport_unicast_t *src) {
+    _ZP_UNUSED(dst);
+    _ZP_UNUSED(src);
+}
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
 
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
