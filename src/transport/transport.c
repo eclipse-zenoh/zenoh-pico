@@ -23,6 +23,7 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/sleep.h"
 
 size_t _z_transport_get_peers_count(_z_transport_t *zt) {
     size_t count = 0;
@@ -142,3 +143,85 @@ z_result_t _z_transport_stop_batching(_z_transport_t *zt) {
     return _Z_RES_OK;
 }
 #endif
+
+_z_pending_peers_t _z_pending_peers_null(void) {
+    _z_pending_peers_t pending_peers;
+
+    pending_peers._peers = _z_pending_peer_svec_null();
+    pending_peers._timeout_ms = 0;
+    pending_peers._start = (z_clock_t){0};
+    pending_peers._sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+
+    return pending_peers;
+}
+
+z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers, const _z_string_svec_t *locators) {
+    if ((pending_peers == NULL) || (locators == NULL)) {
+        return _Z_ERR_GENERIC;
+    }
+
+    _z_pending_peers_clear(pending_peers);
+
+    size_t len = _z_string_svec_len(locators);
+    if (len == 0) {
+        return _Z_RES_OK;
+    }
+
+    pending_peers->_peers = _z_pending_peer_svec_make(len);
+    if (pending_peers->_peers._val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        _z_pending_peer_t peer = {0};
+        peer._state = _Z_PENDING_PEER_STATE_PENDING;
+        _z_string_t *locator = _z_string_svec_get(locators, i);
+        z_result_t ret = _z_string_copy(&peer._locator, locator);
+        if (ret == _Z_RES_OK) {
+            ret = _z_pending_peer_svec_append(&pending_peers->_peers, &peer, false);
+        }
+        if (ret != _Z_RES_OK) {
+            _z_pending_peer_clear(&peer);
+            _z_pending_peers_clear(pending_peers);
+            return ret;
+        }
+    }
+
+    return _Z_RES_OK;
+}
+
+bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers) {
+    if (pending_peers == NULL) {
+        return false;
+    }
+
+    size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
+    for (size_t i = 0; i < len; i++) {
+        const _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, i);
+        if (peer->_state == _Z_PENDING_PEER_STATE_PENDING) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void _z_pending_peers_clear(_z_pending_peers_t *pending_peers) {
+    if (pending_peers == NULL) {
+        return;
+    }
+
+    _z_pending_peer_svec_clear(&pending_peers->_peers);
+    *pending_peers = _z_pending_peers_null();
+}
+
+void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src) {
+    if ((dst == NULL) || (src == NULL) || (dst == src)) {
+        return;
+    }
+
+    _z_pending_peers_clear(dst);
+
+    *dst = *src;
+    *src = _z_pending_peers_null();
+}

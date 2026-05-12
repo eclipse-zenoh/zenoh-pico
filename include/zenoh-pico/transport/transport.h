@@ -155,7 +155,8 @@ typedef enum _z_transport_state_t {
 #define _Z_TRANSPORT_TASK_LEASE 1
 #define _Z_TRANSPORT_TASK_READ 2
 #define _Z_TRANSPORT_TASK_SEND_JOIN 3  // multicast / raweth only
-#define _Z_TRANSPORT_TASK_COUNT 4
+#define _Z_TRANSPORT_TASK_ADD_PEERS 4  // unicast only
+#define _Z_TRANSPORT_TASK_COUNT 5
 #if Z_FEATURE_AUTO_RECONNECT == 1
 typedef struct _z_transport_tasks_t {
     _z_fut_handle_t _task_handles[_Z_TRANSPORT_TASK_COUNT];
@@ -194,10 +195,40 @@ typedef struct {
 // Send function prototype
 typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_transport_message_t *t_msg);
 
+typedef enum {
+    _Z_PENDING_PEER_STATE_PENDING = 0,
+    _Z_PENDING_PEER_STATE_DONE = 1,
+    _Z_PENDING_PEER_STATE_FAILED = 2,
+} _z_pending_peer_state_t;
+
+typedef struct {
+    _z_string_t _locator;
+    _z_pending_peer_state_t _state;
+} _z_pending_peer_t;
+
+static inline void _z_pending_peer_clear(_z_pending_peer_t *peer) { _z_string_clear(&peer->_locator); }
+_Z_ELEM_DEFINE(_z_pending_peer, _z_pending_peer_t, _z_noop_size, _z_pending_peer_clear, _z_noop_copy, _z_noop_move,
+               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_SVEC_DEFINE_NO_COPY(_z_pending_peer, _z_pending_peer_t)
+
+typedef struct {
+    _z_pending_peer_svec_t _peers;
+    int32_t _timeout_ms;
+    z_clock_t _start;
+    uint32_t _sleep_ms;
+} _z_pending_peers_t;
+
+_z_pending_peers_t _z_pending_peers_null(void);
+z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers, const _z_string_svec_t *locators);
+bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers);
+void _z_pending_peers_clear(_z_pending_peers_t *pending_peers);
+void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src);
+
 typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
     _z_transport_peer_unicast_slist_t *_peers;
+    _z_pending_peers_t _pending_peers;
 } _z_transport_unicast_t;
 
 #define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.

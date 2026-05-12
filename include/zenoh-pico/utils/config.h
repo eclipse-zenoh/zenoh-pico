@@ -66,6 +66,35 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key);
 z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, uint8_t key);
 
 /**
+ * Retrieve a signed 32-bit integer property from the configuration.
+ * If the property is not present, the provided default value is used.
+ *
+ * The value is parsed as a base-10 integer and validated to ensure it
+ * fits within the range of int32_t.
+ *
+ * Parameters:
+ *   config: A pointer to the configuration object.
+ *   key: The key of the property to retrieve.
+ *   default_val: The default value to use if the property is not present.
+ *   out: A pointer to store the parsed result.
+ */
+z_result_t _z_config_get_i32_default(_z_config_t *config, uint8_t key, const char *default_val, int32_t *out);
+
+/**
+ * Retrieve a boolean property from the configuration.
+ * If the property is not present, the provided default value is used.
+ *
+ * Accepted values are "true" and "false".
+ *
+ * Parameters:
+ *   config: A pointer to the configuration object.
+ *   key: The key of the property to retrieve.
+ *   default_val: The default value to use if the property is not present.
+ *   out: A pointer to store the parsed result.
+ */
+z_result_t _z_config_get_bool_default(_z_config_t *config, uint8_t key, const char *default_val, bool *out);
+
+/**
  * Get the length of the given properties map.
  *
  * Parameters:
