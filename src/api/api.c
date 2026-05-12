@@ -403,13 +403,48 @@ z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_
     return _z_bytes_writer_append_z_bytes(writer, &bytes->_this._val);
 }
 
+#if defined(Z_TEST_HOOKS)
+static _z_timestamp_time_since_epoch_override_fn _z_timestamp_time_since_epoch_override = NULL;
+static void *_z_timestamp_time_since_epoch_override_arg = NULL;
+
+void _z_timestamp_set_time_since_epoch_override(_z_timestamp_time_since_epoch_override_fn fn, void *arg) {
+    _z_timestamp_time_since_epoch_override = fn;
+    _z_timestamp_time_since_epoch_override_arg = arg;
+}
+#endif
+
 z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
+    if ((ts == NULL) || (zs == NULL) || _Z_RC_IS_NULL(zs)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
     *ts = _z_timestamp_null();
     _z_time_since_epoch t;
+#if defined(Z_TEST_HOOKS)
+    if (_z_timestamp_time_since_epoch_override != NULL) {
+        _Z_RETURN_IF_ERR(_z_timestamp_time_since_epoch_override(&t, _z_timestamp_time_since_epoch_override_arg));
+    } else {
+        _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+    }
+#else
     _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+#endif
+
+    _z_session_t *s = _Z_RC_IN_VAL(zs);
+    _z_ntp64_t time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock(s));
+    if (time <= s->_last_timestamp) {
+        if (s->_last_timestamp == UINT64_MAX) {
+            _z_session_mutex_unlock(s);
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+        }
+        time = s->_last_timestamp + 1;
+    }
+    s->_last_timestamp = time;
+    _z_session_mutex_unlock(s);
+
     ts->valid = true;
-    ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
-    ts->id = _Z_RC_IN_VAL(zs)->_local_zid;
+    ts->time = time;
+    ts->id = s->_local_zid;
     return _Z_RES_OK;
 }
 

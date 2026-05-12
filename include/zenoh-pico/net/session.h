@@ -139,6 +139,7 @@ typedef struct _z_session_t {
     uint32_t _entity_id;
     _z_zint_t _query_id;
     _z_zint_t _interest_id;
+    _z_ntp64_t _last_timestamp;
 
     // Session declarations
     _z_resource_slist_t *_local_resources;

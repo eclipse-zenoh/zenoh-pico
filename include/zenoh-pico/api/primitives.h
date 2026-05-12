@@ -918,6 +918,11 @@ z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_
  */
 z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
 
+#if defined(Z_TEST_HOOKS)
+typedef z_result_t (*_z_timestamp_time_since_epoch_override_fn)(_z_time_since_epoch *, void *);
+void _z_timestamp_set_time_since_epoch_override(_z_timestamp_time_since_epoch_override_fn fn, void *arg);
+#endif
+
 /**
  * Returns NTP64 time associated with this timestamp.
  *
