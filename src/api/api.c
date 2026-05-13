@@ -431,16 +431,16 @@ z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
 
     _z_session_t *s = _Z_RC_IN_VAL(zs);
     _z_ntp64_t time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock(s));
+    _Z_RETURN_IF_ERR(_z_mutex_lock(&s->_mutex_last_timestamp));
     if (time <= s->_last_timestamp) {
         if (s->_last_timestamp == UINT64_MAX) {
-            _z_session_mutex_unlock(s);
+            _z_mutex_unlock(&s->_mutex_last_timestamp);
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
         }
         time = s->_last_timestamp + 1;
     }
     s->_last_timestamp = time;
-    _z_session_mutex_unlock(s);
+    _z_mutex_unlock(&s->_mutex_last_timestamp);
 
     ts->valid = true;
     ts->time = time;
