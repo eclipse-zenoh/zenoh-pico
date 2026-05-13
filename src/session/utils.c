@@ -68,6 +68,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     ret = _z_mutex_init(&zn->_mutex_last_timestamp);
     if (ret != _Z_RES_OK) {
         _z_mutex_rec_drop(&zn->_mutex_transport);
+        _z_mutex_drop(&zn->_mutex_last_timestamp);
         _z_mutex_drop(&zn->_mutex_inner);
         _Z_ERROR_RETURN(ret);
     }
