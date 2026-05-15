@@ -437,7 +437,7 @@ z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
     } else {
         if (s->_last_timestamp == UINT64_MAX) {
             _z_session_last_timestamp_mutex_unlock(s);
-            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+            _Z_ERROR_RETURN(_Z_ERR_TIMESTAMP_GENERATION_FAILED);
         }
         time = s->_last_timestamp + 1;
         s->_last_timestamp = time;
