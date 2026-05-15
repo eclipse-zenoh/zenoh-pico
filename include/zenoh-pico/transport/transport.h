@@ -216,11 +216,15 @@ typedef struct {
     int32_t _timeout_ms;
     z_clock_t _start;
     uint32_t _sleep_ms;
+    size_t _next_peer_idx;
+    size_t _remaining_attempts;
 } _z_pending_peers_t;
 
 _z_pending_peers_t _z_pending_peers_null(void);
 z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers, const _z_string_svec_t *locators);
+size_t _z_pending_peers_count_pending(const _z_pending_peers_t *pending_peers);
 bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers);
+bool _z_pending_peers_next_pending_idx(_z_pending_peers_t *pending_peers, size_t *idx);
 void _z_pending_peers_clear(_z_pending_peers_t *pending_peers);
 void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src);
 

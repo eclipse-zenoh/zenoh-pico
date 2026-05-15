@@ -272,42 +272,61 @@ bool _z_transport_open_error_is_retryable(z_result_t ret) {
 }
 
 #if Z_FEATURE_UNICAST_PEER == 1
+#define _Z_ADD_PEERS_ALL_PENDING 0
+#define _Z_ADD_PEERS_TASK_MAX_ATTEMPTS 1
+
+typedef struct {
+    size_t _attempted;
+    size_t _added;
+    z_result_t _last_non_retryable_ret;
+} _z_add_peers_result_t;
+
+static _z_add_peers_result_t _z_add_peers_result_null(void) {
+    _z_add_peers_result_t result;
+    result._attempted = 0;
+    result._added = 0;
+    result._last_non_retryable_ret = _Z_RES_OK;
+    return result;
+}
+
 /*
- * Attempt to add all peers currently marked as pending.
+ * Attempt to add peers currently marked as pending.
  *
  * Behaviour:
- * - Each locator is attempted once per call.
+ * - If max_attempts is 0, all pending locators are attempted once.
+ * - Otherwise, up to max_attempts pending locators are attempted.
+ * - Attempts use the pending peer cursor so repeated calls rotate through
+ *   peers without changing the svec order.
  * - On success, the locator is marked done.
  * - On non-retryable error, the locator is marked failed.
  * - On retryable error, the locator remains pending for future attempts.
  *
  * Return values:
- * - _Z_RES_OK:
- *     All pending peers were added, or there were no pending peers.
+ * - _attempted:
+ *     Number of pending locators attempted during this call.
  *
- * - _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY:
- *     At least one peer was successfully added during this call, but
- *     retryable peers remain.
+ * - _added:
+ *     Number of peers successfully added during this call.
  *
- * - _Z_ERR_TRANSPORT_OPEN_FAILED:
- *     No peer was successfully added during this call, and retryable
- *     peers remain.
- *
- * - Any other error:
- *     A non-retryable error occurred; the returned value is the last
- *     such error encountered.
+ * - _last_non_retryable_ret:
+ *     Last non-retryable error encountered during this call, or _Z_RES_OK.
  */
-static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_id, _z_pending_peers_t *pending_peers,
-                                    const _z_config_t *config) {
-    if (!_z_pending_peers_has_pending(pending_peers)) {
-        return _Z_RES_OK;
+static _z_add_peers_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_id,
+                                               _z_pending_peers_t *pending_peers, const _z_config_t *config,
+                                               size_t max_attempts) {
+    _z_add_peers_result_t result = _z_add_peers_result_null();
+    size_t pending_count = _z_pending_peers_count_pending(pending_peers);
+    if (pending_count == 0) {
+        return result;
     }
 
-    z_result_t last_non_retryable_ret = _Z_RES_OK;
-    bool peer_added = false;
+    size_t loop_count = ((max_attempts != 0) && (max_attempts < pending_count)) ? max_attempts : pending_count;
+    for (size_t attempt = 0; attempt < loop_count; attempt++) {
+        size_t i = 0;
+        if (!_z_pending_peers_next_pending_idx(pending_peers, &i)) {
+            break;
+        }
 
-    size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
-    for (size_t i = 0; i < len; i++) {
         _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, i);
         if (peer->_state != _Z_PENDING_PEER_STATE_PENDING) {
             continue;
@@ -315,10 +334,11 @@ static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_i
 
         _z_string_t *locator = &peer->_locator;
         z_result_t peer_ret = _z_new_peer(zt, session_id, locator, config);
+        result._attempted++;
 
         if (peer_ret == _Z_RES_OK) {
             peer->_state = _Z_PENDING_PEER_STATE_DONE;
-            peer_added = true;
+            result._added++;
             _Z_DEBUG("Successfully added peer locator [%zu]: %.*s", i, (int)_z_string_len(locator),
                      _z_string_data(locator));
             continue;
@@ -329,20 +349,14 @@ static z_result_t _z_add_peers_impl(_z_transport_t *zt, const _z_id_t *session_i
 
         if (!_z_transport_open_error_is_retryable(peer_ret)) {
             peer->_state = _Z_PENDING_PEER_STATE_FAILED;
-            last_non_retryable_ret = peer_ret;
+            result._last_non_retryable_ret = peer_ret;
 
             _Z_WARN("Peer locator [%zu] (%.*s) removed from pending set due to non-retryable error", i,
                     (int)_z_string_len(locator), _z_string_data(locator));
         }
     }
 
-    if (last_non_retryable_ret != _Z_RES_OK) {
-        return last_non_retryable_ret;
-    }
-    if (_z_pending_peers_has_pending(pending_peers)) {
-        return peer_added ? _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY : _Z_ERR_TRANSPORT_OPEN_FAILED;
-    }
-    return _Z_RES_OK;
+    return result;
 }
 
 static _z_fut_fn_result_t _z_add_peers_task_ready(_z_pending_peers_t *pending_peers) {
@@ -381,8 +395,9 @@ static _z_fut_fn_result_t _z_add_peers_task_ready(_z_pending_peers_t *pending_pe
  *           * a non-retryable error occurs
  *
  *     - exit_on_failure == false:
- *         returns _Z_RES_OK and leaves pending_peers populated for
- *         background retry handling.
+ *         returns _Z_RES_OK after one synchronous pass and leaves any
+ *         remaining retryable pending_peers populated for background retry
+ *         handling.
  *
  * Timeout result (exit_on_failure == true):
  * - If at least one peer was added before timeout:
@@ -400,42 +415,42 @@ z_result_t _z_add_peers(_z_transport_t *zt, const _z_id_t *session_id, _z_pendin
     bool peer_added = false;
 
     while (true) {
-        z_result_t ret = _z_add_peers_impl(zt, session_id, pending_peers, session_cfg);
+        _z_add_peers_result_t result =
+            _z_add_peers_impl(zt, session_id, pending_peers, session_cfg, _Z_ADD_PEERS_ALL_PENDING);
 
-        if (ret == _Z_RES_OK) {
-            assert(!_z_pending_peers_has_pending(pending_peers));
+        if (result._added > 0) {
+            peer_added = true;
+        }
+
+        bool has_pending = _z_pending_peers_has_pending(pending_peers);
+
+        if (result._last_non_retryable_ret != _Z_RES_OK) {
+            // Non-retryable error.
+            if (exit_on_failure) {
+                _z_pending_peers_clear(pending_peers);
+                return result._last_non_retryable_ret;
+            }
+        }
+
+        if (!has_pending) {
             _z_pending_peers_clear(pending_peers);
             return _Z_RES_OK;
         }
 
-        if (ret == _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY) {
-            peer_added = true;
-        } else if (ret != _Z_ERR_TRANSPORT_OPEN_FAILED) {
-            // Non-retryable error
-            if (exit_on_failure) {
-                _z_pending_peers_clear(pending_peers);
-                return ret;
-            }
-
-            if (!_z_pending_peers_has_pending(pending_peers)) {
-                _z_pending_peers_clear(pending_peers);
-                return _Z_RES_OK;
-            }
+        // Move remaining retryable peers to background handling task if we're not required to exit on failure and a
+        // timeout is configured
+        if (!exit_on_failure && pending_peers->_timeout_ms != 0) {
+            _z_pending_peers_move(&zt->_transport._unicast._pending_peers, pending_peers);
+            return _Z_RES_OK;
         }
 
         // Retryable peers remain
         if (pending_peers->_timeout_ms == 0) {
+            _z_pending_peers_clear(pending_peers);
             if (!exit_on_failure) {
-                _z_pending_peers_clear(pending_peers);
                 return _Z_RES_OK;
             }
-            _z_pending_peers_clear(pending_peers);
             return peer_added ? _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY : _Z_ERR_TRANSPORT_OPEN_FAILED;
-        }
-
-        if (!exit_on_failure) {
-            _z_pending_peers_move(&zt->_transport._unicast._pending_peers, pending_peers);
-            return _Z_RES_OK;  // Let the background task handle retries until success or timeout
         }
 
         if (!_z_backoff_sleep(&pending_peers->_start, pending_peers->_timeout_ms, &pending_peers->_sleep_ms)) {
@@ -475,13 +490,30 @@ _z_fut_fn_result_t _zp_add_peers_task_fn(void *ztu_arg, _z_executor_t *executor)
         return _z_add_peers_task_ready(pending_peers);
     }
 
-    (void)_z_add_peers_impl(&_Z_RC_IN_VAL(&session_rc)->_tp, &_Z_RC_IN_VAL(&session_rc)->_local_zid, pending_peers,
-                            &_Z_RC_IN_VAL(&session_rc)->_config);
+    if (pending_peers->_remaining_attempts == 0) {
+        pending_peers->_remaining_attempts = _z_pending_peers_count_pending(pending_peers);
+    }
+
+    _z_add_peers_result_t result =
+        _z_add_peers_impl(&_Z_RC_IN_VAL(&session_rc)->_tp, &_Z_RC_IN_VAL(&session_rc)->_local_zid, pending_peers,
+                          &_Z_RC_IN_VAL(&session_rc)->_config, _Z_ADD_PEERS_TASK_MAX_ATTEMPTS);
+    if ((result._attempted > 0) && (pending_peers->_remaining_attempts > 0)) {
+        pending_peers->_remaining_attempts--;
+    }
 
     _z_session_rc_drop(&session_rc);
 
     if (!_z_pending_peers_has_pending(pending_peers)) {
         return _z_add_peers_task_ready(pending_peers);
+    }
+
+    if (result._added > 0) {
+        pending_peers->_sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+        return _z_fut_fn_result_continue();
+    }
+
+    if (pending_peers->_remaining_attempts > 0) {
+        return _z_fut_fn_result_continue();
     }
 
     // Check timeout and reschedule if needed

@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 // simply replace the previous value.
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, int *n) {
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:l:n:t:")) != -1) {
         switch (opt) {
             case 'k':
                 *ke = optarg;
@@ -114,8 +114,17 @@ static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke
             case 'n':
                 *n = atoi(optarg);
                 break;
+            case 't':
+#if defined(Z_FEATURE_UNSTABLE_API)
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_TIMEOUT_KEY, optarg);
+#else
+                fprintf(stderr, "Option -t requires Z_FEATURE_UNSTABLE_API.\n");
+                return 1;
+#endif
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n' ||
+                    optopt == 't') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
