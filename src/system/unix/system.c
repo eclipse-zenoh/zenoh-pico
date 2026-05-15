@@ -329,9 +329,11 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
-    z_time_t now;
-    gettimeofday(&now, NULL);
+    struct timespec now;
+    if (clock_gettime(CLOCK_REALTIME, &now) != 0) {
+        return _Z_ERR_SYSTEM_GENERIC;
+    }
     t->secs = (uint32_t)now.tv_sec;
-    t->nanos = (uint32_t)now.tv_usec * 1000;
-    return 0;
+    t->nanos = (uint32_t)now.tv_nsec;
+    return _Z_RES_OK;
 }

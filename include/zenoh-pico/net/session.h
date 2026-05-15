@@ -139,6 +139,10 @@ typedef struct _z_session_t {
     uint32_t _entity_id;
     _z_zint_t _query_id;
     _z_zint_t _interest_id;
+    _z_ntp64_t _last_timestamp;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_t _mutex_last_timestamp;
+#endif
 
     // Session declarations
     _z_resource_slist_t *_local_resources;
