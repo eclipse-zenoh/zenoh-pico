@@ -30,14 +30,14 @@ static inline size_t u32_hash(const uint32_t *k) {
 }
 static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *b; }
 
-#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
-#define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
-#define _ZP_HASHMAP_TEMPLATE_NAME u32map
-#define _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT 8
-#define _ZP_HASHMAP_TEMPLATE_CAPACITY 12
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
-#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME u32_eq
-#include "zenoh-pico/collections/hashmap_template.h"
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME u32map
+#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 8
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 12
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME u32_eq
+#include "zenoh-pico/collections/static_hashmap_template.h"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 

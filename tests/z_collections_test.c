@@ -784,13 +784,13 @@ void _z_elt_move(_z_elt_t *dst, _z_elt_t *src) {
     src->id = -1;  // Invalidate source to detect use-after-move
 }
 
-#define _ZP_DEQUE_TEMPLATE_ELEM_TYPE _z_elt_t
-#define _ZP_DEQUE_TEMPLATE_NAME _z_elt_deque
-#define _ZP_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME _z_elt_destroy
-#define _ZP_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME _z_elt_move
-#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_elt_compare
-#define _ZP_DEQUE_TEMPLATE_SIZE 4
-#include "zenoh-pico/collections/deque_template.h"
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_elt_t
+#define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_elt_deque
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME _z_elt_destroy
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME _z_elt_move
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_elt_compare
+#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE 4
+#include "zenoh-pico/collections/static_deque_template.h"
 
 void deque_test(void) {
     destroyed_elts = 0;
