@@ -2119,7 +2119,7 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
     }
     _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
 #else
-    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&queryable->_zn);
 #endif
     if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
         _Z_WARN("Failed to lock session for queryable keyexpr retrieval - session may be closing");
