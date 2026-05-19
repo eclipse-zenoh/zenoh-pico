@@ -2415,7 +2415,7 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
     }
     _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
 #else
-    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&sub->_zn);
 #endif
     if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
         _Z_WARN("Failed to lock session for subscriber keyexpr retrieval - session may be closing");
