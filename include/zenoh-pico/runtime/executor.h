@@ -164,20 +164,20 @@ static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key
 
 #define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT (_ZP_EXECUTOR_MAX_NUM_FUTURES * 3 / 2)  // 0.66 load factor
 
-#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE size_t
-#define _ZP_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
-#define _ZP_HASHMAP_TEMPLATE_NAME _z_fut_data_hmap
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME _z_size_fut_data_hmap_hash
-#define _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT
-#define _ZP_HASHMAP_TEMPLATE_CAPACITY _ZP_EXECUTOR_MAX_NUM_FUTURES
-#define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME _z_fut_data_destroy
-#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME _z_fut_data_move
-#include "zenoh-pico/collections/hashmap_template.h"
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE size_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_fut_data_hmap
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME _z_size_fut_data_hmap_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME _z_fut_data_destroy
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME _z_fut_data_move
+#include "zenoh-pico/collections/static_hashmap_template.h"
 
-#define _ZP_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
-#define _ZP_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
-#define _ZP_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
-#include "zenoh-pico/collections/deque_template.h"
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
+#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#include "zenoh-pico/collections/static_deque_template.h"
 
 // Compare two sleeping-task indices by their wake-up time stored in the hashmap.
 // The context is a pointer to the task hashmap, which provides the wake-up times.
@@ -192,12 +192,12 @@ static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_index_t *a, con
     return 0;
 }
 
-#define _ZP_PQUEUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
-#define _ZP_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
-#define _ZP_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
-#define _ZP_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_idx_cmp
-#define _ZP_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
-#include "zenoh-pico/collections/pqueue_template.h"
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_STATIC_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
+#define _ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_idx_cmp
+#define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#include "zenoh-pico/collections/static_pqueue_template.h"
 
 typedef struct _z_executor_t {
     _z_fut_data_hmap_index_deque_t _ready_tasks;
