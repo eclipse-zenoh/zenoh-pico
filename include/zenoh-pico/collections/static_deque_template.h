@@ -12,15 +12,16 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-// user needs to define the following macros before including this file
-// _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE: the type of the elements in the buffer
-// _ZP_STATIC_DEQUE_TEMPLATE_NAME: the name of the buffer type to generate (without the _t suffix)
-// _ZP_STATIC_DEQUE_TEMPLATE_SIZE: the maximum size of the circular buffer (optional, default is 16)
-// _ZP_STATIC_DEQUE_TEMPLATE_ALLOCATOR_TYPE: the type of the allocator to use for the buffer nodes (optional, default is
-// a simple z_malloc/z_free allocator) _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME: the name of the function to
-// destroy an element (optional, default is a no-op function) _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME: the name of
-// the function to move an element (optional, default is an element-wise move function that uses the copy function and
-// then clears the source element)
+// User needs to define the following macros before including this file:
+// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE: the type of the elements in the deque (required)
+// - _ZP_STATIC_DEQUE_TEMPLATE_NAME: the name of the deque type to generate, without the _t suffix
+//   (optional, default is derived from the element type and size)
+// - _ZP_STATIC_DEQUE_TEMPLATE_SIZE: the maximum size of the fixed-capacity circular buffer
+//   stored in the generated struct (optional, default is 16)
+// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME: the function-like macro used to destroy
+//   an element (optional, default is a no-op)
+// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME: the function-like macro used to move an
+//   element (optional, default performs assignment and then destroys the source element)
 
 #include <stdbool.h>
 #include <stddef.h>
