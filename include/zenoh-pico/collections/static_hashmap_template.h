@@ -30,7 +30,7 @@
 //
 // Optional:
 //   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) -> bool
-//       equality function for keys (default: memcmp == 0)
+//       equality function for keys (default: *key_a_ptr == *key_b_ptr)
 //   _ZP_STATIC_HASHMAP_TEMPLATE_NAME
 //       base name for all generated symbols
 //       (default: _ZP_CAT(key_type, _ZP_CAT(val_type, hmap)))
@@ -166,7 +166,7 @@ typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_TYPE {
 
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, new)(void) {
     _ZP_STATIC_HASHMAP_TEMPLATE_TYPE map;
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
+    for (size_t b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
         map._buckets[b] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     }
     for (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
@@ -203,9 +203,7 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STAT
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                              get_idx)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                       const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
-    _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b =
-        (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE)(_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) %
-                                                 _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT);
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
@@ -276,9 +274,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_
                                                              insert)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                      _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key,
                                                                      _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *val) {
-    _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b =
-        (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE)(_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) %
-                                                 _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT);
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     // Walk the chain looking for an existing entry with the same key
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
@@ -318,9 +314,7 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_STAT
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
     // Re-derive the bucket from the node's own key so the caller does not need
     // to supply it separately.
-    _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b =
-        (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE)(_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(&n->key) %
-                                                 _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT);
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(&n->key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     // Walk the chain to find the predecessor and unlink idx.
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE prev = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE cur = map->_buckets[b];
@@ -350,9 +344,7 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_STAT
 static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                      const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key,
                                                                      _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *out_val) {
-    _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b =
-        (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE)(_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) %
-                                                 _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT);
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE prev = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
@@ -385,7 +377,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove)(_ZP_STATIC_
 
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
     // Walk every bucket chain and destroy live entries
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
+    for (size_t b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
         _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_TYPE idx = map->_buckets[b];
         while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
             _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];

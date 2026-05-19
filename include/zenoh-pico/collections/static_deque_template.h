@@ -72,7 +72,7 @@ static inline void _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, destroy)(_ZP_STATIC_D
     size_t count = _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(deque);
     for (size_t i = 0; i < count; i++) {
         size_t idx = deque->_start + i;
-        if (i >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
+        if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
             idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
         }
         _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[idx]);
