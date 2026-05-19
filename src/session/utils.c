@@ -92,6 +92,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _z_config_init(&zn->_config);
 #if Z_FEATURE_AUTO_RECONNECT == 1
     zn->_declaration_cache = NULL;
+    zn->_last_connect_locator = _z_string_null();
 #endif
 
     // Initialize the data structs
@@ -189,6 +190,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_free(&zn->_declaration_cache);
+    _z_string_clear(&zn->_last_connect_locator);
 #endif
     _z_session_mutex_unlock(zn);
     _z_flush_local_resources(zn);

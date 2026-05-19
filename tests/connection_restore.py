@@ -26,6 +26,19 @@ PASSIVE_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_sub', '-e', f'tcp/127.
 LIVELINESS_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_liveliness', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
 LIVELINESS_SUB_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_sub_liveliness', '-h', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
 
+SINGLE_THREAD_ZENOH_PORT = "7448"
+SINGLE_THREAD_ROUTER_ARGS = ['-l', f'tcp/0.0.0.0:{SINGLE_THREAD_ZENOH_PORT}', '--no-multicast-scouting']
+SINGLE_THREAD_ACTIVE_CLIENT_COMMAND = STDBUF_CMD + [
+    f'{DIR_EXAMPLES}/z_pub_st',
+    '-e',
+    f'tcp/127.0.0.1:{SINGLE_THREAD_ZENOH_PORT}',
+]
+SINGLE_THREAD_PASSIVE_CLIENT_COMMAND = STDBUF_CMD + [
+    f'{DIR_EXAMPLES}/z_sub_st',
+    '-e',
+    f'tcp/127.0.0.1:{SINGLE_THREAD_ZENOH_PORT}',
+]
+
 LIBASAN_PATH = subprocess.run(["gcc", "-print-file-name=libasan.so"], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
 
 
@@ -383,8 +396,20 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
 
 
 def main():
+    if len(sys.argv) == 3 and sys.argv[2] == "--single-thread":
+        router_command = STDBUF_CMD + [sys.argv[1]] + SINGLE_THREAD_ROUTER_ARGS
+        test_pub_sub_survive_router_restart(router_command,
+                                            SINGLE_THREAD_ACTIVE_CLIENT_COMMAND,
+                                            SINGLE_THREAD_PASSIVE_CLIENT_COMMAND,
+                                            8)
+        test_pub_before_restart_then_new_sub(router_command,
+                                             SINGLE_THREAD_ACTIVE_CLIENT_COMMAND,
+                                             SINGLE_THREAD_PASSIVE_CLIENT_COMMAND,
+                                             8)
+        return
+
     if len(sys.argv) != 2:
-        print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd")
+        print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd [--single-thread]")
         sys.exit(1)
 
     router_command = STDBUF_CMD + [sys.argv[1]] + ROUTER_ARGS

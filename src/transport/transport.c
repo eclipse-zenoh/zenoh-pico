@@ -109,7 +109,7 @@ void _z_transport_free(_z_transport_t **zt) {
 #if Z_FEATURE_BATCHING == 1
 z_result_t _z_transport_start_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
-    if (ztc == NULL) {
+    if ((ztc == NULL) || (ztc->_state != _Z_TRANSPORT_STATE_OPEN)) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
     }
     if (ztc->_batch_state == _Z_BATCHING_ACTIVE) {
@@ -131,6 +131,10 @@ z_result_t _z_transport_stop_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
     if (ztc == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+    }
+
+    if (ztc->_batch_state != _Z_BATCHING_ACTIVE) {
+        return _Z_RES_OK;
     }
 
 #if Z_FEATURE_BATCH_TX_MUTEX == 1
