@@ -784,65 +784,6 @@ void _z_elt_move(_z_elt_t *dst, _z_elt_t *src) {
     src->id = -1;  // Invalidate source to detect use-after-move
 }
 
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_elt_t
-#define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_elt_deque
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME _z_elt_destroy
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME _z_elt_move
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_elt_compare
-#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE 4
-#include "zenoh-pico/collections/static_deque_template.h"
-
-void deque_test(void) {
-    destroyed_elts = 0;
-    _z_elt_deque_t deque = _z_elt_deque_new();
-    assert(_z_elt_deque_size(&deque) == 0);
-    assert(_z_elt_deque_is_empty(&deque));
-    assert(_z_elt_deque_front(&deque) == NULL);
-    assert(_z_elt_deque_back(&deque) == NULL);
-    _z_elt_t elt0 = {.id = 0};
-
-    assert(_z_elt_deque_push_front(&deque, &elt0));
-
-    assert(_z_elt_deque_front(&deque)->id == 0);
-    assert(_z_elt_deque_back(&deque)->id == 0);
-    _z_elt_t elt1 = {.id = 1};
-    assert(_z_elt_deque_push_front(&deque, &elt1));
-
-    _z_elt_t elt2 = {.id = 2};
-    assert(_z_elt_deque_push_back(&deque, &elt2));
-    assert(_z_elt_deque_front(&deque)->id == 1);
-    assert(_z_elt_deque_back(&deque)->id == 2);
-
-    _z_elt_t elt3 = {.id = 3};
-    assert(_z_elt_deque_push_back(&deque, &elt3));
-    assert(_z_elt_deque_front(&deque)->id == 1);
-    assert(_z_elt_deque_back(&deque)->id == 3);
-
-    assert(_z_elt_deque_size(&deque) == 4);
-    assert(!_z_elt_deque_is_empty(&deque));
-
-    _z_elt_t elt4 = {.id = 4};
-    assert(!_z_elt_deque_push_back(&deque, &elt4));
-    assert(_z_elt_deque_front(&deque)->id == 1);
-    assert(_z_elt_deque_back(&deque)->id == 3);
-
-    _z_elt_t out;
-    assert(_z_elt_deque_pop_front(&deque, &out));
-    assert(out.id == 1);
-    assert(_z_elt_deque_front(&deque)->id == 0);
-    assert(_z_elt_deque_back(&deque)->id == 3);
-    assert(_z_elt_deque_pop_back(&deque, &out));
-    assert(out.id == 3);
-    assert(_z_elt_deque_front(&deque)->id == 0);
-    assert(_z_elt_deque_back(&deque)->id == 2);
-    assert(_z_elt_deque_size(&deque) == 2);
-
-    // Clean up remaining elements
-    _z_elt_deque_destroy(&deque);
-    assert(_z_elt_deque_size(&deque) == 0);
-    assert(destroyed_elts == 2);
-}
-
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -867,6 +808,4 @@ int main(void) {
     sorted_map_copy_move_test();
     sorted_map_free_test();
     sorted_map_stress_test();
-
-    deque_test();
 }

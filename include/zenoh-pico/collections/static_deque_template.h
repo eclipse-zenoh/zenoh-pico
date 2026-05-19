@@ -53,24 +53,24 @@
 typedef struct _ZP_STATIC_DEQUE_TEMPLATE_TYPE {
     _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _buffer[_ZP_STATIC_DEQUE_TEMPLATE_SIZE];
     size_t _start;
-    size_t _end;
+    size_t _size;
 } _ZP_STATIC_DEQUE_TEMPLATE_TYPE;
 
+// Creates a new, empty deque. All fields are zero-initialised.
 static inline _ZP_STATIC_DEQUE_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, new)(void) {
     _ZP_STATIC_DEQUE_TEMPLATE_TYPE deque = {0};
     return deque;
 }
+
+// Returns the number of elements currently stored in the deque.
 static inline size_t _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(const _ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque) {
-    if (deque->_start < deque->_end) {
-        return deque->_end - deque->_start;
-    } else if (deque->_start == 0 && deque->_end == 0) {
-        return 0;
-    }
-    return _ZP_STATIC_DEQUE_TEMPLATE_SIZE - deque->_start + deque->_end;
+    return deque->_size;
 }
+
+// Destroys all elements in the deque by calling the configured destroy function on each one,
+// then resets the deque to an empty state. Does not free the deque struct itself.
 static inline void _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, destroy)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque) {
-    size_t count = _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(deque);
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < deque->_size; i++) {
         size_t idx = deque->_start + i;
         if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
             idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
@@ -78,47 +78,70 @@ static inline void _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, destroy)(_ZP_STATIC_D
         _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[idx]);
     }
     deque->_start = 0;
-    deque->_end = 0;
+    deque->_size = 0;
 }
+
+// Returns true if the deque contains no elements.
 static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, is_empty)(const _ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque) {
-    return _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(deque) == 0;
+    return deque->_size == 0;
 }
+
+// Appends an element to the back of the deque by moving it from @p elem.
+// Returns true on success, or false if the deque is at full capacity.
 static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, push_back)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque,
                                                                       _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *elem) {
-    if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(deque) == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
+    if (deque->_size == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
         return false;
     }
-    if (deque->_end == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
-        deque->_end = 0;
+    size_t idx = deque->_start + deque->_size;
+    if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
+        idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
     }
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(&deque->_buffer[deque->_end], elem);
-    deque->_end++;
+    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(&deque->_buffer[idx], elem);
+    deque->_size++;
     return true;
 }
+
+// Removes the element at the back of the deque.
+// If @p out is non-NULL the element is moved into it; otherwise it is destroyed in place.
+// Returns true on success, or false if the deque is empty.
 static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, pop_back)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque,
                                                                      _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *out) {
     if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, is_empty)(deque)) {
         return false;
     }
-    if (deque->_end == 0) {
-        deque->_end = _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
+    size_t idx = deque->_start + deque->_size - 1;
+    if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
+        idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
     }
-    deque->_end--;
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[deque->_end]);
-    if (deque->_end == deque->_start) {
-        deque->_end = 0;
-        deque->_start = 0;
+    if (out != NULL) {
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[idx]);
+    } else {
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[idx]);
     }
+    if (deque->_size == 1) {
+        deque->_start = 0;  // reset to initial state when empty
+    }
+    deque->_size--;
     return true;
 }
+
+// Returns a pointer to the element at the back of the deque without removing it,
+// or NULL if the deque is empty.
 static inline _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME,
                                                            back)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque) {
     if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, is_empty)(deque)) {
         return NULL;
     }
-    size_t idx = deque->_end == 0 ? _ZP_STATIC_DEQUE_TEMPLATE_SIZE - 1 : deque->_end - 1;
+    size_t idx = deque->_start + deque->_size - 1;
+    if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
+        idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
+    }
     return &deque->_buffer[idx];
 }
+
+// Prepends an element to the front of the deque by moving it from @p elem.
+// Returns true on success, or false if the deque is at full capacity.
 static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, push_front)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque,
                                                                        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *elem) {
     if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, size)(deque) == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
@@ -128,22 +151,34 @@ static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, push_front)(_ZP_STATI
         deque->_start = _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
     }
     deque->_start--;
+    deque->_size++;
     _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(&deque->_buffer[deque->_start], elem);
     return true;
 }
+
+// Removes the element at the front of the deque.
+// If @p out is non-NULL the element is moved into it; otherwise it is destroyed in place.
+// Returns true on success, or false if the deque is empty.
 static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, pop_front)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque,
                                                                       _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *out) {
     if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, is_empty)(deque)) {
         return false;
     }
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[deque->_start]);
+    if (out != NULL) {
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[deque->_start]);
+    } else {
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[deque->_start]);
+    }
     deque->_start++;
-    if (deque->_end == deque->_start) {
-        deque->_end = 0;
+    if (deque->_start == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
         deque->_start = 0;
     }
+    deque->_size--;
     return true;
 }
+
+// Returns a pointer to the element at the front of the deque without removing it,
+// or NULL if the deque is empty.
 static inline _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME,
                                                            front)(_ZP_STATIC_DEQUE_TEMPLATE_TYPE *deque) {
     if (_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, is_empty)(deque)) {
