@@ -196,6 +196,58 @@ static void test_pool_slot_reused_after_remove(void) {
     u32map_destroy(&m);
 }
 
+// ── Instantiate a map where BUCKET_COUNT (300) exceeds the sentinel value of
+// the chosen index type (uint8_t, sentinel = 255, selected because CAPACITY=10 ≤ 254).
+// _buckets[] stores pool node indices — values are always < CAPACITY — so the
+// uint8_t representation is safe even though 300 > 255.
+// This test verifies the map operates correctly in that configuration.
+
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME wide_bucket_map
+#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 300
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 10
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME u32_eq
+#include "zenoh-pico/collections/static_hashmap_template.h"
+
+static void test_bucket_count_exceeds_index_type(void) {
+    printf("Test: BUCKET_COUNT (%d) > index type sentinel (255, uint8_t), map still correct\n", 300);
+    wide_bucket_map_t m = wide_bucket_map_new();
+    assert(wide_bucket_map_is_empty(&m));
+
+    // Insert entries that spread across many buckets (key % 300 spreads widely)
+    for (uint32_t i = 0; i < 10; i++) {
+        uint32_t k = i * 31, v = i;  // 0, 31, 62, 93 … — distinct buckets for most
+        assert(wide_bucket_map_index_valid(wide_bucket_map_insert(&m, &k, &v)));
+    }
+    assert(wide_bucket_map_size(&m) == 10);
+
+    // Verify every entry is retrievable
+    for (uint32_t i = 0; i < 10; i++) {
+        uint32_t k = i * 31;
+        uint32_t *got = wide_bucket_map_get(&m, &k);
+        assert(got != NULL && *got == i);
+    }
+
+    // Update one entry — must not allocate a new pool node
+    uint32_t ku = 0, vu = 99;
+    assert(wide_bucket_map_index_valid(wide_bucket_map_insert(&m, &ku, &vu)));
+    assert(wide_bucket_map_size(&m) == 10);
+    assert(*wide_bucket_map_get(&m, &(uint32_t){0}) == 99);
+
+    // Remove an entry and re-insert a different key to confirm pool slot recycling
+    assert(wide_bucket_map_remove(&m, &(uint32_t){31}, NULL));
+    assert(wide_bucket_map_size(&m) == 9);
+    uint32_t kn = 1000, vn = 42;
+    assert(wide_bucket_map_index_valid(wide_bucket_map_insert(&m, &kn, &vn)));
+    assert(wide_bucket_map_size(&m) == 10);
+    assert(*wide_bucket_map_get(&m, &(uint32_t){1000}) == 42);
+
+    wide_bucket_map_destroy(&m);
+    assert(wide_bucket_map_is_empty(&m));
+}
+
 static void test_multiple_collisions(void) {
     printf("Test: many keys colliding into the same bucket\n");
     u32map_t m = u32map_new();
@@ -237,5 +289,6 @@ int main(void) {
     test_pool_exhaustion();
     test_pool_slot_reused_after_remove();
     test_multiple_collisions();
+    test_bucket_count_exceeds_index_type();
     return 0;
 }

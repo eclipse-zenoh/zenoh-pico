@@ -769,21 +769,6 @@ void sorted_map_stress_test(void) {
     _z_str__z_str_sortedmap_clear(&map);
 }
 
-size_t destroyed_elts = 0;
-typedef struct {
-    int id;
-} _z_elt_t;
-
-void _z_elt_destroy(_z_elt_t *elt) {
-    (void)elt;
-    destroyed_elts++;
-}
-
-void _z_elt_move(_z_elt_t *dst, _z_elt_t *src) {
-    dst->id = src->id;
-    src->id = -1;  // Invalidate source to detect use-after-move
-}
-
 int main(void) {
     ring_test();
     ring_test_init_free();
