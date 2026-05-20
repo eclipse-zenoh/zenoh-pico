@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_LINK_TRANSPORT_DATAGRAM_UDP_MULTICAST_LWIP_COMMON_H
 #define ZENOH_PICO_LINK_TRANSPORT_DATAGRAM_UDP_MULTICAST_LWIP_COMMON_H
 
+#include "lwip/sockets.h"
 #include "zenoh-pico/link/transport/udp_multicast.h"
 
 #ifdef __cplusplus

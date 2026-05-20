@@ -304,12 +304,8 @@ static inline void _z_transport_get_link_properties(const _z_transport_common_t 
     }
 }
 
-#if Z_FEATURE_BATCHING == 1
-z_result_t _z_transport_start_batching(_z_transport_t *zt);
-z_result_t _z_transport_stop_batching(_z_transport_t *zt);
-
 static inline bool _z_transport_batch_hold_tx_mutex(void) {
-#if Z_FEATURE_BATCH_TX_MUTEX == 1
+#if Z_FEATURE_BATCHING == 1 && Z_FEATURE_BATCH_TX_MUTEX == 1
     return true;
 #else
     return false;
@@ -317,12 +313,17 @@ static inline bool _z_transport_batch_hold_tx_mutex(void) {
 }
 
 static inline bool _z_transport_batch_hold_peer_mutex(void) {
-#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+#if Z_FEATURE_BATCHING == 1 && Z_FEATURE_BATCH_PEER_MUTEX == 1
     return true;
 #else
     return false;
 #endif
 }
+
+#if Z_FEATURE_BATCHING == 1
+z_result_t _z_transport_start_batching(_z_transport_t *zt);
+z_result_t _z_transport_stop_batching(_z_transport_t *zt);
+
 #endif  // Z_FEATURE_BATCHING == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1

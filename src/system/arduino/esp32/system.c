@@ -22,6 +22,7 @@
 #include <esp_random.h>
 #include <stddef.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/system_error.h"
