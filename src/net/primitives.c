@@ -158,9 +158,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     if (pub == NULL || _Z_RC_IS_NULL(&pub->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-#if Z_FEATURE_MATCHING == 1
     _z_write_filter_clear(&pub->_filter);
-#endif
     _z_declared_keyexpr_clear(&pub->_key);
     _z_session_weak_drop(&pub->_zn);
     _z_encoding_clear(&pub->_encoding);
@@ -529,9 +527,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
         _z_unregister_pending_queries_from_querier(_Z_RC_IN_VAL(&s), querier->_id);
         _z_session_rc_drop(&s);
     }
-#if Z_FEATURE_MATCHING == 1
     _z_write_filter_clear(&querier->_filter);
-#endif
     _z_declared_keyexpr_clear(&querier->_key);
     _z_session_weak_drop(&querier->_zn);
     _z_encoding_clear(&querier->_encoding);
