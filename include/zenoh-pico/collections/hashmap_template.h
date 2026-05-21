@@ -346,7 +346,10 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(const _ZP_HASH
             // The entry would have been placed here or earlier if it existed.
             return _ZP_HASHMAP_ITER_INVALID;
         }
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&slot->node.key, key)) {
+        // A key hashing to our bucket always sits at exactly PSL == psl at this probe step.
+        // If the stored PSL is greater, the occupant belongs to a different ideal bucket —
+        // our key cannot be here, but may still be further along the probe chain.
+        if (_ZP_RH_HMAP_SLOT_PSL(slot) == psl && _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&slot->node.key, key)) {
             return _ZP_RH_HMAP_IDX_TO_ITER(pos);
         }
         psl++;
