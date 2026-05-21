@@ -74,7 +74,7 @@
 #include "zenoh-pico/collections/cat.h"
 
 #ifndef _ZP_HASHMAP_ITER_INVALID
-#define _ZP_HASHMAP_ITER_INVALID (SIZE_MAX)
+#define _ZP_HASHMAP_ITER_INVALID 0
 #endif
 // ── Required macros ──────────────────────────────────────────────────────────
 
@@ -172,6 +172,9 @@ typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE node;  // key+val; valid when _info != 0
     size_t _info;                         // packed occupied flag (bit 0) + PSL (bits [N-1:1])
 } _ZP_HASHMAP_TEMPLATE_SLOT_TYPE;
+
+#define _ZP_RH_HMAP_IDX_TO_ITER(idx) ((idx) + 1u)
+#define _ZP_RH_HMAP_ITER_TO_IDX(iter) ((iter) - 1u)
 
 // ── Map type ──────────────────────────────────────────────────────────────────
 
@@ -344,7 +347,7 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(const _ZP_HASH
             return _ZP_HASHMAP_ITER_INVALID;
         }
         if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&slot->node.key, key)) {
-            return pos;
+            return _ZP_RH_HMAP_IDX_TO_ITER(pos);
         }
         psl++;
         pos = (pos + 1u) & mask;
@@ -361,7 +364,7 @@ static inline _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     if (idx == _ZP_HASHMAP_ITER_INVALID) {
         return NULL;
     }
-    return &map->_slots[idx].node.val;
+    return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(idx)].node.val;
 }
 
 // ── contains ─────────────────────────────────────────────────────────────────
@@ -383,10 +386,11 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMP
     // Check for existing entry first.
     size_t existing = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (existing != _ZP_HASHMAP_ITER_INVALID) {
+        existing = _ZP_RH_HMAP_ITER_TO_IDX(existing);
         _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key);
         _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&map->_slots[existing].node.val);
         _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&map->_slots[existing].node.val, val);
-        return existing;
+        return _ZP_RH_HMAP_IDX_TO_ITER(existing);
     }
 
     // Grow before inserting if needed.
@@ -405,15 +409,16 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMP
 
     size_t idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, _raw_insert)(map->_slots, map->_capacity, &candidate);
     map->_size++;
-    return idx;
+    return _ZP_RH_HMAP_IDX_TO_ITER(idx);
 }
 
 // ── remove_at ────────────────────────────────────────────────────────────────
 // Remove the node at the iterator index (obtained from insert or a prior
-// lookup).  Behaviour is undefined if idx is INDEX_NONE or has already been
+// lookup).  Behaviour is undefined if idx is _ZP_HASHMAP_ITER_INVALID or has already been
 // freed.  If out_val != NULL the value is moved out; otherwise it is destroyed.
 static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEMPLATE_TYPE *map, size_t idx,
                                                                  _ZP_HASHMAP_TEMPLATE_NODE_TYPE *out_val) {
+    idx = _ZP_RH_HMAP_ITER_TO_IDX(idx);  // shift back from incremented iterator
     size_t mask = _ZP_RH_HMAP_MASK(map);
     _ZP_HASHMAP_TEMPLATE_SLOT_TYPE *slots = map->_slots;
 
@@ -504,7 +509,7 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter)(const _ZP_HASHMAP_TEMPLATE_TYPE *map) {
     for (size_t i = 0; i < map->_capacity; i++) {
         if (_ZP_RH_HMAP_SLOT_OCCUPIED(&map->_slots[i])) {
-            return i;
+            return _ZP_RH_HMAP_IDX_TO_ITER(i);
         }
     }
     return _ZP_HASHMAP_ITER_INVALID;
@@ -512,9 +517,9 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter)(const _ZP_HASHMAP_
 
 // Returns the index of the next live slot after 'pos', or _ZP_HASHMAP_ITER_INVALID.
 static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter_next)(const _ZP_HASHMAP_TEMPLATE_TYPE *map, size_t pos) {
-    for (size_t i = pos + 1u; i < map->_capacity; i++) {
+    for (size_t i = pos; i < map->_capacity; i++) {
         if (_ZP_RH_HMAP_SLOT_OCCUPIED(&map->_slots[i])) {
-            return i;
+            return _ZP_RH_HMAP_IDX_TO_ITER(i);
         }
     }
     return _ZP_HASHMAP_ITER_INVALID;
@@ -524,11 +529,11 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter_next)(const _ZP_HAS
 // Behaviour is undefined if pos is _ZP_HASHMAP_ITER_INVALID or the slot is not occupied.
 static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
                                                       node_at)(_ZP_HASHMAP_TEMPLATE_TYPE *map, size_t pos) {
-    return &map->_slots[pos].node;
+    return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(pos)].node;
 }
 
 // ── iter_valid ──────────────────────────────────────────────────────────────
-// index_valid: returns true when idx is a valid live node index.
+// iter_valid: returns true when idx is a valid live node index.
 // This can be useful for validating iterators after removals:
 //   for (size_t i = map_iter(&map); i != _ZP_HASHMAP_ITER_INVALID; ) {
 //       if (...) {
@@ -541,6 +546,7 @@ static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
 //   }
 
 static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter_valid)(const _ZP_HASHMAP_TEMPLATE_TYPE *map, size_t idx) {
+    idx = _ZP_RH_HMAP_ITER_TO_IDX(idx);
     return idx < map->_capacity && _ZP_RH_HMAP_SLOT_OCCUPIED(&map->_slots[idx]);
 }
 
@@ -570,3 +576,5 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, iter_valid)(const _ZP_HASH
 #undef _ZP_RH_HMAP_SLOT_PSL
 #undef _ZP_RH_HMAP_SLOT_SET
 #undef _ZP_RH_HMAP_SLOT_CLEAR
+#undef _ZP_RH_HMAP_IDX_TO_ITER
+#undef _ZP_RH_HMAP_ITER_TO_IDX
