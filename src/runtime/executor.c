@@ -23,7 +23,7 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     }
     _z_fut_data_hmap_iter_t idx = _z_fut_data_hmap_insert(&executor->_tasks, &executor->_next_fut_id, &fut_data);
     _z_fut_handle_t handle = _z_fut_handle_null();
-    if (!_z_fut_data_hmap_iter_valid(idx)) {
+    if (idx == _ZP_HASHMAP_ITER_INVALID) {
         return handle;
     }
     handle._id = executor->_next_fut_id;
@@ -151,7 +151,7 @@ bool _z_executor_resume_suspended_fut(_z_executor_t *executor, const _z_fut_hand
         return false;
     }
     _z_fut_data_hmap_iter_t fut_idx = _z_fut_data_hmap_get_iter(&executor->_tasks, &handle->_id);
-    if (!_z_fut_data_hmap_iter_valid(fut_idx)) {
+    if (fut_idx == _ZP_HASHMAP_ITER_INVALID) {
         return false;
     }
     _z_fut_data_t *fut = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;

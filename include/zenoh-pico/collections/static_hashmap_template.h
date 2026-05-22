@@ -97,24 +97,18 @@
 // Given that we use msb bit for indicating presence,
 // the following mappings are used:
 //
-//   CAPACITY ≤ 127   → uint8_t   (sentinel = 127)
-//   CAPACITY ≤ 32767 → uint16_t  (sentinel = 32767)
-//   otherwise        → uint32_t  (sentinel = 2147483647)
-#if _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY <= 127
+//   CAPACITY ≤ 254   → uint8_t   (sentinel = 255)
+//   CAPACITY ≤ 65534 → uint16_t  (sentinel = 65535)
+//   otherwise        → uint32_t  (sentinel = UINT32_MAX)
+#if _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY <= 254
 #define _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE uint8_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint8_t)127)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK ((uint8_t)0x80)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_MASK ((uint8_t)0x7F)
-#elif _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY <= 32767
+#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint8_t)0xFF)
+#elif _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY <= 65534
 #define _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE uint16_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint16_t)32767)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK ((uint16_t)0x8000)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_MASK ((uint16_t)0x7FFF)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint16_t)0xFFFF)
 #else
 #define _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE uint32_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint32_t)2147483647)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK ((uint32_t)0x80000000u)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_MASK ((uint32_t)0x7FFFFFFFu)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint32_t)0xFFFFFFFF)
 #endif
 
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME
@@ -156,11 +150,11 @@ typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE {
 // Public typedef for the index type so callers can store/declare indices without
 // spelling out the internal macro.
 typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPEDEF;
-typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_TYPE;
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(iter) ((iter) & _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_MASK)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING(idx) (idx)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT(idx) ((idx) | _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_IS_PRESENT(idx) (((idx) & _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK) != 0)
+#define _ZP_HMAP_IDX_TO_ITER(idx) ((idx) + 1u)
+#define _ZP_HMAP_ITER_TO_IDX(iter) ((iter) - 1u)
+#define _ZP_HMAP_SET_PRESENT(map, idx) (map->_present[(idx) >> 3] |= (1u << ((idx) & 7)))
+#define _ZP_HMAP_SET_MISSING(map, idx) (map->_present[(idx) >> 3] &= ~(1u << ((idx) & 7)))
+#define _ZP_HMAP_IS_PRESENT(map, idx) ((map->_present[(idx) >> 3] & (1u << ((idx) & 7))) != 0)
 
 // ── Map type ──────────────────────────────────────────────────────────────────
 //
@@ -170,7 +164,9 @@ typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_NODE_I
 
 typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_TYPE {
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE _pool[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY];
-    _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_TYPE _info[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY];
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _next[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY];
+    uint8_t _present[(_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY + 1) /
+                     sizeof(uint8_t)];  // bitfield presence flags for each node
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _buckets[_ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT];
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _free_head;
     size_t _size;  // number of live entries
@@ -184,10 +180,10 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLA
         map._buckets[b] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     }
     for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map._info[i] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING((_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1));
+        map._next[i] = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
     }
-    map._info[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1] =
-        _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING(_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE);  // end of free list
+    map._next[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
+    memset(map._present, 0, sizeof(map._present));
     map._free_head = 0;
     map._size = 0;
     return map;
@@ -201,14 +197,16 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
     if (idx == _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         return _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // pool full
     }
-    map->_free_head = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[idx]);
+    map->_free_head = map->_next[idx];
+    _ZP_HMAP_SET_PRESENT(map, idx);
     return idx;
 }
 
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                         _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
-    map->_info[idx] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING(map->_free_head);
+    map->_next[idx] = map->_free_head;
     map->_free_head = idx;
+    _ZP_HMAP_SET_MISSING(map, idx);
 }
 
 // ── get_iter ──────────────────────────────────────────────────────────────────
@@ -224,9 +222,9 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
         if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
-            return _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT(idx);
+            return _ZP_HMAP_IDX_TO_ITER(idx);
         }
-        idx = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[idx]);
+        idx = map->_next[idx];
     }
     return _ZP_HASHMAP_ITER_INVALID;
 }
@@ -239,7 +237,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_T
                                                                  const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx != _ZP_HASHMAP_ITER_INVALID) {
-        return &map->_pool[_ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(idx)].val;
+        return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)].val;
     }
     return NULL;
 }
@@ -263,19 +261,13 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, is_empty)(const _ZP
     return map->_size == 0;
 }
 
-// ── iter_valid ──────────────────────────────────────────────────────────────
-// iter_valid: returns true when idx is a live node index (not the sentinel).
-static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_valid)(_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
-    return _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_IS_PRESENT(idx) &&
-           _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(idx) < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY;
-}
 // ── node_at ──────────────────────────────────────────────────────────────────
 // Converts a valid index to a pointer to its node.
 // Behaviour is undefined if idx is not a valid iterator.
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                              node_at)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                       _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
-    return &map->_pool[_ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(idx)];
+    return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)];
 }
 
 // ── insert ────────────────────────────────────────────────────────────────────
@@ -284,8 +276,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_
 // The new key is destroyed (existing key kept).
 // Returns the iterator to the inserted/updated node.
 // Returns _ZP_HASHMAP_ITER_INVALID only when the pool is exhausted and the key is not already
-// present.  Use iter_valid() to check the result; use node_at() to obtain
-// a pointer to the node.
+// present.
 
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             insert)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
@@ -301,9 +292,9 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
             _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key);
             _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
             _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
-            return _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT(idx);
+            return _ZP_HMAP_IDX_TO_ITER(idx);
         }
-        idx = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[idx]);
+        idx = map->_next[idx];
     }
     // New entry — allocate a pool node
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE new_idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_alloc)(map);
@@ -314,14 +305,10 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
     _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&n->key, key);
     _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
     // Prepend to bucket chain (O(1))
-    if (map->_buckets[b] != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
-        map->_info[new_idx] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT(map->_buckets[b]);
-    } else {
-        map->_info[new_idx] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING(map->_buckets[b]);
-    }
+    map->_next[new_idx] = map->_buckets[b];
     map->_buckets[b] = new_idx;
     map->_size++;
-    return _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT(new_idx);
+    return _ZP_HMAP_IDX_TO_ITER(new_idx);
 }
 
 // ── remove_at ────────────────────────────────────────────────────────────────
@@ -332,7 +319,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                            remove_at)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx,
                                       _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *out_val) {
-    idx = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(idx);
+    idx = _ZP_HMAP_ITER_TO_IDX(idx);
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
     // Re-derive the bucket from the node's own key so the caller does not need
     // to supply it separately.
@@ -342,12 +329,12 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE cur = map->_buckets[b];
     while (cur != idx) {
         prev = cur;
-        cur = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[cur]);
+        cur = map->_next[cur];
     }
     if (prev == _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
-        map->_buckets[b] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[idx]);  // idx was the bucket head
+        map->_buckets[b] = map->_next[idx];
     } else {
-        map->_info[prev] = map->_info[idx];
+        map->_next[prev] = map->_next[idx];
     }
     if (out_val != NULL) {
         _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&out_val->key, &n->key);
@@ -393,18 +380,18 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC
             _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
             _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->key);
             _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
-            idx = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX(map->_info[idx]);
+            idx = map->_next[idx];
         }
         map->_buckets[b] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     }
     // Rebuild the free list
     for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map->_info[i] = _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING((_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1));
+        map->_next[i] = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
     }
-    map->_info[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1] =
-        _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING(_ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE);  // end of free list
+    map->_next[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
     map->_free_head = 0;
     map->_size = 0;
+    memset(map->_present, 0, sizeof(map->_present));
 }
 
 // ── Undef all macros ──────────────────────────────────────────────────────────
@@ -427,8 +414,8 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_PRESENCE_MASK
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_MASK
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPEDEF
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_TYPE
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_GET_IDX
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_MISSING
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_PRESENT
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_INFO_IS_PRESENT
+#undef _ZP_HMAP_IDX_TO_ITER
+#undef _ZP_HMAP_ITER_TO_IDX
+#undef _ZP_HMAP_SET_PRESENT
+#undef _ZP_HMAP_SET_MISSING
+#undef _ZP_HMAP_IS_PRESENT
