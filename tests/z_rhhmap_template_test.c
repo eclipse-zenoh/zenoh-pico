@@ -168,7 +168,7 @@ static void test_dtor_remove_at_without_out_destroys_both(void) {
     size_t it = dtormap_insert(&m, &k, &v);
     assert(it != _ZP_HASHMAP_ITER_INVALID);
 
-    dtormap_remove_at(&m, it, NULL);
+    dtormap_remove_at(&m, it, NULL, NULL);
     assert(g_key_dtor_count == 1);
     assert(g_val_dtor_count == 1);
 
@@ -186,7 +186,7 @@ static void test_dtor_remove_at_with_out_does_not_destroy_val(void) {
     assert(it != _ZP_HASHMAP_ITER_INVALID);
 
     dtormap_node_t out;
-    dtormap_remove_at(&m, it, &out);
+    dtormap_remove_at(&m, it, &out, NULL);
     assert(out.key == 8 && out.val == 88);
     // Both key and value are moved into `out`; neither should be destroyed yet.
     assert(g_key_dtor_count == 0);
@@ -339,7 +339,7 @@ static void test_remove_at(void) {
     size_t it = u32rhhmap_insert(&m, &k, &v);
     assert(it != _ZP_HASHMAP_ITER_INVALID);
     u32rhhmap_node_t out;
-    assert(u32rhhmap_remove_at(&m, it, &out));
+    assert(u32rhhmap_remove_at(&m, it, &out, NULL));
     assert(out.key == 3 && out.val == 33);
     assert(u32rhhmap_size(&m) == 0);
     u32rhhmap_destroy(&m);
@@ -428,12 +428,12 @@ static void test_many_collisions(void) {
     collmap_destroy(&m);
 }
 
-// ── Tests: collmap — remove_at, iteration, removal-during-iteration ──────────
+// ── Tests: collmap — remove_at, iteration  ──────────
 // All keys share bucket 0 (constant hash), so every operation exercises the
 // deepest PSL chains and the most complex backward-shift paths.
 
-static void test_collmap_remove_at_iter_valid(void) {
-    printf("Test (collmap): iter_valid after remove_at reflects backward-shift on deep chain\n");
+static void test_collmap_remove_at(void) {
+    printf("Test (collmap): remove_at\n");
     collmap_t m;
     assert(collmap_new(&m));
 
@@ -450,15 +450,9 @@ static void test_collmap_remove_at_iter_valid(void) {
     assert(it != _ZP_HASHMAP_ITER_INVALID);
     uint32_t removed_key = collmap_node_at(&m, it)->key;
 
-    // Remove head; backward-shift must pull the next element into slot `it`.
-    collmap_remove_at(&m, it, NULL);
+    // Remove head
+    collmap_remove_at(&m, it, NULL, NULL);
     assert(collmap_size(&m) == N - 1);
-
-    // iter_valid tells us whether an element was shifted into `it`.
-    if (collmap_iter_valid(&m, it)) {
-        // The element now at `it` must not be the one we removed.
-        assert(collmap_node_at(&m, it)->key != removed_key);
-    }
 
     // Every remaining key must still be findable.
     for (uint32_t i = 0; i < N; i++) {
@@ -510,16 +504,14 @@ static void test_collmap_iteration_removal_pattern(void) {
         assert(collmap_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
     }
 
-    // Remove all even keys during iteration using the iter_valid pattern.
+    // Remove all even keys during iteration
     for (size_t i = collmap_iter(&m); i != _ZP_HASHMAP_ITER_INVALID;) {
         collmap_node_t *n = collmap_node_at(&m, i);
         if (n->key % 2 == 0) {
-            collmap_remove_at(&m, i, NULL);
-            if (collmap_iter_valid(&m, i)) {
-                continue;  // an element shifted into i — re-examine without advancing
-            }
+            collmap_remove_at(&m, i, NULL, &i);
+        } else {
+            i = collmap_iter_next(&m, i);
         }
-        i = collmap_iter_next(&m, i);
     }
 
     assert(collmap_size(&m) == N / 2);
@@ -536,8 +528,8 @@ static void test_collmap_iteration_removal_pattern(void) {
 
 // ── Tests: remove_at + backward-shift ────────────────────────────────────────
 
-static void test_remove_at_iter_valid(void) {
-    printf("Test: iter_valid after remove_at reflects backward-shift\n");
+static void test_remove_at2(void) {
+    printf("Test: remove_at with multiple elements\n");
     u32rhhmap_t m;
     assert(u32rhhmap_new(&m));
 
@@ -551,7 +543,7 @@ static void test_remove_at_iter_valid(void) {
     assert(it1 != _ZP_HASHMAP_ITER_INVALID);
 
     // Remove first; the backward-shift may move the second into its slot.
-    u32rhhmap_remove_at(&m, it0, NULL);
+    u32rhhmap_remove_at(&m, it0, NULL, NULL);
     assert(u32rhhmap_size(&m) == 1);
     // Regardless of shift, the remaining key must be findable.
     assert(u32rhhmap_get(&m, &(uint32_t){1}) != NULL);
@@ -584,7 +576,7 @@ static void test_iteration_visits_all(void) {
 }
 
 static void test_iteration_removal_pattern(void) {
-    printf("Test: safe iteration with conditional removal (iter_valid pattern)\n");
+    printf("Test: safe iteration with conditional removal\n");
     u32rhhmap_t m;
     assert(u32rhhmap_new(&m));
     const uint32_t N = 20;
@@ -593,16 +585,14 @@ static void test_iteration_removal_pattern(void) {
         assert(u32rhhmap_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
     }
 
-    // Remove all even keys during iteration using the iter_valid pattern.
+    // Remove all even keys during iteration.
     for (size_t i = u32rhhmap_iter(&m); i != _ZP_HASHMAP_ITER_INVALID;) {
         u32rhhmap_node_t *n = u32rhhmap_node_at(&m, i);
         if (n->key % 2 == 0) {
-            u32rhhmap_remove_at(&m, i, NULL);
-            if (u32rhhmap_iter_valid(&m, i)) {
-                continue;  // something shifted into i — re-examine without advancing
-            }
+            u32rhhmap_remove_at(&m, i, NULL, &i);
+        } else {
+            i = u32rhhmap_iter_next(&m, i);
         }
-        i = u32rhhmap_iter_next(&m, i);
     }
 
     assert(u32rhhmap_size(&m) == N / 2);
@@ -682,10 +672,10 @@ int main(void) {
     test_resize_on_load();
     test_resize_preserves_entries();
     test_many_collisions();
-    test_collmap_remove_at_iter_valid();
+    test_collmap_remove_at();
     test_collmap_iteration_visits_all();
     test_collmap_iteration_removal_pattern();
-    test_remove_at_iter_valid();
+    test_remove_at2();
     test_iteration_visits_all();
     test_iteration_removal_pattern();
     test_empty_iteration();
