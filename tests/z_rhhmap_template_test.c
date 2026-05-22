@@ -339,7 +339,7 @@ static void test_remove_at(void) {
     size_t it = u32rhhmap_insert(&m, &k, &v);
     assert(it != _ZP_HASHMAP_ITER_INVALID);
     u32rhhmap_node_t out;
-    assert(u32rhhmap_remove_at(&m, it, &out, NULL));
+    u32rhhmap_remove_at(&m, it, &out, NULL);
     assert(out.key == 3 && out.val == 33);
     assert(u32rhhmap_size(&m) == 0);
     u32rhhmap_destroy(&m);

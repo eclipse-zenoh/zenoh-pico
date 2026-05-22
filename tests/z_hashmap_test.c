@@ -169,7 +169,7 @@ static void test_pool_exhaustion(void) {
     }
     // One more distinct key must fail
     uint32_t k = 200, v = 200;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) == _ZP_HASHMAP_ITER_INVALID);
     // Updating an existing key must still succeed (no new pool slot needed)
     uint32_t ku = 0, vu = 255;
     assert(u32map_insert(&m, &ku, &vu) != _ZP_HASHMAP_ITER_INVALID);
@@ -248,6 +248,142 @@ static void test_bucket_count_exceeds_iter_type(void) {
     assert(wide_bucket_map_is_empty(&m));
 }
 
+// ── Tests: iteration ──────────────────────────────────────────────────────────
+
+static void test_empty_iteration(void) {
+    printf("Test: iteration over empty map yields no elements\n");
+    u32map_t m = u32map_new();
+    assert(u32map_iter(&m) == _ZP_HASHMAP_ITER_INVALID);
+    u32map_destroy(&m);
+}
+
+static void test_iteration_visits_all(void) {
+    printf("Test: forward iteration visits every live entry exactly once\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 10;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 10;
+        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    }
+
+    bool seen[10] = {false};
+    size_t count = 0;
+    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID; it = u32map_iter_next(&m, it)) {
+        u32map_node_t *n = u32map_node_at(&m, it);
+        assert(n->key < N && !seen[n->key]);
+        assert(n->val == n->key * 10);
+        seen[n->key] = true;
+        count++;
+    }
+    assert(count == N);
+    for (uint32_t i = 0; i < N; i++) {
+        assert(seen[i]);
+    }
+    u32map_destroy(&m);
+}
+
+static void test_iteration_visits_all_with_collisions(void) {
+    printf("Test: iteration visits all entries including collision chains\n");
+    u32map_t m = u32map_new();
+    // Keys 0,8,16 all hash to bucket 0 (BUCKET_COUNT=8); spread the rest across other buckets.
+    uint32_t keys[] = {0, 8, 16, 1, 2, 3};
+    const uint32_t N = 6;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = keys[i], v = keys[i] + 100;
+        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    }
+
+    bool seen[17] = {false};  // keys go up to 16
+    size_t count = 0;
+    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID; it = u32map_iter_next(&m, it)) {
+        u32map_node_t *n = u32map_node_at(&m, it);
+        assert(!seen[n->key]);
+        assert(n->val == n->key + 100);
+        seen[n->key] = true;
+        count++;
+    }
+    assert(count == N);
+    for (uint32_t i = 0; i < N; i++) {
+        assert(seen[keys[i]]);
+    }
+    u32map_destroy(&m);
+}
+
+static void test_iter_next_after_single_entry(void) {
+    printf("Test: iter_next after single-entry map returns INVALID\n");
+    u32map_t m = u32map_new();
+    uint32_t k = 42, v = 420;
+    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    u32map_iter_t it = u32map_iter(&m);
+    assert(it != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_iter_next(&m, it) == _ZP_HASHMAP_ITER_INVALID);
+    u32map_destroy(&m);
+}
+
+static void test_iteration_removal_pattern(void) {
+    printf("Test: safe removal of even keys during iteration\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 10;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    }
+
+    // Remove all even keys during iteration using the next_idx output.
+    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID;) {
+        u32map_node_t *n = u32map_node_at(&m, it);
+        if (n->key % 2 == 0) {
+            u32map_remove_at(&m, it, NULL, &it);
+        } else {
+            it = u32map_iter_next(&m, it);
+        }
+    }
+
+    assert(u32map_size(&m) == N / 2);
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t *got = u32map_get(&m, &i);
+        if (i % 2 == 0) {
+            assert(got == NULL);
+        } else {
+            assert(got != NULL && *got == i);
+        }
+    }
+    u32map_destroy(&m);
+}
+
+static void test_iteration_remove_all(void) {
+    printf("Test: removing all entries during iteration leaves map empty\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 8;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    }
+
+    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID;) {
+        u32map_remove_at(&m, it, NULL, &it);
+    }
+
+    assert(u32map_is_empty(&m));
+    assert(u32map_iter(&m) == _ZP_HASHMAP_ITER_INVALID);
+    u32map_destroy(&m);
+}
+
+static void test_remove_at_moves_value_out(void) {
+    printf("Test: remove_at with out_val moves node out correctly\n");
+    u32map_t m = u32map_new();
+    uint32_t k = 55, v = 550;
+    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    u32map_iter_t it = u32map_iter(&m);
+    assert(it != _ZP_HASHMAP_ITER_INVALID);
+
+    u32map_node_t out;
+    u32map_remove_at(&m, it, &out, NULL);
+    assert(out.key == 55 && out.val == 550);
+    assert(u32map_is_empty(&m));
+    u32map_destroy(&m);
+}
+
 static void test_multiple_collisions(void) {
     printf("Test: many keys colliding into the same bucket\n");
     u32map_t m = u32map_new();
@@ -290,5 +426,12 @@ int main(void) {
     test_pool_slot_reused_after_remove();
     test_multiple_collisions();
     test_bucket_count_exceeds_iter_type();
+    test_empty_iteration();
+    test_iteration_visits_all();
+    test_iteration_visits_all_with_collisions();
+    test_iter_next_after_single_entry();
+    test_iteration_removal_pattern();
+    test_iteration_remove_all();
+    test_remove_at_moves_value_out();
     return 0;
 }

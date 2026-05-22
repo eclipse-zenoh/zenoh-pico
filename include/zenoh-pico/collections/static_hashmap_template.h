@@ -311,14 +311,42 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
     return _ZP_HMAP_IDX_TO_ITER(new_idx);
 }
 
+// ── Iteration ─────────────────────────────────────────────────────────────────
+//
+// Pattern:
+//   for (size_t i = map_iter(&map); i != _ZP_HASHMAP_ITER_INVALID; i = map_iter_next(&map, i)) {
+//       map_node_t *n = map_node_at(&map, i);
+//       // use n->key, n->val
+//   }
+
+// Returns the index of the next live slot after 'pos', or _ZP_HASHMAP_ITER_INVALID.
+static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
+                                                            iter_next)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
+                                                                       _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE pos) {
+    for (size_t i = pos; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
+        if (_ZP_HMAP_IS_PRESENT(map, i)) {
+            return _ZP_HMAP_IDX_TO_ITER(i);
+        }
+    }
+    return _ZP_HASHMAP_ITER_INVALID;
+}
+
+// Returns the index of the first live slot, or _ZP_HASHMAP_ITER_INVALID if the map is empty.
+static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
+                                                            iter)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
+    return _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_next)(map, 0);
+}
+
 // ── remove_at ────────────────────────────────────────────────────────────────
 // Remove the node at the given pool index (obtained from insert or a prior
 // lookup).  Behaviour is undefined if idx is _ZP_HASHMAP_ITER_INVALID or has already been
 // freed.  If out_val != NULL the value is moved out; otherwise it is destroyed.
+// If next_idx != NULL it is set to the iterator of the next node.
 
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                            remove_at)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx,
-                                      _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *out_val) {
+                                      _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *out_val,
+                                      _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE *next_idx) {
     idx = _ZP_HMAP_ITER_TO_IDX(idx);
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
     // Re-derive the bucket from the node's own key so the caller does not need
@@ -345,8 +373,10 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
     }
     _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(map, idx);
     map->_size--;
+    if (next_idx != NULL) {
+        *next_idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_next)(map, _ZP_HMAP_IDX_TO_ITER(idx));
+    }
 }
-
 // ── remove ────────────────────────────────────────────────────────────────────
 // If out_val != NULL the value is moved out; otherwise it is destroyed.
 // Returns true if the key was found.
@@ -360,11 +390,11 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove)(_ZP_STATIC_
     }
     if (out_val != NULL) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE temp;
-        _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, &temp);
+        _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, &temp, NULL);
         _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&temp.key);  // key is not returned to caller, so destroy it
         _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(out_val, &temp.val);
     } else {
-        _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, NULL);
+        _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, NULL, NULL);
     }
     return true;
 }

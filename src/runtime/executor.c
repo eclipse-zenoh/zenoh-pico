@@ -89,7 +89,8 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
         }
         fut_data = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;
         if (fut_data->_fut._fut_fn == NULL) {  // idle task, just skip it and check the next task.
-            _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL);  // Remove the idle task from the task pool
+            _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL,
+                                       NULL);  // Remove the idle task from the task pool
             continue;
         } else if (_z_fut_schedule_get_status(fut_data->_schedule) != _Z_FUT_STATUS_SUSPENDED) {
             break;
@@ -110,7 +111,7 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
         _z_sleeping_fut_pqueue_push(&executor->_sleeping_tasks, &fut_idx);
     } else if (fn_result._status == _Z_FUT_STATUS_READY) {
         // The task is ready, we should destroy it to free the resource.
-        _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL);
+        _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL, NULL);
     } else if (fn_result._status == _Z_FUT_STATUS_SUSPENDED) {
         // The task is suspended, we should keep it in the task pool with the suspended status, and it will be skipped
         // in the next spin until it's resumed by external events.
