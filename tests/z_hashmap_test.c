@@ -35,8 +35,8 @@ static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME u32map
 #define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 8
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 12
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME u32_eq
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -207,8 +207,8 @@ static void test_pool_slot_reused_after_remove(void) {
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME wide_bucket_map
 #define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 300
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 10
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME u32_eq
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 static void test_bucket_count_exceeds_iter_type(void) {

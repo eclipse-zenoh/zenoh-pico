@@ -18,13 +18,13 @@
 //   (optional, default is derived from the element type)
 // - _ZP_VECTOR_TEMPLATE_INITIAL_CAPACITY: the initial heap allocation capacity
 //   (optional, default is 16)
-// - _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME: the function-like macro used to destroy
+// - _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
-// - _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME: the function-like macro used to move an
+// - _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
 //   element (optional, default performs assignment and then destroys the source element)
-// - _ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME: the function-like macro used to allocate memory
+// - _ZP_VECTOR_TEMPLATE_ALLOC_FN: the function-like macro used to allocate memory
 //   with signature void*(size_t bytes) (optional, default is malloc)
-// - _ZP_VECTOR_TEMPLATE_FREE_FN_NAME: the function-like macro used to free memory
+// - _ZP_VECTOR_TEMPLATE_FREE_FN: the function-like macro used to free memory
 //   with signature void(void *ptr) (optional, default is free)
 
 #include <stdbool.h>
@@ -42,22 +42,22 @@
 #define _ZP_VECTOR_TEMPLATE_NAME _ZP_CAT(_ZP_VECTOR_TEMPLATE_ELEM_TYPE, vec)
 #endif
 
-#ifndef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME
+#ifndef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN
 #define _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE
-#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(x) (void)(x)
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME
+#ifndef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN
 #define _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
-#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                    \
-    _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
+#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) \
+    *(dst) = *(src);                               \
+    _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(src);
 #endif
 
-#ifndef _ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME
-#define _ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME(bytes) malloc(bytes)
+#ifndef _ZP_VECTOR_TEMPLATE_ALLOC_FN
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes) malloc(bytes)
 #endif
-#ifndef _ZP_VECTOR_TEMPLATE_FREE_FN_NAME
-#define _ZP_VECTOR_TEMPLATE_FREE_FN_NAME(ptr) free(ptr)
+#ifndef _ZP_VECTOR_TEMPLATE_FREE_FN
+#define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) free(ptr)
 #endif
 
 #define _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, t)
@@ -81,7 +81,7 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new_with_capacity)(_ZP_VECT
     if (capacity == 0) {
         v->_buffer = NULL;
     } else {
-        v->_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME(
+        v->_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(
             capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
         if (v->_buffer == NULL) {
             return false;
@@ -111,10 +111,10 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, is_empty)(const _ZP_VECTOR_
 static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, destroy)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
 #if !defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE)
     for (size_t i = 0; i < vec->_size; i++) {
-        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(&vec->_buffer[i]);
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[i]);
     }
 #endif
-    _ZP_VECTOR_TEMPLATE_FREE_FN_NAME(vec->_buffer);
+    _ZP_VECTOR_TEMPLATE_FREE_FN(vec->_buffer);
     vec->_buffer = NULL;
     vec->_size = 0;
     vec->_capacity = 0;
@@ -146,7 +146,7 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     if (new_capacity <= vec->_capacity) {
         return true;
     }
-    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME(
+    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(
         new_capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
     if (new_buffer == NULL) {
         return false;
@@ -155,10 +155,10 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     memcpy(new_buffer, vec->_buffer, vec->_size * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
 #else
     for (size_t i = 0; i < vec->_size; i++) {
-        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&new_buffer[i], &vec->_buffer[i]);
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&new_buffer[i], &vec->_buffer[i]);
     }
 #endif
-    _ZP_VECTOR_TEMPLATE_FREE_FN_NAME(vec->_buffer);
+    _ZP_VECTOR_TEMPLATE_FREE_FN(vec->_buffer);
     vec->_buffer = new_buffer;
     vec->_capacity = new_capacity;
     return true;
@@ -175,7 +175,7 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, push_back)(_ZP_VECTOR_TEMPL
             return false;
         }
     }
-    _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&vec->_buffer[vec->_size], elem);
+    _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size], elem);
     vec->_size++;
     return true;
 }
@@ -190,9 +190,9 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, pop_back)(_ZP_VECTOR_TEMPLA
     }
     vec->_size--;
     if (out != NULL) {
-        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(out, &vec->_buffer[vec->_size]);
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[vec->_size]);
     } else {
-        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(&vec->_buffer[vec->_size]);
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[vec->_size]);
     }
     return true;
 }
@@ -224,9 +224,9 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, d
 #undef _ZP_VECTOR_TEMPLATE_TYPE
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TYPE
 #undef _ZP_VECTOR_TEMPLATE_NAME
-#undef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME
-#undef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME
+#undef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN
+#undef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
-#undef _ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME
-#undef _ZP_VECTOR_TEMPLATE_FREE_FN_NAME
+#undef _ZP_VECTOR_TEMPLATE_ALLOC_FN
+#undef _ZP_VECTOR_TEMPLATE_FREE_FN

@@ -35,8 +35,8 @@ static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_NAME u32rhhmap
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
-#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(a, b) u32_eq(a, b)
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a, b) u32_eq(a, b)
 #define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 4u  // small so resize is exercised early
 #include "zenoh-pico/collections/hashmap_template.h"
 
@@ -59,14 +59,14 @@ static inline void counted_val_destroy(uint32_t *p) {
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_NAME dtormap
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME u32_hash
-#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(a, b) u32_eq(a, b)
-#define _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(p) counted_key_destroy(p)
-#define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(p) counted_val_destroy(p)
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a, b) u32_eq(a, b)
+#define _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(p) counted_key_destroy(p)
+#define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(p) counted_val_destroy(p)
 // Plain copy move — the destroy counter fires only on explicit destroy calls,
 // not implicitly inside every insert/move operation.
-#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(dst, src) (*(dst) = *(src))
-#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(dst, src) (*(dst) = *(src))
+#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) (*(dst) = *(src))
+#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) (*(dst) = *(src))
 #define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 4u
 #include "zenoh-pico/collections/hashmap_template.h"
 
@@ -392,8 +392,8 @@ static void test_resize_preserves_entries(void) {
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_NAME collmap
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(_k) ((size_t)0)
-#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(a, b) (*(a) == *(b))
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(_k) ((size_t)0)
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a, b) (*(a) == *(b))
 #define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 16u
 #include "zenoh-pico/collections/hashmap_template.h"
 

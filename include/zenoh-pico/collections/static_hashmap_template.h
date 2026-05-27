@@ -25,11 +25,11 @@
 //       type of the key
 //   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE
 //       type of the value
-//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key_ptr) -> size_t
+//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) -> size_t
 //       hash function for the key
 //
 // Optional:
-//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) -> bool
+//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(key_a_ptr, key_b_ptr) -> bool
 //       equality function for keys (default: *key_a_ptr == *key_b_ptr)
 //   _ZP_STATIC_HASHMAP_TEMPLATE_NAME
 //       base name for all generated symbols
@@ -40,13 +40,13 @@
 //   _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY
 //       maximum total number of entries that can be stored
 //       (default: _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT)
-//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key_ptr)
+//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key_ptr)
 //       destroy a key (default: no-op)
-//   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(val_ptr)
+//   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(val_ptr)
 //       destroy a value (default: no-op)
-//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(dst_ptr, src_ptr)
+//   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst_ptr, src_ptr)
 //       move a key (default: copy then destroy src)
-//   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(dst_ptr, src_ptr)
+//   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst_ptr, src_ptr)
 //       move a value (default: copy then destroy src)
 
 #include <stdbool.h>
@@ -70,13 +70,13 @@
 #error "_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE must be defined before including static_hashmap_template.h"
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE int
 #endif
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME
-#error "_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME must be defined before including static_hashmap_template.h"
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN
+#error "_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN must be defined before including static_hashmap_template.h"
 #endif
 
 // ── Optional macros with defaults ────────────────────────────────────────────
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) (*(key_a_ptr) == *(key_b_ptr))
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(key_a_ptr, key_b_ptr) (*(key_a_ptr) == *(key_b_ptr))
 #endif
 
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT
@@ -111,21 +111,21 @@
 #define _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ((uint32_t)0xFFFFFFFF)
 #endif
 
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                           \
-    _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(src);
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) \
+    *(dst) = *(src);                                      \
+    _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(src);
 #endif
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                           \
-    _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(src);
+#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) \
+    *(dst) = *(src);                                      \
+    _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(src);
 #endif
 
 // ── Internal name helpers ─────────────────────────────────────────────────────
@@ -217,11 +217,11 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STAT
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             get_iter)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                       const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
-    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-        if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
+        if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(&n->key, key)) {
             return _ZP_HMAP_IDX_TO_ITER(idx);
         }
         idx = map->_next[idx];
@@ -282,16 +282,16 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
                                                             insert)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                     _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key,
                                                                     _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *val) {
-    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     // Walk the chain looking for an existing entry with the same key
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-        if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&n->key, key)) {
+        if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(&n->key, key)) {
             // Update: destroy incoming key, replace value in-place
-            _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key);
-            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
-            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
+            _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key);
+            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
+            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
             return _ZP_HMAP_IDX_TO_ITER(idx);
         }
         idx = map->_next[idx];
@@ -302,8 +302,8 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
         return _ZP_HASHMAP_ITER_INVALID;  // pool exhausted
     }
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[new_idx];
-    _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&n->key, key);
-    _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&n->val, val);
+    _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(&n->key, key);
+    _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
     // Prepend to bucket chain (O(1))
     map->_next[new_idx] = map->_buckets[b];
     map->_buckets[b] = new_idx;
@@ -351,7 +351,7 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
     // Re-derive the bucket from the node's own key so the caller does not need
     // to supply it separately.
-    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(&n->key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
+    size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(&n->key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     // Walk the chain to find the predecessor and unlink idx.
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE prev = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE cur = map->_buckets[b];
@@ -365,11 +365,11 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
         map->_next[prev] = map->_next[idx];
     }
     if (out_val != NULL) {
-        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&out_val->key, &n->key);
-        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&out_val->val, &n->val);
+        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(&out_val->key, &n->key);
+        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&out_val->val, &n->val);
     } else {
-        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->key);
-        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
+        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
+        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
     }
     _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(map, idx);
     map->_size--;
@@ -391,8 +391,8 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove)(_ZP_STATIC_
     if (out_val != NULL) {
         _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE temp;
         _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, &temp, NULL);
-        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&temp.key);  // key is not returned to caller, so destroy it
-        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(out_val, &temp.val);
+        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&temp.key);  // key is not returned to caller, so destroy it
+        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(out_val, &temp.val);
     } else {
         _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, NULL, NULL);
     }
@@ -408,8 +408,8 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC
         _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_buckets[b];
         while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
             _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
-            _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&n->key);
-            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&n->val);
+            _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
+            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
             idx = map->_next[idx];
         }
         map->_buckets[b] = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
@@ -431,12 +431,12 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_NAME
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN
+#undef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_TYPE
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE
 #undef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE

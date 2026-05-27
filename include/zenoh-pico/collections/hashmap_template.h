@@ -37,11 +37,11 @@
 //       type of the key
 //   _ZP_HASHMAP_TEMPLATE_VAL_TYPE
 //       type of the value
-//   _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key_ptr) -> size_t
+//   _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) -> size_t
 //       hash function for the key
 //
 // Optional:
-//   _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(key_a_ptr, key_b_ptr) -> bool
+//   _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(key_a_ptr, key_b_ptr) -> bool
 //       equality function for keys (default: pointer dereference ==)
 //   _ZP_HASHMAP_TEMPLATE_NAME
 //       base name for all generated symbols
@@ -52,13 +52,13 @@
 //       numerator of the maximum load factor (default: 75)
 //   _ZP_HASHMAP_TEMPLATE_MAX_LOAD_DEN
 //       denominator of the maximum load factor (default: 100)
-//   _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key_ptr)
+//   _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key_ptr)
 //       destroy a key (default: no-op)
-//   _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(val_ptr)
+//   _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(val_ptr)
 //       destroy a value (default: no-op)
-//   _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(dst_ptr, src_ptr)
+//   _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst_ptr, src_ptr)
 //       move a key (default: *dst = *src; destroy src)
-//   _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(dst_ptr, src_ptr)
+//   _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst_ptr, src_ptr)
 //       move a value (default: *dst = *src; destroy src)
 //   _ZP_HASHMAP_TEMPLATE_ALLOC_FN(size) -> void*
 //       allocate 'size' bytes (default: malloc)
@@ -86,14 +86,14 @@
 #error "_ZP_HASHMAP_TEMPLATE_VAL_TYPE must be defined before including robin_hood_hashmap_template.h"
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE int
 #endif
-#ifndef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME
-#error "_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME must be defined before including robin_hood_hashmap_template.h"
+#ifndef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN
+#error "_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN must be defined before including robin_hood_hashmap_template.h"
 #endif
 
 // ── Optional macros with defaults ────────────────────────────────────────────
 
-#ifndef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
-#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(a, b) (*(a) == *(b))
+#ifndef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a, b) (*(a) == *(b))
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_NAME
@@ -111,21 +111,21 @@
 #define _ZP_HASHMAP_TEMPLATE_MAX_LOAD_DEN 100u
 #endif
 
-#ifndef _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME
-#define _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN
+#define _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME
-#define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN
+#define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME
-#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                    \
-    _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(src);
+#ifndef _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN
+#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) \
+    *(dst) = *(src);                               \
+    _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(src);
 #endif
-#ifndef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME
-#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                    \
-    _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(src);
+#ifndef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN
+#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) \
+    *(dst) = *(src);                               \
+    _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(src);
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_ALLOC_FN
@@ -257,7 +257,7 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, is_empty)(const _ZP_HASHMA
 static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, _raw_insert)(_ZP_HASHMAP_TEMPLATE_SLOT_TYPE *slots, size_t cap,
                                                                      _ZP_HASHMAP_TEMPLATE_SLOT_TYPE *candidate) {
     size_t mask = cap - 1u;
-    size_t hash = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(&candidate->node.key);
+    size_t hash = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(&candidate->node.key);
     size_t ins = _ZP_RH_HMAP_BUCKET(hash, mask);
     size_t ins_psl = 0;
 
@@ -267,8 +267,8 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, _raw_insert)(_ZP_HASHMAP
         if (!_ZP_RH_HMAP_SLOT_OCCUPIED(slot)) {
             // Fast path: insertion slot is empty — no shifting required.
             _ZP_RH_HMAP_SLOT_SET(&slots[ins], ins_psl);
-            _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&slots[ins].node.key, &candidate->node.key);
-            _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&slots[ins].node.val, &candidate->node.val);
+            _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&slots[ins].node.key, &candidate->node.key);
+            _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&slots[ins].node.val, &candidate->node.val);
             return ins;
         } else if (_ZP_RH_HMAP_SLOT_PSL(slot) < ins_psl) {
             break;
@@ -293,14 +293,14 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, _raw_insert)(_ZP_HASHMAP
         size_t src = (ins + k - 1u) & mask;
         size_t dst = (ins + k) & mask;
         slots[dst]._info = slots[src]._info + (size_t)2u;  // PSL += 1
-        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&slots[dst].node.key, &slots[src].node.key);
-        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&slots[dst].node.val, &slots[src].node.val);
+        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&slots[dst].node.key, &slots[src].node.key);
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&slots[dst].node.val, &slots[src].node.val);
     }
 
     // Place candidate at the insertion slot.
     _ZP_RH_HMAP_SLOT_SET(&slots[ins], ins_psl);
-    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&slots[ins].node.key, &candidate->node.key);
-    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&slots[ins].node.val, &candidate->node.val);
+    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&slots[ins].node.key, &candidate->node.key);
+    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&slots[ins].node.val, &candidate->node.val);
     return ins;
 }
 
@@ -336,7 +336,7 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(const _ZP_HASH
         return _ZP_HASHMAP_ITER_INVALID;
     }
     size_t mask = _ZP_RH_HMAP_MASK(map);
-    size_t hash = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME(key);
+    size_t hash = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key);
     size_t pos = _ZP_RH_HMAP_BUCKET(hash, mask);
     size_t psl = 0;
 
@@ -349,7 +349,7 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(const _ZP_HASH
         // A key hashing to our bucket always sits at exactly PSL == psl at this probe step.
         // If the stored PSL is greater, the occupant belongs to a different ideal bucket —
         // our key cannot be here, but may still be further along the probe chain.
-        if (_ZP_RH_HMAP_SLOT_PSL(slot) == psl && _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME(&slot->node.key, key)) {
+        if (_ZP_RH_HMAP_SLOT_PSL(slot) == psl && _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(&slot->node.key, key)) {
             return _ZP_RH_HMAP_IDX_TO_ITER(pos);
         }
         psl++;
@@ -390,9 +390,9 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMP
     size_t existing = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (existing != _ZP_HASHMAP_ITER_INVALID) {
         existing = _ZP_RH_HMAP_ITER_TO_IDX(existing);
-        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(key);
-        _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&map->_slots[existing].node.val);
-        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&map->_slots[existing].node.val, val);
+        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key);
+        _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&map->_slots[existing].node.val);
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&map->_slots[existing].node.val, val);
         return _ZP_RH_HMAP_IDX_TO_ITER(existing);
     }
 
@@ -407,8 +407,8 @@ static inline size_t _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, insert)(_ZP_HASHMAP_TEMP
     _ZP_HASHMAP_TEMPLATE_SLOT_TYPE candidate;
     memset(&candidate, 0, sizeof(candidate));
     candidate._info = (size_t)1u;  // occupied, PSL=0
-    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&candidate.node.key, key);
-    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&candidate.node.val, val);
+    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&candidate.node.key, key);
+    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&candidate.node.val, val);
 
     size_t idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, _raw_insert)(map->_slots, map->_capacity, &candidate);
     map->_size++;
@@ -452,11 +452,11 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
     _ZP_HASHMAP_TEMPLATE_SLOT_TYPE *slots = map->_slots;
 
     if (out_val != NULL) {
-        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&out_val->key, &slots[idx].node.key);
-        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&out_val->val, &slots[idx].node.val);
+        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&out_val->key, &slots[idx].node.key);
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&out_val->val, &slots[idx].node.val);
     } else {
-        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&slots[idx].node.key);
-        _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&slots[idx].node.val);
+        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&slots[idx].node.key);
+        _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&slots[idx].node.val);
     }
     _ZP_RH_HMAP_SLOT_CLEAR(&slots[idx]);
     map->_size--;
@@ -471,8 +471,8 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
         }
         // Move key+val from nb into cur, then decrement PSL by 1.
         slots[cur]._info = nb->_info - (size_t)2u;  // copy _info with PSL-1
-        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME(&slots[cur].node.key, &nb->node.key);
-        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(&slots[cur].node.val, &nb->node.val);
+        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&slots[cur].node.key, &nb->node.key);
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&slots[cur].node.val, &nb->node.val);
         _ZP_RH_HMAP_SLOT_CLEAR(nb);
         cur = next;
         next = (next + 1u) & mask;
@@ -504,8 +504,8 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove)(_ZP_HASHMAP_TEMPLA
     } else {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE tmp;
         _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, &tmp, NULL);
-        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME(out_val, &tmp.val);
-        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&tmp.key);
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(out_val, &tmp.val);
+        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&tmp.key);
     }
     return true;
 }
@@ -519,8 +519,8 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
     }
     for (size_t i = 0; i < map->_capacity; i++) {
         if (_ZP_RH_HMAP_SLOT_OCCUPIED(&map->_slots[i])) {
-            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME(&map->_slots[i].node.key);
-            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME(&map->_slots[i].node.val);
+            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&map->_slots[i].node.key);
+            _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&map->_slots[i].node.val);
         }
     }
     _ZP_HASHMAP_TEMPLATE_FREE_FN(map->_slots);
@@ -544,12 +544,12 @@ static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
 #undef _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY
 #undef _ZP_HASHMAP_TEMPLATE_MAX_LOAD_NUM
 #undef _ZP_HASHMAP_TEMPLATE_MAX_LOAD_DEN
-#undef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME
-#undef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN_NAME
-#undef _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN_NAME
-#undef _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME
-#undef _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN_NAME
-#undef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME
+#undef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN
+#undef _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN
+#undef _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN
+#undef _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN
+#undef _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN
+#undef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN
 #undef _ZP_HASHMAP_TEMPLATE_ALLOC_FN
 #undef _ZP_HASHMAP_TEMPLATE_FREE_FN
 #undef _ZP_HASHMAP_TEMPLATE_TYPE

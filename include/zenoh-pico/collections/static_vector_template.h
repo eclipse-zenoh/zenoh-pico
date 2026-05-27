@@ -18,9 +18,9 @@
 //   (optional, default is derived from the element type and size)
 // - _ZP_STATIC_VECTOR_TEMPLATE_SIZE: the maximum capacity of the fixed-capacity array
 //   stored in the generated struct (optional, default is 16)
-// - _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME: the function-like macro used to destroy
+// - _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
-// - _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME: the function-like macro used to move an
+// - _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
 //   element (optional, default performs assignment and then destroys the source element)
 
 #include <stdbool.h>
@@ -40,13 +40,13 @@
     _ZP_CAT(_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE, vec), _ZP_STATIC_VECTOR_TEMPLATE_SIZE)
 #endif
 
-#ifndef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME
-#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME
-#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                           \
-    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
+#ifndef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) \
+    *(dst) = *(src);                                      \
+    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(src);
 #endif
 
 #define _ZP_STATIC_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, t)
@@ -81,7 +81,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, is_empty)(const _ZP_
 // then resets the vector to an empty state. Does not free the vector struct itself.
 static inline void _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, destroy)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     for (size_t i = 0; i < vec->_size; i++) {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(&vec->_buffer[i]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[i]);
     }
     vec->_size = 0;
 }
@@ -112,7 +112,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, push_back)(_ZP_STATI
     if (vec->_size == _ZP_STATIC_VECTOR_TEMPLATE_SIZE) {
         return false;
     }
-    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&vec->_buffer[vec->_size], elem);
+    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size], elem);
     vec->_size++;
     return true;
 }
@@ -127,9 +127,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, pop_back)(_ZP_STATIC
     }
     vec->_size--;
     if (out != NULL) {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(out, &vec->_buffer[vec->_size]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[vec->_size]);
     } else {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(&vec->_buffer[vec->_size]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[vec->_size]);
     }
     return true;
 }
@@ -162,9 +162,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, insert)(_ZP_STATIC_V
         return false;
     }
     for (size_t i = vec->_size; i > index; i--) {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&vec->_buffer[i], &vec->_buffer[i - 1]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i], &vec->_buffer[i - 1]);
     }
-    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&vec->_buffer[index], elem);
+    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], elem);
     vec->_size++;
     return true;
 }
@@ -178,12 +178,12 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(_ZP_STATIC_V
         return false;
     }
     if (out != NULL) {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(out, &vec->_buffer[index]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
     } else {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(&vec->_buffer[index]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
     }
     for (size_t i = index + 1; i < vec->_size; i++) {
-        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(&vec->_buffer[i - 1], &vec->_buffer[i]);
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i - 1], &vec->_buffer[i]);
     }
     vec->_size--;
     return true;
@@ -199,6 +199,6 @@ static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TE
 #undef _ZP_STATIC_VECTOR_TEMPLATE_TYPE
 #undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE
 #undef _ZP_STATIC_VECTOR_TEMPLATE_NAME
-#undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME
-#undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME
+#undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN
+#undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN
 #undef _ZP_STATIC_VECTOR_TEMPLATE_SIZE

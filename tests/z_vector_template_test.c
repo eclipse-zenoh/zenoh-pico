@@ -60,8 +60,8 @@ static void box_move(box_t *dst, box_t *src) {
 
 #define _ZP_VECTOR_TEMPLATE_ELEM_TYPE box_t
 #define _ZP_VECTOR_TEMPLATE_NAME boxvec
-#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN_NAME(x) box_destroy(x)
-#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src) box_move(dst, src)
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) box_destroy(x)
+#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) box_move(dst, src)
 #include "zenoh-pico/collections/vector_template.h"
 
 // ── Section 3: custom allocator ───────────────────────────────────────────────
@@ -82,8 +82,8 @@ static void counted_free(void *ptr) {
 
 #define _ZP_VECTOR_TEMPLATE_ELEM_TYPE int
 #define _ZP_VECTOR_TEMPLATE_NAME customvec
-#define _ZP_VECTOR_TEMPLATE_ALLOC_FN_NAME(bytes) counted_alloc(bytes)
-#define _ZP_VECTOR_TEMPLATE_FREE_FN_NAME(ptr) counted_free(ptr)
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes) counted_alloc(bytes)
+#define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) counted_free(ptr)
 #include "zenoh-pico/collections/vector_template.h"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -55,22 +55,22 @@
 //       NAME_get_ok / NAME_take_ok and NAME_TAG_ok.
 //
 // Optional callbacks (default: no-op destroy, shallow-copy move):
-//   _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME(ptr)
-//   _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME(dst_ptr, src_ptr)
-//   _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_3_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_5_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_6_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_7_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_8_DESTROY_FN(ptr)
+//   _ZP_VARIANT_TEMPLATE_1_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_3_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_4_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_5_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_6_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_7_MOVE_FN(dst_ptr, src_ptr)
+//   _ZP_VARIANT_TEMPLATE_8_MOVE_FN(dst_ptr, src_ptr)
 //
 // Generated API  (NAME=_ZP_VARIANT_TEMPLATE_NAME, XN=X alternative name)
 // ────────────────────────────────────────────────────────────────────────
@@ -206,80 +206,80 @@
 
 // ── Optional callbacks with defaults ─────────────────────────────────────────
 
-#ifndef _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_1_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_2_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_1_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_1_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(src);
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_2_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(src);
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_3_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_3_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_3_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_3_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_3_DESTROY_FN(src);
 #endif
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_4_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_4_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_4_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(src);
 #endif
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_5_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_5_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_5_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_5_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_5_DESTROY_FN(src);
 #endif
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_6_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_6_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_6_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_6_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_6_DESTROY_FN(src);
 #endif
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_7_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_7_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_7_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_7_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_7_DESTROY_FN(src);
 #endif
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_8_TYPE
-#ifndef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME(ptr) (void)(ptr)
+#ifndef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN
+#define _ZP_VARIANT_TEMPLATE_8_DESTROY_FN(ptr) (void)(ptr)
 #endif
-#ifndef _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME
-#define _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                  \
-    _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME(src);
+#ifndef _ZP_VARIANT_TEMPLATE_8_MOVE_FN
+#define _ZP_VARIANT_TEMPLATE_8_MOVE_FN(dst, src) \
+    *(dst) = *(src);                             \
+    _ZP_VARIANT_TEMPLATE_8_DESTROY_FN(src);
 #endif
 #endif
 
@@ -613,7 +613,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_1(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_1;
-    _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME(&v._1, val);
+    _ZP_VARIANT_TEMPLATE_1_MOVE_FN(&v._1, val);
     return v;
 }
 
@@ -621,7 +621,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_2(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_2;
-    _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(&v._2, val);
+    _ZP_VARIANT_TEMPLATE_2_MOVE_FN(&v._2, val);
     return v;
 }
 
@@ -630,7 +630,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_3(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_3;
-    _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(&v._3, val);
+    _ZP_VARIANT_TEMPLATE_3_MOVE_FN(&v._3, val);
     return v;
 }
 #endif
@@ -640,7 +640,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_4(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_4;
-    _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(&v._4, val);
+    _ZP_VARIANT_TEMPLATE_4_MOVE_FN(&v._4, val);
     return v;
 }
 #endif
@@ -650,7 +650,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_5(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_5;
-    _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME(&v._5, val);
+    _ZP_VARIANT_TEMPLATE_5_MOVE_FN(&v._5, val);
     return v;
 }
 #endif
@@ -660,7 +660,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_6(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_6;
-    _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME(&v._6, val);
+    _ZP_VARIANT_TEMPLATE_6_MOVE_FN(&v._6, val);
     return v;
 }
 #endif
@@ -670,7 +670,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_7(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_7;
-    _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME(&v._7, val);
+    _ZP_VARIANT_TEMPLATE_7_MOVE_FN(&v._7, val);
     return v;
 }
 #endif
@@ -680,7 +680,7 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_8(_ZP_VARIANT_TEMPLA
     _ZP_VARIANT_TEMPLATE_TYPE v;
     memset(&v, 0, sizeof(v));
     v._tag = _ZP_VARIANT_TAG_8;
-    _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME(&v._8, val);
+    _ZP_VARIANT_TEMPLATE_8_MOVE_FN(&v._8, val);
     return v;
 }
 #endif
@@ -689,38 +689,38 @@ static inline _ZP_VARIANT_TEMPLATE_TYPE _ZP_VARIANT_FN_FROM_8(_ZP_VARIANT_TEMPLA
 
 static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, destroy)(_ZP_VARIANT_TEMPLATE_TYPE *v) {
     if (v->_tag == _ZP_VARIANT_TAG_1) {
-        _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME(&v->_1);
+        _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(&v->_1);
     } else if (v->_tag == _ZP_VARIANT_TAG_2) {
-        _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(&v->_2);
+        _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(&v->_2);
     }
 #ifdef _ZP_VARIANT_TEMPLATE_3_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_3) {
-        _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME(&v->_3);
+        _ZP_VARIANT_TEMPLATE_3_DESTROY_FN(&v->_3);
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_4_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_4) {
-        _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME(&v->_4);
+        _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(&v->_4);
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_5_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_5) {
-        _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME(&v->_5);
+        _ZP_VARIANT_TEMPLATE_5_DESTROY_FN(&v->_5);
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_6_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_6) {
-        _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME(&v->_6);
+        _ZP_VARIANT_TEMPLATE_6_DESTROY_FN(&v->_6);
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_7_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_7) {
-        _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME(&v->_7);
+        _ZP_VARIANT_TEMPLATE_7_DESTROY_FN(&v->_7);
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_8_TYPE
     else if (v->_tag == _ZP_VARIANT_TAG_8) {
-        _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME(&v->_8);
+        _ZP_VARIANT_TEMPLATE_8_DESTROY_FN(&v->_8);
     }
 #endif
     v->_tag = _ZP_VARIANT_TAG_NONE;
@@ -734,45 +734,45 @@ static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, move)(_ZP_VARIANT_TEMPLATE
                                                             _ZP_VARIANT_TEMPLATE_TYPE *src) {
     _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, destroy)(dst);
     if (src->_tag == _ZP_VARIANT_TAG_1) {
-        _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME(&dst->_1, &src->_1);
+        _ZP_VARIANT_TEMPLATE_1_MOVE_FN(&dst->_1, &src->_1);
         dst->_tag = _ZP_VARIANT_TAG_1;
     } else if (src->_tag == _ZP_VARIANT_TAG_2) {
-        _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(&dst->_2, &src->_2);
+        _ZP_VARIANT_TEMPLATE_2_MOVE_FN(&dst->_2, &src->_2);
         dst->_tag = _ZP_VARIANT_TAG_2;
     }
 #ifdef _ZP_VARIANT_TEMPLATE_3_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_3) {
-        _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(&dst->_3, &src->_3);
+        _ZP_VARIANT_TEMPLATE_3_MOVE_FN(&dst->_3, &src->_3);
         dst->_tag = _ZP_VARIANT_TAG_3;
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_4_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_4) {
-        _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(&dst->_4, &src->_4);
+        _ZP_VARIANT_TEMPLATE_4_MOVE_FN(&dst->_4, &src->_4);
         dst->_tag = _ZP_VARIANT_TAG_4;
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_5_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_5) {
-        _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME(&dst->_5, &src->_5);
+        _ZP_VARIANT_TEMPLATE_5_MOVE_FN(&dst->_5, &src->_5);
         dst->_tag = _ZP_VARIANT_TAG_5;
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_6_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_6) {
-        _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME(&dst->_6, &src->_6);
+        _ZP_VARIANT_TEMPLATE_6_MOVE_FN(&dst->_6, &src->_6);
         dst->_tag = _ZP_VARIANT_TAG_6;
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_7_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_7) {
-        _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME(&dst->_7, &src->_7);
+        _ZP_VARIANT_TEMPLATE_7_MOVE_FN(&dst->_7, &src->_7);
         dst->_tag = _ZP_VARIANT_TAG_7;
     }
 #endif
 #ifdef _ZP_VARIANT_TEMPLATE_8_TYPE
     else if (src->_tag == _ZP_VARIANT_TAG_8) {
-        _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME(&dst->_8, &src->_8);
+        _ZP_VARIANT_TEMPLATE_8_MOVE_FN(&dst->_8, &src->_8);
         dst->_tag = _ZP_VARIANT_TAG_8;
     }
 #endif
@@ -863,7 +863,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_1(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_1) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME(out, &v->_1);
+    _ZP_VARIANT_TEMPLATE_1_MOVE_FN(out, &v->_1);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -872,7 +872,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_2(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_2) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(out, &v->_2);
+    _ZP_VARIANT_TEMPLATE_2_MOVE_FN(out, &v->_2);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -882,7 +882,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_3(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_3) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(out, &v->_3);
+    _ZP_VARIANT_TEMPLATE_3_MOVE_FN(out, &v->_3);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -893,7 +893,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_4(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_4) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(out, &v->_4);
+    _ZP_VARIANT_TEMPLATE_4_MOVE_FN(out, &v->_4);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -904,7 +904,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_5(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_5) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME(out, &v->_5);
+    _ZP_VARIANT_TEMPLATE_5_MOVE_FN(out, &v->_5);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -915,7 +915,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_6(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_6) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME(out, &v->_6);
+    _ZP_VARIANT_TEMPLATE_6_MOVE_FN(out, &v->_6);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -926,7 +926,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_7(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_7) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME(out, &v->_7);
+    _ZP_VARIANT_TEMPLATE_7_MOVE_FN(out, &v->_7);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -937,7 +937,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     if (v->_tag != _ZP_VARIANT_TAG_8) {
         return false;
     }
-    _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME(out, &v->_8);
+    _ZP_VARIANT_TEMPLATE_8_MOVE_FN(out, &v->_8);
     v->_tag = _ZP_VARIANT_TAG_NONE;
     return true;
 }
@@ -985,45 +985,45 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 #ifdef _ZP_VARIANT_TEMPLATE_8_NAME
 #undef _ZP_VARIANT_TEMPLATE_8_NAME
 #endif
-#undef _ZP_VARIANT_TEMPLATE_1_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME
-#ifdef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME
+#undef _ZP_VARIANT_TEMPLATE_1_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_2_DESTROY_FN
+#ifdef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_3_DESTROY_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_4_DESTROY_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_5_DESTROY_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_6_DESTROY_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_7_DESTROY_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN
+#undef _ZP_VARIANT_TEMPLATE_8_DESTROY_FN
 #endif
-#undef _ZP_VARIANT_TEMPLATE_1_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME
-#ifdef _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME
+#undef _ZP_VARIANT_TEMPLATE_1_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_2_MOVE_FN
+#ifdef _ZP_VARIANT_TEMPLATE_3_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_3_MOVE_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_4_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_4_MOVE_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_5_MOVE_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_5_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_5_MOVE_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_6_MOVE_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_6_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_6_MOVE_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_7_MOVE_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_7_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_7_MOVE_FN
 #endif
-#ifdef _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME
-#undef _ZP_VARIANT_TEMPLATE_8_MOVE_FN_NAME
+#ifdef _ZP_VARIANT_TEMPLATE_8_MOVE_FN
+#undef _ZP_VARIANT_TEMPLATE_8_MOVE_FN
 #endif
 #undef _ZP_VARIANT_TEMPLATE_TYPE
 #undef _ZP_VARIANT_TEMPLATE_TAG_TYPE

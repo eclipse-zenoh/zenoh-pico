@@ -59,8 +59,8 @@ static void hstring_move(hstring_t *dst, hstring_t *src) {
 #define _ZP_VARIANT_TEMPLATE_NAME my_variant
 #define _ZP_VARIANT_TEMPLATE_1_TYPE int
 #define _ZP_VARIANT_TEMPLATE_2_TYPE hstring_t
-#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(ptr) hstring_destroy(ptr)
-#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(dst, src) hstring_move(dst, src)
+#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst, src) hstring_move(dst, src)
 #include "zenoh-pico/collections/variant_template.h"
 
 // ─── Instantiation 2: my_result (custom names ok / err) ─────────────────────
@@ -70,8 +70,8 @@ static void hstring_move(hstring_t *dst, hstring_t *src) {
 #define _ZP_VARIANT_TEMPLATE_1_NAME ok
 #define _ZP_VARIANT_TEMPLATE_2_TYPE hstring_t
 #define _ZP_VARIANT_TEMPLATE_2_NAME err
-#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN_NAME(ptr) hstring_destroy(ptr)
-#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN_NAME(dst, src) hstring_move(dst, src)
+#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst, src) hstring_move(dst, src)
 #include "zenoh-pico/collections/variant_template.h"
 
 // ─── Instantiation 3: my_tri (3 types: int / double / hstring_t) ────────────
@@ -83,8 +83,8 @@ static void hstring_move(hstring_t *dst, hstring_t *src) {
 #define _ZP_VARIANT_TEMPLATE_2_NAME f64
 #define _ZP_VARIANT_TEMPLATE_3_TYPE hstring_t
 #define _ZP_VARIANT_TEMPLATE_3_NAME str
-#define _ZP_VARIANT_TEMPLATE_3_DESTROY_FN_NAME(ptr) hstring_destroy(ptr)
-#define _ZP_VARIANT_TEMPLATE_3_MOVE_FN_NAME(dst, src) hstring_move(dst, src)
+#define _ZP_VARIANT_TEMPLATE_3_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_3_MOVE_FN(dst, src) hstring_move(dst, src)
 #include "zenoh-pico/collections/variant_template.h"
 
 // ─── Instantiation 4: my_quad (4 types, default names 1/2/3/4) ──────────────
@@ -94,8 +94,8 @@ static void hstring_move(hstring_t *dst, hstring_t *src) {
 #define _ZP_VARIANT_TEMPLATE_2_TYPE double
 #define _ZP_VARIANT_TEMPLATE_3_TYPE float
 #define _ZP_VARIANT_TEMPLATE_4_TYPE hstring_t
-#define _ZP_VARIANT_TEMPLATE_4_DESTROY_FN_NAME(ptr) hstring_destroy(ptr)
-#define _ZP_VARIANT_TEMPLATE_4_MOVE_FN_NAME(dst, src) hstring_move(dst, src)
+#define _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_4_MOVE_FN(dst, src) hstring_move(dst, src)
 #include "zenoh-pico/collections/variant_template.h"
 
 // ─── Tests for my_variant (default names) ────────────────────────────────────
