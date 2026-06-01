@@ -21,7 +21,7 @@
 // - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
 // - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
-//   element (optional, default performs assignment and then destroys the source element)
+//   element (optional, default performs assignment without destroying the source element)
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -44,9 +44,7 @@
 #define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
 #ifndef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(dst, src) \
-    *(dst) = *(src);                                     \
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(src);
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
 #define _ZP_STATIC_DEQUE_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, t)

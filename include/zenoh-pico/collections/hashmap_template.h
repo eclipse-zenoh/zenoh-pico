@@ -57,9 +57,9 @@
 //   _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(val_ptr)
 //       destroy a value (default: no-op)
 //   _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst_ptr, src_ptr)
-//       move a key (default: *dst = *src; destroy src)
+//       move a key (default: *dst = *src)
 //   _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst_ptr, src_ptr)
-//       move a value (default: *dst = *src; destroy src)
+//       move a value (default: *dst = *src)
 //   _ZP_HASHMAP_TEMPLATE_ALLOC_FN(size) -> void*
 //       allocate 'size' bytes (default: malloc)
 //   _ZP_HASHMAP_TEMPLATE_FREE_FN(ptr)
@@ -118,14 +118,10 @@
 #define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(x) (void)(x)
 #endif
 #ifndef _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN
-#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) \
-    *(dst) = *(src);                               \
-    _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(src);
+#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 #ifndef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN
-#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) \
-    *(dst) = *(src);                               \
-    _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(src);
+#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_ALLOC_FN

@@ -17,9 +17,10 @@
 // _ZP_STATIC_PQUEUE_TEMPLATE_NAME: the name of the priority queue type to generate (without the _t suffix)
 // _ZP_STATIC_PQUEUE_TEMPLATE_SIZE: the maximum size of the priority queue (optional, default is 16)
 // _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_DESTROY_FN: the name of the function to destroy an element (optional, default is
-// a no-op) _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN: the name of the function to move an element (optional, default
-// is element-wise copy + destroy source) _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN: the name of the comparison
-// function (elem_a, elem_b) -> int
+// a no-op)
+// _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN: the name of the function to move an element (optional, default
+// is element-wise copy without destroying source)
+// _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN: the name of the comparison function (elem_a, elem_b) -> int
 //   should return <0 if a has higher priority than b, 0 if equal, >0 if b has higher priority than a
 //   (i.e. min-priority queue by default: smallest element is at the top)
 //
@@ -54,9 +55,7 @@
 #define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
 #ifndef _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN(dst, src) \
-    *(dst) = *(src);                                      \
-    _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_DESTROY_FN(src);
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
 // ── Context support ───────────────────────────────────────────────────────────

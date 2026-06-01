@@ -65,8 +65,6 @@ static inline void counted_val_destroy(uint32_t *p) {
 #define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(p) counted_val_destroy(p)
 // Plain copy move — the destroy counter fires only on explicit destroy calls,
 // not implicitly inside every insert/move operation.
-#define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) (*(dst) = *(src))
-#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) (*(dst) = *(src))
 #define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 4u
 #include "zenoh-pico/collections/hashmap_template.h"
 

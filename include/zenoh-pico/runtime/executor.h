@@ -150,12 +150,6 @@ static inline void _z_fut_data_destroy(_z_fut_data_t *data) {
     data->_schedule = _z_fut_schedule_ready();  // Reset status to ready after destroy
 }
 
-static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
-    _z_fut_move(&dst->_fut, &src->_fut);
-    dst->_schedule = src->_schedule;
-    src->_schedule = _z_fut_schedule_ready();
-}
-
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
 #ifndef _ZP_EXECUTOR_MAX_NUM_FUTURES
@@ -171,7 +165,7 @@ static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key
 #define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY _ZP_EXECUTOR_MAX_NUM_FUTURES
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN _z_fut_data_destroy
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN _z_fut_data_move
+// default move for _z_fut_data - i.e. a plain copy without destroying the source
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 #define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_iter_t

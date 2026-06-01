@@ -45,9 +45,9 @@
 //   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(val_ptr)
 //       destroy a value (default: no-op)
 //   _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst_ptr, src_ptr)
-//       move a key (default: copy then destroy src)
+//       move a key (default: copy without destroying src)
 //   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst_ptr, src_ptr)
-//       move a value (default: copy then destroy src)
+//       move a value (default: copy without destroying src)
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -118,14 +118,10 @@
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(x) (void)(x)
 #endif
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) \
-    *(dst) = *(src);                                      \
-    _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(src);
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) \
-    *(dst) = *(src);                                      \
-    _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(src);
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
 // ── Internal name helpers ─────────────────────────────────────────────────────

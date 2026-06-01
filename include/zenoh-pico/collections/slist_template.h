@@ -21,7 +21,7 @@
 // - _ZP_SLIST_TEMPLATE_ELEM_DESTROY_FN(p): destroys the element pointed to by p
 //   (optional, default is a no-op)
 // - _ZP_SLIST_TEMPLATE_ELEM_MOVE_FN(dst, src): moves the element from src into dst
-//   (optional, default is plain assignment)
+//   (optional, default is plain assignment without destroying the source element)
 // - _ZP_SLIST_TEMPLATE_ALLOC_CTX_TYPE: type of the allocator context stored inside
 //   the list struct (optional). When defined:
 //     - _ZP_SLIST_TEMPLATE_ALLOC_FN must have signature: void*(ctx_type *ctx, size_t bytes)

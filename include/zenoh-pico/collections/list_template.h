@@ -19,7 +19,7 @@
 // - _ZP_LIST_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
 // - _ZP_LIST_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
-//   element (optional, default performs assignment and then destroys the source element)
+//   element (optional, default performs assignment without destroying the source element)
 // - _ZP_LIST_TEMPLATE_ALLOC_CTX_TYPE: the type of the allocator context stored inside
 //   the list struct (optional). When defined:
 //     - _ZP_LIST_TEMPLATE_ALLOC_FN must have signature: void*(ctx_type *ctx, size_t bytes)
