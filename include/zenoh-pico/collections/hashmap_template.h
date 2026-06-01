@@ -366,6 +366,19 @@ static inline _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(idx)].node.val;
 }
 
+// ── cget ───────────────────────────────────────────────────────────────────────
+// Returns a const pointer to the value for key, or NULL if not found.
+
+static inline const _ZP_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
+                                                           cget)(const _ZP_HASHMAP_TEMPLATE_TYPE *map,
+                                                                 const _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+    size_t idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
+    if (idx == _ZP_HASHMAP_ITER_INVALID) {
+        return NULL;
+    }
+    return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(idx)].node.val;
+}
+
 // ── contains ─────────────────────────────────────────────────────────────────
 
 static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, contains)(const _ZP_HASHMAP_TEMPLATE_TYPE *map,
@@ -529,6 +542,13 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 // Behaviour is undefined if pos is _ZP_HASHMAP_ITER_INVALID or the slot is not occupied.
 static inline _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
                                                       node_at)(_ZP_HASHMAP_TEMPLATE_TYPE *map, size_t pos) {
+    return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(pos)].node;
+}
+
+// Returns a const pointer to the node (key+val) at the given iterator position.
+// Behaviour is undefined if pos is _ZP_HASHMAP_ITER_INVALID or the slot is not occupied.
+static inline const _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
+                                                            cnode_at)(_ZP_HASHMAP_TEMPLATE_TYPE *map, size_t pos) {
     return &map->_slots[_ZP_RH_HMAP_ITER_TO_IDX(pos)].node;
 }
 

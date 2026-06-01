@@ -211,12 +211,12 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STAT
 // removed.
 
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
-                                                            get_iter)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
+                                                            get_iter)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                       const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
     size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_buckets[b];
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
-        _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
+        const _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_pool[idx];
         if (_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(&n->key, key)) {
             return _ZP_HMAP_IDX_TO_ITER(idx);
         }
@@ -231,6 +231,18 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             get)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                  const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
+    if (idx != _ZP_HASHMAP_ITER_INVALID) {
+        return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)].val;
+    }
+    return NULL;
+}
+
+// ── cget ───────────────────────────────────────────────────────────────────────
+// Returns a const pointer to the value for key, or NULL if not found.
+
+static inline const _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, cget)(
+    const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx != _ZP_HASHMAP_ITER_INVALID) {
         return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)].val;
@@ -263,6 +275,14 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, is_empty)(const _ZP
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                              node_at)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                       _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
+    return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)];
+}
+
+// ── cnode_at ──────────────────────────────────────────────────────────────────
+// Converts a valid index to a const pointer to its node.
+// Behaviour is undefined if idx is not a valid iterator.
+static inline const _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, cnode_at)(
+    const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
     return &map->_pool[_ZP_HMAP_ITER_TO_IDX(idx)];
 }
 
