@@ -23,7 +23,7 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     }
     _z_fut_data_hmap_iter_t idx = _z_fut_data_hmap_insert(&executor->_tasks, &executor->_next_fut_id, &fut_data);
     _z_fut_handle_t handle = _z_fut_handle_null();
-    if (idx == _ZP_HASHMAP_ITER_INVALID) {
+    if (idx == _z_fut_data_hmap_end(&executor->_tasks)) {
         return handle;
     }
     handle._id = executor->_next_fut_id;
@@ -40,7 +40,7 @@ _z_executor_spin_result_t _z_executor_get_next_fut(_z_executor_t *executor, _z_f
     if (sleeping_idx_ptr != NULL) {
         z_clock_t now = z_clock_now();
         uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
-            _z_fut_data_hmap_node_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
+            _z_fut_data_hmap_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
         z_clock_t wake_up_time = executor->_epoch;
         z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
@@ -53,7 +53,7 @@ _z_executor_spin_result_t _z_executor_get_next_fut(_z_executor_t *executor, _z_f
                 _z_fut_data_hmap_index_deque_push_back(&executor->_ready_tasks, &sleeping_idx);
                 // Mark the sleeping task as ready since it's now
                 // re-enqueued to the ready task queue and can be executed.
-                _z_fut_data_hmap_node_at(&executor->_tasks, sleeping_idx)->val._schedule = _z_fut_schedule_ready();
+                _z_fut_data_hmap_at(&executor->_tasks, sleeping_idx)->val._schedule = _z_fut_schedule_ready();
             } else {
                 // No non-sleeping task, execute the ready sleeping task directly.
                 *task_idx = sleeping_idx;
@@ -87,7 +87,7 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
             result.status == _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT) {  // No tasks to execute
             return result;
         }
-        fut_data = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;
+        fut_data = &_z_fut_data_hmap_at(&executor->_tasks, fut_idx)->val;
         if (fut_data->_fut._fut_fn == NULL) {  // idle task, just skip it and check the next task.
             _z_fut_data_hmap_remove_at(&executor->_tasks, fut_idx, NULL,
                                        NULL);  // Remove the idle task from the task pool
@@ -152,10 +152,10 @@ bool _z_executor_resume_suspended_fut(_z_executor_t *executor, const _z_fut_hand
         return false;
     }
     _z_fut_data_hmap_iter_t fut_idx = _z_fut_data_hmap_get_iter(&executor->_tasks, &handle->_id);
-    if (fut_idx == _ZP_HASHMAP_ITER_INVALID) {
+    if (fut_idx == _z_fut_data_hmap_end(&executor->_tasks)) {
         return false;
     }
-    _z_fut_data_t *fut = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;
+    _z_fut_data_t *fut = &_z_fut_data_hmap_at(&executor->_tasks, fut_idx)->val;
     if (_z_fut_schedule_get_status(fut->_schedule) != _Z_FUT_STATUS_SUSPENDED) {
         return false;
     }

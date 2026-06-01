@@ -143,7 +143,7 @@ static void test_push_back_and_get(void) {
     assert(intvec_size(&v) == 3);
     for (int i = 0; i < 3; i++) {
         assert(*intvec_get(&v, (size_t)i) == vals[i]);
-        assert(*intvec_cget(&v, (size_t)i) == vals[i]);
+        assert(*intvec_const_get(&v, (size_t)i) == vals[i]);
     }
     intvec_destroy(&v);
 }
@@ -216,7 +216,7 @@ static void test_get_out_of_bounds(void) {
     assert(intvec_get(&v, 0) != NULL);
     assert(intvec_get(&v, 1) == NULL);
     assert(intvec_get(&v, 100) == NULL);
-    assert(intvec_cget(&v, 1) == NULL);
+    assert(intvec_const_get(&v, 1) == NULL);
     intvec_destroy(&v);
 }
 

@@ -33,7 +33,6 @@ static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME u32map
-#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 8
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 12
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
@@ -53,7 +52,7 @@ static void test_insert_and_get(void) {
     printf("Test: insert then get returns value\n");
     u32map_t m = u32map_new();
     uint32_t k = 1, v = 10;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     assert(u32map_size(&m) == 1);
     uint32_t *got = u32map_get(&m, &(uint32_t){1});
     assert(got != NULL && *got == 10);
@@ -71,8 +70,8 @@ static void test_insert_updates_existing(void) {
     printf("Test: insert with duplicate key updates value, size stays same\n");
     u32map_t m = u32map_new();
     uint32_t k = 5, v1 = 50, v2 = 99;
-    assert(u32map_insert(&m, &k, &v1) != _ZP_HASHMAP_ITER_INVALID);
-    assert(u32map_insert(&m, &(uint32_t){5}, &v2) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v1) != u32map_end(&m));
+    assert(u32map_insert(&m, &(uint32_t){5}, &v2) != u32map_end(&m));
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){5}) == 99);
     u32map_destroy(&m);
@@ -82,7 +81,7 @@ static void test_remove_existing(void) {
     printf("Test: remove existing key moves value out\n");
     u32map_t m = u32map_new();
     uint32_t k = 7, v = 70;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     uint32_t out = 0;
     assert(u32map_remove(&m, &(uint32_t){7}, &out));
     assert(out == 70);
@@ -104,8 +103,8 @@ static void test_remove_head_of_chain(void) {
     // Keys 0 and 8 both hash to bucket 0 with BUCKET_COUNT=8 (hash%8 == 0 for both)
     uint32_t k0 = 0, v0 = 100;
     uint32_t k8 = 8, v8 = 800;
-    assert(u32map_insert(&m, &k0, &v0) != _ZP_HASHMAP_ITER_INVALID);
-    assert(u32map_insert(&m, &k8, &v8) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
+    assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
     assert(u32map_size(&m) == 2);
     // Remove whichever is the head (k8, inserted last → prepended)
     assert(u32map_remove(&m, &(uint32_t){8}, NULL));
@@ -120,8 +119,8 @@ static void test_remove_tail_of_chain(void) {
     u32map_t m = u32map_new();
     uint32_t k0 = 0, v0 = 100;
     uint32_t k8 = 8, v8 = 800;
-    assert(u32map_insert(&m, &k0, &v0) != _ZP_HASHMAP_ITER_INVALID);
-    assert(u32map_insert(&m, &k8, &v8) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
+    assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
     assert(u32map_remove(&m, &(uint32_t){0}, NULL));  // tail (inserted first)
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){8}) == 800);
@@ -134,7 +133,7 @@ static void test_contains(void) {
     u32map_t m = u32map_new();
     assert(!u32map_contains(&m, &(uint32_t){3}));
     uint32_t k = 3, v = 30;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     assert(u32map_contains(&m, &(uint32_t){3}));
     assert(u32map_remove(&m, &(uint32_t){3}, NULL));
     assert(!u32map_contains(&m, &(uint32_t){3}));
@@ -146,7 +145,7 @@ static void test_clear_and_reuse(void) {
     u32map_t m = u32map_new();
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i, v = i * 10;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     assert(u32map_size(&m) == 12);
     u32map_destroy(&m);
@@ -154,7 +153,7 @@ static void test_clear_and_reuse(void) {
     // Pool fully freed — all 12 slots available again
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i + 100, v = i;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     assert(u32map_size(&m) == 12);
     u32map_destroy(&m);
@@ -165,14 +164,14 @@ static void test_pool_exhaustion(void) {
     u32map_t m = u32map_new();
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i, v = i;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     // One more distinct key must fail
     uint32_t k = 200, v = 200;
-    assert(u32map_insert(&m, &k, &v) == _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) == u32map_end(&m));
     // Updating an existing key must still succeed (no new pool slot needed)
     uint32_t ku = 0, vu = 255;
-    assert(u32map_insert(&m, &ku, &vu) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &ku, &vu) != u32map_end(&m));
     assert(*u32map_get(&m, &(uint32_t){0}) == 255);
     u32map_destroy(&m);
 }
@@ -183,43 +182,41 @@ static void test_pool_slot_reused_after_remove(void) {
     // Fill to capacity
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i, v = i;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     // Remove one entry to free a slot
     assert(u32map_remove(&m, &(uint32_t){0}, NULL));
     assert(u32map_size(&m) == 11);
     // Now a new key must succeed
     uint32_t k = 200, v = 200;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     assert(u32map_size(&m) == 12);
     assert(*u32map_get(&m, &(uint32_t){200}) == 200);
     u32map_destroy(&m);
 }
 
-// ── Instantiate a map where BUCKET_COUNT (300) exceeds the max value of
-// the chosen index type (uint8_t, max = 255, selected because CAPACITY=10 ≤ 254).
-// _buckets[] stores pool node indices — values are always < CAPACITY — so the
-// uint8_t representation is safe even though 300 > 255.
-// This test verifies the map operates correctly in that configuration.
+// ── Instantiate a map with a larger capacity (and therefore bucket count) to
+// exercise spreading entries across many buckets.  Bucket count always equals
+// capacity, and bucket values are pool node indices that are always < CAPACITY,
+// so they fit in the chosen index type.
 
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME wide_bucket_map
-#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT 300
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 10
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 static void test_bucket_count_exceeds_iter_type(void) {
-    printf("Test: BUCKET_COUNT (%d) > index type max (255, uint8_t), map still correct\n", 300);
+    printf("Test: entries spread across many buckets, map still correct\n");
     wide_bucket_map_t m = wide_bucket_map_new();
     assert(wide_bucket_map_is_empty(&m));
 
     // Insert entries that spread across many buckets (key % 300 spreads widely)
     for (uint32_t i = 0; i < 10; i++) {
         uint32_t k = i * 31, v = i;  // 0, 31, 62, 93 … — distinct buckets for most
-        assert(wide_bucket_map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(wide_bucket_map_insert(&m, &k, &v) != wide_bucket_map_end(&m));
     }
     assert(wide_bucket_map_size(&m) == 10);
 
@@ -232,7 +229,7 @@ static void test_bucket_count_exceeds_iter_type(void) {
 
     // Update one entry — must not allocate a new pool node
     uint32_t ku = 0, vu = 99;
-    assert(wide_bucket_map_insert(&m, &ku, &vu) != _ZP_HASHMAP_ITER_INVALID);
+    assert(wide_bucket_map_insert(&m, &ku, &vu) != wide_bucket_map_end(&m));
     assert(wide_bucket_map_size(&m) == 10);
     assert(*wide_bucket_map_get(&m, &(uint32_t){0}) == 99);
 
@@ -240,7 +237,7 @@ static void test_bucket_count_exceeds_iter_type(void) {
     assert(wide_bucket_map_remove(&m, &(uint32_t){31}, NULL));
     assert(wide_bucket_map_size(&m) == 9);
     uint32_t kn = 1000, vn = 42;
-    assert(wide_bucket_map_insert(&m, &kn, &vn) != _ZP_HASHMAP_ITER_INVALID);
+    assert(wide_bucket_map_insert(&m, &kn, &vn) != wide_bucket_map_end(&m));
     assert(wide_bucket_map_size(&m) == 10);
     assert(*wide_bucket_map_get(&m, &(uint32_t){1000}) == 42);
 
@@ -253,7 +250,7 @@ static void test_bucket_count_exceeds_iter_type(void) {
 static void test_empty_iteration(void) {
     printf("Test: iteration over empty map yields no elements\n");
     u32map_t m = u32map_new();
-    assert(u32map_iter(&m) == _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_begin(&m) == u32map_end(&m));
     u32map_destroy(&m);
 }
 
@@ -263,13 +260,13 @@ static void test_iteration_visits_all(void) {
     const uint32_t N = 10;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = i, v = i * 10;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
 
     bool seen[10] = {false};
     size_t count = 0;
-    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID; it = u32map_iter_next(&m, it)) {
-        u32map_node_t *n = u32map_node_at(&m, it);
+    for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
+        u32map_node_t *n = u32map_at(&m, it);
         assert(n->key < N && !seen[n->key]);
         assert(n->val == n->key * 10);
         seen[n->key] = true;
@@ -290,13 +287,13 @@ static void test_iteration_visits_all_with_collisions(void) {
     const uint32_t N = 6;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = keys[i], v = keys[i] + 100;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
 
     bool seen[17] = {false};  // keys go up to 16
     size_t count = 0;
-    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID; it = u32map_iter_next(&m, it)) {
-        u32map_node_t *n = u32map_node_at(&m, it);
+    for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
+        u32map_node_t *n = u32map_at(&m, it);
         assert(!seen[n->key]);
         assert(n->val == n->key + 100);
         seen[n->key] = true;
@@ -310,13 +307,13 @@ static void test_iteration_visits_all_with_collisions(void) {
 }
 
 static void test_iter_next_after_single_entry(void) {
-    printf("Test: iter_next after single-entry map returns INVALID\n");
+    printf("Test: iter_next after single-entry map returns end\n");
     u32map_t m = u32map_new();
     uint32_t k = 42, v = 420;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
-    u32map_iter_t it = u32map_iter(&m);
-    assert(it != _ZP_HASHMAP_ITER_INVALID);
-    assert(u32map_iter_next(&m, it) == _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    u32map_iter_t it = u32map_begin(&m);
+    assert(it != u32map_end(&m));
+    assert(u32map_iter_next(&m, it) == u32map_end(&m));
     u32map_destroy(&m);
 }
 
@@ -326,12 +323,12 @@ static void test_iteration_removal_pattern(void) {
     const uint32_t N = 10;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = i, v = i;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
 
     // Remove all even keys during iteration using the next_idx output.
-    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID;) {
-        u32map_node_t *n = u32map_node_at(&m, it);
+    for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m);) {
+        u32map_node_t *n = u32map_at(&m, it);
         if (n->key % 2 == 0) {
             u32map_remove_at(&m, it, NULL, &it);
         } else {
@@ -357,15 +354,15 @@ static void test_iteration_remove_all(void) {
     const uint32_t N = 8;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = i, v = i;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
 
-    for (u32map_iter_t it = u32map_iter(&m); it != _ZP_HASHMAP_ITER_INVALID;) {
+    for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m);) {
         u32map_remove_at(&m, it, NULL, &it);
     }
 
     assert(u32map_is_empty(&m));
-    assert(u32map_iter(&m) == _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_begin(&m) == u32map_end(&m));
     u32map_destroy(&m);
 }
 
@@ -373,9 +370,9 @@ static void test_remove_at_moves_value_out(void) {
     printf("Test: remove_at with out_val moves node out correctly\n");
     u32map_t m = u32map_new();
     uint32_t k = 55, v = 550;
-    assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
-    u32map_iter_t it = u32map_iter(&m);
-    assert(it != _ZP_HASHMAP_ITER_INVALID);
+    assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    u32map_iter_t it = u32map_begin(&m);
+    assert(it != u32map_end(&m));
 
     u32map_node_t out;
     u32map_remove_at(&m, it, &out, NULL);
@@ -391,7 +388,7 @@ static void test_multiple_collisions(void) {
     uint32_t keys[] = {0, 8, 16, 24, 32, 40};
     for (size_t i = 0; i < 6; i++) {
         uint32_t k = keys[i], v = keys[i] * 10;
-        assert(u32map_insert(&m, &k, &v) != _ZP_HASHMAP_ITER_INVALID);
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     assert(u32map_size(&m) == 6);
     for (size_t i = 0; i < 6; i++) {

@@ -54,6 +54,9 @@
 #ifndef _ZP_VECTOR_TEMPLATE_ALLOC_FN
 #define _ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes) malloc(bytes)
 #endif
+// By default reallocation is implemented as malloc + free
+// but a custom reallocation function can be provided by user to improve performance
+// #define _ZP_VECTOR_TEMPLATE_REALLOC_FN(ptr, size) realloc(ptr, size)
 #ifndef _ZP_VECTOR_TEMPLATE_FREE_FN
 #define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) free(ptr)
 #endif
@@ -64,6 +67,8 @@ typedef struct _ZP_VECTOR_TEMPLATE_TYPE {
     size_t _size;
     size_t _capacity;
 } _ZP_VECTOR_TEMPLATE_TYPE;
+
+typedef _ZP_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, node_t);
 
 // Creates a new, empty vector.
 static inline _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new)(void) {
@@ -129,10 +134,24 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, g
 
 // Returns a const pointer to the element at the given index, or NULL if out of bounds.
 static inline const _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME,
-                                                           cget)(const _ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
+                                                           const_get)(const _ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                      size_t index) {
     if (index >= vec->_size) {
         return NULL;
     }
+    return &vec->_buffer[index];
+}
+
+// Returns a pointer to the element at the given index, without bounds checking.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, at)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                                   size_t index) {
+    return &vec->_buffer[index];
+}
+
+// Returns a const pointer to the element at the given index, without bounds checking.
+static inline const _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME,
+                                                           const_at)(const _ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                     size_t index) {
     return &vec->_buffer[index];
 }
 
@@ -144,8 +163,20 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     if (new_capacity <= vec->_capacity) {
         return true;
     }
-    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(
-        new_capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer;
+#if defined(_ZP_VECTOR_TEMPLATE_REALLOC_FN) && defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_REALLOC_FN(
+        vec->_buffer, new_capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+    if (new_buffer == NULL) {
+        return false;
+    } else {
+        vec->_buffer = new_buffer;
+        vec->_capacity = new_capacity;
+        return true;
+    }
+#else
+    new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(new_capacity *
+                                                                               sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
     if (new_buffer == NULL) {
         return false;
     }
@@ -160,6 +191,7 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     vec->_buffer = new_buffer;
     vec->_capacity = new_capacity;
     return true;
+#endif
 }
 
 // Appends an element to the back of the vector by moving it from @p elem.
@@ -219,6 +251,17 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, d
     return vec->_buffer;
 }
 
+// Returns the index of the first element (always 0).
+// Use together with end() for index-based iteration: for (size_t i = begin(v); i != end(v); i++).
+// Dereference with at() or const_at(). Indices remain stable across growth.
+static inline size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, begin)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    (void)vec;
+    return 0;
+}
+
+// Returns the one-past-last index (equal to size). Used as the end sentinel for index iteration.
+static inline size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, end)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) { return vec->_size; }
+
 #undef _ZP_VECTOR_TEMPLATE_TYPE
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TYPE
 #undef _ZP_VECTOR_TEMPLATE_NAME
@@ -227,4 +270,7 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, d
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE
 #undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
 #undef _ZP_VECTOR_TEMPLATE_ALLOC_FN
+#ifdef _ZP_VECTOR_TEMPLATE_REALLOC_FN
+#undef _ZP_VECTOR_TEMPLATE_REALLOC_FN
+#endif
 #undef _ZP_VECTOR_TEMPLATE_FREE_FN
