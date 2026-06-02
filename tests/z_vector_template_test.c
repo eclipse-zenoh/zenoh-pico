@@ -21,6 +21,8 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
+
 // ── Section 1: trivially destructible/moveable int vector ────────────────────
 //
 // No custom destroy/move → TRIVIALLY_DESTRUCTIBLE and TRIVIALLY_MOVEABLE are
@@ -384,6 +386,73 @@ static void test_custom_alloc_called(void) {
     assert(v._buffer == NULL);
 }
 
+// ── algorithms_template.h tests: heap vector (intvec) ────────────────────────
+
+static void test_heap_foreach(void) {
+    printf("  _ZP_FOREACH visits every element of heap vector\n");
+    intvec_t v = intvec_new();
+    int sum = 0;
+    for (int i = 1; i <= 10; i++) {
+        assert(intvec_push_back(&v, &i));
+        sum += i;
+    }
+    int *elem;
+    int got_sum = 0;
+    _ZP_FOREACH(intvec, &v, elem) { got_sum += *elem; }
+    assert(got_sum == sum);
+
+    // Verify order
+    int expected = 1;
+    _ZP_FOREACH(intvec, &v, elem) {
+        assert(*elem == expected);
+        expected++;
+    }
+    intvec_destroy(&v);
+}
+
+static void test_heap_cforeach(void) {
+    printf("  _ZP_CFOREACH visits every element via const pointer\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 8; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+    const int *elem;
+    int idx = 0;
+    _ZP_CFOREACH(intvec, &v, elem) {
+        assert(*elem == idx);
+        idx++;
+    }
+    assert(idx == 8);
+    intvec_destroy(&v);
+}
+
+static void test_heap_find(void) {
+    printf("  _ZP_FIND locates first matching element, returns NULL when absent\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 10; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+    const int *found;
+#define pred_eq7(e) (*(e) == 7)
+    _ZP_FIND(intvec, &v, found, pred_eq7);
+#undef pred_eq7
+    assert(found != NULL && *found == 7);
+
+#define pred_eq99(e) (*(e) == 99)
+    _ZP_FIND(intvec, &v, found, pred_eq99);
+#undef pred_eq99
+    assert(found == NULL);
+
+    // Empty vector returns NULL
+    intvec_t empty = intvec_new();
+#define pred_eq0(e) (*(e) == 0)
+    _ZP_FIND(intvec, &empty, found, pred_eq0);
+#undef pred_eq0
+    assert(found == NULL);
+    intvec_destroy(&empty);
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -412,6 +481,11 @@ int main(void) {
 
     printf("\n=== custom allocator ===\n");
     test_custom_alloc_called();
+
+    printf("\n=== algorithms_template.h: heap vector (intvec) ===\n");
+    test_heap_foreach();
+    test_heap_cforeach();
+    test_heap_find();
 
     printf("\nAll vector_template tests passed.\n");
     return 0;

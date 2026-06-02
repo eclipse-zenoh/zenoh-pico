@@ -21,6 +21,8 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
+
 // ── Instantiate uint32_t -> uint32_t, default index type, small initial cap ──
 
 static inline size_t u32_hash(const uint32_t *k) {
@@ -193,7 +195,7 @@ static void test_iterator_stable_across_growth(void) {
     }
 
     // The captured iterator must still refer to the same entry.
-    u32map_node_t *n = u32map_at(&m, it);
+    u32map_elem_t *n = u32map_at(&m, it);
     assert(n->key == 12345 && n->val == 67890);
     // And looking the key up again yields the same iterator.
     assert(u32map_get_iter(&m, &(uint32_t){12345}) == it);
@@ -250,7 +252,7 @@ static void test_iteration_visits_all(void) {
     bool seen[64] = {false};
     size_t count = 0;
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
-        u32map_node_t *n = u32map_at(&m, it);
+        u32map_elem_t *n = u32map_at(&m, it);
         assert(n->key < N && !seen[n->key]);
         assert(n->val == n->key * 10);
         seen[n->key] = true;
@@ -272,7 +274,7 @@ static void test_iteration_removal_pattern(void) {
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m);) {
-        u32map_node_t *n = u32map_at(&m, it);
+        u32map_elem_t *n = u32map_at(&m, it);
         if (n->key % 2 == 0) {
             u32map_remove_at(&m, it, NULL, &it);
         } else {
@@ -297,7 +299,7 @@ static void test_remove_at_moves_value_out(void) {
     uint32_t k = 55, v = 550;
     u32map_iter_t it = u32map_insert(&m, &k, &v);
     assert(it != u32map_end(&m));
-    u32map_node_t out;
+    u32map_elem_t out;
     u32map_remove_at(&m, it, &out, NULL);
     assert(out.key == 55 && out.val == 550);
     assert(u32map_is_empty(&m));
@@ -390,7 +392,7 @@ static void test_realloc_grow_path(void) {
     assert(reallocmap_size(&m) == N);
 
     // Iterator must still point at the original entry after realloc-based growth.
-    reallocmap_node_t *n = reallocmap_at(&m, it);
+    reallocmap_elem_t *n = reallocmap_at(&m, it);
     assert(n->key == 777 && n->val == 888);
     assert(reallocmap_get_iter(&m, &(uint32_t){777}) == it);
 
@@ -502,6 +504,149 @@ static void test_partial_fill_grow_preserves_free_list(void) {
     }
 }
 
+// ── Tests: algorithms_template.h macros ───────────────────────────────────────
+
+static void test_algorithms_foreach(void) {
+    printf("Test: _ZP_FOREACH visits every entry exactly once\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 20;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 5;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    bool seen[20] = {false};
+    size_t count = 0;
+    u32map_elem_t *node;
+    _ZP_FOREACH(u32map, &m, node) {
+        assert(node->key < N && !seen[node->key]);
+        assert(node->val == node->key * 5);
+        seen[node->key] = true;
+        count++;
+    }
+    assert(count == N);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_cforeach(void) {
+    printf("Test: _ZP_CFOREACH visits every entry via const pointer\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 15;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i + 100;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    bool seen[15] = {false};
+    const u32map_elem_t *node;
+    _ZP_CFOREACH(u32map, &m, node) {
+        assert(node->key < N && !seen[node->key]);
+        assert(node->val == node->key + 100);
+        seen[node->key] = true;
+    }
+    for (uint32_t i = 0; i < N; i++) {
+        assert(seen[i]);
+    }
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_foreach_val(void) {
+    printf("Test: _ZP_FOREACH_VAL iterates values\n");
+    u32map_t m = u32map_new();
+    uint32_t sum = 0;
+    for (uint32_t i = 1; i <= 10; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+        sum += i;
+    }
+    uint32_t *val;
+    uint32_t got_sum = 0;
+    _ZP_FOREACH_VAL(u32map, &m, val) { got_sum += *val; }
+    assert(got_sum == sum);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_find(void) {
+    printf("Test: _ZP_FIND locates first matching entry, returns NULL when absent\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 20; i++) {
+        uint32_t k = i, v = i * 3;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    // Predicate: entry whose value equals 21 (key 7)
+    const u32map_elem_t *found;
+#define pred_val21(e) ((e)->val == 21)
+    _ZP_FIND(u32map, &m, found, pred_val21);
+#undef pred_val21
+    assert(found != NULL && found->key == 7 && found->val == 21);
+
+    // Predicate that matches nothing
+#define pred_val9999(e) ((e)->val == 9999)
+    _ZP_FIND(u32map, &m, found, pred_val9999);
+#undef pred_val9999
+    assert(found == NULL);
+
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_find_val(void) {
+    printf("Test: _ZP_FIND_VAL locates first matching value\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 12; i++) {
+        uint32_t k = i, v = i * 2;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    const uint32_t *found_val;
+#define pred_val14(v) (*(v) == 14)
+    _ZP_FIND_VAL(u32map, &m, found_val, pred_val14);  // key 7 -> val 14
+#undef pred_val14
+    assert(found_val != NULL && *found_val == 14);
+
+#define pred_val9999(v) (*(v) == 9999)
+    _ZP_FIND_VAL(u32map, &m, found_val, pred_val9999);
+#undef pred_val9999
+    assert(found_val == NULL);
+
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_remove(void) {
+    printf("Test: _ZP_REMOVE removes all matching entries\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 30;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    // Remove all entries with odd keys
+#define pred_odd(e) ((e)->key % 2 != 0)
+    _ZP_REMOVE(u32map, &m, pred_odd);
+#undef pred_odd
+    assert(u32map_size(&m) == N / 2);
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t *got = u32map_get(&m, &i);
+        if (i % 2 != 0) {
+            assert(got == NULL);
+        } else {
+            assert(got != NULL && *got == i);
+        }
+    }
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_remove_all(void) {
+    printf("Test: _ZP_REMOVE with always-true predicate empties the map\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 16; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+#define pred_true(e) ((void)(e), true)
+    _ZP_REMOVE(u32map, &m, pred_true);
+#undef pred_true
+    assert(u32map_is_empty(&m));
+    assert(u32map_begin(&m) == u32map_end(&m));
+    u32map_destroy(&m);
+}
+
 int main(void) {
     test_new_is_empty();
     test_insert_and_get();
@@ -522,6 +667,13 @@ int main(void) {
     test_value_destroy_called();
     test_realloc_grow_path();
     test_partial_fill_grow_preserves_free_list();
+    test_algorithms_foreach();
+    test_algorithms_cforeach();
+    test_algorithms_foreach_val();
+    test_algorithms_find();
+    test_algorithms_find_val();
+    test_algorithms_remove();
+    test_algorithms_remove_all();
     printf("All hashmap_template tests passed\n");
     return 0;
 }

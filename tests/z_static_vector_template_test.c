@@ -19,6 +19,8 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
+
 // ── Instantiate int vector, capacity 8 ───────────────────────────────────────
 
 #define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE int
@@ -308,6 +310,71 @@ static void test_interleaved_insert_remove(void) {
     intvec_destroy(&v);
 }
 
+// ── algorithms_template.h tests ───────────────────────────────────────────────
+
+static void test_foreach(void) {
+    printf("Test: _ZP_FOREACH visits every element in order\n");
+    intvec_t v = intvec_new();
+    int sum = 0;
+    for (int i = 1; i <= 6; i++) {
+        assert(intvec_push_back(&v, &i));
+        sum += i;
+    }
+    int *elem;
+    int got_sum = 0;
+    _ZP_FOREACH(intvec, &v, elem) { got_sum += *elem; }
+    assert(got_sum == sum);
+
+    int expected = 1;
+    _ZP_FOREACH(intvec, &v, elem) {
+        assert(*elem == expected);
+        expected++;
+    }
+    intvec_destroy(&v);
+}
+
+static void test_cforeach(void) {
+    printf("Test: _ZP_CFOREACH visits every element via const pointer\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 5; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+    const int *elem;
+    int idx = 0;
+    _ZP_CFOREACH(intvec, &v, elem) {
+        assert(*elem == idx);
+        idx++;
+    }
+    assert(idx == 5);
+    intvec_destroy(&v);
+}
+
+static void test_find(void) {
+    printf("Test: _ZP_FIND locates matching element, returns NULL when absent\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 8; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+    const int *found;
+#define pred_eq5(e) (*(e) == 5)
+    _ZP_FIND(intvec, &v, found, pred_eq5);
+#undef pred_eq5
+    assert(found != NULL && *found == 5);
+
+#define pred_eq99(e) (*(e) == 99)
+    _ZP_FIND(intvec, &v, found, pred_eq99);
+#undef pred_eq99
+    assert(found == NULL);
+
+    intvec_t empty = intvec_new();
+#define pred_eq0(e) (*(e) == 0)
+    _ZP_FIND(intvec, &empty, found, pred_eq0);
+#undef pred_eq0
+    assert(found == NULL);
+    intvec_destroy(&empty);
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -332,6 +399,9 @@ int main(void) {
     test_data_pointer();
     test_destroy_non_empty();
     test_interleaved_insert_remove();
+    test_foreach();
+    test_cforeach();
+    test_find();
     printf("All vector tests passed.\n");
     return 0;
 }

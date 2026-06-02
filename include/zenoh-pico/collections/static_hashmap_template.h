@@ -121,7 +121,7 @@
 // ── Internal name helpers ─────────────────────────────────────────────────────
 
 #define _ZP_STATIC_HASHMAP_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, t)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, node_t)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, elem_t)
 #define _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, slot_t)
 #define _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPEDEF _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_t)
 
@@ -331,7 +331,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 //
 // Pattern:
 //   for (map_iter_t i = map_begin(&map); i != map_end(&map); i = map_iter_next(&map, i)) {
-//       map_node_t *n = map_at(&map, i);
+//       map_elem_t *n = map_at(&map, i);
 //       // use n->key, n->val
 //   }
 

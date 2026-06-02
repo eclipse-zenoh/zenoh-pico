@@ -19,6 +19,8 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
+
 // ── Instantiate uint32_t -> uint32_t, 8 buckets, capacity 12 ─────────────────
 
 static inline size_t u32_hash(const uint32_t *k) {
@@ -100,13 +102,11 @@ static void test_remove_missing_returns_false(void) {
 static void test_remove_head_of_chain(void) {
     printf("Test: remove head of a collision chain; remaining entry still accessible\n");
     u32map_t m = u32map_new();
-    // Keys 0 and 8 both hash to bucket 0 with BUCKET_COUNT=8 (hash%8 == 0 for both)
     uint32_t k0 = 0, v0 = 100;
     uint32_t k8 = 8, v8 = 800;
     assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
     assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
     assert(u32map_size(&m) == 2);
-    // Remove whichever is the head (k8, inserted last → prepended)
     assert(u32map_remove(&m, &(uint32_t){8}, NULL));
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){0}) == 100);
@@ -121,7 +121,7 @@ static void test_remove_tail_of_chain(void) {
     uint32_t k8 = 8, v8 = 800;
     assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
     assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
-    assert(u32map_remove(&m, &(uint32_t){0}, NULL));  // tail (inserted first)
+    assert(u32map_remove(&m, &(uint32_t){0}, NULL));
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){8}) == 800);
     assert(u32map_get(&m, &(uint32_t){0}) == NULL);
@@ -150,7 +150,6 @@ static void test_clear_and_reuse(void) {
     assert(u32map_size(&m) == 12);
     u32map_destroy(&m);
     assert(u32map_is_empty(&m));
-    // Pool fully freed — all 12 slots available again
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i + 100, v = i;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
@@ -166,10 +165,8 @@ static void test_pool_exhaustion(void) {
         uint32_t k = i, v = i;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-    // One more distinct key must fail
     uint32_t k = 200, v = 200;
     assert(u32map_insert(&m, &k, &v) == u32map_end(&m));
-    // Updating an existing key must still succeed (no new pool slot needed)
     uint32_t ku = 0, vu = 255;
     assert(u32map_insert(&m, &ku, &vu) != u32map_end(&m));
     assert(*u32map_get(&m, &(uint32_t){0}) == 255);
@@ -179,26 +176,18 @@ static void test_pool_exhaustion(void) {
 static void test_pool_slot_reused_after_remove(void) {
     printf("Test: pool slot freed by remove is reused by subsequent insert\n");
     u32map_t m = u32map_new();
-    // Fill to capacity
     for (uint32_t i = 0; i < 12; i++) {
         uint32_t k = i, v = i;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-    // Remove one entry to free a slot
     assert(u32map_remove(&m, &(uint32_t){0}, NULL));
     assert(u32map_size(&m) == 11);
-    // Now a new key must succeed
     uint32_t k = 200, v = 200;
     assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     assert(u32map_size(&m) == 12);
     assert(*u32map_get(&m, &(uint32_t){200}) == 200);
     u32map_destroy(&m);
 }
-
-// ── Instantiate a map with a larger capacity (and therefore bucket count) to
-// exercise spreading entries across many buckets.  Bucket count always equals
-// capacity, and bucket values are pool node indices that are always < CAPACITY,
-// so they fit in the chosen index type.
 
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
@@ -212,35 +201,26 @@ static void test_bucket_count_exceeds_iter_type(void) {
     printf("Test: entries spread across many buckets, map still correct\n");
     wide_bucket_map_t m = wide_bucket_map_new();
     assert(wide_bucket_map_is_empty(&m));
-
-    // Insert entries that spread across many buckets (key % 300 spreads widely)
     for (uint32_t i = 0; i < 10; i++) {
-        uint32_t k = i * 31, v = i;  // 0, 31, 62, 93 … — distinct buckets for most
+        uint32_t k = i * 31, v = i;
         assert(wide_bucket_map_insert(&m, &k, &v) != wide_bucket_map_end(&m));
     }
     assert(wide_bucket_map_size(&m) == 10);
-
-    // Verify every entry is retrievable
     for (uint32_t i = 0; i < 10; i++) {
         uint32_t k = i * 31;
         uint32_t *got = wide_bucket_map_get(&m, &k);
         assert(got != NULL && *got == i);
     }
-
-    // Update one entry — must not allocate a new pool node
     uint32_t ku = 0, vu = 99;
     assert(wide_bucket_map_insert(&m, &ku, &vu) != wide_bucket_map_end(&m));
     assert(wide_bucket_map_size(&m) == 10);
     assert(*wide_bucket_map_get(&m, &(uint32_t){0}) == 99);
-
-    // Remove an entry and re-insert a different key to confirm pool slot recycling
     assert(wide_bucket_map_remove(&m, &(uint32_t){31}, NULL));
     assert(wide_bucket_map_size(&m) == 9);
     uint32_t kn = 1000, vn = 42;
     assert(wide_bucket_map_insert(&m, &kn, &vn) != wide_bucket_map_end(&m));
     assert(wide_bucket_map_size(&m) == 10);
     assert(*wide_bucket_map_get(&m, &(uint32_t){1000}) == 42);
-
     wide_bucket_map_destroy(&m);
     assert(wide_bucket_map_is_empty(&m));
 }
@@ -262,11 +242,10 @@ static void test_iteration_visits_all(void) {
         uint32_t k = i, v = i * 10;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-
     bool seen[10] = {false};
     size_t count = 0;
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
-        u32map_node_t *n = u32map_at(&m, it);
+        u32map_elem_t *n = u32map_at(&m, it);
         assert(n->key < N && !seen[n->key]);
         assert(n->val == n->key * 10);
         seen[n->key] = true;
@@ -282,18 +261,16 @@ static void test_iteration_visits_all(void) {
 static void test_iteration_visits_all_with_collisions(void) {
     printf("Test: iteration visits all entries including collision chains\n");
     u32map_t m = u32map_new();
-    // Keys 0,8,16 all hash to bucket 0 (BUCKET_COUNT=8); spread the rest across other buckets.
     uint32_t keys[] = {0, 8, 16, 1, 2, 3};
     const uint32_t N = 6;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = keys[i], v = keys[i] + 100;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-
-    bool seen[17] = {false};  // keys go up to 16
+    bool seen[17] = {false};
     size_t count = 0;
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
-        u32map_node_t *n = u32map_at(&m, it);
+        u32map_elem_t *n = u32map_at(&m, it);
         assert(!seen[n->key]);
         assert(n->val == n->key + 100);
         seen[n->key] = true;
@@ -325,17 +302,14 @@ static void test_iteration_removal_pattern(void) {
         uint32_t k = i, v = i;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-
-    // Remove all even keys during iteration using the next_idx output.
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m);) {
-        u32map_node_t *n = u32map_at(&m, it);
+        u32map_elem_t *n = u32map_at(&m, it);
         if (n->key % 2 == 0) {
             u32map_remove_at(&m, it, NULL, &it);
         } else {
             it = u32map_iter_next(&m, it);
         }
     }
-
     assert(u32map_size(&m) == N / 2);
     for (uint32_t i = 0; i < N; i++) {
         uint32_t *got = u32map_get(&m, &i);
@@ -356,11 +330,9 @@ static void test_iteration_remove_all(void) {
         uint32_t k = i, v = i;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m);) {
         u32map_remove_at(&m, it, NULL, &it);
     }
-
     assert(u32map_is_empty(&m));
     assert(u32map_begin(&m) == u32map_end(&m));
     u32map_destroy(&m);
@@ -373,8 +345,7 @@ static void test_remove_at_moves_value_out(void) {
     assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     u32map_iter_t it = u32map_begin(&m);
     assert(it != u32map_end(&m));
-
-    u32map_node_t out;
+    u32map_elem_t out;
     u32map_remove_at(&m, it, &out, NULL);
     assert(out.key == 55 && out.val == 550);
     assert(u32map_is_empty(&m));
@@ -384,7 +355,6 @@ static void test_remove_at_moves_value_out(void) {
 static void test_multiple_collisions(void) {
     printf("Test: many keys colliding into the same bucket\n");
     u32map_t m = u32map_new();
-    // With BUCKET_COUNT=8, keys 0,8,16,24,32,40 all land in bucket 0
     uint32_t keys[] = {0, 8, 16, 24, 32, 40};
     for (size_t i = 0; i < 6; i++) {
         uint32_t k = keys[i], v = keys[i] * 10;
@@ -395,7 +365,6 @@ static void test_multiple_collisions(void) {
         uint32_t *got = u32map_get(&m, &keys[i]);
         assert(got != NULL && *got == keys[i] * 10);
     }
-    // Remove middle entries and verify survivors
     assert(u32map_remove(&m, &(uint32_t){16}, NULL));
     assert(u32map_remove(&m, &(uint32_t){32}, NULL));
     assert(u32map_size(&m) == 4);
@@ -405,6 +374,142 @@ static void test_multiple_collisions(void) {
     assert(*u32map_get(&m, &(uint32_t){8}) == 80);
     assert(*u32map_get(&m, &(uint32_t){24}) == 240);
     assert(*u32map_get(&m, &(uint32_t){40}) == 400);
+    u32map_destroy(&m);
+}
+
+// ── Tests: algorithms_template.h macros ───────────────────────────────────────
+
+static void test_algorithms_foreach(void) {
+    printf("Test: _ZP_FOREACH visits every entry exactly once\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 8;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 5;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    bool seen[8] = {false};
+    size_t count = 0;
+    u32map_elem_t *node;
+    _ZP_FOREACH(u32map, &m, node) {
+        assert(node->key < N && !seen[node->key]);
+        assert(node->val == node->key * 5);
+        seen[node->key] = true;
+        count++;
+    }
+    assert(count == N);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_cforeach(void) {
+    printf("Test: _ZP_CFOREACH visits every entry via const pointer\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 6;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i + 100;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    bool seen[6] = {false};
+    const u32map_elem_t *node;
+    _ZP_CFOREACH(u32map, &m, node) {
+        assert(node->key < N && !seen[node->key]);
+        assert(node->val == node->key + 100);
+        seen[node->key] = true;
+    }
+    for (uint32_t i = 0; i < N; i++) {
+        assert(seen[i]);
+    }
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_foreach_val(void) {
+    printf("Test: _ZP_FOREACH_VAL iterates values of entries\n");
+    u32map_t m = u32map_new();
+    uint32_t sum = 0;
+    for (uint32_t i = 1; i <= 5; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+        sum += i;
+    }
+    uint32_t *val;
+    uint32_t got_sum = 0;
+    _ZP_FOREACH_VAL(u32map, &m, val) { got_sum += *val; }
+    assert(got_sum == sum);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_find(void) {
+    printf("Test: _ZP_FIND locates first matching entry, returns NULL when absent\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 10; i++) {
+        uint32_t k = i, v = i * 3;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    const u32map_elem_t *found;
+#define pred_val15(e) ((e)->val == 15)
+    _ZP_FIND(u32map, &m, found, pred_val15);  // key 5 -> val 15
+#undef pred_val15
+    assert(found != NULL && found->key == 5 && found->val == 15);
+#define pred_val999(e) ((e)->val == 999)
+    _ZP_FIND(u32map, &m, found, pred_val999);
+#undef pred_val999
+    assert(found == NULL);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_find_val(void) {
+    printf("Test: _ZP_FIND_VAL locates first matching value\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 8; i++) {
+        uint32_t k = i, v = i * 2;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+    const uint32_t *found_val;
+#define pred_val10(v) (*(v) == 10)
+    _ZP_FIND_VAL(u32map, &m, found_val, pred_val10);  // key 5 -> val 10
+#undef pred_val10
+    assert(found_val != NULL && *found_val == 10);
+#define pred_val99(v) (*(v) == 99)
+    _ZP_FIND_VAL(u32map, &m, found_val, pred_val99);
+#undef pred_val99
+    assert(found_val == NULL);
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_remove(void) {
+    printf("Test: _ZP_REMOVE removes all matching entries\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 12;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+#define pred_odd(e) ((e)->key % 2 != 0)
+    _ZP_REMOVE(u32map, &m, pred_odd);
+#undef pred_odd
+    assert(u32map_size(&m) == N / 2);
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t *got = u32map_get(&m, &i);
+        if (i % 2 != 0) {
+            assert(got == NULL);
+        } else {
+            assert(got != NULL && *got == i);
+        }
+    }
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_remove_all(void) {
+    printf("Test: _ZP_REMOVE with always-true predicate empties the map\n");
+    u32map_t m = u32map_new();
+    for (uint32_t i = 0; i < 8; i++) {
+        uint32_t k = i, v = i;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+#define pred_true(e) ((void)(e), true)
+    _ZP_REMOVE(u32map, &m, pred_true);
+#undef pred_true
+    assert(u32map_is_empty(&m));
+    assert(u32map_begin(&m) == u32map_end(&m));
     u32map_destroy(&m);
 }
 
@@ -430,5 +535,13 @@ int main(void) {
     test_iteration_removal_pattern();
     test_iteration_remove_all();
     test_remove_at_moves_value_out();
+    test_algorithms_foreach();
+    test_algorithms_cforeach();
+    test_algorithms_foreach_val();
+    test_algorithms_find();
+    test_algorithms_find_val();
+    test_algorithms_remove();
+    test_algorithms_remove_all();
+    printf("All static_hashmap tests passed\n");
     return 0;
 }

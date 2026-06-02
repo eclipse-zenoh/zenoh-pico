@@ -53,7 +53,7 @@ typedef struct _ZP_STATIC_VECTOR_TEMPLATE_TYPE {
     size_t _size;
 } _ZP_STATIC_VECTOR_TEMPLATE_TYPE;
 
-typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, node_t);
+typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t);
 
 // Creates a new, empty vector. All fields are zero-initialised.
 static inline _ZP_STATIC_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, new)(void) {
@@ -202,6 +202,12 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(_ZP_STATIC_V
     return true;
 }
 
+// elem_t is an alias for the element type, used by algorithms_template.h macros.
+typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t);
+
+// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
+typedef size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t);
+
 // Returns a pointer to the raw buffer (first element). May be used for iteration.
 // The valid range is [data, data + size).
 static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
@@ -212,14 +218,24 @@ static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TE
 // Returns the index of the first element (always 0).
 // Use together with end() for index-based iteration: for (size_t i = begin(v); i != end(v); i++).
 // Dereference with at() or const_at(). Indices remain stable across growth.
-static inline size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, begin)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
+static inline _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, begin)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     (void)vec;
     return 0;
 }
 
 // Returns the one-past-last index (equal to size). Used as the end sentinel for index iteration.
-static inline size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, end)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
+static inline _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, end)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     return vec->_size;
+}
+
+// Advances the iterator by one step.
+static inline _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_next)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
+                                                        _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t) pos) {
+    (void)vec;
+    return pos + 1;
 }
 
 #undef _ZP_STATIC_VECTOR_TEMPLATE_TYPE
