@@ -25,6 +25,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "zenoh-pico/collections/cat.h"
 
@@ -54,6 +55,11 @@ typedef struct _ZP_STATIC_VECTOR_TEMPLATE_TYPE {
 } _ZP_STATIC_VECTOR_TEMPLATE_TYPE;
 
 typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t);
+
+// Initializes a new, empty vector. All fields are zero-initialised.
+static inline void _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, init)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
+    memset(vec, 0, sizeof(_ZP_STATIC_VECTOR_TEMPLATE_TYPE));
+}
 
 // Creates a new, empty vector. All fields are zero-initialised.
 static inline _ZP_STATIC_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, new)(void) {

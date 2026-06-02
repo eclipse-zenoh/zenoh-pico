@@ -215,15 +215,22 @@ typedef struct _ZP_HASHMAP_TEMPLATE_TYPE {
     size_t _size;
 } _ZP_HASHMAP_TEMPLATE_TYPE;
 
+// ── init ──────────────────────────────────────────────────────────────────────
+// Initializes a new, empty map. No allocation is performed until the first insert.
+
+static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, init)(_ZP_HASHMAP_TEMPLATE_TYPE *map) {
+    map->_slots = NULL;
+    map->_capacity = 0;
+    map->_free_head = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
+    map->_size = 0;
+}
+
 // ── new ───────────────────────────────────────────────────────────────────────
 // Creates a new, empty map. No allocation is performed until the first insert.
 
 static inline _ZP_HASHMAP_TEMPLATE_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, new)(void) {
     _ZP_HASHMAP_TEMPLATE_TYPE map;
-    map._slots = NULL;
-    map._capacity = 0;
-    map._free_head = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
-    map._size = 0;
+    _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, init)(&map);
     return map;
 }
 

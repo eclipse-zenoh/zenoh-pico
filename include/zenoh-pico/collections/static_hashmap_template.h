@@ -165,23 +165,29 @@ typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_TYPE {
     size_t _size;  // number of live entries
 } _ZP_STATIC_HASHMAP_TEMPLATE_TYPE;
 
+// ── init ──────────────────────────────────────────────────────────────────────
+
+static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, init)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
+    for (size_t b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
+        map->_slots[b]._bucket = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+    }
+    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
+        map->_slots[i]._present = false;
+    }
+    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
+        map->_slots[i]._next = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
+    }
+    map->_slots[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1]._next =
+        _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
+    map->_free_head = 0;
+    map->_size = 0;
+}
+
 // ── new ───────────────────────────────────────────────────────────────────────
 
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, new)(void) {
     _ZP_STATIC_HASHMAP_TEMPLATE_TYPE map;
-    for (size_t b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
-        map._slots[b]._bucket = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
-    }
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map._slots[i]._present = false;
-    }
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map._slots[i]._next = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
-    }
-    map._slots[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1]._next =
-        _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
-    map._free_head = 0;
-    map._size = 0;
+    _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, init)(&map);
     return map;
 }
 

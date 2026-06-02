@@ -70,12 +70,17 @@ typedef struct _ZP_VECTOR_TEMPLATE_TYPE {
 
 typedef _ZP_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t);
 
+// Initializes a new, empty vector.
+static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    vec->_size = 0;
+    vec->_capacity = 0;
+    vec->_buffer = NULL;
+}
+
 // Creates a new, empty vector.
 static inline _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new)(void) {
     _ZP_VECTOR_TEMPLATE_TYPE vec;
-    vec._size = 0;
-    vec._capacity = 0;
-    vec._buffer = NULL;
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(&vec);
     return vec;
 }
 
