@@ -450,6 +450,8 @@ static inline const _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE
 // Returns the iterator to the inserted/updated node.
 // Returns an invalid iterator only when an allocation fails (and the key is not
 // already present) or the maximum addressable capacity has been reached.
+// *val can be NULL, in this case the entry will be created with an initialized value,
+// and can be initialized manually by calling _at at the returned iterator.
 
 static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
                                                      insert)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
@@ -490,7 +492,9 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE new_idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_alloc)(map);
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[new_idx]._node;
     _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&n->key, key);
-    _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
+    if (val != NULL) {
+        _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
+    }
     // Prepend to bucket chain (O(1)).
     map->_slots[new_idx]._next = map->_slots[b]._bucket;
     map->_slots[b]._bucket = new_idx;
