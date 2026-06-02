@@ -427,26 +427,26 @@ static void test_heap_cforeach(void) {
 }
 
 static void test_heap_find(void) {
-    printf("  _ZP_FIND locates first matching element, returns NULL when absent\n");
+    printf("  _ZP_CFIND locates first matching element, returns NULL when absent\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 10; i++) {
         assert(intvec_push_back(&v, &i));
     }
     const int *found;
 #define pred_eq7(e) (*(e) == 7)
-    _ZP_FIND(intvec, &v, found, pred_eq7);
+    _ZP_CFIND(intvec, &v, found, pred_eq7);
 #undef pred_eq7
     assert(found != NULL && *found == 7);
 
 #define pred_eq99(e) (*(e) == 99)
-    _ZP_FIND(intvec, &v, found, pred_eq99);
+    _ZP_CFIND(intvec, &v, found, pred_eq99);
 #undef pred_eq99
     assert(found == NULL);
 
     // Empty vector returns NULL
     intvec_t empty = intvec_new();
 #define pred_eq0(e) (*(e) == 0)
-    _ZP_FIND(intvec, &empty, found, pred_eq0);
+    _ZP_CFIND(intvec, &empty, found, pred_eq0);
 #undef pred_eq0
     assert(found == NULL);
     intvec_destroy(&empty);

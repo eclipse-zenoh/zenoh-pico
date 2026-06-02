@@ -438,7 +438,7 @@ static void test_algorithms_foreach_val(void) {
 }
 
 static void test_algorithms_find(void) {
-    printf("Test: _ZP_FIND locates first matching entry, returns NULL when absent\n");
+    printf("Test: _ZP_CFIND locates first matching entry, returns NULL when absent\n");
     u32map_t m = u32map_new();
     for (uint32_t i = 0; i < 10; i++) {
         uint32_t k = i, v = i * 3;
@@ -446,18 +446,18 @@ static void test_algorithms_find(void) {
     }
     const u32map_elem_t *found;
 #define pred_val15(e) ((e)->val == 15)
-    _ZP_FIND(u32map, &m, found, pred_val15);  // key 5 -> val 15
+    _ZP_CFIND(u32map, &m, found, pred_val15);  // key 5 -> val 15
 #undef pred_val15
     assert(found != NULL && found->key == 5 && found->val == 15);
 #define pred_val999(e) ((e)->val == 999)
-    _ZP_FIND(u32map, &m, found, pred_val999);
+    _ZP_CFIND(u32map, &m, found, pred_val999);
 #undef pred_val999
     assert(found == NULL);
     u32map_destroy(&m);
 }
 
 static void test_algorithms_find_val(void) {
-    printf("Test: _ZP_FIND_VAL locates first matching value\n");
+    printf("Test: _ZP_CFIND_VAL locates first matching value\n");
     u32map_t m = u32map_new();
     for (uint32_t i = 0; i < 8; i++) {
         uint32_t k = i, v = i * 2;
@@ -465,11 +465,11 @@ static void test_algorithms_find_val(void) {
     }
     const uint32_t *found_val;
 #define pred_val10(v) (*(v) == 10)
-    _ZP_FIND_VAL(u32map, &m, found_val, pred_val10);  // key 5 -> val 10
+    _ZP_CFIND_VAL(u32map, &m, found_val, pred_val10);  // key 5 -> val 10
 #undef pred_val10
     assert(found_val != NULL && *found_val == 10);
 #define pred_val99(v) (*(v) == 99)
-    _ZP_FIND_VAL(u32map, &m, found_val, pred_val99);
+    _ZP_CFIND_VAL(u32map, &m, found_val, pred_val99);
 #undef pred_val99
     assert(found_val == NULL);
     u32map_destroy(&m);

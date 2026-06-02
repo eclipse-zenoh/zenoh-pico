@@ -350,25 +350,25 @@ static void test_cforeach(void) {
 }
 
 static void test_find(void) {
-    printf("Test: _ZP_FIND locates matching element, returns NULL when absent\n");
+    printf("Test: _ZP_CFIND locates matching element, returns NULL when absent\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 8; i++) {
         assert(intvec_push_back(&v, &i));
     }
     const int *found;
 #define pred_eq5(e) (*(e) == 5)
-    _ZP_FIND(intvec, &v, found, pred_eq5);
+    _ZP_CFIND(intvec, &v, found, pred_eq5);
 #undef pred_eq5
     assert(found != NULL && *found == 5);
 
 #define pred_eq99(e) (*(e) == 99)
-    _ZP_FIND(intvec, &v, found, pred_eq99);
+    _ZP_CFIND(intvec, &v, found, pred_eq99);
 #undef pred_eq99
     assert(found == NULL);
 
     intvec_t empty = intvec_new();
 #define pred_eq0(e) (*(e) == 0)
-    _ZP_FIND(intvec, &empty, found, pred_eq0);
+    _ZP_CFIND(intvec, &empty, found, pred_eq0);
 #undef pred_eq0
     assert(found == NULL);
     intvec_destroy(&empty);

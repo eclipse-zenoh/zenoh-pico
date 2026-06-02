@@ -33,7 +33,19 @@
              : (var_name = transform(collection_name##_const_at(collection_ptr, __iter)), true); \
          __iter = collection_name##_iter_next(collection_ptr, __iter))
 
-#define _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, transform)        \
+#define _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, transform) \
+    var_name = NULL;                                                                        \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);         \
+         __iter != collection_name##_end(collection_ptr);                                   \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                    \
+        collection_name##_elem_t *node = collection_name##_at(collection_ptr, __iter);      \
+        if (predicate(transform(node))) {                                                   \
+            var_name = transform(node);                                                     \
+            break;                                                                          \
+        }                                                                                   \
+    }
+
+#define _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, transform)       \
     var_name = NULL;                                                                               \
     for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);                \
          __iter != collection_name##_end(collection_ptr);                                          \
@@ -53,10 +65,16 @@
 // before the loop.
 #define _ZP_CFOREACH(collection_name, collection_ptr, var_name) \
     _ZP_CFOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_IDENTITY)
-// Find first element matching predicate.  var_name is a pointer to the element type which should be declared by user
-// before the loop.  It is set to NULL if no matching element is found.
+
+// Find first const element matching predicate.  var_name is a pointer to the element type which should be declared by
+// user before the loop.  It is set to NULL if no matching element is found.
 #define _ZP_FIND(collection_name, collection_ptr, var_name, predicate) \
     _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_IDENTITY)
+
+// Find first const element matching predicate.  var_name is a pointer to the element type which should be declared by
+// user before the loop.  It is set to NULL if no matching element is found.
+#define _ZP_CFIND(collection_name, collection_ptr, var_name, predicate) \
+    _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_IDENTITY)
 
 // For loop over hashmap values.  var_name is a pointer to the value type which should be declared by user before the
 // loop.
@@ -66,10 +84,16 @@
 // the loop.
 #define _ZP_CFOREACH_VAL(collection_name, collection_ptr, var_name) \
     _ZP_CFOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_VAL)
+
 // Find first hashmap value matching predicate.  var_name is a pointer to the value type which should be declared by
 // user before the loop.  It is set to NULL if no matching element is found.
 #define _ZP_FIND_VAL(collection_name, collection_ptr, var_name, predicate) \
     _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_VAL)
+
+// Find first const hashmap value matching predicate.  var_name is a pointer to the value type which should be declared
+// by user before the loop.  It is set to NULL if no matching element is found.
+#define _ZP_CFIND_VAL(collection_name, collection_ptr, var_name, predicate) \
+    _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_VAL)
 
 // Remove all elements matching predicate.  Behaviour is undefined if predicate has side effects that modify the
 // collection.
