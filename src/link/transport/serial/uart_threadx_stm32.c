@@ -197,9 +197,10 @@ void zptxstm32_rx_event_cb(UART_HandleTypeDef *huart, uint16_t offset) {
 
     while (last_offset < offset) {
         if (_z_threadx_stm32_dma_buffer[last_offset] == (uint8_t)0x00) {
-            tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_WAIT_FOREVER);
-            _z_threadx_stm32_delimiter_offset = last_offset + 1;
-            tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
+            if (tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT) == TX_SUCCESS) {
+                _z_threadx_stm32_delimiter_offset = last_offset + 1;
+                tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
+            }
         }
         ++last_offset;
     }
