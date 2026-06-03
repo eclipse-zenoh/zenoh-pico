@@ -158,7 +158,7 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, true));
     z_result_t ret = _Z_RES_OK;
 
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
 
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);

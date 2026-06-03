@@ -91,7 +91,7 @@ else()
 endif()
 
 set(BUILD_SHARED_LIBS OFF)
-set(WITH_RPI_PICO ON)
+set(ZP_PLATFORM "rpi_pico" CACHE STRING "Zenoh-Pico platform profile")
 
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 

@@ -16,6 +16,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -70,6 +71,24 @@ z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, 
         cfg_list = _z_list_next(cfg_list);
     }
     return _Z_RES_OK;
+}
+
+z_result_t _z_config_get_i32_default(_z_config_t *config, uint8_t key, const char *default_val, int32_t *out) {
+    const char *s = _z_config_get(config, key);
+    if (s == NULL) {
+        s = default_val;
+    }
+
+    return _z_str_parse_i32(s, out) ? _Z_RES_OK : _Z_ERR_CONFIG_INVALID_VALUE;
+}
+
+z_result_t _z_config_get_bool_default(_z_config_t *config, uint8_t key, const char *default_val, bool *out) {
+    const char *s = _z_config_get(config, key);
+    if (s == NULL) {
+        s = default_val;
+    }
+
+    return _z_str_parse_bool(s, out) ? _Z_RES_OK : _Z_ERR_CONFIG_INVALID_VALUE;
 }
 
 /*------------------ int-string map ------------------*/

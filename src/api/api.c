@@ -403,13 +403,50 @@ z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_
     return _z_bytes_writer_append_z_bytes(writer, &bytes->_this._val);
 }
 
+#if defined(Z_TEST_HOOKS)
+static _z_timestamp_time_since_epoch_override_fn _z_timestamp_time_since_epoch_override = NULL;
+static void *_z_timestamp_time_since_epoch_override_arg = NULL;
+
+void _z_timestamp_set_time_since_epoch_override(_z_timestamp_time_since_epoch_override_fn fn, void *arg) {
+    _z_timestamp_time_since_epoch_override = fn;
+    _z_timestamp_time_since_epoch_override_arg = arg;
+}
+#endif
+
 z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
+    if ((ts == NULL) || (zs == NULL) || _Z_RC_IS_NULL(zs)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
     *ts = _z_timestamp_null();
     _z_time_since_epoch t;
+#if defined(Z_TEST_HOOKS)
+    if (_z_timestamp_time_since_epoch_override != NULL) {
+        _Z_RETURN_IF_ERR(_z_timestamp_time_since_epoch_override(&t, _z_timestamp_time_since_epoch_override_arg));
+    } else {
+        _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+    }
+#else
     _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+#endif
+
+    _z_session_t *s = _Z_RC_IN_VAL(zs);
+    _z_ntp64_t time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
+    _Z_RETURN_IF_ERR(_z_session_last_timestamp_mutex_lock(s));
+    if (time > s->_last_timestamp) {
+        s->_last_timestamp = time;
+    } else {
+        if (s->_last_timestamp == UINT64_MAX) {
+            _z_session_last_timestamp_mutex_unlock(s);
+            _Z_ERROR_RETURN(_Z_ERR_TIMESTAMP_GENERATION_FAILED);
+        }
+        time = s->_last_timestamp + 1;
+        s->_last_timestamp = time;
+    }
+    _z_session_last_timestamp_mutex_unlock(s);
+
     ts->valid = true;
-    ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
-    ts->id = _Z_RC_IN_VAL(zs)->_local_zid;
+    ts->time = time;
+    ts->id = s->_local_zid;
     return _Z_RES_OK;
 }
 
@@ -908,36 +945,30 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     }
 
     ret = _z_open(&zs->_rc, cfg, &zid);
+
+    // Move config ownership into the session before starting any background tasks,
+    // as reconnect and async peer-add logic may access it.
+    _Z_OWNED_RC_IN_VAL(zs)->_config = config->_this._val;
+    z_internal_config_null(&config->_this);
+
     _Z_SET_IF_OK(ret, _zp_start_transport_tasks(_Z_RC_IN_VAL(&zs->_rc)));
     if (ret != _Z_RES_OK) {
         z_session_drop(z_session_move(zs));
-        z_config_drop(config);
         return ret;
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     if (opts.auto_start_read_task) {
         _Z_CLEAN_RETURN_IF_ERR(_z_runtime_start(&_Z_RC_IN_VAL(&zs->_rc)->_runtime, opts.executor_task_attributes),
-                               z_session_drop(z_session_move(zs));
-                               z_config_drop(config));
+                               z_session_drop(z_session_move(zs)));
     }
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADMIN_SPACE == 1
     if (opts.auto_start_admin_space) {
-        _Z_CLEAN_RETURN_IF_ERR(zp_start_admin_space(z_session_loan_mut(zs)), z_session_drop(z_session_move(zs));
-                               z_config_drop(config));
+        _Z_CLEAN_RETURN_IF_ERR(zp_start_admin_space(z_session_loan_mut(zs)), z_session_drop(z_session_move(zs)));
     }
 #endif
 #endif
-
-    // Clean up
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _Z_OWNED_RC_IN_VAL(zs)->_config = config->_this._val;
-    z_internal_config_null(&config->_this);
-#else
-    z_config_drop(config);
-#endif
-
     return _Z_RES_OK;
 }
 
@@ -2088,7 +2119,7 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
     }
     _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
 #else
-    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&queryable->_zn);
 #endif
     if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
         _Z_WARN("Failed to lock session for queryable keyexpr retrieval - session may be closing");
@@ -2384,7 +2415,7 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
     }
     _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
 #else
-    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&sub->_zn);
 #endif
     if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
         _Z_WARN("Failed to lock session for subscriber keyexpr retrieval - session may be closing");
@@ -2446,7 +2477,7 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     _z_session_t *session = _Z_RC_IN_VAL(zs);
-    return _z_transport_start_batching(&session->_tp) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    return _z_transport_start_batching(&session->_tp);
 }
 
 z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
@@ -2463,7 +2494,7 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     if (_Z_RC_IS_NULL(zs)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
-    _z_transport_stop_batching(&session->_tp);
+    _Z_RETURN_IF_ERR(_z_transport_stop_batching(&session->_tp));
     // Send remaining batch without dropping
     return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
 }

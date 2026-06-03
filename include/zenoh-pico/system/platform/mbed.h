@@ -61,7 +61,7 @@ typedef struct {
 typedef struct {
     bool _err;
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         SocketAddress *_iptcp;  // As pointer to cross the boundary between C and C++
 #endif
     };

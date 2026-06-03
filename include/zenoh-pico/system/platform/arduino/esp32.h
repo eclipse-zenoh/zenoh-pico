@@ -58,7 +58,7 @@ typedef struct HardwareSerial HardwareSerial;    // Forward declaration to be us
 
 typedef struct {
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         int _fd;
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
@@ -72,11 +72,15 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         struct addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+#error "Raw ethernet transport not supported yet on ESP32 port of Zenoh-Pico"
+#endif
 
 #ifdef __cplusplus
 }

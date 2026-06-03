@@ -73,7 +73,7 @@ typedef struct timeval z_time_t;
 
 typedef struct {
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         Socket_t _socket;
 #endif
     };
@@ -81,7 +81,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         struct freertos_addrinfo *_iptcp;
 #endif
     };

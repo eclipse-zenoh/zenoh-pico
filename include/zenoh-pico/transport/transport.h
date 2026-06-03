@@ -155,7 +155,8 @@ typedef enum _z_transport_state_t {
 #define _Z_TRANSPORT_TASK_LEASE 1
 #define _Z_TRANSPORT_TASK_READ 2
 #define _Z_TRANSPORT_TASK_SEND_JOIN 3  // multicast / raweth only
-#define _Z_TRANSPORT_TASK_COUNT 4
+#define _Z_TRANSPORT_TASK_ADD_PEERS 4  // unicast only
+#define _Z_TRANSPORT_TASK_COUNT 5
 #if Z_FEATURE_AUTO_RECONNECT == 1
 typedef struct _z_transport_tasks_t {
     _z_fut_handle_t _task_handles[_Z_TRANSPORT_TASK_COUNT];
@@ -194,10 +195,40 @@ typedef struct {
 // Send function prototype
 typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_transport_message_t *t_msg);
 
+typedef enum {
+    _Z_PENDING_PEER_STATE_PENDING = 0,
+    _Z_PENDING_PEER_STATE_DONE = 1,
+    _Z_PENDING_PEER_STATE_FAILED = 2,
+} _z_pending_peer_state_t;
+
+typedef struct {
+    _z_string_t _locator;
+    _z_pending_peer_state_t _state;
+} _z_pending_peer_t;
+
+static inline void _z_pending_peer_clear(_z_pending_peer_t *peer) { _z_string_clear(&peer->_locator); }
+_Z_ELEM_DEFINE(_z_pending_peer, _z_pending_peer_t, _z_noop_size, _z_pending_peer_clear, _z_noop_copy, _z_noop_move,
+               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_SVEC_DEFINE_NO_COPY(_z_pending_peer, _z_pending_peer_t)
+
+typedef struct {
+    _z_pending_peer_svec_t _peers;
+    int32_t _timeout_ms;
+    z_clock_t _start;
+    uint32_t _sleep_ms;
+} _z_pending_peers_t;
+
+_z_pending_peers_t _z_pending_peers_null(void);
+z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers, const _z_string_svec_t *locators);
+bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers);
+void _z_pending_peers_clear(_z_pending_peers_t *pending_peers);
+void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src);
+
 typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
     _z_transport_peer_unicast_slist_t *_peers;
+    _z_pending_peers_t _pending_peers;
 } _z_transport_unicast_t;
 
 #define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
@@ -256,6 +287,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_sys_net_socket_t socket, bool owns_socket,
                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
+size_t _z_transport_get_peers_count(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
@@ -272,12 +304,8 @@ static inline void _z_transport_get_link_properties(const _z_transport_common_t 
     }
 }
 
-#if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt);
-void _z_transport_stop_batching(_z_transport_t *zt);
-
 static inline bool _z_transport_batch_hold_tx_mutex(void) {
-#if Z_FEATURE_BATCH_TX_MUTEX == 1
+#if Z_FEATURE_BATCHING == 1 && Z_FEATURE_BATCH_TX_MUTEX == 1
     return true;
 #else
     return false;
@@ -285,12 +313,17 @@ static inline bool _z_transport_batch_hold_tx_mutex(void) {
 }
 
 static inline bool _z_transport_batch_hold_peer_mutex(void) {
-#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+#if Z_FEATURE_BATCHING == 1 && Z_FEATURE_BATCH_PEER_MUTEX == 1
     return true;
 #else
     return false;
 #endif
 }
+
+#if Z_FEATURE_BATCHING == 1
+z_result_t _z_transport_start_batching(_z_transport_t *zt);
+z_result_t _z_transport_stop_batching(_z_transport_t *zt);
+
 #endif  // Z_FEATURE_BATCHING == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1

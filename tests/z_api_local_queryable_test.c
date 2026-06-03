@@ -22,7 +22,8 @@ static const char *QUERYABLE_EXPR = "zenoh-pico/locality/query";
 
 void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowed_origin,
                     z_locality_t q2_allowed_origin) {
-    printf("Testing: %d %d %d\n", get_allowed_destination, q1_allowed_origin, q2_allowed_origin);
+    printf("Testing Quryables: get_dest=%d q1_origin=%d q2_origin=%d\n", get_allowed_destination, q1_allowed_origin,
+           q2_allowed_origin);
     z_owned_session_t s1, s2;
     z_owned_config_t c1, c2;
     z_config_default(&c1);
@@ -142,6 +143,97 @@ void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowe
     z_session_drop(z_session_move(&s2));
 }
 
+void test_queryable_peer_mode(z_locality_t get_allowed_destination, z_locality_t q_allowed_origin) {
+    printf("Testing peer mode: get_dest=%d q_origin=%d\n", get_allowed_destination, q_allowed_origin);
+
+    z_owned_session_t s;
+    z_owned_config_t c;
+    z_config_default(&c);
+    assert(zp_config_insert(z_loan_mut(c), Z_CONFIG_MODE_KEY, "peer") == Z_OK);
+    assert(zp_config_insert(z_loan_mut(c), Z_CONFIG_LISTEN_KEY, "tcp/127.0.0.1:10000") == Z_OK);
+    assert(zp_config_insert(z_loan_mut(c), Z_CONFIG_MULTICAST_SCOUTING_KEY, "false") == Z_OK);
+
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, QUERYABLE_EXPR);
+
+    assert(z_open(&s, z_config_move(&c), NULL) == Z_OK);
+
+    z_owned_queryable_t queryable;
+    z_queryable_options_t qopts;
+    z_queryable_options_default(&qopts);
+    qopts.allowed_origin = q_allowed_origin;
+
+    z_owned_closure_query_t query_callback;
+    z_owned_fifo_handler_query_t query_handler;
+    z_fifo_channel_query_new(&query_callback, &query_handler, 16);
+    z_declare_queryable(z_session_loan(&s), &queryable, z_view_keyexpr_loan(&ke), z_closure_query_move(&query_callback),
+                        &qopts);
+
+    z_owned_closure_reply_t reply_callback;
+    z_owned_fifo_handler_reply_t reply_handler;
+    z_fifo_channel_reply_new(&reply_callback, &reply_handler, 16);
+
+    z_get_options_t opts;
+    z_get_options_default(&opts);
+    opts.allowed_destination = get_allowed_destination;
+
+    z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts);
+
+    z_owned_query_t q;
+    z_result_t ret = z_fifo_handler_query_try_recv(z_fifo_handler_query_loan(&query_handler), &q);
+
+    bool expect_response =
+        _z_locality_allows_local(get_allowed_destination) && _z_locality_allows_local(q_allowed_origin);
+    size_t expect_responses = 0;
+
+    if (expect_response) {
+        assert(ret == Z_OK);
+        z_owned_bytes_t payload;
+        z_bytes_copy_from_str(&payload, "peer_reply");
+        z_query_reply(z_query_loan(&q), z_view_keyexpr_loan(&ke), z_bytes_move(&payload), NULL);
+        z_query_drop(z_query_move(&q));
+        expect_responses = 1;
+    } else {
+        assert(ret != Z_OK);
+    }
+
+    size_t reply_count = 0;
+    bool found_reply = false;
+
+    z_sleep_s(1);
+
+    z_owned_reply_t reply;
+    for (z_result_t res = z_fifo_handler_reply_recv(z_fifo_handler_reply_loan(&reply_handler), &reply);
+         res != Z_CHANNEL_DISCONNECTED;
+         res = z_fifo_handler_reply_recv(z_fifo_handler_reply_loan(&reply_handler), &reply)) {
+        assert(z_reply_is_ok(z_loan(reply)));
+        const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
+        z_owned_string_t replystr;
+        z_bytes_to_string(z_sample_payload(sample), &replystr);
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
+        if (strncmp(z_string_data(z_loan(replystr)), "peer_reply", 10) == 0) {
+            found_reply = true;
+        }
+        reply_count++;
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
+        assert(strncmp(z_string_data(z_loan(keystr)), QUERYABLE_EXPR, strlen(QUERYABLE_EXPR)) == 0);
+        z_reply_drop(z_reply_move(&reply));
+        z_string_drop(z_string_move(&replystr));
+    }
+
+    assert(reply_count == expect_responses);
+    assert(found_reply == expect_response);
+
+    z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
+    z_fifo_handler_query_drop(z_fifo_handler_query_move(&query_handler));
+    z_queryable_drop(z_queryable_move(&queryable));
+    z_session_drop(z_session_move(&s));
+}
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -153,6 +245,8 @@ int main(int argc, char **argv) {
             }
         }
     }
+    // Test local query on a single session in peer mode
+    test_queryable_peer_mode(Z_LOCALITY_ANY, Z_LOCALITY_ANY);
 }
 
 #else

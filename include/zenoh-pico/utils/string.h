@@ -81,6 +81,18 @@ static inline void _z_str_append(char *str, const char c) {
  */
 bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
 
+/*
+ * Parse a null-terminated base-10 string as a signed 32-bit integer.
+ */
+bool _z_str_parse_i32(const char *s, int32_t *out);
+
+/*
+ * Parse a null-terminated boolean string.
+ *
+ * Accepted values are "true" and "false".
+ */
+bool _z_str_parse_bool(const char *s, bool *out);
+
 void *_z_memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len);
 
 /*

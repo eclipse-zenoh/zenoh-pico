@@ -20,6 +20,9 @@
 #include "zenoh-pico/link/config/udp.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/utils/result.h"
+#if Z_FEATURE_LINK_WS == 1
+#include "zenoh-pico/link/config/ws.h"
+#endif
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/link/config/tls.h"
 #endif
@@ -142,6 +145,28 @@ int main(void) {
     str = _z_string_alias_str("udp/127.0.0.1:7447?invalid=ctrl#invalid=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
     _z_endpoint_clear(&ep);
+
+#if Z_FEATURE_LINK_WS == 1
+    str = _z_string_alias_str("ws/localhost:7447#tout=1000");
+    assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+
+    str = _z_string_alias_str("ws");
+    assert(_z_string_equals(&ep._locator._protocol, &str) == true);
+    str = _z_string_alias_str("localhost:7447");
+    assert(_z_string_equals(&ep._locator._address, &str) == true);
+    assert(_z_str_intmap_len(&ep._config) == 1);
+    char *tout = _z_str_intmap_get(&ep._config, WS_CONFIG_TOUT_KEY);
+    assert(_z_str_eq(tout, "1000") == true);
+    _z_endpoint_clear(&ep);
+
+    str = _z_string_alias_str("ws/[::1]:7447");
+    assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
+
+    str = _z_string_alias_str("ws/");
+    assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
+#endif
 
 #if Z_FEATURE_LINK_TLS == 1
     str = _z_string_alias_str("tls/localhost:7447#root_ca_certificate=/path/ca.pem");

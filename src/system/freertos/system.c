@@ -57,8 +57,9 @@ uint64_t z_random_u64(void) {
 }
 
 void z_random_fill(void *buf, size_t len) {
+    uint8_t *p = (uint8_t *)buf;
     for (size_t i = 0; i < len; i++) {
-        *((uint8_t *)buf) = z_random_u8();
+        p[i] = z_random_u8();
     }
 }
 

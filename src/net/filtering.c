@@ -320,7 +320,9 @@ z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
         _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
         _z_session_rc_drop(&s);
     }
+#if Z_FEATURE_MATCHING == 1
     _z_write_filter_ctx_remove_callbacks(_Z_RC_IN_VAL(&filter->ctx));
+#endif
     _z_write_filter_ctx_rc_drop(&filter->ctx);
     return _Z_RES_OK;
 }

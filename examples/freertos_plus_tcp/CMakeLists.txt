@@ -53,7 +53,7 @@ set(FREERTOS_PLUS_TCP_BUFFER_ALLOCATION "2" CACHE STRING "" FORCE)
 FetchContent_MakeAvailable(freertos_kernel freertos_plus_tcp)
 
 set(BUILD_SHARED_LIBS OFF)
-set(WITH_FREERTOS_PLUS_TCP ON)
+set(ZP_PLATFORM "freertos_plus_tcp" CACHE STRING "Zenoh-Pico platform profile")
 set(ZENOH_LOG DEBUG)
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 

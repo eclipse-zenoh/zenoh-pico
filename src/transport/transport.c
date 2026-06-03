@@ -23,6 +23,26 @@
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/sleep.h"
+
+size_t _z_transport_get_peers_count(_z_transport_t *zt) {
+    size_t count = 0;
+    switch (zt->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            _z_transport_peer_mutex_lock(&zt->_transport._unicast._common);
+            count = _z_transport_peer_unicast_slist_len(zt->_transport._unicast._peers);
+            _z_transport_peer_mutex_unlock(&zt->_transport._unicast._common);
+            return count;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            _z_transport_peer_mutex_lock(&zt->_transport._multicast._common);
+            count = _z_transport_peer_multicast_slist_len(zt->_transport._multicast._peers);
+            _z_transport_peer_mutex_unlock(&zt->_transport._multicast._common);
+            return count;
+        default:
+            return 0;
+    }
+}
 
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt) {
     switch (zt->_type) {
@@ -87,10 +107,13 @@ void _z_transport_free(_z_transport_t **zt) {
 }
 
 #if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt) {
+z_result_t _z_transport_start_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
+    if (ztc == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+    }
     if (ztc->_batch_state == _Z_BATCHING_ACTIVE) {
-        return false;
+        return _Z_ERR_GENERIC;
     }
     ztc->_batch_count = 0;
     ztc->_batch_state = _Z_BATCHING_ACTIVE;
@@ -101,11 +124,14 @@ bool _z_transport_start_batching(_z_transport_t *zt) {
 #if Z_FEATURE_BATCH_PEER_MUTEX == 1
     _z_transport_peer_mutex_lock(ztc);
 #endif
-    return true;
+    return _Z_RES_OK;
 }
 
-void _z_transport_stop_batching(_z_transport_t *zt) {
+z_result_t _z_transport_stop_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
+    if (ztc == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+    }
 
 #if Z_FEATURE_BATCH_TX_MUTEX == 1
     _z_transport_tx_mutex_unlock(ztc);
@@ -114,5 +140,88 @@ void _z_transport_stop_batching(_z_transport_t *zt) {
     _z_transport_peer_mutex_unlock(ztc);
 #endif
     ztc->_batch_state = _Z_BATCHING_IDLE;
+    return _Z_RES_OK;
 }
 #endif
+
+_z_pending_peers_t _z_pending_peers_null(void) {
+    _z_pending_peers_t pending_peers;
+
+    pending_peers._peers = _z_pending_peer_svec_null();
+    pending_peers._timeout_ms = 0;
+    pending_peers._start = (z_clock_t){0};
+    pending_peers._sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+
+    return pending_peers;
+}
+
+z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers, const _z_string_svec_t *locators) {
+    if ((pending_peers == NULL) || (locators == NULL)) {
+        return _Z_ERR_GENERIC;
+    }
+
+    _z_pending_peers_clear(pending_peers);
+
+    size_t len = _z_string_svec_len(locators);
+    if (len == 0) {
+        return _Z_RES_OK;
+    }
+
+    pending_peers->_peers = _z_pending_peer_svec_make(len);
+    if (pending_peers->_peers._val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        _z_pending_peer_t peer = {0};
+        peer._state = _Z_PENDING_PEER_STATE_PENDING;
+        _z_string_t *locator = _z_string_svec_get(locators, i);
+        z_result_t ret = _z_string_copy(&peer._locator, locator);
+        if (ret == _Z_RES_OK) {
+            ret = _z_pending_peer_svec_append(&pending_peers->_peers, &peer, false);
+        }
+        if (ret != _Z_RES_OK) {
+            _z_pending_peer_clear(&peer);
+            _z_pending_peers_clear(pending_peers);
+            return ret;
+        }
+    }
+
+    return _Z_RES_OK;
+}
+
+bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers) {
+    if (pending_peers == NULL) {
+        return false;
+    }
+
+    size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
+    for (size_t i = 0; i < len; i++) {
+        const _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, i);
+        if (peer->_state == _Z_PENDING_PEER_STATE_PENDING) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void _z_pending_peers_clear(_z_pending_peers_t *pending_peers) {
+    if (pending_peers == NULL) {
+        return;
+    }
+
+    _z_pending_peer_svec_clear(&pending_peers->_peers);
+    *pending_peers = _z_pending_peers_null();
+}
+
+void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src) {
+    if ((dst == NULL) || (src == NULL) || (dst == src)) {
+        return;
+    }
+
+    _z_pending_peers_clear(dst);
+
+    *dst = *src;
+    *src = _z_pending_peers_null();
+}

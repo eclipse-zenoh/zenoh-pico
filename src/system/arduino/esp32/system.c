@@ -12,12 +12,17 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/config.h"
+
+#if defined(ZENOH_ARDUINO_ESP32)
+
 #include <Arduino.h>
 #include <errno.h>
 #include <esp_heap_caps.h>
 #include <esp_random.h>
 #include <stddef.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/system_error.h"
@@ -331,3 +336,5 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     t->nanos = now.tv_usec * 1000;
     return 0;
 }
+
+#endif /* defined(ZENOH_ARDUINO_ESP32) */

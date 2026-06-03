@@ -50,7 +50,15 @@ jobs:
 
           mkdir -p $ESPIDF_BASE
           cd $ESPIDF_BASE
-          pio init -b az-delivery-devkit-v4 -O "board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1" --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF -DZENOH_LOG_DEBUG"
+          # Temporary workaround: espressif32@7.0.0 pulls in ESP-IDF 6.0 and exposes
+          # the existing PlatformIO source-selection issue after the platform
+          # restructuring from #1188. Remove this pin once PlatformIO integration is
+          # aligned with the new platform structure.
+          pio init -b az-delivery-devkit-v4 \
+            --project-option="platform=espressif32@6.13.0" \
+            --project-option="framework=espidf" \
+            --project-option="build_flags=-DZENOH_ESPIDF -DZENOH_LOG_DEBUG" \
+            -O "board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1"
 
           cd $ESPIDF_BASE/lib
           ln -s $ZENOH_PICO_BASE

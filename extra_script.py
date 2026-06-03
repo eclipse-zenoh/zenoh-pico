@@ -18,6 +18,20 @@ Import('env', 'projenv')
 
 SRC_FILTER = []
 CPPDEFINES = []
+ZP_PLATFORM = None
+
+BASE_SRC_FILTER = [
+    "+<*>",
+    "-<tests/>",
+    "-<example/>",
+    "-<system/>",
+    "+<system/common/>",
+    "+<system/socket/>",
+]
+
+
+def _platform_src_filter(system_dir):
+    return BASE_SRC_FILTER + [f"+<{system_dir}/>"]
 
 FRAMEWORK = env.get("PIOFRAMEWORK")[0]
 PLATFORM = env.get("PIOPLATFORM")
@@ -29,96 +43,49 @@ if ZENOH_GENERIC == "1":
     BOARD = 'generic'
 
 if FRAMEWORK == 'zephyr':
-    SRC_FILTER = [
-        "+<*>",
-        "-<tests/>",
-        "-<example/>",
-        "-<system/arduino/>",
-        "-<system/emscripten/>",
-        "-<system/espidf/>",
-        "-<system/freertos/>",
-        "-<system/rpi_pico/>",
-        "-<system/mbed/>",
-        "-<system/unix/>",
-        "-<system/flipper/>",
-        "-<system/windows/>",
+    SRC_FILTER = _platform_src_filter("system/zephyr")
+    ZP_PLATFORM = "zephyr"
+    CPPDEFINES = [
+        "ZENOH_ZEPHYR",
     ]
-    CPPDEFINES = ["ZENOH_ZEPHYR"]
 
 elif FRAMEWORK == 'arduino':
     PLATFORM = env.get("PIOPLATFORM")
     if PLATFORM == 'espressif32':
-        SRC_FILTER = [
-            "+<*>",
-            "-<tests/>",
-            "-<example/>",
-            "-<system/arduino/opencr>",
-            "-<system/emscripten/>",
-            "-<system/espidf>",
-            "-<system/freertos/>",
-            "-<system/rpi_pico/>",
-            "-<system/mbed/>",
-            "-<system/unix/>",
-            "-<system/flipper/>",
-            "-<system/windows/>",
-            "-<system/zephyr/>",
+        SRC_FILTER = _platform_src_filter("system/arduino/esp32")
+        ZP_PLATFORM = "arduino_esp32"
+        CPPDEFINES = [
+            "ZENOH_ARDUINO_ESP32",
+            "ZENOH_COMPILER_GCC",
+            "ZENOH_C_STANDARD=99",
         ]
-        CPPDEFINES = ["ZENOH_ARDUINO_ESP32", "ZENOH_COMPILER_GCC", "ZENOH_C_STANDARD=99"]
     if PLATFORM == 'ststm32':
         BOARD = env.get("PIOENV")
         if BOARD == 'opencr':
-            SRC_FILTER = [
-                "+<*>",
-                "-<tests/>",
-                "-<example/>",
-                "-<system/arduino/esp32>",
-                "-<system/emscripten/>",
-                "-<system/espidf>",
-                "-<system/freertos/>",
-                "-<system/rpi_pico/>",
-                "-<system/mbed/>",
-                "-<system/unix/>",
-                "-<system/flipper/>",
-                "-<system/windows/>",
-                "-<system/zephyr/>",
+            SRC_FILTER = _platform_src_filter("system/arduino/opencr")
+            ZP_PLATFORM = "opencr"
+            CPPDEFINES = [
+                "ZENOH_ARDUINO_OPENCR",
+                "ZENOH_C_STANDARD=99",
+                "Z_FEATURE_MULTI_THREAD=0",
             ]
-            CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
 
 elif FRAMEWORK == 'espidf':
-    SRC_FILTER = [
-        "+<*>",
-        "-<tests/>",
-        "-<example/>",
-        "-<system/arduino/>",
-        "-<system/emscripten/>",
-        "-<system/freertos/>",
-        "-<system/rpi_pico/>",
-        "-<system/mbed/>",
-        "-<system/unix/>",
-        "-<system/flipper/>",
-        "-<system/windows/>",
-        "-<system/zephyr/>",
+    SRC_FILTER = _platform_src_filter("system/espidf")
+    ZP_PLATFORM = "espidf"
+    CPPDEFINES = [
+        "ZENOH_ESPIDF",
     ]
-    CPPDEFINES = ["ZENOH_ESPIDF"]
 
 elif FRAMEWORK == 'mbed':
-    SRC_FILTER = [
-        "+<*>",
-        "-<tests/>",
-        "-<example/>",
-        "-<system/arduino/>",
-        "-<system/emscripten/>",
-        "-<system/espidf/>",
-        "-<system/freertos/>",
-        "-<system/rpi_pico/>",
-        "-<system/unix/>",
-        "-<system/flipper/>",
-        "-<system/windows/>",
-        "-<system/zephyr/>",
+    SRC_FILTER = _platform_src_filter("system/mbed")
+    ZP_PLATFORM = "mbed"
+    CPPDEFINES = [
+        "ZENOH_MBED",
+        "ZENOH_C_STANDARD=99",
     ]
-    CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
 elif FRAMEWORK == 'generic':
-    SRC_FILTER = ["+<*>", "-<tests/>", "-<example/>", "-<system/*>", "+<system/common>"]
+    SRC_FILTER = BASE_SRC_FILTER
     CPPDEFINES = ["ZENOH_GENERIC"]
 
 env.Append(SRC_FILTER=SRC_FILTER)
@@ -140,17 +107,32 @@ default_args = ["-DFRAG_MAX_SIZE=4096", "-DBATCH_UNICAST_SIZE=2048", "-DBATCH_MU
 cmake_extra_args = env.BoardConfig().get("build.cmake_extra_args", "")
 cmake_extra_args_list = cmake_extra_args.split()
 
+
+def _has_cmake_arg(name):
+    prefix = f"{name}="
+    return any(arg.startswith(prefix) for arg in cmake_extra_args_list)
+
+
+if (
+    ZP_PLATFORM is not None
+    and not _has_cmake_arg("-DZP_PLATFORM")
+):
+    cmake_extra_args_list.append(f"-DZP_PLATFORM={ZP_PLATFORM}")
+
 # Add default value if needed
-args_set = set(cmake_extra_args_list)
 for default in default_args:
     arg_name = default.split('=')[0]
-    if not any(arg.startswith(arg_name) for arg in args_set):
+    if not any(arg.startswith(arg_name) for arg in cmake_extra_args_list):
         cmake_extra_args_list.append(default)
 
 # Define the source and binary directories
 source_dir = os.getcwd()
 build_dir = os.path.join(source_dir, "build")
 os.makedirs(build_dir, exist_ok=True)
+generated_include_dir = os.path.join(build_dir, "include")
+for build_env in (env, projenv, global_env):  # pylint: disable=undefined-variable
+    build_env.Prepend(CPPPATH=[generated_include_dir])
+    build_env.Prepend(CCFLAGS=[f"-I{generated_include_dir}"])
 # Run the CMake command with the source and binary directories
 print("Run command: cmake", source_dir, cmake_extra_args_list)
 subprocess.run(["cmake", source_dir] + cmake_extra_args_list, cwd=build_dir, check=True)

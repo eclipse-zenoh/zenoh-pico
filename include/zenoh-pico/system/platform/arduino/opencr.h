@@ -58,7 +58,7 @@ typedef struct {
 
 typedef struct {
     union {
-#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED)
         __z_net_iptcp_addr_t _iptcp;
 #endif
     };

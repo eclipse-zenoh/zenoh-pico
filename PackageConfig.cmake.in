@@ -18,6 +18,13 @@ if(@CHECK_THREADS@)
   find_dependency(Threads REQUIRED)
 endif()
 
+set(_zenohpico_dependency_packages "@ZP_PACKAGE_DEPENDENCY_PACKAGES@")
+foreach(_zenohpico_dependency_package IN LISTS _zenohpico_dependency_packages)
+  if(NOT _zenohpico_dependency_package STREQUAL "")
+    find_dependency(${_zenohpico_dependency_package} CONFIG REQUIRED)
+  endif()
+endforeach()
+
 include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoTargets.cmake")
 
 if(@PICO_SHARED@)
