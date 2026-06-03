@@ -404,7 +404,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
     return (tx_time_get() - *time) * 1000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) * TX_TIMER_TICKS_PER_SECOND; }
+unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) / TX_TIMER_TICKS_PER_SECOND; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     ULONG64 time_ns = tx_time_get() * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
