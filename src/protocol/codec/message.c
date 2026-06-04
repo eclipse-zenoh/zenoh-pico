@@ -167,17 +167,16 @@ z_result_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
     ret |= _z_zsize_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
         *a_loc = _z_locator_array_make(len);
+        for (size_t i = 0; i < a_loc->_len; i++) {
+            _z_locator_init(&a_loc->_val[i]);
+        }
 
         // Decode the elements
         for (size_t i = 0; i < len; i++) {
             _z_string_t str = _z_string_null();
             ret |= _z_string_decode(&str, zbf);
             if (ret == _Z_RES_OK) {
-                _z_locator_init(&a_loc->_val[i]);
                 ret |= _z_locator_from_string(&a_loc->_val[i], &str);
-                _z_string_clear(&str);
-            } else {
-                a_loc->_len = i;
             }
         }
     } else {
