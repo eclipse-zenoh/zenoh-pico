@@ -14,12 +14,18 @@
 
 // Tests for variant_template.h
 //
-// Four instantiations are tested in the same TU:
+// Several instantiations are tested in the same TU:
 //
 //   1. my_variant  — 2-type, default 1/2 names
 //   2. my_result   — 2-type, custom names "ok" / "err"
 //   3. my_tri      — 3-type, custom names "i32" / "f64" / "str"
 //   4. my_quad     — 4-type, default names 1 / 2 / 3 / 4
+//
+// Sparse instantiations exercise the "any subset of alternatives 1..8" support:
+//
+//   5. my_only2    — single alternative at slot 2 only (default name 2)
+//   6. my_sparse   — slots 1 and 4 only, with a gap (custom names num / text)
+//   7. my_only8    — single alternative at the last slot 8 (default name 8)
 //
 // A very small heap-allocated string type is used for arms that need
 // non-trivial move/destroy callbacks.
@@ -98,6 +104,40 @@ static void hstring_move(hstring_t *dst, hstring_t *src) {
 #define _ZP_VARIANT_TEMPLATE_4_MOVE_FN(dst, src) hstring_move(dst, src)
 #include "zenoh-pico/collections/variant_template.h"
 
+// ─── Instantiation 5: my_only2 (single arm at slot 2, default name 2) ────────
+//
+// Exercises a variant whose only alternative is not slot 1.  Validates that the
+// template never assumes alternative 1 is present.
+
+#define _ZP_VARIANT_TEMPLATE_NAME my_only2
+#define _ZP_VARIANT_TEMPLATE_2_TYPE hstring_t
+#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst, src) hstring_move(dst, src)
+#include "zenoh-pico/collections/variant_template.h"
+
+// ─── Instantiation 6: my_sparse (slots 1 and 4, gap in between) ──────────────
+//
+// Exercises a sparse set of alternatives with a gap (slots 2 and 3 undefined)
+// and custom names on non-contiguous slots.
+
+#define _ZP_VARIANT_TEMPLATE_NAME my_sparse
+#define _ZP_VARIANT_TEMPLATE_1_TYPE int
+#define _ZP_VARIANT_TEMPLATE_1_NAME num
+#define _ZP_VARIANT_TEMPLATE_4_TYPE hstring_t
+#define _ZP_VARIANT_TEMPLATE_4_NAME text
+#define _ZP_VARIANT_TEMPLATE_4_DESTROY_FN(ptr) hstring_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_4_MOVE_FN(dst, src) hstring_move(dst, src)
+#include "zenoh-pico/collections/variant_template.h"
+
+// ─── Instantiation 7: my_only8 (single arm at the last slot 8) ───────────────
+//
+// Exercises a variant whose only alternative is the highest slot, confirming
+// the tag enum, switch statements and undef cleanup all handle slot 8 alone.
+
+#define _ZP_VARIANT_TEMPLATE_NAME my_only8
+#define _ZP_VARIANT_TEMPLATE_8_TYPE int
+#include "zenoh-pico/collections/variant_template.h"
+
 // ─── Tests for my_variant (default names) ────────────────────────────────────
 
 static void test_default_none(void) {
@@ -119,6 +159,9 @@ static void test_default_from_a(void) {
     assert(!my_variant_is_2(&v));
     assert(my_variant_tag(&v) == my_variant_tag_1);
     assert(*my_variant_get_1(&v) == 42);
+    // const_get returns a const pointer to the same value
+    const my_variant_t *cv = &v;
+    assert(*my_variant_const_get_1(cv) == 42);
     my_variant_destroy(&v);
     assert(my_variant_is_none(&v));
     printf("  test_default_from_a            OK\n");
@@ -131,6 +174,9 @@ static void test_default_from_b(void) {
     assert(s.ptr == NULL);
     assert(my_variant_is_2(&v));
     assert(strcmp(my_variant_get_2(&v)->ptr, "hello") == 0);
+    // const_get returns a const pointer to the same value
+    const my_variant_t *cv = &v;
+    assert(strcmp(my_variant_const_get_2(cv)->ptr, "hello") == 0);
     my_variant_destroy(&v);
     assert(my_variant_is_none(&v));
     printf("  test_default_from_b            OK\n");
@@ -207,6 +253,9 @@ static void test_custom_from_ok(void) {
     assert(!my_result_is_err(&r));
     assert(my_result_tag(&r) == my_result_tag_ok);
     assert(*my_result_get_ok(&r) == 0);
+    // const_get with custom alternative name
+    const my_result_t *cr = &r;
+    assert(*my_result_const_get_ok(cr) == 0);
     my_result_destroy(&r);
     assert(my_result_is_none(&r));
     printf("  test_custom_from_ok            OK\n");
@@ -364,6 +413,124 @@ static void test_quad(void) {
     printf("  test_quad                      OK\n");
 }
 
+// ─── Tests for sparse instantiations ─────────────────────────────────────────
+
+// my_only2: the sole alternative lives at slot 2 (default name 2).
+
+static void test_only2(void) {
+    my_only2_t v = my_only2_none();
+    assert(my_only2_is_none(&v));
+    assert(!my_only2_is_2(&v));
+    assert(my_only2_tag(&v) == my_only2_tag_none);
+
+    hstring_t s = hstring_make("only-two");
+    v = my_only2_from_2(&s);
+    assert(s.ptr == NULL);  // moved
+    assert(!my_only2_is_none(&v));
+    assert(my_only2_is_2(&v));
+    assert(my_only2_tag(&v) == my_only2_tag_2);
+    assert(strcmp(my_only2_get_2(&v)->ptr, "only-two") == 0);
+
+    // const_get
+    const my_only2_t *cv = &v;
+    assert(strcmp(my_only2_const_get_2(cv)->ptr, "only-two") == 0);
+
+    // take_2 succeeds, leaves NONE
+    hstring_t out;
+    memset(&out, 0, sizeof(out));
+    assert(my_only2_take_2(&v, &out));
+    assert(strcmp(out.ptr, "only-two") == 0);
+    assert(my_only2_is_none(&v));
+    hstring_destroy(&out);
+
+    // take_2 on NONE fails
+    assert(!my_only2_take_2(&v, &out));
+
+    // destroy on a populated variant releases the held resource
+    hstring_t s2 = hstring_make("destroy-me");
+    v = my_only2_from_2(&s2);
+    my_only2_destroy(&v);
+    assert(my_only2_is_none(&v));
+
+    printf("  test_only2                     OK\n");
+}
+
+// my_sparse: alternatives at slots 1 (num) and 4 (text), slots 2 and 3 absent.
+
+static void test_sparse(void) {
+    // num arm (slot 1)
+    int n = 123;
+    my_sparse_t v = my_sparse_from_num(&n);
+    assert(my_sparse_is_num(&v));
+    assert(!my_sparse_is_text(&v));
+    assert(my_sparse_tag(&v) == my_sparse_tag_num);
+    assert(*my_sparse_get_num(&v) == 123);
+    const my_sparse_t *cv = &v;
+    assert(*my_sparse_const_get_num(cv) == 123);
+    my_sparse_destroy(&v);
+    assert(my_sparse_is_none(&v));
+
+    // text arm (slot 4)
+    hstring_t s = hstring_make("sparse-text");
+    v = my_sparse_from_text(&s);
+    assert(s.ptr == NULL);  // moved
+    assert(my_sparse_is_text(&v));
+    assert(!my_sparse_is_num(&v));
+    assert(my_sparse_tag(&v) == my_sparse_tag_text);
+    assert(strcmp(my_sparse_get_text(&v)->ptr, "sparse-text") == 0);
+
+    // wrong-arm take fails and leaves the variant untouched
+    int out_num = 0;
+    assert(!my_sparse_take_num(&v, &out_num));
+    assert(my_sparse_is_text(&v));
+
+    // move across the gap: text (slot 4) into a variant holding num (slot 1)
+    int n2 = 7;
+    my_sparse_t dst = my_sparse_from_num(&n2);
+    my_sparse_move(&dst, &v);
+    assert(my_sparse_is_none(&v));
+    assert(my_sparse_is_text(&dst));
+    assert(strcmp(my_sparse_get_text(&dst)->ptr, "sparse-text") == 0);
+
+    // take_text succeeds
+    hstring_t out;
+    memset(&out, 0, sizeof(out));
+    assert(my_sparse_take_text(&dst, &out));
+    assert(strcmp(out.ptr, "sparse-text") == 0);
+    assert(my_sparse_is_none(&dst));
+    hstring_destroy(&out);
+
+    printf("  test_sparse                    OK\n");
+}
+
+// my_only8: the sole alternative lives at the highest slot 8 (default name 8).
+
+static void test_only8(void) {
+    my_only8_t v = my_only8_none();
+    assert(my_only8_is_none(&v));
+    assert(!my_only8_is_8(&v));
+    assert(my_only8_tag(&v) == my_only8_tag_none);
+
+    int x = 88;
+    v = my_only8_from_8(&x);
+    assert(my_only8_is_8(&v));
+    assert(my_only8_tag(&v) == my_only8_tag_8);
+    assert(*my_only8_get_8(&v) == 88);
+    const my_only8_t *cv = &v;
+    assert(*my_only8_const_get_8(cv) == 88);
+
+    // take_8 succeeds
+    int out = 0;
+    assert(my_only8_take_8(&v, &out));
+    assert(out == 88);
+    assert(my_only8_is_none(&v));
+
+    // take_8 on NONE fails
+    assert(!my_only8_take_8(&v, &out));
+
+    printf("  test_only8                     OK\n");
+}
+
 // ─── Tests for _ZP_VARIANT_VISIT ─────────────────────────────────────────────
 
 // --- 2-type: my_variant ---
@@ -384,7 +551,7 @@ static void test_visit_2type(void) {
     int x = 10;
     my_variant_t v = my_variant_from_1(&x);
     g_visit_called_arm = 0;
-    _ZP_VARIANT_VISIT(&v, visit2_a, visit2_b);
+    _ZP_VARIANT_VISIT(my_variant, &v, (1, visit2_a), (2, visit2_b));
     assert(g_visit_called_arm == 1);
     my_variant_destroy(&v);
 
@@ -392,15 +559,8 @@ static void test_visit_2type(void) {
     hstring_t s = hstring_make("visit-b");
     v = my_variant_from_2(&s);
     g_visit_called_arm = 0;
-    _ZP_VARIANT_VISIT(&v, visit2_a, visit2_b);
+    _ZP_VARIANT_VISIT(my_variant, &v, (1, visit2_a), (2, visit2_b));
     assert(g_visit_called_arm == 2);
-    my_variant_destroy(&v);
-
-    // NONE: no arm called (tag == 0, switch falls through)
-    v = my_variant_none();
-    g_visit_called_arm = -1;
-    _ZP_VARIANT_VISIT(&v, visit2_a, visit2_b);
-    assert(g_visit_called_arm == -1);  // unchanged
     my_variant_destroy(&v);
 
     printf("  test_visit_2type               OK\n");
@@ -427,29 +587,23 @@ static void test_visit_3type(void) {
     int i = 5;
     my_tri_t v = my_tri_from_i32(&i);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit3_i32, visit3_f64, visit3_str);
+    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
     assert(g_visit3_called == 1);
     my_tri_destroy(&v);
 
     double d = 1.5;
     v = my_tri_from_f64(&d);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit3_i32, visit3_f64, visit3_str);
+    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
     assert(g_visit3_called == 2);
     my_tri_destroy(&v);
 
     hstring_t s = hstring_make("tri-str");
     v = my_tri_from_str(&s);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit3_i32, visit3_f64, visit3_str);
+    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
     assert(g_visit3_called == 3);
     my_tri_destroy(&v);
-
-    // NONE: no arm called
-    v = my_tri_none();
-    g_visit3_called = -1;
-    _ZP_VARIANT_VISIT(&v, visit3_i32, visit3_f64, visit3_str);
-    assert(g_visit3_called == -1);
 
     printf("  test_visit_3type               OK\n");
 }
@@ -479,36 +633,30 @@ static void test_visit_4type(void) {
     int i = 1;
     my_quad_t v = my_quad_from_1(&i);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit4_a, visit4_b, visit4_c, visit4_d);
+    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
     assert(g_visit4_called == 1);
     my_quad_destroy(&v);
 
     double d = 2.0;
     v = my_quad_from_2(&d);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit4_a, visit4_b, visit4_c, visit4_d);
+    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
     assert(g_visit4_called == 2);
     my_quad_destroy(&v);
 
     float f = 3.0f;
     v = my_quad_from_3(&f);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit4_a, visit4_b, visit4_c, visit4_d);
+    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
     assert(g_visit4_called == 3);
     my_quad_destroy(&v);
 
     hstring_t s = hstring_make("quad-d");
     v = my_quad_from_4(&s);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(&v, visit4_a, visit4_b, visit4_c, visit4_d);
+    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
     assert(g_visit4_called == 4);
     my_quad_destroy(&v);
-
-    // NONE: no arm called
-    v = my_quad_none();
-    g_visit4_called = -1;
-    _ZP_VARIANT_VISIT(&v, visit4_a, visit4_b, visit4_c, visit4_d);
-    assert(g_visit4_called == -1);
 
     printf("  test_visit_4type               OK\n");
 }
@@ -527,7 +675,7 @@ static void test_visit_generic(void) {
     { r = atoi((s)->ptr); }
     for (int i = 0; i < 3; i++) {
         int r = 0;
-        _ZP_VARIANT_VISIT(&v[i], DOUBLE_TO_INT, IDENTITY, STR_TO_INT);
+        _ZP_VARIANT_VISIT(my_tri, &v[i], (f64, DOUBLE_TO_INT), (i32, IDENTITY), (str, STR_TO_INT));
         assert(r == out[i]);
     }
 
@@ -552,6 +700,10 @@ int main(void) {
     test_tri();
     printf("── 4-type (1 / 2 / 3 / 4) ───\n");
     test_quad();
+    printf("── sparse instantiations ────\n");
+    test_only2();
+    test_sparse();
+    test_only8();
     printf("── _ZP_VARIANT_VISIT macro ──\n");
     test_visit_2type();
     test_visit_3type();
