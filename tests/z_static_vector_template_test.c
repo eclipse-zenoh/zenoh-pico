@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #undef NDEBUG
 #include <assert.h>
@@ -26,6 +27,48 @@
 #define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE int
 #define _ZP_STATIC_VECTOR_TEMPLATE_NAME intvec
 #define _ZP_STATIC_VECTOR_TEMPLATE_SIZE 8
+#include "zenoh-pico/collections/static_vector_template.h"
+
+// ── Instantiate non-trivially-movable "box" vector, capacity 8 ───────────────
+//
+// box_t holds a heap-allocated int. A custom move function transfers ownership
+// and nulls the source, so this instantiation exercises the element-wise
+// (non-memmove) fallback paths of append/insert/remove.
+
+typedef struct {
+    int *ptr;
+} box_t;
+
+static int g_box_destroy_count = 0;
+static int g_box_move_count = 0;
+
+static void box_destroy(box_t *b) {
+    if (b->ptr != NULL) {
+        free(b->ptr);
+        b->ptr = NULL;
+        g_box_destroy_count++;
+    }
+}
+
+static void box_move(box_t *dst, box_t *src) {
+    *dst = *src;
+    src->ptr = NULL;
+    g_box_move_count++;
+}
+
+static box_t make_box(int value) {
+    box_t b;
+    b.ptr = (int *)malloc(sizeof(int));
+    assert(b.ptr != NULL);
+    *b.ptr = value;
+    return b;
+}
+
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE box_t
+#define _ZP_STATIC_VECTOR_TEMPLATE_NAME boxvec
+#define _ZP_STATIC_VECTOR_TEMPLATE_SIZE 8
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) box_destroy(x)
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) box_move(dst, src)
 #include "zenoh-pico/collections/static_vector_template.h"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -103,6 +146,59 @@ static void test_pop_empty(void) {
     intvec_t v = intvec_new();
     int out = -1;
     assert(!intvec_pop_back(&v, &out));
+    intvec_destroy(&v);
+}
+
+static void test_append(void) {
+    printf("Test: append moves a range of elements onto the back\n");
+    intvec_t v = intvec_new();
+    int head[] = {1, 2};
+    for (int i = 0; i < 2; i++) {
+        assert(intvec_push_back(&v, &head[i]));
+    }
+    int tail[] = {3, 4, 5};
+    assert(intvec_append(&v, tail, 3));
+    assert(intvec_size(&v) == 5);
+    for (int i = 0; i < 5; i++) {
+        assert(*intvec_get(&v, (size_t)i) == i + 1);
+    }
+    intvec_destroy(&v);
+}
+
+static void test_append_empty_range(void) {
+    printf("Test: append with len 0 is a no-op and succeeds\n");
+    intvec_t v = intvec_new();
+    int a = 1;
+    assert(intvec_push_back(&v, &a));
+    assert(intvec_append(&v, NULL, 0));
+    assert(intvec_size(&v) == 1);
+    assert(*intvec_get(&v, 0) == 1);
+    intvec_destroy(&v);
+}
+
+static void test_append_exact_capacity(void) {
+    printf("Test: append succeeds when it exactly fills the vector\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    assert(intvec_append(&v, vals, 8));
+    assert(intvec_size(&v) == 8);
+    for (int i = 0; i < 8; i++) {
+        assert(*intvec_get(&v, (size_t)i) == vals[i]);
+    }
+    intvec_destroy(&v);
+}
+
+static void test_append_overflow(void) {
+    printf("Test: append fails and leaves vector unchanged when capacity is exceeded\n");
+    intvec_t v = intvec_new();
+    int head[] = {1, 2, 3, 4, 5};
+    assert(intvec_append(&v, head, 5));
+    int tail[] = {6, 7, 8, 9};  // would need 9 slots, capacity is 8
+    assert(!intvec_append(&v, tail, 4));
+    assert(intvec_size(&v) == 5);
+    for (int i = 0; i < 5; i++) {
+        assert(*intvec_get(&v, (size_t)i) == i + 1);
+    }
     intvec_destroy(&v);
 }
 
@@ -310,6 +406,88 @@ static void test_interleaved_insert_remove(void) {
     intvec_destroy(&v);
 }
 
+// ── box_t vector tests (non-trivially movable, element-wise fallback) ────────
+
+static void test_box_append_element_wise_move(void) {
+    printf("Test: box append moves each element once, transferring ownership\n");
+    boxvec_t v = boxvec_new();
+    box_t seed = make_box(0);
+    assert(boxvec_push_back(&v, &seed));
+
+    box_t src[3];
+    for (int i = 0; i < 3; i++) {
+        src[i] = make_box(i + 1);
+    }
+    g_box_move_count = 0;
+    assert(boxvec_append(&v, src, 3));
+    // Each appended element must have been moved exactly once
+    assert(g_box_move_count == 3);
+    // Ownership transferred: the source boxes were nulled out by box_move
+    for (int i = 0; i < 3; i++) {
+        assert(src[i].ptr == NULL);
+    }
+    assert(boxvec_size(&v) == 4);
+    for (int i = 0; i < 4; i++) {
+        assert(*boxvec_get(&v, (size_t)i)->ptr == i);
+    }
+    g_box_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_box_destroy_count == 4);
+}
+
+static void test_box_insert_element_wise_move(void) {
+    printf("Test: box insert shifts elements without double-free\n");
+    boxvec_t v = boxvec_new();
+    for (int i = 0; i < 3; i++) {
+        box_t b = make_box(i * 10);  // [0, 10, 20]
+        assert(boxvec_push_back(&v, &b));
+    }
+    box_t mid = make_box(99);
+    // Insert 99 at index 1: [0, 99, 10, 20]
+    assert(boxvec_insert(&v, 1, &mid));
+    assert(mid.ptr == NULL);  // ownership transferred
+    assert(boxvec_size(&v) == 4);
+    assert(*boxvec_get(&v, 0)->ptr == 0);
+    assert(*boxvec_get(&v, 1)->ptr == 99);
+    assert(*boxvec_get(&v, 2)->ptr == 10);
+    assert(*boxvec_get(&v, 3)->ptr == 20);
+    g_box_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_box_destroy_count == 4);
+}
+
+static void test_box_remove_element_wise_move(void) {
+    printf("Test: box remove shifts elements and moves out without double-free\n");
+    boxvec_t v = boxvec_new();
+    for (int i = 0; i < 4; i++) {
+        box_t b = make_box(i + 1);  // [1, 2, 3, 4]
+        assert(boxvec_push_back(&v, &b));
+    }
+    // Remove index 1 (value 2): [1, 3, 4]
+    box_t out = {NULL};
+    g_box_destroy_count = 0;
+    assert(boxvec_remove(&v, 1, &out));
+    assert(out.ptr != NULL && *out.ptr == 2);
+    assert(g_box_destroy_count == 0);  // moved out, not destroyed
+    box_destroy(&out);
+    assert(g_box_destroy_count == 1);
+
+    assert(boxvec_size(&v) == 3);
+    assert(*boxvec_get(&v, 0)->ptr == 1);
+    assert(*boxvec_get(&v, 1)->ptr == 3);
+    assert(*boxvec_get(&v, 2)->ptr == 4);
+
+    // Remove with NULL out destroys the element in place
+    g_box_destroy_count = 0;
+    assert(boxvec_remove(&v, 0, NULL));
+    assert(g_box_destroy_count == 1);
+    assert(boxvec_size(&v) == 2);
+
+    g_box_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_box_destroy_count == 2);
+}
+
 // ── algorithms_template.h tests ───────────────────────────────────────────────
 
 static void test_foreach(void) {
@@ -384,6 +562,10 @@ int main(void) {
     test_front_back_peek();
     test_capacity_full();
     test_pop_empty();
+    test_append();
+    test_append_empty_range();
+    test_append_exact_capacity();
+    test_append_overflow();
     test_get_out_of_bounds();
     test_insert_at_index();
     test_insert_at_front();
@@ -399,6 +581,9 @@ int main(void) {
     test_data_pointer();
     test_destroy_non_empty();
     test_interleaved_insert_remove();
+    test_box_append_element_wise_move();
+    test_box_insert_element_wise_move();
+    test_box_remove_element_wise_move();
     test_foreach();
     test_cforeach();
     test_find();

@@ -45,6 +45,7 @@
 #define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
 #ifndef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN
+#define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
 #define _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
@@ -136,6 +137,27 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, push_back)(_ZP_STATI
     return true;
 }
 
+// Appends @p len elements to the back of the vector by moving them from the array @p elems.
+// On success every element in [elems, elems + len) is moved into the vector.
+// Returns true on success, or false if the vector does not have enough remaining capacity,
+// in which case the vector is left unchanged and no elements are moved.
+static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, append)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
+                                                                    _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *elems,
+                                                                    size_t len) {
+    if (len > _ZP_STATIC_VECTOR_TEMPLATE_SIZE - vec->_size) {
+        return false;
+    }
+#if defined(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memcpy(&vec->_buffer[vec->_size], elems, len * sizeof(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = 0; i < len; i++) {
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size + i], &elems[i]);
+    }
+#endif
+    vec->_size += len;
+    return true;
+}
+
 // Removes the element at the back of the vector.
 // If @p out is non-NULL the element is moved into it; otherwise it is destroyed in place.
 // Returns true on success, or false if the vector is empty.
@@ -180,9 +202,14 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, insert)(_ZP_STATIC_V
     if (vec->_size == _ZP_STATIC_VECTOR_TEMPLATE_SIZE || index > vec->_size) {
         return false;
     }
+#if defined(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index + 1], &vec->_buffer[index],
+            (vec->_size - index) * sizeof(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
     for (size_t i = vec->_size; i > index; i--) {
         _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i], &vec->_buffer[i - 1]);
     }
+#endif
     _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], elem);
     vec->_size++;
     return true;
@@ -201,9 +228,14 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(_ZP_STATIC_V
     } else {
         _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
     }
+#if defined(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index], &vec->_buffer[index + 1],
+            (vec->_size - index - 1) * sizeof(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
     for (size_t i = index + 1; i < vec->_size; i++) {
         _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i - 1], &vec->_buffer[i]);
     }
+#endif
     vec->_size--;
     return true;
 }
@@ -249,4 +281,7 @@ static inline _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t)
 #undef _ZP_STATIC_VECTOR_TEMPLATE_NAME
 #undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN
 #undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN
+#ifdef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
+#undef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
+#endif
 #undef _ZP_STATIC_VECTOR_TEMPLATE_SIZE

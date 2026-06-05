@@ -215,6 +215,34 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, push_back)(_ZP_VECTOR_TEMPL
     return true;
 }
 
+// Appends @p len elements to the back of the vector by moving them from the array @p elems.
+// Grows the internal buffer (doubling capacity until the elements fit) if needed.
+// On success every element in [elems, elems + len) is moved into the vector.
+// Returns true on success, or false if a reallocation was required but failed,
+// in which case the vector is left unchanged and no elements are moved.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, append)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elems, size_t len) {
+    size_t required = vec->_size + len;
+    if (required > vec->_capacity) {
+        size_t new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity;
+        while (new_capacity < required) {
+            new_capacity *= 2;
+        }
+        if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+            return false;
+        }
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memcpy(&vec->_buffer[vec->_size], elems, len * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = 0; i < len; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size + i], &elems[i]);
+    }
+#endif
+    vec->_size += len;
+    return true;
+}
+
 // Removes the element at the back of the vector.
 // If @p out is non-NULL the element is moved into it; otherwise it is destroyed in place.
 // Returns true on success, or false if the vector is empty.

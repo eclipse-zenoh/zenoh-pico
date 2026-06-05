@@ -165,6 +165,32 @@ static void test_auto_grow(void) {
     intvec_destroy(&v);
 }
 
+static void test_append(void) {
+    printf("  append moves a range of elements and grows the buffer as needed\n");
+    intvec_t v = intvec_new();
+    int head[] = {1, 2};
+    for (int i = 0; i < 2; i++) assert(intvec_push_back(&v, &head[i]));
+    int tail[50];
+    for (int i = 0; i < 50; i++) tail[i] = i + 3;
+    assert(intvec_append(&v, tail, 50));
+    assert(intvec_size(&v) == 52);
+    assert(intvec_capacity(&v) >= 52);
+    for (int i = 0; i < 52; i++) {
+        assert(*intvec_get(&v, (size_t)i) == i + 1);
+    }
+    intvec_destroy(&v);
+}
+
+static void test_append_empty_range(void) {
+    printf("  append with len 0 is a no-op and never allocates\n");
+    intvec_t v = intvec_new();
+    assert(intvec_append(&v, NULL, 0));
+    assert(intvec_is_empty(&v));
+    assert(intvec_capacity(&v) == 0);
+    assert(intvec_data(&v) == NULL);
+    intvec_destroy(&v);
+}
+
 static void test_pop_back(void) {
     printf("  pop_back removes from the back in LIFO order\n");
     intvec_t v = intvec_new();
@@ -329,6 +355,36 @@ static void test_box_auto_grow_element_wise_move(void) {
     assert(g_destroy_count == N);
 }
 
+static void test_box_append_element_wise_move(void) {
+    printf("  box: append moves each element once, transferring ownership\n");
+    boxvec_t v = boxvec_new();
+    box_t seed = make_box(0);
+    assert(boxvec_push_back(&v, &seed));
+    // Reserve enough room so append itself does not trigger a grow (which would
+    // move the existing seed element); this isolates the moves to the appended ones.
+    assert(boxvec_reserve(&v, 6));
+
+    box_t src[5];
+    for (int i = 0; i < 5; i++) {
+        src[i] = make_box(i + 1);
+    }
+    g_move_count = 0;
+    assert(boxvec_append(&v, src, 5));
+    // Each appended element must have been moved exactly once
+    assert(g_move_count == 5);
+    // Ownership transferred: the source boxes were nulled out by box_move
+    for (int i = 0; i < 5; i++) {
+        assert(src[i].ptr == NULL);
+    }
+    assert(boxvec_size(&v) == 6);
+    for (int i = 0; i < 6; i++) {
+        assert(*boxvec_get(&v, (size_t)i)->ptr == i);
+    }
+    g_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_destroy_count == 6);
+}
+
 static void test_box_pop_back_moves_out(void) {
     printf("  box: pop_back moves element into out without double-free\n");
     boxvec_t v = boxvec_new();
@@ -462,6 +518,8 @@ int main(void) {
     test_new_with_capacity_zero();
     test_push_back_and_get();
     test_auto_grow();
+    test_append();
+    test_append_empty_range();
     test_pop_back();
     test_pop_empty_returns_false();
     test_pop_back_null_out();
@@ -476,6 +534,7 @@ int main(void) {
     test_box_push_and_read();
     test_box_reserve_uses_element_wise_move();
     test_box_auto_grow_element_wise_move();
+    test_box_append_element_wise_move();
     test_box_pop_back_moves_out();
     test_box_pop_back_null_destroys();
 
