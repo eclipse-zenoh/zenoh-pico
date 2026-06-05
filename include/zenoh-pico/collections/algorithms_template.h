@@ -57,6 +57,22 @@
         }                                                                                          \
     }
 
+#define _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, transform) \
+    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) {          \
+        collection_name##_elem_t *node = collection_name##_at(collection_ptr, begin);           \
+        if (predicate(transform(node))) {                                                       \
+            break;                                                                              \
+        }                                                                                       \
+    }
+
+#define _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, transform)  \
+    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) {            \
+        const collection_name##_elem_t *node = collection_name##_const_at(collection_ptr, begin); \
+        if (predicate(transform(node))) {                                                         \
+            break;                                                                                \
+        }                                                                                         \
+    }
+
 // For loop over collection elements.  var_name is a pointer to the element type which should be declared by user before
 // the loop.
 #define _ZP_FOREACH(collection_name, collection_ptr, var_name) \
@@ -76,8 +92,19 @@
 #define _ZP_CFIND(collection_name, collection_ptr, var_name, predicate) \
     _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_IDENTITY)
 
-// For loop over hashmap values.  var_name is a pointer to the value type which should be declared by user before the
-// loop.
+// Set begin iterator to point to the first element satisfying predicate within [begin, end) range.
+// Will be set to end if no matching element is found.
+#define _ZP_ITFIND(collection_name, collection_ptr, begin, end, predicate) \
+    _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_IDENTITY)
+
+// Set begin iterator to point to the first element satisfying predicate within [begin, end) range.
+// Will be set to end if no matching element is found.
+// Iterates over const collection.
+#define _ZP_CITFIND(collection_name, collection_ptr, begin, end, predicate) \
+    _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_IDENTITY)
+
+// For loop over hashmap values.  var_name is a pointer to the value type which should be declared by user before
+// the loop.
 #define _ZP_FOREACH_VAL(collection_name, collection_ptr, var_name) \
     _ZP_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_VAL)
 // For loop over const hashmap values.  var_name is a pointer to the value type which should be declared by user before
@@ -94,6 +121,17 @@
 // by user before the loop.  It is set to NULL if no matching element is found.
 #define _ZP_CFIND_VAL(collection_name, collection_ptr, var_name, predicate) \
     _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_VAL)
+
+// Set begin iterator to point to the first element with value satisfying predicate within [begin, end) range.
+// Will be set to end if no matching element is found.
+#define _ZP_ITFIND_VAL(collection_name, collection_ptr, begin, end, predicate) \
+    _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_VAL)
+
+// Set begin iterator to point to the first element with value satisfying predicate within [begin, end) range.
+// Will be set to end if no matching element is found.
+// Iterates over const collection.
+#define _ZP_CITFIND_VAL(collection_name, collection_ptr, begin, end, predicate) \
+    _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_VAL)
 
 // Remove all elements matching predicate.  Behaviour is undefined if predicate has side effects that modify the
 // collection.

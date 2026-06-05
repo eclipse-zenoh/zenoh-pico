@@ -553,6 +553,93 @@ static void test_find(void) {
     intvec_destroy(&v);
 }
 
+static void test_itfind(void) {
+    printf("Test: _ZP_ITFIND positions iterator on first match within [begin, end)\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 8; i++) {
+        assert(intvec_push_back(&v, &i));  // value i at index i
+    }
+
+    // Found: begin lands on the matching element.
+    intvec_iter_t it = intvec_begin(&v);
+    intvec_iter_t end_it = intvec_end(&v);
+#define pred_eq5(p) (*(p) == 5)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq5);
+#undef pred_eq5
+    assert(it != end_it);
+    assert(*intvec_at(&v, it) == 5);
+
+    // Not found: begin advances to end.
+    it = intvec_begin(&v);
+    end_it = intvec_end(&v);
+#define pred_eq99(p) (*(p) == 99)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq99);
+#undef pred_eq99
+    assert(it == end_it);
+
+    // Respects begin bound: a match before begin is not found.
+    it = 4;  // skip index 2
+    end_it = intvec_end(&v);
+#define pred_eq2(p) (*(p) == 2)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq2);
+#undef pred_eq2
+    assert(it == end_it);
+
+    // Respects end bound: a match at/after end is not found.
+    it = intvec_begin(&v);
+    end_it = 4;  // restrict search to indices [0, 4)
+#define pred_eq6(p) (*(p) == 6)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq6);
+#undef pred_eq6
+    assert(it == end_it);
+
+    // Positive sub-range search.
+    it = 1;
+    end_it = 7;
+#define pred_eq4(p) (*(p) == 4)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq4);
+#undef pred_eq4
+    assert(it == 4);
+    assert(*intvec_at(&v, it) == 4);
+
+    intvec_destroy(&v);
+}
+
+static void test_citfind(void) {
+    printf("Test: _ZP_CITFIND positions iterator on first match via const access\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 8; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+
+    // Found via const access.
+    intvec_iter_t it = intvec_begin(&v);
+    intvec_iter_t end_it = intvec_end(&v);
+#define pred_eq3(p) (*(p) == 3)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq3);
+#undef pred_eq3
+    assert(it != end_it);
+    assert(*intvec_const_at(&v, it) == 3);
+
+    // Not found.
+    it = intvec_begin(&v);
+    end_it = intvec_end(&v);
+#define pred_eq77(p) (*(p) == 77)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq77);
+#undef pred_eq77
+    assert(it == end_it);
+
+    // Empty range (begin == end) finds nothing.
+    it = intvec_begin(&v);
+    end_it = it;
+#define pred_any(p) ((void)(p), true)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_any);
+#undef pred_any
+    assert(it == end_it);
+
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -587,6 +674,8 @@ int main(void) {
     test_foreach();
     test_cforeach();
     test_find();
+    test_itfind();
+    test_citfind();
     printf("All vector tests passed.\n");
     return 0;
 }

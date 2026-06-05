@@ -509,6 +509,93 @@ static void test_heap_find(void) {
     intvec_destroy(&v);
 }
 
+static void test_heap_itfind(void) {
+    printf("  _ZP_ITFIND positions iterator on first match within [begin, end)\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 10; i++) {
+        assert(intvec_push_back(&v, &i));  // value i at index i
+    }
+
+    // Found: begin lands on the matching element.
+    intvec_iter_t it = intvec_begin(&v);
+    intvec_iter_t end_it = intvec_end(&v);
+#define pred_eq6(p) (*(p) == 6)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq6);
+#undef pred_eq6
+    assert(it != end_it);
+    assert(*intvec_at(&v, it) == 6);
+
+    // Not found: begin advances to end.
+    it = intvec_begin(&v);
+    end_it = intvec_end(&v);
+#define pred_eq99(p) (*(p) == 99)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq99);
+#undef pred_eq99
+    assert(it == end_it);
+
+    // Respects begin bound: a match located before begin is not found.
+    it = 7;  // start past index 3
+    end_it = intvec_end(&v);
+#define pred_eq3(p) (*(p) == 3)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq3);
+#undef pred_eq3
+    assert(it == end_it);
+
+    // Respects end bound: a match located at/after end is not found.
+    it = intvec_begin(&v);
+    end_it = 5;  // restrict search to indices [0, 5)
+#define pred_eq8(p) (*(p) == 8)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq8);
+#undef pred_eq8
+    assert(it == end_it);
+
+    // Positive sub-range search: finds a match that lies strictly inside [begin, end).
+    it = 2;
+    end_it = 8;
+#define pred_eq5(p) (*(p) == 5)
+    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq5);
+#undef pred_eq5
+    assert(it == 5);
+    assert(*intvec_at(&v, it) == 5);
+
+    intvec_destroy(&v);
+}
+
+static void test_heap_citfind(void) {
+    printf("  _ZP_CITFIND positions iterator on first match via const access\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 10; i++) {
+        assert(intvec_push_back(&v, &i));
+    }
+
+    // Found via const access.
+    intvec_iter_t it = intvec_begin(&v);
+    intvec_iter_t end_it = intvec_end(&v);
+#define pred_eq4(p) (*(p) == 4)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq4);
+#undef pred_eq4
+    assert(it != end_it);
+    assert(*intvec_const_at(&v, it) == 4);
+
+    // Not found.
+    it = intvec_begin(&v);
+    end_it = intvec_end(&v);
+#define pred_eq42(p) (*(p) == 42)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq42);
+#undef pred_eq42
+    assert(it == end_it);
+
+    // Empty range (begin == end) finds nothing.
+    it = intvec_begin(&v);
+    end_it = it;
+#define pred_any(p) ((void)(p), true)
+    _ZP_CITFIND(intvec, &v, it, end_it, pred_any);
+#undef pred_any
+    assert(it == end_it);
+
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -545,6 +632,8 @@ int main(void) {
     test_heap_foreach();
     test_heap_cforeach();
     test_heap_find();
+    test_heap_itfind();
+    test_heap_citfind();
 
     printf("\nAll vector_template tests passed.\n");
     return 0;

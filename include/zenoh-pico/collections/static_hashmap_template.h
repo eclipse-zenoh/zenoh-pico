@@ -366,6 +366,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 // Returns an invalid post-end iterator.
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             end)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
+    (void)map;
     return _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
 }
 

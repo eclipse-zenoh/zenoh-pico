@@ -475,6 +475,182 @@ static void test_algorithms_find_val(void) {
     u32map_destroy(&m);
 }
 
+static void test_algorithms_itfind(void) {
+    printf("Test: _ZP_ITFIND positions iterator on first matching entry\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 10;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 5;  // unique keys and values
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+
+    // Found over the full range.
+    u32map_iter_t it = u32map_begin(&m);
+    u32map_iter_t end_it = u32map_end(&m);
+#define pred_key6(e) ((e)->key == 6)
+    _ZP_ITFIND(u32map, &m, it, end_it, pred_key6);
+    assert(it != end_it);
+    u32map_iter_t pos = it;
+    assert(u32map_at(&m, it)->key == 6 && u32map_at(&m, it)->val == 30);
+
+    // begin bound: searching strictly after the match finds nothing (unique key).
+    it = u32map_iter_next(&m, pos);
+    end_it = u32map_end(&m);
+    _ZP_ITFIND(u32map, &m, it, end_it, pred_key6);
+    assert(it == end_it);
+
+    // end bound: excluding the matching slot finds nothing.
+    it = u32map_begin(&m);
+    end_it = pos;
+    _ZP_ITFIND(u32map, &m, it, end_it, pred_key6);
+    assert(it == pos);
+#undef pred_key6
+
+    // No match advances the iterator to end.
+    it = u32map_begin(&m);
+    end_it = u32map_end(&m);
+#define pred_key999(e) ((e)->key == 999)
+    _ZP_ITFIND(u32map, &m, it, end_it, pred_key999);
+    assert(it == end_it);
+#undef pred_key999
+
+    // Empty range finds nothing.
+    it = u32map_end(&m);
+    end_it = u32map_end(&m);
+#define pred_any(e) ((void)(e), true)
+    _ZP_ITFIND(u32map, &m, it, end_it, pred_any);
+    assert(it == end_it);
+#undef pred_any
+
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_citfind(void) {
+    printf("Test: _ZP_CITFIND positions iterator on first matching entry (const)\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 9;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i + 100;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+
+    // Found over the full range; node accessed via const_at().
+    u32map_iter_t it = u32map_begin(&m);
+    u32map_iter_t end_it = u32map_end(&m);
+#define pred_key4(e) ((e)->key == 4)
+    _ZP_CITFIND(u32map, &m, it, end_it, pred_key4);
+    assert(it != end_it);
+    u32map_iter_t pos = it;
+    assert(u32map_const_at(&m, it)->key == 4 && u32map_const_at(&m, it)->val == 104);
+
+    // begin bound: searching strictly after the match finds nothing.
+    it = u32map_iter_next(&m, pos);
+    end_it = u32map_end(&m);
+    _ZP_CITFIND(u32map, &m, it, end_it, pred_key4);
+    assert(it == end_it);
+
+    // end bound: excluding the matching slot finds nothing.
+    it = u32map_begin(&m);
+    end_it = pos;
+    _ZP_CITFIND(u32map, &m, it, end_it, pred_key4);
+    assert(it == pos);
+#undef pred_key4
+
+    // No match advances to end.
+    it = u32map_begin(&m);
+    end_it = u32map_end(&m);
+#define pred_key999(e) ((e)->key == 999)
+    _ZP_CITFIND(u32map, &m, it, end_it, pred_key999);
+    assert(it == end_it);
+#undef pred_key999
+
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_itfind_val(void) {
+    printf("Test: _ZP_ITFIND_VAL positions iterator on first matching value\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 9;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 2;  // unique values
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+
+    // Found by value.
+    u32map_iter_t it = u32map_begin(&m);
+    u32map_iter_t end_it = u32map_end(&m);
+#define pred_val10(v) (*(v) == 10)
+    _ZP_ITFIND_VAL(u32map, &m, it, end_it, pred_val10);  // key 5 -> val 10
+    assert(it != end_it);
+    u32map_iter_t pos = it;
+    assert(u32map_at(&m, it)->key == 5 && u32map_at(&m, it)->val == 10);
+
+    // begin bound: searching strictly after the match finds nothing.
+    it = u32map_iter_next(&m, pos);
+    end_it = u32map_end(&m);
+    _ZP_ITFIND_VAL(u32map, &m, it, end_it, pred_val10);
+    assert(it == end_it);
+
+    // end bound: excluding the matching slot finds nothing.
+    it = u32map_begin(&m);
+    end_it = pos;
+    _ZP_ITFIND_VAL(u32map, &m, it, end_it, pred_val10);
+    assert(it == pos);
+#undef pred_val10
+
+    // No match advances to end.
+    it = u32map_begin(&m);
+    end_it = u32map_end(&m);
+#define pred_val9999(v) (*(v) == 9999)
+    _ZP_ITFIND_VAL(u32map, &m, it, end_it, pred_val9999);
+    assert(it == end_it);
+#undef pred_val9999
+
+    u32map_destroy(&m);
+}
+
+static void test_algorithms_citfind_val(void) {
+    printf("Test: _ZP_CITFIND_VAL positions iterator on first matching value (const)\n");
+    u32map_t m = u32map_new();
+    const uint32_t N = 8;
+    for (uint32_t i = 0; i < N; i++) {
+        uint32_t k = i, v = i * 3;
+        assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
+    }
+
+    // Found by value via const_at().
+    u32map_iter_t it = u32map_begin(&m);
+    u32map_iter_t end_it = u32map_end(&m);
+#define pred_val12(v) (*(v) == 12)
+    _ZP_CITFIND_VAL(u32map, &m, it, end_it, pred_val12);  // key 4 -> val 12
+    assert(it != end_it);
+    u32map_iter_t pos = it;
+    assert(u32map_const_at(&m, it)->key == 4 && u32map_const_at(&m, it)->val == 12);
+
+    // begin bound: searching strictly after the match finds nothing.
+    it = u32map_iter_next(&m, pos);
+    end_it = u32map_end(&m);
+    _ZP_CITFIND_VAL(u32map, &m, it, end_it, pred_val12);
+    assert(it == end_it);
+
+    // end bound: excluding the matching slot finds nothing.
+    it = u32map_begin(&m);
+    end_it = pos;
+    _ZP_CITFIND_VAL(u32map, &m, it, end_it, pred_val12);
+    assert(it == pos);
+#undef pred_val12
+
+    // No match advances to end.
+    it = u32map_begin(&m);
+    end_it = u32map_end(&m);
+#define pred_val9999(v) (*(v) == 9999)
+    _ZP_CITFIND_VAL(u32map, &m, it, end_it, pred_val9999);
+    assert(it == end_it);
+#undef pred_val9999
+
+    u32map_destroy(&m);
+}
+
 static void test_algorithms_remove(void) {
     printf("Test: _ZP_REMOVE removes all matching entries\n");
     u32map_t m = u32map_new();
@@ -540,6 +716,10 @@ int main(void) {
     test_algorithms_foreach_val();
     test_algorithms_find();
     test_algorithms_find_val();
+    test_algorithms_itfind();
+    test_algorithms_citfind();
+    test_algorithms_itfind_val();
+    test_algorithms_citfind_val();
     test_algorithms_remove();
     test_algorithms_remove_all();
     printf("All static_hashmap tests passed\n");
