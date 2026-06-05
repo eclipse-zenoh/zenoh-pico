@@ -105,52 +105,55 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
         const char *p_key_start = start;
         const char *p_key_end = memchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR, curr_len);
 
-        if (p_key_end != NULL) {
-            // Verify the key is valid based on the provided mapping
-            size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
-            bool found = false;
-            uint8_t key = 0;
-            for (uint8_t i = 0; i < argc; i++) {
-                if (p_key_len != strlen(argv[i]._str)) {
-                    continue;
-                }
-                if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0) {
-                    continue;
-                }
+        if (p_key_end == NULL) {
+            ret = _Z_ERR_CONFIG_INVALID_VALUE;
+            break;
+        }
 
-                found = true;
-                key = argv[i]._key;
-                break;
+        // Verify the key is valid based on the provided mapping
+        size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
+        bool found = false;
+        uint8_t key = 0;
+        for (uint8_t i = 0; i < argc; i++) {
+            if (p_key_len != strlen(argv[i]._str)) {
+                continue;
+            }
+            if (strncmp(p_key_start, argv[i]._str, p_key_len) != 0) {
+                continue;
             }
 
-            if (found == false) {
-                break;
-            }
+            found = true;
+            key = argv[i]._key;
+            break;
+        }
 
-            // Read and populate the value
-            const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
-            size_t value_max_size = curr_len - _z_ptr_char_diff(p_value_start, start);
-            const char *p_value_end = memchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR, value_max_size);
+        if (found == false) {
+            break;
+        }
 
-            size_t p_value_len = 0;
-            if (p_value_end == NULL) {
-                p_value_end = end;
-                p_value_len = value_max_size + 1;
-            } else {
-                p_value_len = _z_ptr_char_diff(p_value_end, p_value_start) + 1;
-            }
-            char *p_value = (char *)z_malloc(p_value_len);
-            if (p_value != NULL) {
-                _z_str_n_copy(p_value, p_value_start, p_value_len);
-                _z_str_intmap_insert(strint, key, p_value);
+        // Read and populate the value
+        const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
+        size_t value_max_size = curr_len - _z_ptr_char_diff(p_value_start, start);
+        const char *p_value_end = memchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR, value_max_size);
 
-                // Process next key value
-                start = _z_cptr_char_offset(p_value_end, 1);
-                curr_len = n - _z_ptr_char_diff(start, s);
-            } else {
-                _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-                ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
+        size_t p_value_len = 0;
+        if (p_value_end == NULL) {
+            p_value_end = end;
+            p_value_len = value_max_size + 1;
+        } else {
+            p_value_len = _z_ptr_char_diff(p_value_end, p_value_start) + 1;
+        }
+        char *p_value = (char *)z_malloc(p_value_len);
+        if (p_value != NULL) {
+            _z_str_n_copy(p_value, p_value_start, p_value_len);
+            _z_str_intmap_insert(strint, key, p_value);
+
+            // Process next key value
+            start = _z_cptr_char_offset(p_value_end, 1);
+            curr_len = n - _z_ptr_char_diff(start, s);
+        } else {
+            _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     }
 
