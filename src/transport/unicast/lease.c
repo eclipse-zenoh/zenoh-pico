@@ -73,6 +73,13 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 }
 
 _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_executor_t *executor) {
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
+        return _z_fut_fn_result_ready();
+    }
+    if (ztu->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
+        return _z_fut_fn_result_suspend();
+    }
+
     _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
     _z_liveliness_subscription_undeclare_all(zs);
@@ -97,17 +104,28 @@ _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_exe
     }
 #endif
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_session_weak_t weak_session_clone = _z_session_weak_null();
+#endif
     _z_session_transport_mutex_lock(zs);
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    // Store weak session to reuse for reconnection.
-    _z_session_weak_t weak_session_clone = _z_session_weak_clone(&ztu->_common._session);
-#endif
+    if (zs->_mode == Z_WHATAMI_CLIENT) {
+        _z_unicast_transport_clear_connection(ztu);
+    } else {
+        // Keep the legacy peer-mode reopen path: clear the transport storage and let _z_open() rebuild it.
+        weak_session_clone = _z_session_weak_clone(&ztu->_common._session);
+        _z_transport_clear(&zs->_tp);
+    }
+#else
     _z_transport_clear(&zs->_tp);
+#endif
     _z_session_transport_mutex_unlock(zs);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    ztu->_common._state = _Z_TRANSPORT_STATE_RECONNECTING;
-    ztu->_common._session = weak_session_clone;
+    if (zs->_mode != Z_WHATAMI_CLIENT) {
+        ztu->_common._state = _Z_TRANSPORT_STATE_RECONNECTING;
+        ztu->_common._session = weak_session_clone;
+    }
     _z_fut_t f = _z_fut_null();
     f._fut_arg = &ztu->_common;
     f._fut_fn = _z_client_reopen_task_fn;
@@ -115,11 +133,12 @@ _z_fut_fn_result_t _zp_unicast_failed_result(_z_transport_unicast_t *ztu, _z_exe
     if (_z_fut_handle_is_null(_z_executor_spawn(executor, &f))) {
         _Z_ERROR("Failed to spawn client reopen task after transport failure.");
         ztu->_common._state = _Z_TRANSPORT_STATE_CLOSED;
-        _z_session_weak_drop(&ztu->_common._session);
+        if (zs->_mode != Z_WHATAMI_CLIENT) {
+            _z_session_weak_drop(&ztu->_common._session);
+        }
         return _z_fut_fn_result_ready();
-    } else {
-        return _z_fut_fn_result_suspend();
     }
+    return _z_fut_fn_result_suspend();
 #else
     return _z_fut_fn_result_ready();
 #endif

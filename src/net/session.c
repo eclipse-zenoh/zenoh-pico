@@ -31,6 +31,7 @@
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
 #include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/transport/manager.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/read.h"
@@ -39,6 +40,7 @@
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/read.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
@@ -130,6 +132,34 @@ static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mod
     return ret;
 }
 
+typedef enum {
+    _Z_OPEN_CONNECT_DEFAULT,
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _Z_OPEN_CONNECT_CLIENT_UNICAST_RECONNECT,
+#endif
+} _z_open_connect_mode_t;
+
+typedef struct {
+    const _z_string_t *_preferred_locator;
+    _z_open_connect_mode_t _connect_mode;
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_transport_unicast_t *_reconnect_unicast;
+#endif
+} _z_open_options_t;
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+static void _z_session_update_last_connect_locator(_z_session_t *s, const _z_string_t *locator) {
+    _z_string_t copy = _z_string_null();
+    if (_z_string_copy(&copy, locator) != _Z_RES_OK) {
+        _Z_DEBUG("Failed to update last successful connect locator");
+        _z_string_clear(&s->_last_connect_locator);
+        return;
+    }
+    _z_string_clear(&s->_last_connect_locator);
+    (void)_z_string_move(&s->_last_connect_locator, &copy);
+}
+#endif
+
 static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const _z_id_t *zid, int peer_op,
                                 const _z_config_t *config) {
     z_result_t ret = _Z_RES_OK;
@@ -141,12 +171,87 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     }
     _z_transport_get_common(&zn->_tp)->_session = _z_session_rc_clone_as_weak(zs);
     _z_transport_get_common(&zn->_tp)->_state = _Z_TRANSPORT_STATE_OPEN;
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    if ((zn->_mode == Z_WHATAMI_CLIENT) && (peer_op == _Z_PEER_OP_OPEN)) {
+        _z_session_update_last_connect_locator(zn, locator);
+    }
+#endif
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
     if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_interest_pull_resource_from_peers(zn);
     }
 #endif
     return ret;
+}
+
+static void _z_open_options_default(_z_open_options_t *opts) {
+    opts->_preferred_locator = NULL;
+    opts->_connect_mode = _Z_OPEN_CONNECT_DEFAULT;
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    opts->_reconnect_unicast = NULL;
+#endif
+}
+
+static bool _z_open_has_preferred_locator(const _z_open_options_t *opts) {
+    return (opts != NULL) && (opts->_preferred_locator != NULL) && _z_string_check(opts->_preferred_locator);
+}
+
+static z_result_t _z_open_connect_single_locator(_z_session_rc_t *zs, _z_string_t *locator, const _z_id_t *zid,
+                                                 const _z_config_t *config, const _z_open_options_t *opts) {
+    switch (opts->_connect_mode) {
+        case _Z_OPEN_CONNECT_DEFAULT:
+            return _z_open_inner(zs, locator, zid, _Z_PEER_OP_OPEN, config);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+        case _Z_OPEN_CONNECT_CLIENT_UNICAST_RECONNECT: {
+            if (opts->_reconnect_unicast == NULL) {
+                return _Z_ERR_GENERIC;
+            }
+            z_result_t ret = _z_reopen_client_unicast_transport(opts->_reconnect_unicast, zid, locator, config);
+            if (ret != _Z_RES_OK) {
+                return ret;
+            }
+            _z_session_update_last_connect_locator(_Z_RC_IN_VAL(zs), locator);
+            return _Z_RES_OK;
+        }
+#endif
+        default:
+            return _Z_ERR_GENERIC;
+    }
+}
+
+static z_result_t _z_open_append_locator_copy(_z_string_svec_t *dst, const _z_string_t *locator) {
+    _z_string_t copy = _z_string_null();
+    _Z_RETURN_IF_ERR(_z_string_copy(&copy, locator));
+    z_result_t ret = _z_string_svec_append(dst, &copy, false);
+    if (ret != _Z_RES_OK) {
+        _z_string_clear(&copy);
+    }
+    return ret;
+}
+
+static z_result_t _z_open_order_connect_locators(_z_string_svec_t *ordered_locators,
+                                                 const _z_string_svec_t *connect_locators,
+                                                 const _z_open_options_t *opts) {
+    *ordered_locators = _z_string_svec_null();
+    const _z_string_t *preferred_locator = NULL;
+    if (_z_open_has_preferred_locator(opts)) {
+        preferred_locator = opts->_preferred_locator;
+        _Z_RETURN_IF_ERR(_z_open_append_locator_copy(ordered_locators, preferred_locator));
+    }
+
+    size_t connect_len = _z_string_svec_len(connect_locators);
+    for (size_t i = 0; i < connect_len; i++) {
+        _z_string_t *locator = _z_string_svec_get(connect_locators, i);
+        if ((preferred_locator != NULL) && _z_string_equals(locator, preferred_locator)) {
+            continue;
+        }
+        z_result_t ret = _z_open_append_locator_copy(ordered_locators, locator);
+        if (ret != _Z_RES_OK) {
+            _z_string_svec_clear(ordered_locators);
+            return ret;
+        }
+    }
+    return _Z_RES_OK;
 }
 
 static int32_t _z_get_remaining_timeout_ms(z_clock_t *start, int32_t timeout_ms) {
@@ -188,10 +293,13 @@ typedef struct {
  */
 static z_result_t _z_open_connect_locator(_z_session_rc_t *zn, _z_pending_peers_t *pending_peers, const _z_id_t *zid,
                                           _z_config_t *config, int32_t timeout_ms, bool exit_on_non_retryable_failure,
-                                          _z_open_connect_result_t *out) {
+                                          const _z_open_options_t *opts, _z_open_connect_result_t *out) {
     size_t connect_len = _z_pending_peer_svec_len(&pending_peers->_peers);
     z_result_t last_retryable_ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
     z_result_t last_non_retryable_ret = _Z_RES_OK;
+    if (opts == NULL) {
+        return _Z_ERR_GENERIC;
+    }
 
     out->transport_opened = false;
     out->remaining_timeout_ms = timeout_ms;
@@ -215,7 +323,7 @@ static z_result_t _z_open_connect_locator(_z_session_rc_t *zn, _z_pending_peers_
 
             _z_string_t *locator = &peer->_locator;
 
-            ret = _z_open_inner(zn, locator, zid, _Z_PEER_OP_OPEN, config);
+            ret = _z_open_connect_single_locator(zn, locator, zid, config, opts);
             if (ret == _Z_RES_OK) {
                 out->transport_opened = true;
                 peer->_state = _Z_PENDING_PEER_STATE_DONE;
@@ -266,19 +374,24 @@ static z_result_t _z_open_connect_locator(_z_session_rc_t *zn, _z_pending_peers_
 }
 
 z_result_t _z_open_locators_client(_z_session_rc_t *zn, const _z_string_svec_t *connect_locators, const _z_id_t *zid,
-                                   _z_config_t *config, int32_t timeout_ms) {
-    size_t connect_len = _z_string_svec_len(connect_locators);
+                                   _z_config_t *config, int32_t timeout_ms, const _z_open_options_t *opts) {
+    _z_string_svec_t ordered_locators = _z_string_svec_null();
+    _Z_RETURN_IF_ERR(_z_open_order_connect_locators(&ordered_locators, connect_locators, opts));
+    size_t connect_len = _z_string_svec_len(&ordered_locators);
 
     if (connect_len == 0) {
         _Z_ERROR("No connect locators configured in client mode");
+        _z_string_svec_clear(&ordered_locators);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     _z_pending_peers_t pending_peers = _z_pending_peers_null();
-    _Z_RETURN_IF_ERR(_z_pending_peers_copy_from_locators(&pending_peers, connect_locators));
+    _Z_CLEAN_RETURN_IF_ERR(_z_pending_peers_copy_from_locators(&pending_peers, &ordered_locators),
+                           _z_string_svec_clear(&ordered_locators));
     _z_open_connect_result_t connect_result;
-    z_result_t ret = _z_open_connect_locator(zn, &pending_peers, zid, config, timeout_ms, false, &connect_result);
+    z_result_t ret = _z_open_connect_locator(zn, &pending_peers, zid, config, timeout_ms, false, opts, &connect_result);
     _z_pending_peers_clear(&pending_peers);
+    _z_string_svec_clear(&ordered_locators);
     return ret;
 }
 
@@ -346,8 +459,10 @@ z_result_t _z_open_locators_peer(_z_session_rc_t *zn, _z_string_t *listen_locato
     int32_t remaining_timeout_ms = connect_timeout_ms;
     if (!transport_opened && (connect_len > 0)) {
         _z_open_connect_result_t connect_result;
+        _z_open_options_t default_opts;
+        _z_open_options_default(&default_opts);
         _Z_CLEAN_RETURN_IF_ERR(_z_open_connect_locator(zn, &pending_peers, zid, config, connect_timeout_ms,
-                                                       connect_exit_on_failure, &connect_result),
+                                                       connect_exit_on_failure, &default_opts, &connect_result),
                                _z_pending_peers_clear(&pending_peers));
         transport_opened = connect_result.transport_opened;
         remaining_timeout_ms = connect_result.remaining_timeout_ms;
@@ -392,7 +507,7 @@ static inline const char *_z_open_connect_exit_on_failure_default(z_whatami_t mo
 
 z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_locators,
                             const _z_string_svec_t *connect_locators, const _z_id_t *zid, _z_config_t *config,
-                            z_whatami_t mode) {
+                            z_whatami_t mode, const _z_open_options_t *opts) {
     size_t listen_len = _z_string_svec_len(listen_locators);
     size_t connect_len = _z_string_svec_len(connect_locators);
 
@@ -453,7 +568,7 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
 
     switch (mode) {
         case Z_WHATAMI_CLIENT:
-            return _z_open_locators_client(zn, connect_locators, zid, config, connect_timeout_ms);
+            return _z_open_locators_client(zn, connect_locators, zid, config, connect_timeout_ms, opts);
 
         case Z_WHATAMI_PEER: {
             _z_string_t *listen_locator = (listen_len == 1) ? _z_string_svec_get(listen_locators, 0) : NULL;
@@ -464,6 +579,71 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
         default:
             return _Z_ERR_CONFIG_INVALID_MODE;
     }
+}
+
+static z_result_t _z_open_common(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid,
+                                 const _z_open_options_t *opts) {
+    z_result_t ret = _Z_RES_OK;
+    _z_open_options_t default_opts;
+    if (opts == NULL) {
+        _z_open_options_default(&default_opts);
+        opts = &default_opts;
+    }
+
+    _z_string_svec_t listen_locators = _z_string_svec_null();
+    _z_string_svec_t connect_locators = _z_string_svec_null();
+
+    ret = _z_locators_by_config(config, &listen_locators, &connect_locators);
+    if (ret != _Z_RES_OK) {
+        goto exit;
+    }
+
+    z_whatami_t mode;
+    ret = _z_config_get_mode(config, &mode);
+    if (ret != _Z_RES_OK) {
+        goto exit;
+    }
+    _Z_RC_IN_VAL(zn)->_mode = mode;
+
+    if ((_z_string_svec_len(&listen_locators) > 0) || (_z_string_svec_len(&connect_locators) > 0)) {
+        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, opts);
+        goto exit;
+    }
+
+    if ((mode == Z_WHATAMI_CLIENT) && _z_open_has_preferred_locator(opts)) {
+        // Reconnect may have no configured connect locators when the previous open used scouting.
+        // Try the last successful locator before scouting again.
+        ret = _z_open_append_locator_copy(&connect_locators, opts->_preferred_locator);
+        if (ret != _Z_RES_OK) {
+            goto exit;
+        }
+
+        _z_open_options_t preferred_opts = *opts;
+        preferred_opts._preferred_locator = NULL;
+        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, &preferred_opts);
+        _z_string_svec_clear(&connect_locators);
+        if (ret == _Z_RES_OK) {
+            goto exit;
+        }
+    }
+
+    _z_open_options_t fallback_opts = *opts;
+    fallback_opts._preferred_locator = NULL;
+
+    ret = _z_locators_by_scout(config, zid, &connect_locators);
+    if (ret != _Z_RES_OK) {
+        goto exit;
+    }
+    if (_z_string_svec_len(&connect_locators) == 0) {
+        ret = _Z_ERR_SCOUT_NO_RESULTS;
+        goto exit;
+    }
+    ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode, &fallback_opts);
+
+exit:
+    _z_string_svec_clear(&listen_locators);
+    _z_string_svec_clear(&connect_locators);
+    return ret;
 }
 
 /**
@@ -508,40 +688,24 @@ z_result_t _z_open_locators(_z_session_rc_t *zn, const _z_string_svec_t *listen_
  *   failure (e.g. exit-on-failure with incomplete connectivity).
  */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid) {
-    z_result_t ret = _Z_RES_OK;
     _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
+    _z_open_options_t opts;
+    _z_open_options_default(&opts);
 
-    _z_string_svec_t listen_locators = _z_string_svec_null();
-    _z_string_svec_t connect_locators = _z_string_svec_null();
-
-    ret = _z_locators_by_config(config, &listen_locators, &connect_locators);
-    if (ret == _Z_RES_OK) {
-        z_whatami_t mode;
-        ret = _z_config_get_mode(config, &mode);
-        if (ret == _Z_RES_OK) {
-            _Z_RC_IN_VAL(zn)->_mode = mode;
-
-            if ((_z_string_svec_len(&listen_locators) > 0) || (_z_string_svec_len(&connect_locators) > 0)) {
-                ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode);
-            } else {
-                ret = _z_locators_by_scout(config, zid, &connect_locators);
-                if (ret == _Z_RES_OK) {
-                    if (_z_string_svec_len(&connect_locators) == 0) {
-                        ret = _Z_ERR_SCOUT_NO_RESULTS;
-                    } else {
-                        ret = _z_open_locators(zn, &listen_locators, &connect_locators, zid, config, mode);
-                    }
-                }
-            }
-        }
-    }
-
-    _z_string_svec_clear(&listen_locators);
-    _z_string_svec_clear(&connect_locators);
-    return ret;
+    return _z_open_common(zn, config, zid, &opts);
 }
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
+static z_result_t _z_client_reopen_unicast(_z_session_rc_t *zs) {
+    _z_session_t *s = _Z_RC_IN_VAL(zs);
+    _z_open_options_t opts;
+    _z_open_options_default(&opts);
+    opts._preferred_locator = &s->_last_connect_locator;
+    opts._connect_mode = _Z_OPEN_CONNECT_CLIENT_UNICAST_RECONNECT;
+    opts._reconnect_unicast = &s->_tp._transport._unicast;
+    return _z_open_common(zs, &s->_config, &s->_local_zid, &opts);
+}
+
 void _z_client_reopen_task_drop(void *ztc_arg) {
     _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
     if (tc->_state == _Z_TRANSPORT_STATE_RECONNECTING) {
@@ -555,35 +719,46 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
     _z_transport_common_t *tc = (_z_transport_common_t *)ztc_arg;
     _z_transport_tasks_t tasks_handles = tc->_tasks;
     _z_session_rc_t zs = _z_session_weak_upgrade(&tc->_session);  // should not fail
+    if (_Z_RC_IS_NULL(&zs)) {
+        return _z_fut_fn_result_ready();
+    }
     _z_session_t *s = _Z_RC_IN_VAL(&zs);
-    _z_session_weak_drop(&tc->_session);
 
+    _z_session_transport_mutex_lock(s);
+    bool in_place_reconnect = _z_transport_in_place_reconnect_supported(&s->_tp, s->_mode);
+    if (!in_place_reconnect) {
+        _z_session_weak_drop(&tc->_session);
+    }
     if (_z_config_is_empty(&s->_config)) {
+        _z_session_transport_mutex_unlock(s);
         _z_session_rc_drop(&zs);
         return _z_fut_fn_result_ready();
     }
-    _z_session_transport_mutex_lock(s);
-    z_result_t ret = _z_open(&zs, &s->_config, &s->_local_zid);
-    _z_session_transport_mutex_unlock(s);
+
+    z_result_t ret = in_place_reconnect ? _z_client_reopen_unicast(&zs) : _z_open(&zs, &s->_config, &s->_local_zid);
     if (ret != _Z_RES_OK) {
-        if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
-            ret == _Z_ERR_TRANSPORT_TX_FAILED || ret == _Z_ERR_TRANSPORT_RX_FAILED ||
-            ret == _Z_ERR_TRANSPORT_RX_DURATION_EXPIRED || ret == _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY) {
+        _z_session_transport_mutex_unlock(s);
+        if ((ret == _Z_ERR_TRANSPORT_OPEN_FAILED) || (ret == _Z_ERR_SCOUT_NO_RESULTS) ||
+            (ret == _Z_ERR_TRANSPORT_TX_FAILED) || (ret == _Z_ERR_TRANSPORT_RX_FAILED) ||
+            (ret == _Z_ERR_TRANSPORT_RX_DURATION_EXPIRED) || (ret == _Z_ERR_TRANSPORT_OPEN_PARTIAL_CONNECTIVITY)) {
             _Z_DEBUG("Reopen failed, next try in 1s");
-            tc->_session = _z_session_rc_clone_as_weak(&zs);
+            if (!in_place_reconnect) {
+                tc->_session = _z_session_rc_clone_as_weak(&zs);
+            }
             tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
             tc->_tasks = tasks_handles;
             _z_session_rc_drop(&zs);
             return _z_fut_fn_result_wake_up_after(1000);
-        } else {
-            _Z_ERROR("Reopen failed, will not retry");
-            tc->_state = _Z_TRANSPORT_STATE_CLOSED;
-            _z_session_rc_drop(&zs);
-            return _z_fut_fn_result_ready();
         }
+        _Z_ERROR("Reopen failed, will not retry");
+        tc->_state = _Z_TRANSPORT_STATE_CLOSED;
+        _z_session_rc_drop(&zs);
+        return _z_fut_fn_result_ready();
     }
-
+    tc = _z_transport_get_common(&s->_tp);
     tc->_tasks = tasks_handles;
+    _z_session_transport_mutex_unlock(s);
+
     if (!_z_network_message_slist_is_empty(s->_declaration_cache)) {
         _z_network_message_slist_t *iter = s->_declaration_cache;
         while (iter != NULL) {
@@ -591,9 +766,17 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
             ret = _z_send_n_msg(s, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
             if (ret != _Z_RES_OK) {
                 _Z_DEBUG("Send message during reopen failed: %i", ret);
-                _z_transport_clear(&s->_tp);
-                tc->_session = _z_session_rc_clone_as_weak(&zs);
-                tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+                _z_session_transport_mutex_lock(s);
+                if (_z_transport_in_place_reconnect_supported(&s->_tp, s->_mode)) {
+                    tc = &s->_tp._transport._unicast._common;
+                    _z_unicast_transport_clear_connection(&s->_tp._transport._unicast);
+                } else {
+                    _z_transport_clear(&s->_tp);
+                    tc->_session = _z_session_rc_clone_as_weak(&zs);
+                    tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+                }
+                tc->_tasks = tasks_handles;
+                _z_session_transport_mutex_unlock(s);
                 _z_session_rc_drop(&zs);
                 return _z_fut_fn_result_continue();
             }

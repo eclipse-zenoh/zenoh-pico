@@ -31,6 +31,9 @@ enum _z_peer_op_e {
 
 z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_string_t *locator, z_whatami_t mode,
                             int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime);
+bool _z_transport_in_place_reconnect_supported(const _z_transport_t *zt, z_whatami_t mode);
+z_result_t _z_reopen_client_unicast_transport(_z_transport_unicast_t *ztu, const _z_id_t *local_zid,
+                                              const _z_string_t *locator, const _z_config_t *session_cfg);
 z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_string_t *locator,
                        const _z_config_t *session_cfg);
 bool _z_transport_open_error_is_retryable(z_result_t ret);
