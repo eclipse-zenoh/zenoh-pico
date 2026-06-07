@@ -246,10 +246,15 @@ typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_
 // iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
 typedef size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t);
 
-// Returns a pointer to the raw buffer (first element). May be used for iteration.
-// The valid range is [data, data + size).
+// Returns a pointer to the raw buffer.
 static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
                                                             data)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_buffer;
+}
+
+// Returns a const pointer to the raw buffer.
+static inline const _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, const_data)(
+    const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     return vec->_buffer;
 }
 
