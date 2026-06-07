@@ -142,17 +142,23 @@ _Z_ELEM_DEFINE(_z_timestamp, _z_timestamp_t, _z_timestamp_size, _z_timestamp_cle
  *
  * Members:
  *  uint16_t _id: The resource ID of the ke.
- *  uintptr_t _mapping: Address of the peer as id, if ke is remotely declared.
+ *  _z_mapping_t _mapping: Whether the ke's _id is declared in the local or in a remote id space.
  *  _z_string_t _suffix: The string value of the ke.
  */
-// Note on the _mapping field: there are collisions on _id value between peers/local, this field is used only to
-// distinguish which peer/local id space we are in and should not be dereferenced, just compared. NULL/0 value is used
-// for local declared keyexpr and the address of empty_id as a placeholder.
-#define _Z_KEYEXPR_MAPPING_LOCAL (uintptr_t)0
+// The _mapping field tells in which id space the keyexpr's _id lives. There are collisions on _id values between
+// peers/local, so this field is used only to distinguish which id space we are in. The actual peer is always passed
+// alongside the wireexpr, so the mapping does not need to identify a specific peer, only whether the keyexpr was
+// declared locally or by a remote peer.
+typedef enum {
+    // The keyexpr _id belongs to the local id space.
+    _Z_KEYEXPR_MAPPING_LOCAL = 0,
+    // The keyexpr _id belongs to a remote peer's id space.
+    _Z_KEYEXPR_MAPPING_REMOTE = 1,
+} _z_mapping_t;
 
 typedef struct {
     uint16_t _id;
-    uintptr_t _mapping;
+    _z_mapping_t _mapping;
     _z_string_t _suffix;
 } _z_wireexpr_t;
 

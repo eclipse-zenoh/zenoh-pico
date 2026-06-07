@@ -135,7 +135,7 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
     _z_network_message_t curr_nmsg = {0};
     _z_arc_slice_t arcs = _z_arc_slice_empty();
     while (_z_zbuf_len(msg->_payload) > 0) {
-        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs, (uintptr_t)&peer->common));
+        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztu->_common, &curr_nmsg, &peer->common));
     }
@@ -242,7 +242,7 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
         // Decode message
         _z_zenoh_message_t zm = {0};
         _z_arc_slice_t arcs = _z_arc_slice_empty();
-        ret = _z_network_message_decode(&zm, &zbf, &arcs, (uintptr_t)&peer->common);
+        ret = _z_network_message_decode(&zm, &zbf, &arcs);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             // Memory clear of the network message data must be handled by the network message layer

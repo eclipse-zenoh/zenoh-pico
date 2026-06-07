@@ -137,7 +137,7 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
     if (expr->_id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, expr->_id);
         if (res == NULL) {
-            _Z_ERROR("Unknown scope: %d, for mapping: %zu", (unsigned int)expr->_id, (size_t)expr->_mapping);
+            _Z_ERROR("Unknown scope: %d, for mapping: %d", (unsigned int)expr->_id, (int)expr->_mapping);
             return _Z_ERR_ENTITY_DECLARATION_FAILED;
         }
         if (_z_wireexpr_has_suffix(expr)) {
@@ -188,13 +188,8 @@ z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uin
 }
 
 z_result_t _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer) {
-    bool is_local = true;
-    uintptr_t mapping = _Z_KEYEXPR_MAPPING_LOCAL;
-    if (peer != NULL) {
-        is_local = false;
-        mapping = (uintptr_t)peer;
-    }
-    _Z_DEBUG("unregistering: id %d, mapping: %d", id, (unsigned int)mapping);
+    bool is_local = (peer == NULL);
+    _Z_DEBUG("unregistering: id %d, mapping: %s", id, is_local ? "local" : "remote");
     _z_session_mutex_lock(zn);
     _z_resource_slist_t **resources = is_local ? &zn->_local_resources : &peer->_remote_resources;
     _z_resource_t res = {0};

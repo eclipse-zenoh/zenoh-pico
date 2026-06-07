@@ -124,13 +124,12 @@ z_result_t _z_wireexpr_encode(_z_wbuf_t *wbf, bool has_suffix, const _z_wireexpr
     return ret;
 }
 
-z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *zbf, bool has_suffix, bool remote_mapping,
-                              uintptr_t mapping) {
+z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *zbf, bool has_suffix, bool remote_mapping) {
     _Z_DEBUG("Decoding _RESKEY");
     z_result_t ret = _Z_RES_OK;
 
     ret |= _z_zint16_decode(&ke->_id, zbf);
-    ke->_mapping = (remote_mapping) ? mapping : _Z_KEYEXPR_MAPPING_LOCAL;
+    ke->_mapping = (remote_mapping) ? _Z_KEYEXPR_MAPPING_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     if (has_suffix) {
         _z_string_t str = _z_string_null();
         ret |= _z_string_decode(&str, zbf);

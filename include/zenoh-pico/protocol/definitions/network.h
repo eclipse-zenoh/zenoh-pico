@@ -351,7 +351,6 @@ void _z_n_msg_free(_z_network_message_t **m);
 inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
 inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
 z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
-_z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);
 
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_n_msg_copy, _z_noop_move,
                _z_noop_eq, _z_noop_cmp, _z_noop_hash)
