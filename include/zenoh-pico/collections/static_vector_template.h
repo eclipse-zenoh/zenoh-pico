@@ -103,9 +103,13 @@ static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TE
 }
 
 // Returns a const pointer to the element at the given index, or NULL if out of bounds.
-static inline const _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
-                                                                  const_get)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
-                                                                             size_t index) {
+// Note: the `const` is applied to the `elem_t` typedef rather than spelled out as
+// `const _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *`. When the element type is itself a pointer
+// (e.g. `char *`), the latter would expand to `const char **`, which qualifies the
+// wrong pointer level and discards qualifiers when returning `&vec->_buffer[index]`.
+// Using the typedef yields `<elem> const *` (e.g. `char * const *`), which is correct.
+static inline const _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, const_get)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
     if (index >= vec->_size) {
         return NULL;
     }
@@ -119,9 +123,8 @@ static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TE
 }
 
 // Returns a const pointer to the element at the given index, without bounds checking.
-static inline const _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
-                                                                  const_at)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
-                                                                            size_t index) {
+static inline const _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, const_at)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
     return &vec->_buffer[index];
 }
 
@@ -253,8 +256,9 @@ static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TE
 }
 
 // Returns a const pointer to the raw buffer.
-static inline const _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, const_data)(
-    const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
+// See the note on const_get regarding the use of the `elem_t` typedef for the `const` qualifier.
+static inline const _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, const_data)(const _ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     return vec->_buffer;
 }
 

@@ -134,6 +134,15 @@ typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE {
     _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE val;
 } _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE;
 
+// Public typedefs for the key and value types. Applying `const` to these
+// typedefs (e.g. `const <name>_key_t *`) qualifies the whole aliased type, which
+// is correct even when the key/value type is itself a pointer. Spelling the
+// `const` out as `const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *` would instead
+// expand to e.g. `const char **` for a `char *` key, qualifying the wrong pointer
+// level and discarding qualifiers at call sites.
+typedef _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t);
+typedef _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, val_t);
+
 // Public typedef for the index type so callers can store/declare indices without
 // spelling out the internal macro.
 typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPEDEF;
@@ -216,9 +225,8 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STAT
 // Note: iterators are stable across insertions and removals of other keys, but become invalid if the same key is
 // removed.
 
-static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
-                                                            get_iter)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
-                                                                      const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(
+    const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key) {
     size_t b = _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(key) % _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
     while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
@@ -234,9 +242,8 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 // ── get ───────────────────────────────────────────────────────────────────────
 // Returns a pointer to the value for key, or NULL if not found.
 
-static inline _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
-                                                            get)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
-                                                                 const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+static inline _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get)(
+    _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key) {
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         return &map->_slots[idx]._node.val;
@@ -247,8 +254,9 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_T
 // ── const_get ────────────────────────────────────────────────────────────────
 // Returns a const pointer to the value for key, or NULL if not found.
 
-static inline const _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, const_get)(
-    const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+static inline const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, val_t) *
+    _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, const_get)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
+                                                         const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key) {
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         return &map->_slots[idx]._node.val;
@@ -260,7 +268,7 @@ static inline const _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *_ZP_CAT(_ZP_STATIC_HAS
 
 static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                            contains)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
-                                     const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key) {
+                                     const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key) {
     return _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)((_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *)(uintptr_t)map,
                                                                key) != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
 }
@@ -413,9 +421,10 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
 // If out_val != NULL the value is moved out; otherwise it is destroyed.
 // Returns true if the key was found.
 
-static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
-                                                                     const _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE *key,
-                                                                     _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *out_val) {
+static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
+                           remove)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
+                                   const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key,
+                                   _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE *out_val) {
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx == _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
         return false;  // not found
