@@ -116,7 +116,7 @@ typedef enum _z_unicast_peer_flow_state_e {
 
 typedef struct {
     _z_transport_peer_common_t common;
-    _z_sys_net_socket_t _socket;
+    _z_link_peer_t _link_peer;
     // FIXME: Temporary ownership flag to avoid double-closing sockets
     // when link and peer structs alias the same underlying fd/TLS.
     // This should be replaced by proper, explicit ownership semantics
@@ -139,6 +139,15 @@ _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transp
                _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move,
                _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
+
+static inline _z_sys_net_socket_t *_z_transport_peer_unicast_socket(_z_transport_peer_unicast_t *peer) {
+    return _z_link_peer_get_socket(&peer->_link_peer);
+}
+
+static inline const _z_sys_net_socket_t *_z_transport_peer_unicast_socket_const(
+    const _z_transport_peer_unicast_t *peer) {
+    return _z_link_peer_get_socket_const(&peer->_link_peer);
+}
 
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 

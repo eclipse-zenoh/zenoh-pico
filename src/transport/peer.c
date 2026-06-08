@@ -152,10 +152,12 @@ bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
     _z_zbuf_clear(&src->flow_buff);
     if (src->_owns_socket) {
+        _z_sys_net_socket_t *socket = _z_transport_peer_unicast_socket(src);
 #if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&src->_socket);
+        _z_close_tls_socket(socket);
 #endif
-        _z_socket_close(&src->_socket);
+        _z_socket_close(socket);
+        src->_owns_socket = false;
     }
     _z_transport_peer_common_clear(&src->common);
 }
@@ -163,7 +165,7 @@ void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
 void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_transport_peer_unicast_t *src) {
     dst->_sn_rx_reliable = src->_sn_rx_reliable;
     dst->_sn_rx_best_effort = src->_sn_rx_best_effort;
-    dst->_socket = src->_socket;
+    dst->_link_peer = _z_link_peer_from_socket(*_z_transport_peer_unicast_socket_const(src));
     dst->_owns_socket = false;  // Ownership is not copied
     dst->_pending = false;
     dst->flow_state = _Z_FLOW_STATE_INACTIVE;
@@ -207,7 +209,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
     peer->flow_curr_size = 0;
     peer->flow_buff = _z_zbuf_null();
     peer->_pending = false;
-    peer->_socket = socket;
+    peer->_link_peer = _z_link_peer_from_socket(socket);
     peer->_owns_socket = owns_socket;
     _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_common._sn_res, param->_initial_sn_rx);
     peer->_sn_rx_reliable = initial_sn_rx;
@@ -233,8 +235,8 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
         mtu = ztu->_common._link->_mtu;
         is_streamed = ztu->_common._link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
         is_reliable = ztu->_common._link->_cap._is_reliable;
-        if (_z_socket_get_endpoints(&peer->_socket, local_addr, sizeof(local_addr), remote_addr, sizeof(remote_addr)) ==
-            _Z_RES_OK) {
+        if (_z_socket_get_endpoints(_z_transport_peer_unicast_socket(peer), local_addr, sizeof(local_addr), remote_addr,
+                                    sizeof(remote_addr)) == _Z_RES_OK) {
             (void)_z_transport_make_endpoint(&ztu->_common._link->_endpoint._locator._protocol, local_addr,
                                              &peer->common._link_src);
             (void)_z_transport_make_endpoint(&ztu->_common._link->_endpoint._locator._protocol, remote_addr,

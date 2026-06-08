@@ -91,7 +91,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
             while (curr_list != NULL) {
                 _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
                 // Send on peer socket
-                _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
+                _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, _z_transport_peer_unicast_socket(curr_peer));
                 curr_list = _z_transport_peer_unicast_slist_next(curr_list);
             }
         }
@@ -147,7 +147,7 @@ static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc, _z_tr
         while (curr_list != NULL) {
             _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
             // Send on peer socket
-            _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
+            _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, _z_transport_peer_unicast_socket(curr_peer));
             curr_list = _z_transport_peer_unicast_slist_next(curr_list);
         }
     }

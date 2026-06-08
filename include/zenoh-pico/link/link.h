@@ -104,6 +104,22 @@ static inline size_t _z_noop_link_read_socket(const _z_sys_net_socket_t socket, 
     return 0;
 }
 
+typedef struct _z_link_peer_t {
+    _z_sys_net_socket_t _socket;
+} _z_link_peer_t;
+
+static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket) {
+    _z_link_peer_t peer;
+    peer._socket = socket;
+    return peer;
+}
+
+static inline _z_sys_net_socket_t *_z_link_peer_get_socket(_z_link_peer_t *peer) { return &peer->_socket; }
+
+static inline const _z_sys_net_socket_t *_z_link_peer_get_socket_const(const _z_link_peer_t *peer) {
+    return &peer->_socket;
+}
+
 enum _z_link_type_e {
     _Z_LINK_TYPE_TCP,
     _Z_LINK_TYPE_UDP,
