@@ -150,10 +150,6 @@ typedef struct _z_session_t {
     // Information for session restoring and asynchronous peer connection
     _z_config_t _config;
 
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_network_message_slist_t *_declaration_cache;
-#endif
-
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_rc_slist_t *_subscriptions;
@@ -230,24 +226,6 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 void _z_client_reopen_task_drop(void *ztc_arg);
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);
 #endif
-
-/**
- * Store declaration network message to cache for resend it after session restore
- *
- * Parameters:
- *     zs: A zenoh-net session.
- *     z_msg: Network message with declaration
- */
-void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
-
-/**
- * Remove corresponding declaration from the cache
- *
- * Parameters:
- *     zs: A zenoh-net session.
- *     z_msg: Network message with undeclaration
- */
-void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 
 /**
  * Return true is session and all associated transports were closed.

@@ -90,9 +90,6 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     zn->_last_timestamp = 0;
 
     _z_config_init(&zn->_config);
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    zn->_declaration_cache = NULL;
-#endif
 
     // Initialize the data structs
     zn->_local_resources = NULL;
@@ -186,11 +183,6 @@ z_result_t _z_session_close(_z_session_t *zn) {
     // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
     // events
     _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_network_message_slist_free(&zn->_declaration_cache);
-#endif
-    _z_session_mutex_unlock(zn);
     _z_flush_local_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);

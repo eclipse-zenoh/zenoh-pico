@@ -199,10 +199,10 @@ z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_sess
             _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s));
     }
     // Build the declare message to send on the wire
-    uint8_t mode = history ? (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE) : _Z_INTEREST_FLAG_FUTURE;
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&sp_s)->_key, _Z_RC_IN_VAL(zn));
     _z_interest_t interest = _z_make_interest(
-        &wireexpr, s._id, _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS | _Z_INTEREST_FLAG_RESTRICTED | mode);
+        &wireexpr, s._id,
+        history ? _Z_LIVELINESS_SUBSCRIBER_INTEREST_HISTORY : _Z_LIVELINESS_SUBSCRIBER_INTEREST_NO_HISTORY);
 
     _z_network_message_t n_msg;
     _z_n_msg_make_interest(&n_msg, interest);

@@ -584,22 +584,14 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
     }
 
     tc->_tasks = tasks_handles;
-    if (!_z_network_message_slist_is_empty(s->_declaration_cache)) {
-        _z_network_message_slist_t *iter = s->_declaration_cache;
-        while (iter != NULL) {
-            _z_network_message_t *n_msg = _z_network_message_slist_value(iter);
-            ret = _z_send_n_msg(s, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
-            if (ret != _Z_RES_OK) {
-                _Z_DEBUG("Send message during reopen failed: %i", ret);
-                _z_transport_clear(&s->_tp);
-                tc->_session = _z_session_rc_clone_as_weak(&zs);
-                tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
-                _z_session_rc_drop(&zs);
-                return _z_fut_fn_result_continue();
-            }
-
-            iter = _z_network_message_slist_next(iter);
-        }
+    ret = _z_interest_resend_client_declarations(s);
+    if (ret != _Z_RES_OK) {
+        _Z_DEBUG("Resending declarations during reopen failed: %i", ret);
+        _z_transport_clear(&s->_tp);
+        tc->_session = _z_session_rc_clone_as_weak(&zs);
+        tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
+        _z_session_rc_drop(&zs);
+        return _z_fut_fn_result_continue();
     }
     _z_session_rc_drop(&zs);
     _Z_DEBUG("Reconnected successfully");
@@ -608,73 +600,6 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
         _z_executor_resume_suspended_fut(executor, &tc->_tasks._task_handles[i]);
     }
     return _z_fut_fn_result_ready();
-}
-
-void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
-    if (_z_config_is_empty(&zs->_config)) {
-        return;
-    }
-    zs->_declaration_cache = _z_network_message_slist_push_back(zs->_declaration_cache, n_msg);
-}
-
-#define _Z_CACHE_DECLARATION_UNDECLARE_FILTER(tp)                                                                     \
-    static bool _z_cache_declaration_undeclare_filter_##tp(const _z_network_message_t *left,                          \
-                                                           const _z_network_message_t *right) {                       \
-        return left->_tag == _Z_N_DECLARE && right->_tag == _Z_N_DECLARE &&                                           \
-               left->_body._declare._decl._body._undecl_##tp._id == right->_body._declare._decl._body._decl_##tp._id; \
-    }
-_Z_CACHE_DECLARATION_UNDECLARE_FILTER(kexpr)
-_Z_CACHE_DECLARATION_UNDECLARE_FILTER(subscriber)
-_Z_CACHE_DECLARATION_UNDECLARE_FILTER(queryable)
-_Z_CACHE_DECLARATION_UNDECLARE_FILTER(token)
-
-static bool _z_cache_declaration_undeclare_filter_interest(const _z_network_message_t *left,
-                                                           const _z_network_message_t *right) {
-    return left->_tag == _Z_N_INTEREST && right->_tag == _Z_N_INTEREST &&
-           left->_body._interest._interest._id == right->_body._interest._interest._id;
-}
-
-void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
-#ifdef Z_BUILD_DEBUG
-    size_t cnt_before = _z_network_message_slist_len(zs->_declaration_cache);
-#endif
-    switch (n_msg->_tag) {
-        case _Z_N_DECLARE: {
-            const _z_declaration_t *decl = &n_msg->_body._declare._decl;
-            switch (decl->_tag) {
-                case _Z_UNDECL_KEXPR:
-                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
-                        zs->_declaration_cache, _z_cache_declaration_undeclare_filter_kexpr, n_msg);
-                    break;
-                case _Z_UNDECL_SUBSCRIBER:
-                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
-                        zs->_declaration_cache, _z_cache_declaration_undeclare_filter_subscriber, n_msg);
-                    break;
-                case _Z_UNDECL_QUERYABLE:
-                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
-                        zs->_declaration_cache, _z_cache_declaration_undeclare_filter_queryable, n_msg);
-                    break;
-                case _Z_UNDECL_TOKEN:
-                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
-                        zs->_declaration_cache, _z_cache_declaration_undeclare_filter_token, n_msg);
-                    break;
-                default:
-                    _Z_ERROR("Invalid decl for _z_prune_declaration: %i", decl->_tag);
-            };
-            break;
-        }
-        case _Z_N_INTEREST:
-            zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
-                zs->_declaration_cache, _z_cache_declaration_undeclare_filter_interest, n_msg);
-            break;
-        default:
-            _Z_ERROR("Invalid net message for _z_prune_declaration: %i", n_msg->_tag);
-            return;
-    };
-#ifdef Z_BUILD_DEBUG
-    size_t cnt_after = _z_network_message_slist_len(zs->_declaration_cache);
-    assert(cnt_before == cnt_after + 1);
-#endif
 }
 #endif  // Z_FEATURE_AUTO_RECONNECT == 1
 

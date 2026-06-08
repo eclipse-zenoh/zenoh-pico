@@ -42,6 +42,13 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
                                         _z_transport_peer_common_t *peer);
 z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, _z_transport_peer_common_t *peer);
 z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+/**
+ * Re-send all client session declarations (resources, subscribers, queryables, tokens, liveliness subscribers and
+ * interests) to a freshly (re)established transport.
+ */
+z_result_t _z_interest_resend_client_declarations(_z_session_t *zn);
+#endif
 void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t *peer);
 void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest);
 
