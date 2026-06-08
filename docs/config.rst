@@ -194,6 +194,7 @@ All the generated options must be changed in zenoh-pico's CMake (beware of CMake
 * `Z_TRANSPORT_LEASE`: Maximum time without receiving messages from a connection before closing it, in milliseconds.
 * `Z_TRANSPORT_ACCEPT_TIMEOUT`: Link accept timeout in P2P mode in milliseconds (maximum amount of time the listening peer would wait to receive a response).
 * `Z_TRANSPORT_CONNECT_TIMEOUT`: Link connect timeout in milliseconds (maximum amount of time the connecting peer would wait to receive a response).
+* `Z_TRANSPORT_ACCEPT_EAGAIN_INTERVAL`: How long the accept loop sleeps after a non-blocking `accept()` returns `EAGAIN`, in milliseconds. Default 1000. In multi-peer deployments where many SYNs may arrive during the sleep window, lower this (e.g. to 10) so the accept task wakes promptly and avoids serialising N handshakes at ~1 s each.
 * `Z_FEATURE_TCP_NODELAY`: (DEFAULT: ON) Toggle the `TCP_NODELAY` socket option that disables Nagle's algorithm as it can cause latency spikes.
 * `Z_FEATURE_AUTO_RECONNECT`: (DEFAULT: ON) Toggle the auto reconnection feature.
 * `Z_FEATURE_MULTICAST_DECLARATIONS`: (DEFAULT: OFF) Toggle multicast declarations. It lets nodes declare key expressions and activate write filtering but requires each node to send all the declarations every time a new node join the network. 
