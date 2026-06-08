@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/codec/core.h"
@@ -60,12 +61,15 @@
 
 #define _ZP_VECTOR_TEMPLATE_ELEM_TYPE char *
 #define _ZP_VECTOR_TEMPLATE_NAME _z_hstr_vec
-#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) \
-    do {                                           \
-        *(dst) = *(src);                           \
-        *(src) = NULL;                             \
-    } while (0)
 #define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(elem) z_free(*(elem))
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN(size) z_malloc(size)
+#define _ZP_VECTOR_TEMPLATE_REALLOC_FN(ptr, size) z_realloc(ptr, size)
+#define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) z_free(ptr)
+#include "zenoh-pico/collections/vector_template.h"
+
+#define _ZP_VECTOR_TEMPLATE_ELEM_TYPE _z_network_message_t
+#define _ZP_VECTOR_TEMPLATE_NAME _z_network_message_vec
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(elem) _z_n_msg_clear(elem)
 #define _ZP_VECTOR_TEMPLATE_ALLOC_FN(size) z_malloc(size)
 #define _ZP_VECTOR_TEMPLATE_REALLOC_FN(ptr, size) z_realloc(ptr, size)
 #define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) z_free(ptr)
@@ -245,7 +249,7 @@ char *gen_str(size_t size) {
     str[size] = '\0';
     char *ret = str;
     // Store the generated string in STRING_STORAGE so it can be aliased and freed later.
-    // push_back moves `str` into the storage (setting it to NULL), so we return the saved `ret`.
+    // push_back copies the `str` pointer into the storage (which then owns it), so we return the saved `ret`.
     assert(_z_hstr_vec_push_back(&STRING_STORAGE, &str) == true);
     return ret;
 }
@@ -2035,43 +2039,42 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
     }
 }
 
-_z_network_message_svec_t gen_net_msgs(size_t n) {
-    _z_network_message_svec_t ret = _z_network_message_svec_make(n);
+_z_network_message_vec_t gen_net_msgs(size_t n) {
+    _z_network_message_vec_t ret = _z_network_message_vec_new();
     for (size_t i = 0; i < n; i++) {
         _z_network_message_t msg = gen_net_msg();
-        assert(_z_network_message_svec_append(&ret, &msg, false) == _Z_RES_OK);
+        assert(_z_network_message_vec_push_back(&ret, &msg));
     }
     return ret;
 }
 
-_z_transport_message_t gen_frame(_z_wbuf_t *wbf, _z_zbuf_t *zbf, _z_network_message_svec_t *nmsgs) {
+_z_transport_message_t gen_frame(_z_wbuf_t *wbf, _z_zbuf_t *zbf, const _z_network_message_vec_t *nmsgs) {
     // Generate payload
-    for (size_t i = 0; i < _z_network_message_svec_len(nmsgs); i++) {
-        _z_network_message_t *msg = _z_network_message_svec_get(nmsgs, i);
-        assert(_z_network_message_encode(wbf, msg) == _Z_RES_OK);
-    }
+    const _z_network_message_t *msg;
+    _ZP_CFOREACH(_z_network_message_vec, nmsgs, msg) { assert(_z_network_message_encode(wbf, msg) == _Z_RES_OK); }
     *zbf = _z_wbuf_to_zbuf(wbf);
     return _z_t_msg_make_frame(gen_uint32(), zbf, gen_bool());
 }
 
-void assert_eq_frame(_z_network_message_svec_t *nmsgs, _z_t_msg_frame_t *left, _z_t_msg_frame_t *right) {
+void assert_eq_frame(const _z_network_message_vec_t *nmsgs, _z_t_msg_frame_t *left, _z_t_msg_frame_t *right) {
     assert(left->_sn == right->_sn);
-    for (size_t i = 0; i < _z_network_message_svec_len(nmsgs); i++) {
-        _z_network_message_t *expected = _z_network_message_svec_get(nmsgs, i);
+    const _z_network_message_t *msg;
+    _ZP_CFOREACH(_z_network_message_vec, nmsgs, msg) {
         _z_network_message_t received = {0};
         _z_arc_slice_t arcs = _z_arc_slice_empty();
         assert(_z_network_message_decode(&received, right->_payload, &arcs) == _Z_RES_OK);
-        assert_eq_net_msg(expected, &received);
+        assert_eq_net_msg(msg, &received);
         _z_n_msg_clear(&received);
     }
 }
+
 void frame_message(void) {
     printf("\n>> frame message\n");
     string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_wbuf_t tmp_wbf = gen_wbuf(UINT16_MAX);
     _z_zbuf_t tmp_zbf = _z_zbuf_null();
-    _z_network_message_svec_t nmsgs = gen_net_msgs(1);
+    _z_network_message_vec_t nmsgs = gen_net_msgs(1);
     _z_transport_message_t expected = gen_frame(&tmp_wbf, &tmp_zbf, &nmsgs);
     assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
     _z_t_msg_frame_t decoded = {0};
@@ -2083,7 +2086,7 @@ void frame_message(void) {
     _z_wbuf_clear(&wbf);
     _z_wbuf_clear(&tmp_wbf);
     _z_zbuf_clear(&tmp_zbf);
-    _z_network_message_svec_clear(&nmsgs);
+    _z_network_message_vec_destroy(&nmsgs);
     string_storage_destroy();
 }
 

@@ -153,17 +153,6 @@ void _z_n_msg_clear(_z_network_message_t *msg) {
     }
 }
 
-void _z_n_msg_free(_z_network_message_t **msg) {
-    _z_network_message_t *ptr = *msg;
-
-    if (ptr != NULL) {
-        _z_n_msg_clear(ptr);
-
-        z_free(ptr);
-        *msg = NULL;
-    }
-}
-
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid) {
     msg->_tag = _Z_N_RESPONSE_FINAL;
     msg->_reliability = Z_RELIABILITY_DEFAULT;
@@ -416,25 +405,4 @@ static z_result_t _z_n_msg_oam_copy(_z_network_message_t *dst, const _z_network_
             break;
     }
     return _Z_RES_OK;
-}
-
-z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
-    switch (src->_tag) {
-        case _Z_N_PUSH:
-            return _z_n_msg_push_copy(dst, src);
-        case _Z_N_REQUEST:
-            return _z_n_msg_request_copy(dst, src);
-        case _Z_N_RESPONSE:
-            return _z_n_msg_response_copy(dst, src);
-        case _Z_N_RESPONSE_FINAL:
-            return _z_n_msg_response_final_copy(dst, src);
-        case _Z_N_DECLARE:
-            return _z_n_msg_declare_copy(dst, src);
-        case _Z_N_INTEREST:
-            return _z_n_msg_interest_copy(dst, src);
-        case _Z_N_OAM:
-            return _z_n_msg_oam_copy(dst, src);
-        default:
-            _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
-    }
 }

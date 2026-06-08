@@ -35,7 +35,7 @@ z_result_t _z_session_send_reply_final(_z_session_t *session, uint32_t query_id,
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_response_final(&z_msg, query_id);
         z_result_t ret = _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
-        _z_msg_clear(&z_msg);
+        _z_n_msg_clear(&z_msg);
         return ret;
     }
 }
