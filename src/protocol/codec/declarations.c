@@ -203,7 +203,8 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-            _z_mapping_t mapping = _Z_HAS_FLAG(header, 2) ? _Z_KEYEXPR_MAPPING_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
+            _z_keyexpr_mapping_t mapping =
+                _Z_HAS_FLAG(header, 2) ? _Z_KEYEXPR_MAPPING_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
