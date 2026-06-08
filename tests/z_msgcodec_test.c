@@ -58,6 +58,28 @@
                                       // as it is used voluntarily in this file when working with RNG
 #endif
 
+#define _ZP_VECTOR_TEMPLATE_ELEM_TYPE char *
+#define _ZP_VECTOR_TEMPLATE_NAME _z_hstr_vec
+#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) \
+    do {                                           \
+        *(dst) = *(src);                           \
+        *(src) = NULL;                             \
+    } while (0)
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(elem) z_free(*(elem))
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN(size) z_malloc(size)
+#define _ZP_VECTOR_TEMPLATE_REALLOC_FN(ptr, size) z_realloc(ptr, size)
+#define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) z_free(ptr)
+#include "zenoh-pico/collections/vector_template.h"
+
+// Storage owning every string produced by gen_str/gen_string.
+// gen_string aliases entries from this storage instead of copying, so any test that
+// (transitively) calls gen_string must call string_storage_init() at the start and
+// string_storage_destroy() at the end to keep the aliased data alive for the whole test.
+_z_hstr_vec_t STRING_STORAGE;
+
+static inline void string_storage_init(void) { _z_hstr_vec_init(&STRING_STORAGE); }
+static inline void string_storage_destroy(void) { _z_hstr_vec_destroy(&STRING_STORAGE); }
+
 /*=============================*/
 /*       Helper functions      */
 /*=============================*/
@@ -221,14 +243,17 @@ char *gen_str(size_t size) {
         str[i] = charset[key];
     }
     str[size] = '\0';
-    return str;
+    char *ret = str;
+    // Store the generated string in STRING_STORAGE so it can be aliased and freed later.
+    // push_back moves `str` into the storage (setting it to NULL), so we return the saved `ret`.
+    assert(_z_hstr_vec_push_back(&STRING_STORAGE, &str) == true);
+    return ret;
 }
 
 _z_string_t gen_string(size_t len) {
+    // gen_str stores the string in STRING_STORAGE; only alias it here instead of copying.
     char *str = gen_str(len);
-    _z_string_t ret = _z_string_copy_from_str(str);
-    z_free(str);
-    return ret;
+    return _z_string_alias_str(str);
 }
 
 _z_string_svec_t gen_str_array(size_t size) {
@@ -696,10 +721,8 @@ _z_wireexpr_t gen_wireexpr(void) {
         key._suffix = _z_string_null();
     } else {
         size_t len = gen_zint() % 16 + 1;
-        key._suffix = _z_string_preallocate(len);
-        char *suffix = gen_str(len);
-        memcpy((char *)_z_string_data(&key._suffix), suffix, len);
-        z_free(suffix);
+        // gen_string aliases a string owned by STRING_STORAGE.
+        key._suffix = gen_string(len);
     }
     return key;
 }
@@ -723,6 +746,7 @@ void assert_eq_keyexpr(const _z_wireexpr_t *left, const _z_wireexpr_t *right) {
 
 void keyexpr_field(void) {
     printf("\n>> ResKey field\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -749,6 +773,7 @@ void keyexpr_field(void) {
     _z_wireexpr_clear(&d_rk);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*=============================*/
@@ -767,6 +792,7 @@ void assert_eq_resource_declaration(const _z_decl_kexpr_t *left, const _z_decl_k
 
 void resource_declaration(void) {
     printf("\n>> Resource declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -794,6 +820,7 @@ void resource_declaration(void) {
     _z_wireexpr_clear(&d_rd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Subscriber declaration ------------------*/
@@ -809,6 +836,7 @@ void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z
 
 void subscriber_declaration(void) {
     printf("\n>> Subscriber declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -835,6 +863,7 @@ void subscriber_declaration(void) {
     _z_wireexpr_clear(&d_sd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Queryable declaration ------------------*/
@@ -857,6 +886,7 @@ void assert_eq_queryable_declaration(const _z_decl_queryable_t *left, const _z_d
 
 void queryable_declaration(void) {
     printf("\n>> Queryable declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -884,6 +914,7 @@ void queryable_declaration(void) {
     _z_wireexpr_clear(&d_qd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Token declaration ------------------*/
@@ -900,6 +931,7 @@ void assert_eq_token_declaration(const _z_decl_token_t *left, const _z_decl_toke
 
 void token_declaration(void) {
     printf("\n>> Queryable declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -927,6 +959,7 @@ void token_declaration(void) {
     _z_wireexpr_clear(&d_qd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Forget Resource declaration ------------------*/
@@ -986,6 +1019,7 @@ void assert_eq_forget_subscriber_declaration(const _z_undecl_subscriber_t *left,
 
 void forget_subscriber_declaration(void) {
     printf("\n>> Forget subscriber declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -1012,6 +1046,7 @@ void forget_subscriber_declaration(void) {
     _z_wireexpr_clear(&d_fsd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Forget Queryable declaration ------------------*/
@@ -1027,6 +1062,7 @@ void assert_eq_forget_queryable_declaration(const _z_undecl_queryable_t *left, c
 
 void forget_queryable_declaration(void) {
     printf("\n>> Forget queryable declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -1054,6 +1090,7 @@ void forget_queryable_declaration(void) {
     _z_wireexpr_clear(&d_fqd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Forget Token declaration ------------------*/
@@ -1069,6 +1106,7 @@ void assert_eq_forget_token_declaration(const _z_undecl_token_t *left, const _z_
 
 void forget_token_declaration(void) {
     printf("\n>> Forget token declaration\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -1096,6 +1134,7 @@ void forget_token_declaration(void) {
     _z_wireexpr_clear(&d_fqd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Declaration ------------------*/
@@ -1195,6 +1234,7 @@ void assert_eq_declare_message(_z_n_msg_declare_t *left, _z_n_msg_declare_t *rig
 
 void declare_message(void) {
     printf("\n>> Declare message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -1219,6 +1259,7 @@ void declare_message(void) {
     _z_n_msg_clear(&n_msg);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*------------------ Interest ------------------*/
@@ -1278,6 +1319,7 @@ void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
 void interest_message(void) {
     printf("\n>> Interest message\n");
     // Init
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_network_message_t expected = gen_interest_message();
     // Encode
@@ -1294,6 +1336,7 @@ void interest_message(void) {
     _z_n_msg_interest_clear(&expected._body._interest);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 /*=============================*/
@@ -1332,6 +1375,7 @@ void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right
 
 void push_body_message(void) {
     printf("\n>> Put/Del message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
@@ -1357,6 +1401,7 @@ void push_body_message(void) {
     _z_push_body_clear(&e_da);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_msg_query_t gen_query(void) {
@@ -1390,6 +1435,7 @@ void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
 
 void query_message(void) {
     printf("\n>> Query message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_query_t expected = gen_query();
     assert(_z_query_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1403,10 +1449,12 @@ void query_message(void) {
     _z_msg_query_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 void query_message_anyke(void) {
     printf("\n>> Query message _anyke\n");
+    string_storage_init();
     const char *params[] = {NULL, "", "param1", "param2;_anyke", "param3;_anyke;param4", "_anyke;param5"};
     for (size_t i = 0; i < sizeof(params) / sizeof(char *); i++) {
         for (size_t j = 0; j < 2; j++) {
@@ -1439,6 +1487,7 @@ void query_message_anyke(void) {
             _z_wbuf_clear(&wbf);
         }
     }
+    string_storage_destroy();
 }
 
 _z_msg_err_t gen_err(void) {
@@ -1458,6 +1507,7 @@ void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
 
 void err_message(void) {
     printf("\n>> Err message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_err_t expected = gen_err();
     assert(_z_err_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1471,6 +1521,7 @@ void err_message(void) {
     _z_msg_err_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_msg_reply_t gen_reply(void) {
@@ -1487,6 +1538,7 @@ void assert_eq_reply(const _z_msg_reply_t *left, const _z_msg_reply_t *right) {
 
 void reply_message(void) {
     printf("\n>> Reply message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_reply_t expected = gen_reply();
     assert(_z_reply_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1500,6 +1552,7 @@ void reply_message(void) {
     _z_msg_reply_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_n_msg_push_t gen_push(void) {
@@ -1527,6 +1580,7 @@ void assert_eq_push(const _z_n_msg_push_t *left, const _z_n_msg_push_t *right) {
 
 void push_message(void) {
     printf("\n>> Push message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_push_t expected = gen_push();
     assert(_z_push_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1540,6 +1594,7 @@ void push_message(void) {
     _z_n_msg_push_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_n_msg_request_t gen_request(void) {
@@ -1606,6 +1661,7 @@ void assert_eq_request(const _z_n_msg_request_t *left, const _z_n_msg_request_t 
 
 void request_message(void) {
     printf("\n>> Request message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_request_t expected = gen_request();
     assert(_z_request_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1620,6 +1676,7 @@ void request_message(void) {
     _z_n_msg_request_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_n_msg_response_t gen_response(void) {
@@ -1672,6 +1729,7 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
 
 void response_message(void) {
     printf("\n>> Response message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_response_t expected = gen_response();
     assert(_z_response_encode(&wbf, &expected) == _Z_RES_OK);
@@ -1686,6 +1744,7 @@ void response_message(void) {
     _z_n_msg_response_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 _z_n_msg_response_final_t gen_response_final(void) { return (_z_n_msg_response_final_t){._request_id = gen_zint()}; }
@@ -2008,6 +2067,7 @@ void assert_eq_frame(_z_network_message_svec_t *nmsgs, _z_t_msg_frame_t *left, _
 }
 void frame_message(void) {
     printf("\n>> frame message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_wbuf_t tmp_wbf = gen_wbuf(UINT16_MAX);
     _z_zbuf_t tmp_zbf = _z_zbuf_null();
@@ -2024,6 +2084,7 @@ void frame_message(void) {
     _z_wbuf_clear(&tmp_wbf);
     _z_zbuf_clear(&tmp_zbf);
     _z_network_message_svec_clear(&nmsgs);
+    string_storage_destroy();
 }
 
 _z_transport_message_t gen_fragment(void) {
@@ -2134,6 +2195,7 @@ void assert_eq_scouting(const _z_scouting_message_t *left, const _z_scouting_mes
 }
 void scouting_message(void) {
     printf("\n>> scouting message\n");
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_scouting_message_t expected = gen_scouting();
     assert(_z_scouting_message_encode(&wbf, &expected) == _Z_RES_OK);
@@ -2146,6 +2208,7 @@ void scouting_message(void) {
     _z_s_msg_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 void test_serialize_deserialize(void) {
@@ -2256,6 +2319,7 @@ static void network_message_decode_pair_reuse(uint8_t a, uint8_t b, bool check_c
     printf("\n>> Pair %s(%u) -> %s(%u) (check: %s)\n", net_msg_name(a), a, net_msg_name(b), b,
            check_contents ? "true" : "false");
 
+    string_storage_init();
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     _z_network_message_t expected[2];
@@ -2287,6 +2351,7 @@ static void network_message_decode_pair_reuse(uint8_t a, uint8_t b, bool check_c
 
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
+    string_storage_destroy();
 }
 
 // 6x6 matrix: test all A->B transitions, one invocation per pair
