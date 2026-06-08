@@ -208,11 +208,12 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
-                ke->_suffix = _z_string_preallocate(len);
-                if (!_z_wireexpr_has_suffix(ke)) {
-                    _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-                }
-                _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
+                // The suffix aliases the decoding buffer instead of copying it. The bytes live in the
+                // extension's zbuf, which itself aliases the network message decoding buffer. That buffer
+                // is only cleared after _z_handle_network_message has consumed the (un)declaration, so the
+                // alias remains valid for the whole lifetime of the wireexpr.
+                ke->_suffix = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+                _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
             }
             ke->_mapping = mapping;
         } break;
