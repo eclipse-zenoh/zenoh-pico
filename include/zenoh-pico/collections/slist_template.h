@@ -109,14 +109,14 @@ typedef struct _ZP_SLIST_TEMPLATE_NODE_TYPE {
 } _ZP_SLIST_TEMPLATE_NODE_TYPE;
 
 // --- List type ---
-// _tail is a pointer-to-pointer that always points at the _next field where
-// the next push_back should write the new node. When the list is empty it
-// points at _head; when the list has elements it points at the last node's
-// _next field. This gives O(1) push_back without a separate tail pointer.
+// _tail points at the last node in the list, or NULL when the list is empty.
+// This gives O(1) push_back without walking the list. Keeping _tail as a plain
+// node pointer (rather than a pointer into the struct itself) means the list
+// struct stays valid when it is returned/copied by value.
 #define _ZP_SLIST_TEMPLATE_TYPE _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, t)
 typedef struct _ZP_SLIST_TEMPLATE_TYPE {
     _ZP_SLIST_TEMPLATE_NODE_TYPE *_head;
-    _ZP_SLIST_TEMPLATE_NODE_TYPE **_tail;  // points at the slot for the next node
+    _ZP_SLIST_TEMPLATE_NODE_TYPE *_tail;  // last node, or NULL when empty
     size_t _size;
 #ifdef _ZP_SLIST_TEMPLATE_HAS_ALLOC_CTX
     _ZP_SLIST_TEMPLATE_ALLOC_CTX_TYPE _alloc_ctx;
@@ -130,7 +130,7 @@ static inline _ZP_SLIST_TEMPLATE_TYPE _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME,
                                               new)(_ZP_SLIST_TEMPLATE_ALLOC_CTX_TYPE alloc_ctx) {
     _ZP_SLIST_TEMPLATE_TYPE list;
     list._head = NULL;
-    list._tail = &list._head;
+    list._tail = NULL;
     list._size = 0;
     list._alloc_ctx = alloc_ctx;
     return list;
@@ -140,7 +140,7 @@ static inline _ZP_SLIST_TEMPLATE_TYPE _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME,
 static inline _ZP_SLIST_TEMPLATE_TYPE _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, new)(void) {
     _ZP_SLIST_TEMPLATE_TYPE list;
     list._head = NULL;
-    list._tail = &list._head;
+    list._tail = NULL;
     list._size = 0;
     return list;
 }
@@ -197,9 +197,9 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, push_front)(_ZP_SLIST_TEMPLA
     }
     node->_next = list->_head;
     list->_head = node;
-    // If the list was empty, the tail must now point at the new node's _next
+    // If the list was empty, the new node is also the last node
     if (node->_next == NULL) {
-        list->_tail = &node->_next;
+        list->_tail = node;
     }
     list->_size++;
     return true;
@@ -213,9 +213,13 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, push_back)(_ZP_SLIST_TEMPLAT
     if (node == NULL) {
         return false;
     }
-    // *_tail is the _next field of the current last node (or _head when empty)
-    *list->_tail = node;
-    list->_tail = &node->_next;
+    // Link the new node after the current last node (or as the head when empty)
+    if (list->_tail == NULL) {
+        list->_head = node;
+    } else {
+        list->_tail->_next = node;
+    }
+    list->_tail = node;
     list->_size++;
     return true;
 }
@@ -231,8 +235,8 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, pop_front)(_ZP_SLIST_TEMPLAT
     _ZP_SLIST_TEMPLATE_NODE_TYPE *node = list->_head;
     list->_head = node->_next;
     if (list->_head == NULL) {
-        // List is now empty: reset tail to point at _head
-        list->_tail = &list->_head;
+        // List is now empty: clear the tail pointer
+        list->_tail = NULL;
     }
     list->_size--;
     if (out != NULL) {
@@ -261,7 +265,7 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, insert_after)(_ZP_SLIST_TEMP
     node->_next = new_node;
     // If we inserted at the back, update the tail pointer
     if (new_node->_next == NULL) {
-        list->_tail = &new_node->_next;
+        list->_tail = new_node;
     }
     list->_size++;
     return true;
@@ -283,7 +287,7 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, remove_after)(_ZP_SLIST_TEMP
         node = list->_head;
         list->_head = node->_next;
         if (list->_head == NULL) {
-            list->_tail = &list->_head;
+            list->_tail = NULL;
         }
     } else {
         node = prev->_next;
@@ -292,7 +296,7 @@ static inline bool _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, remove_after)(_ZP_SLIST_TEMP
         }
         prev->_next = node->_next;
         if (prev->_next == NULL) {
-            list->_tail = &prev->_next;
+            list->_tail = prev;
         }
     }
     list->_size--;
@@ -317,7 +321,7 @@ static inline void _ZP_CAT(_ZP_SLIST_TEMPLATE_NAME, destroy)(_ZP_SLIST_TEMPLATE_
         node = next;
     }
     list->_head = NULL;
-    list->_tail = &list->_head;
+    list->_tail = NULL;
     list->_size = 0;
 }
 
