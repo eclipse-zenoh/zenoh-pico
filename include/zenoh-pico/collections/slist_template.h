@@ -97,7 +97,7 @@
 #ifndef _ZP_SLIST_TEMPLATE_FREE_FN
 #define _ZP_SLIST_TEMPLATE_FREE_FN(ptr) free(ptr)
 #endif
-#define _ZP_SLIST_TEMPLATE_INTERNAL_ALLOC(list_ptr, bytes) _ZP_SLIST_TEMPLATE_ALLOC_FN((bytes))
+#define _ZP_SLIST_TEMPLATE_INTERNAL_ALLOC(list_ptr, bytes) ((void)list_ptr, _ZP_SLIST_TEMPLATE_ALLOC_FN((bytes)))
 #define _ZP_SLIST_TEMPLATE_INTERNAL_FREE(list_ptr, ptr) _ZP_SLIST_TEMPLATE_FREE_FN((ptr))
 #endif
 
