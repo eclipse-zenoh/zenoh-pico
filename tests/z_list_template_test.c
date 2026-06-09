@@ -33,8 +33,6 @@ typedef struct {
     int *destroy_count;  // points to a test-local counter
 } counted_t;
 
-static int g_destroy_count = 0;
-
 static void counted_destroy(counted_t *p) {
     if (p->destroy_count != NULL) {
         (*p->destroy_count)++;
