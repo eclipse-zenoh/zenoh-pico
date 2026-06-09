@@ -359,7 +359,7 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
                                                                        _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE pos) {
     for (size_t i = pos + 1; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
         if (map->_slots[i]._present) {
-            return i;
+            return (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)i;
         }
     }
     return _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
