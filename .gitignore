@@ -68,3 +68,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 .cache
+
+# Fuzz test related
+fuzz/corpus
+build-fuzz
+crash-*
+leak-*
+oom-*
+timeout-*

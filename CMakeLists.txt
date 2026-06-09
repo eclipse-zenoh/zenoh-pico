@@ -620,6 +620,7 @@ option(BUILD_EXAMPLES "Use this to also build the examples." ON)
 option(BUILD_TOOLS "Use this to also build the tools." OFF)
 option(BUILD_TESTING "Use this to also build tests." ON)
 option(BUILD_INTEGRATION "Use this to also build integration tests." OFF)
+option(BUILD_FUZZERS "Use this to also build libFuzzer targets." OFF)
 option(ASAN "Enable AddressSanitizer." OFF)
 
 message(STATUS "Produce Debian and RPM packages: ${PACKAGING}")
@@ -627,6 +628,7 @@ message(STATUS "Build examples: ${BUILD_EXAMPLES}")
 message(STATUS "Build tools: ${BUILD_TOOLS}")
 message(STATUS "Build tests: ${BUILD_TESTING}")
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
+message(STATUS "Build fuzzers: ${BUILD_FUZZERS}")
 message(STATUS "AddressSanitizer: ${ASAN}")
 
 set(PICO_LIBS "")
@@ -708,6 +710,22 @@ endif()
 if(ASAN AND NOT MSVC)
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
+endif()
+
+if(BUILD_FUZZERS)
+  if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR "BUILD_FUZZERS requires Clang/libFuzzer. Configure with CC=clang.")
+  endif()
+
+  foreach(_zp_fuzz_target IN ITEMS ${Libname}_static ${Libname}_shared)
+    if(TARGET ${_zp_fuzz_target})
+      target_compile_options(${_zp_fuzz_target} PRIVATE -fsanitize=fuzzer-no-link,address,undefined
+                                                     -fno-omit-frame-pointer)
+      target_link_options(${_zp_fuzz_target} PRIVATE -fsanitize=address,undefined)
+    endif()
+  endforeach()
+
+  add_subdirectory(fuzz)
 endif()
 
 if(BUILD_EXAMPLES)
