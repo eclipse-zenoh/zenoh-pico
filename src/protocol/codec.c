@@ -287,44 +287,10 @@ z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     return _z_bytes_encode_val(wbf, bs);
 }
 
-/*------------------ string with null terminator ------------------*/
-z_result_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
-    size_t len = strlen(s);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len))
+z_result_t _z_string_encode(_z_wbuf_t *wbf, _z_view_string_t s) {
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_view_string_len(&s)))
     // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
-}
-
-z_result_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
-    _z_zint_t len = 0;
-    z_result_t ret = _z_zsize_decode(&len, zbf);
-    if (ret != _Z_RES_OK) {
-        *str = NULL;
-        return ret;
-    }
-    // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
-        _Z_WARN("Not enough bytes to read");
-        *str = NULL;
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
-    }
-    // Allocate space for the null terminated string
-    char *tmp = (char *)z_malloc(len + (size_t)1);
-    if (tmp == NULL) {
-        *str = NULL;
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-    // Read and store string
-    tmp[len] = '\0';
-    _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
-    *str = tmp;
-    return _Z_RES_OK;
-}
-
-z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_string_len(s)))
-    // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(s), 0, _z_string_len(s));
+    return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_view_string_data(&s), 0, _z_view_string_len(&s));
 }
 
 z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
@@ -361,7 +327,7 @@ z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
     }
     _Z_RETURN_IF_ERR(_z_zint32_encode(wbf, id));
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &en->schema));
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, _z_view_string_from_string(&en->schema)));
     }
     return _Z_RES_OK;
 }

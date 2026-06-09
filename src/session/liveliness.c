@@ -152,8 +152,8 @@ _z_liveliness_pending_query_t *_z_unsafe_liveliness_register_pending_query(_z_se
 static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t interest_id,
                                                     const _z_wireexpr_t *wireexpr, const _z_timestamp_t *timestamp,
                                                     _z_transport_peer_common_t *peer) {
-    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_string_len(&wireexpr->_suffix),
-             _z_string_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
+    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_view_string_len(&wireexpr->_suffix),
+             _z_view_string_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
     _z_keyexpr_t ke;
     _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, true));
     z_result_t ret = _Z_RES_OK;

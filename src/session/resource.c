@@ -95,13 +95,14 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_t *ret, _z_resou
                                                      const _z_wireexpr_t *expr, bool alias_wireexpr_if_possible) {
     *ret = _z_keyexpr_null();
     _z_zint_t id = expr->_id;
+    _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
 
     if (id == Z_RESOURCE_ID_NONE) {  // Check if ke is already expanded
         if (alias_wireexpr_if_possible) {
-            ret->_keyexpr = _z_string_alias(expr->_suffix);
+            ret->_keyexpr = suffix;
             return _Z_RES_OK;
         } else {
-            return _z_string_copy(&ret->_keyexpr, &expr->_suffix);
+            return _z_string_copy(&ret->_keyexpr, &suffix);
         }
     } else {
         _z_resource_t *res = _z_get_resource_by_id_inner(xs, id);
@@ -109,7 +110,7 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_t *ret, _z_resou
             return _Z_ERR_KEYEXPR_UNKNOWN;
         }
         _z_keyexpr_t ke_prefix = _z_keyexpr_alias(&res->_key);
-        return _z_string_concat(&ret->_keyexpr, &ke_prefix._keyexpr, &expr->_suffix, NULL, 0);
+        return _z_string_concat(&ret->_keyexpr, &ke_prefix._keyexpr, &suffix, NULL, 0);
     }
 }
 
@@ -141,7 +142,8 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
             return _Z_ERR_ENTITY_DECLARATION_FAILED;
         }
         if (_z_wireexpr_has_suffix(expr)) {
-            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, &expr->_suffix, NULL, 0) != _Z_RES_OK) {
+            _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
+            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, &suffix, NULL, 0) != _Z_RES_OK) {
                 _Z_ERROR("Failed to allocate memory for new string");
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
@@ -154,7 +156,8 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
             new_key = _z_keyexpr_alias(&res->_key);
         }
     } else {
-        new_key = _z_keyexpr_alias_from_string(&expr->_suffix);
+        _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
+        new_key = _z_keyexpr_alias_from_string(&suffix);
     }
 
     if (id == Z_RESOURCE_ID_NONE) {

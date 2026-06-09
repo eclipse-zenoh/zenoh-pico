@@ -35,13 +35,13 @@
 z_result_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, const _z_wireexpr_t *ke, bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    uint32_t kelen = (uint32_t)(_z_wireexpr_has_suffix(ke) ? _z_string_len(&ke->_suffix) : 0);
+    uint32_t kelen = (uint32_t)(_z_wireexpr_has_suffix(ke) ? _z_view_string_len(&ke->_suffix) : 0);
     header = (uint8_t)((_z_wireexpr_is_local(ke) ? 2 : 0) | (kelen != 0 ? 1 : 0));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke->_id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ke->_id));
     if (kelen) {
-        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(&ke->_suffix), 0, kelen))
+        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)_z_view_string_data(&ke->_suffix), 0, kelen))
     }
     return _Z_RES_OK;
 }
@@ -212,7 +212,7 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 // extension's zbuf, which itself aliases the network message decoding buffer. That buffer
                 // is only cleared after _z_handle_network_message has consumed the (un)declaration, so the
                 // alias remains valid for the whole lifetime of the wireexpr.
-                ke->_suffix = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+                ke->_suffix = _z_view_string_make((const char *)_z_zbuf_get_rptr(zbf), len);
                 _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
             }
             ke->_mapping = mapping;

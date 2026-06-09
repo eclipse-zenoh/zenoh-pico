@@ -93,9 +93,7 @@ z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs)
 z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);
 z_result_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
-z_result_t _z_str_encode(_z_wbuf_t *buf, const char *s);
-z_result_t _z_str_decode(char **str, _z_zbuf_t *buf);
-z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s);
+z_result_t _z_string_encode(_z_wbuf_t *wbf, _z_view_string_t s);
 z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf);
 
 size_t _z_encoding_len(const _z_encoding_t *en);

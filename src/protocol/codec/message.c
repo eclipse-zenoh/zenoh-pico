@@ -117,8 +117,8 @@ z_result_t _z_wireexpr_encode(_z_wbuf_t *wbf, bool has_suffix, const _z_wireexpr
     _Z_DEBUG("Encoding _RESKEY");
 
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, fld->_id))
-    if (has_suffix == true) {
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &fld->_suffix))
+    if (has_suffix) {
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, fld->_suffix))
     }
 
     return ret;
@@ -134,12 +134,13 @@ z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *zbf, bool has_suffix
         _z_string_t str = _z_string_null();
         ret |= _z_string_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
-            ke->_suffix = str;
+            // _z_string_decode aliases the decoding buffer, so the resulting view shares its lifetime.
+            ke->_suffix = _z_view_string_from_string(&str);
         } else {
-            ke->_suffix = _z_string_null();
+            ke->_suffix = _z_view_string_empty();
         }
     } else {
-        ke->_suffix = _z_string_null();
+        ke->_suffix = _z_view_string_empty();
     }
     return ret;
 }
@@ -151,7 +152,7 @@ z_result_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
         _z_string_t s = _z_locator_to_string(&la->_val[i]);
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &s))
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, _z_view_string_from_string(&s)))
         _z_string_clear(&s);
     }
 

@@ -722,11 +722,12 @@ _z_wireexpr_t gen_wireexpr(void) {
     key._mapping = gen_bool() ? _Z_KEYEXPR_MAPPING_LOCAL : _Z_KEYEXPR_MAPPING_REMOTE;
     bool is_numerical = gen_bool();
     if (is_numerical == true) {
-        key._suffix = _z_string_null();
+        key._suffix = _z_view_string_empty();
     } else {
         size_t len = gen_zint() % 16 + 1;
         // gen_string aliases a string owned by STRING_STORAGE.
-        key._suffix = gen_string(len);
+        _z_string_t suffix = gen_string(len);
+        key._suffix = _z_view_string_from_string(&suffix);
     }
     return key;
 }
@@ -739,9 +740,9 @@ void assert_eq_keyexpr(const _z_wireexpr_t *left, const _z_wireexpr_t *right) {
 
     printf("Name (");
     if (_z_wireexpr_has_suffix(left)) {
-        printf("%.*s:%.*s", (int)_z_string_len(&left->_suffix), _z_string_data(&left->_suffix),
-               (int)_z_string_len(&right->_suffix), _z_string_data(&right->_suffix));
-        assert(_z_string_equals(&left->_suffix, &right->_suffix) == true);
+        printf("%.*s:%.*s", (int)_z_view_string_len(&left->_suffix), _z_view_string_data(&left->_suffix),
+               (int)_z_view_string_len(&right->_suffix), _z_view_string_data(&right->_suffix));
+        assert(_z_view_string_equals(left->_suffix, right->_suffix));
     } else {
         printf("NULL:NULL");
     }
@@ -1314,8 +1315,8 @@ void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
     printf("Interest: 0x%x, 0x%x, %u, %u\n", left->flags, right->flags, left->_id, right->_id);
     printf("Interest ke: %d, %d, %d, %d, %.*s, %.*s\n", left->_keyexpr._id, right->_keyexpr._id,
            (unsigned int)left->_keyexpr._mapping, (unsigned int)right->_keyexpr._mapping,
-           (int)_z_string_len(&left->_keyexpr._suffix), _z_string_data(&left->_keyexpr._suffix),
-           (int)_z_string_len(&right->_keyexpr._suffix), _z_string_data(&right->_keyexpr._suffix));
+           (int)_z_view_string_len(&left->_keyexpr._suffix), _z_view_string_data(&left->_keyexpr._suffix),
+           (int)_z_view_string_len(&right->_keyexpr._suffix), _z_view_string_data(&right->_keyexpr._suffix));
     assert(left->flags == right->flags);
     assert(left->_id == right->_id);
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);

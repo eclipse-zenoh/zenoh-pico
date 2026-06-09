@@ -492,14 +492,14 @@ _z_wireexpr_t _z_declared_keyexpr_alias_to_wire(const _z_declared_keyexpr_t *key
         suffix_len -= _Z_RC_IN_VAL(&key->_declaration)->_prefix_len;
     }
     if (suffix_len > 0) {
-        expr._suffix = _z_string_alias_substr(suffix_str, suffix_len);
+        expr._suffix = _z_view_string_make(suffix_str, suffix_len);
     }
     return expr;
 }
 
 _z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key) {
     _z_wireexpr_t expr = _z_wireexpr_null();
-    expr._suffix = _z_string_alias(key->_keyexpr);
+    expr._suffix = _z_view_string_from_string(&key->_keyexpr);
     return expr;
 }
 

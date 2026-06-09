@@ -138,6 +138,45 @@ _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
+typedef struct {
+    size_t len;
+    const char *start;
+} _z_view_string_t;
+
+static inline _z_view_string_t _z_view_string_make(const char *start, size_t len) {
+    _z_view_string_t s;
+    s.start = start;
+    s.len = len;
+    return s;
+}
+
+static inline _z_view_string_t _z_view_string_empty(void) {
+    _z_view_string_t s = {0};
+    return s;
+}
+
+static inline bool _z_view_string_is_empty(const _z_view_string_t *s) { return s->len == 0; }
+
+static inline size_t _z_view_string_len(const _z_view_string_t *s) { return s->len; }
+
+static inline const char *_z_view_string_data(const _z_view_string_t *s) { return s->start; }
+
+// Builds a non-owning view over the data of an existing string.
+static inline _z_view_string_t _z_view_string_from_string(const _z_string_t *s) {
+    return _z_view_string_make(_z_string_data(s), _z_string_len(s));
+}
+
+// Builds a non-owning `_z_string_t` aliasing the data of a view string. This is meant to bridge view strings with
+// the APIs that only accept `_z_string_t`; the returned string must not outlive the data referenced by the view.
+static inline _z_string_t _z_string_alias_view_string(const _z_view_string_t *s) {
+    return _z_string_alias_substr(_z_view_string_data(s), _z_view_string_len(s));
+}
+
+static inline bool _z_view_string_equals(_z_view_string_t left, _z_view_string_t right) {
+    if (left.len != right.len) return false;
+    return memcmp(left.start, right.start, left.len) == 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

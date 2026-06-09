@@ -78,7 +78,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id) {
     _z_wireexpr_t expr = _z_wireexpr_null();
     expr._id = Z_RESOURCE_ID_NONE;
-    expr._suffix = _z_string_alias(*key);
+    expr._suffix = _z_view_string_from_string(key);
     z_result_t ret = _z_register_resource(zn, &expr, Z_RESOURCE_ID_NONE, NULL, out_id);
     if (ret == _Z_RES_OK) {
         // Build the declare message to send on the wire

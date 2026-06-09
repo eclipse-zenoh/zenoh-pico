@@ -143,7 +143,9 @@ _Z_ELEM_DEFINE(_z_timestamp, _z_timestamp_t, _z_timestamp_size, _z_timestamp_cle
  * Members:
  *  uint16_t _id: The resource ID of the ke.
  *  _z_keyexpr_mapping_t _mapping: Whether the ke's _id is declared in the local or in a remote id space.
- *  _z_string_t _suffix: The string value of the ke.
+ *  _z_view_string_t _suffix: The string value of the ke. It is always a non-owning view: the referenced data
+ *                            is owned elsewhere (the decoding buffer or an existing keyexpr) and must outlive
+ *                            the wireexpr.
  */
 // The _mapping field tells in which id space the keyexpr's _id lives. There are collisions on _id values between
 // peers/local, so this field is used only to distinguish which id space we are in. The actual peer is always passed
@@ -159,19 +161,20 @@ typedef enum {
 typedef struct {
     uint16_t _id;
     _z_keyexpr_mapping_t _mapping;
-    _z_string_t _suffix;
+    _z_view_string_t _suffix;
 } _z_wireexpr_t;
 
-static inline void _z_wireexpr_clear(_z_wireexpr_t *expr) { _z_string_clear(&expr->_suffix); }
+static inline void _z_wireexpr_clear(_z_wireexpr_t *expr) { expr->_suffix = _z_view_string_empty(); }
 static inline z_result_t _z_wireexpr_copy(_z_wireexpr_t *dst, const _z_wireexpr_t *src) {
-    _Z_RETURN_IF_ERR(_z_string_copy(&dst->_suffix, &src->_suffix));
+    // The suffix is a non-owning view, so copying it is a plain alias of the same underlying data.
+    dst->_suffix = src->_suffix;
     dst->_id = src->_id;
     dst->_mapping = src->_mapping;
     return _Z_RES_OK;
 }
 static inline _z_wireexpr_t _z_wireexpr_alias(const _z_wireexpr_t *src) {
     _z_wireexpr_t dst;
-    dst._suffix = _z_string_alias(src->_suffix);
+    dst._suffix = src->_suffix;
     dst._id = src->_id;
     dst._mapping = src->_mapping;
     return dst;
@@ -188,9 +191,11 @@ static inline _z_wireexpr_t _z_wireexpr_steal(_z_wireexpr_t *expr) {
 static inline bool _z_wireexpr_is_local(const _z_wireexpr_t *expr) {
     return expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL;
 }
-static inline bool _z_wireexpr_has_suffix(const _z_wireexpr_t *expr) { return _z_string_check(&expr->_suffix); }
+static inline bool _z_wireexpr_has_suffix(const _z_wireexpr_t *expr) {
+    return !_z_view_string_is_empty(&expr->_suffix);
+}
 static inline bool _z_wireexpr_check(const _z_wireexpr_t *expr) {
-    return _z_string_check(&expr->_suffix) || expr->_id != Z_RESOURCE_ID_NONE;
+    return !_z_view_string_is_empty(&expr->_suffix) || expr->_id != Z_RESOURCE_ID_NONE;
 }
 
 /**
