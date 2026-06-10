@@ -27,7 +27,7 @@ jobs:
 
     env:
       IDF_COMPONENT_MANAGER: "0"   # ← disable pacman to avoid the pydantic crash
-      ESPIDF_BASE: ${{ runner.temp }}/espidfproject
+      ESPIDF_BASE: ${{ github.workspace }}/.ci/espidfproject
       ZENOH_PICO_BASE: ${{ github.workspace }}
 
     steps:

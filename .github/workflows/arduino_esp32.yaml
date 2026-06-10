@@ -21,7 +21,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
-      ARDUINO_BASE: ${{ runner.temp }}/arduino_esp32project
+      ARDUINO_BASE: ${{ github.workspace }}/.ci/arduino_esp32project
       ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false

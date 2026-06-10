@@ -21,7 +21,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
-      ZEPHYR_BASE: ${{ runner.temp }}/zephyrproject
+      ZEPHYR_BASE: ${{ github.workspace }}/.ci/zephyrproject
       ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false
