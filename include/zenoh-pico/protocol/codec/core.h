@@ -97,8 +97,8 @@ z_result_t _z_string_encode(_z_wbuf_t *wbf, _z_view_string_t s);
 z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf);
 
 size_t _z_encoding_len(const _z_encoding_t *en);
-z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en);
-z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf);
+z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_view_encoding_t *en);
+z_result_t _z_encoding_decode(_z_view_encoding_t *en, _z_zbuf_t *zbf);
 
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *en);
 z_result_t _z_value_decode(_z_value_t *en, _z_zbuf_t *zbf);

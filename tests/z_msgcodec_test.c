@@ -293,6 +293,11 @@ _z_encoding_t gen_encoding(void) {
     return en;
 }
 
+_z_view_encoding_t gen_view_encoding(void) {
+    _z_encoding_t en = gen_encoding();
+    return _z_view_encoding_from_encoding(&en);
+}
+
 _z_value_t gen_value(void) {
     _z_value_t val;
     val.encoding = gen_encoding();
@@ -609,6 +614,13 @@ void payload_field(void) {
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->id == right->id);
     assert_eq_string(&left->schema, &right->schema);
+}
+void assert_eq_view_encoding(const _z_view_encoding_t *left, const _z_view_encoding_t *right) {
+    assert(left->id == right->id);
+    assert(_z_view_string_len(&left->schema) == _z_view_string_len(&right->schema));
+    if (_z_view_string_len(&left->schema) > 0) {
+        assert(_z_view_string_equals(left->schema, right->schema));
+    }
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
@@ -1358,7 +1370,7 @@ _z_push_body_t gen_push_body(void) {
                                 ._body._put = {
                                     ._commons = commons,
                                     ._payload = gen_bytes(64),
-                                    ._encoding = gen_encoding(),
+                                    ._encoding = gen_view_encoding(),
                                 }};
     } else {
         return (_z_push_body_t){._is_put = false, ._body._del = {._commons = commons}};
@@ -1369,7 +1381,7 @@ void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right
     assert(left->_is_put == right->_is_put);
     if (left->_is_put) {
         assert_eq_bytes(&left->_body._put._payload, &right->_body._put._payload);
-        assert_eq_encoding(&left->_body._put._encoding, &right->_body._put._encoding);
+        assert_eq_view_encoding(&left->_body._put._encoding, &right->_body._put._encoding);
         assert_eq_timestamp(&left->_body._put._commons._timestamp, &right->_body._put._commons._timestamp);
         assert_eq_source_info(&left->_body._put._commons._source_info, &right->_body._put._commons._source_info);
     } else {
@@ -1498,14 +1510,14 @@ void query_message_anyke(void) {
 _z_msg_err_t gen_err(void) {
     size_t len = 1 + gen_uint8();
     return (_z_msg_err_t){
-        ._encoding = gen_encoding(),
+        ._encoding = gen_view_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
         ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
-    assert_eq_encoding(&left->_encoding, &right->_encoding);
+    assert_eq_view_encoding(&left->_encoding, &right->_encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
     assert_eq_bytes(&left->_payload, &right->_payload);
 }

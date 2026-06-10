@@ -58,6 +58,33 @@ static inline _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
     return ret;
 }
 
+// Non-owning view on the encoding.
+typedef struct _z_view_encoding_t {
+    _z_view_string_t schema;
+    uint16_t id;
+} _z_view_encoding_t;
+
+static inline _z_view_encoding_t _z_view_encoding_null(void) { return (_z_view_encoding_t){0}; }
+static inline bool _z_view_encoding_check(const _z_view_encoding_t *encoding) {
+    return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || !_z_view_string_is_empty(&encoding->schema));
+}
+
+static inline _z_view_encoding_t _z_view_encoding_from_encoding(const _z_encoding_t *encoding) {
+    _z_view_encoding_t view_encoding;
+    view_encoding.schema = _z_view_string_from_string(&encoding->schema);
+    view_encoding.id = encoding->id;
+    return view_encoding;
+}
+
+// Builds a non-owning `_z_encoding_t` aliasing the data of a view encoding. This is meant to bridge view encodings with
+// the APIs that only accept `_z_encoding_t`; the returned encoding must not outlive the data referenced by the view.
+static inline _z_encoding_t _z_encoding_alias_view_encoding(const _z_view_encoding_t *encoding) {
+    _z_encoding_t en;
+    en.id = encoding->id;
+    en.schema = _z_string_alias_view_string(&encoding->schema);
+    return en;
+}
+
 #ifdef __cplusplus
 }
 #endif

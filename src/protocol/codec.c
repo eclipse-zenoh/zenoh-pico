@@ -319,20 +319,20 @@ size_t _z_encoding_len(const _z_encoding_t *en) {
     return en_len;
 }
 
-z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
-    bool has_schema = _z_string_check(&en->schema);
+z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_view_encoding_t *en) {
+    bool has_schema = !_z_view_string_is_empty(&en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;
     }
     _Z_RETURN_IF_ERR(_z_zint32_encode(wbf, id));
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, _z_view_string_from_string(&en->schema)));
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, en->schema));
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
+z_result_t _z_encoding_decode(_z_view_encoding_t *en, _z_zbuf_t *zbf) {
     uint32_t id = 0;
     bool has_schema = false;
     _Z_RETURN_IF_ERR(_z_zint32_decode(&id, zbf));
@@ -341,7 +341,12 @@ z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
     }
     en->id = (uint16_t)(id >> 1);
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_string_decode(&en->schema, zbf));
+        // Decode the schema as a non-owning view aliasing the buffer.
+        _z_string_t schema = _z_string_null();
+        _Z_RETURN_IF_ERR(_z_string_decode(&schema, zbf));
+        en->schema = _z_view_string_from_string(&schema);
+    } else {
+        en->schema = _z_view_string_empty();
     }
     return _Z_RES_OK;
 }
@@ -349,12 +354,15 @@ z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *value) {
     size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
-    _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &value->encoding));
+    _z_view_encoding_t view_encoding = _z_view_encoding_from_encoding(&value->encoding);
+    _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &view_encoding));
     return _z_bytes_encode_val(wbf, &value->payload);
 }
 
 z_result_t _z_value_decode(_z_value_t *value, _z_zbuf_t *zbf) {
-    _Z_RETURN_IF_ERR(_z_encoding_decode(&value->encoding, zbf));
+    _z_view_encoding_t view_encoding;
+    _Z_RETURN_IF_ERR(_z_encoding_decode(&view_encoding, zbf));
+    value->encoding = _z_encoding_alias_view_encoding(&view_encoding);
     _Z_RETURN_IF_ERR(_z_bytes_from_buf(&value->payload, (uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf)));
     return _Z_RES_OK;
 }

@@ -25,7 +25,7 @@ void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
     _z_bytes_drop(&msg->_payload);
     _z_bytes_drop(&msg->_attachment);
-    _z_encoding_clear(&msg->_encoding);
+    // _encoding is a non-owning view, nothing to clear.
     _z_timestamp_clear(&msg->_commons._timestamp);
 }
 
@@ -46,6 +46,6 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
 }
 
 void _z_msg_err_clear(_z_msg_err_t *err) {
-    _z_encoding_clear(&err->_encoding);
+    // _encoding is a non-owning view, nothing to clear.
     _z_bytes_drop(&err->_payload);
 }

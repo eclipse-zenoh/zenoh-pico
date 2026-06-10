@@ -270,7 +270,7 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         if (has_timestamp) {
             header |= _Z_FLAG_Z_P_T;
         }
-        has_encoding = _z_encoding_check(&pshb->_body._put._encoding);
+        has_encoding = _z_view_encoding_check(&pshb->_body._put._encoding);
         if (has_encoding) {
             header |= _Z_FLAG_Z_P_E;
         }
@@ -285,7 +285,7 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
 
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &pshb->_body._put._encoding));
+        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &pshb->_body._put._encoding));
     }
 
     if (has_source_info) {
@@ -547,7 +547,7 @@ z_result_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     uint8_t header = _Z_MID_Z_ERR;
 
     // Encode header
-    bool has_encoding = _z_encoding_check(&err->_encoding);
+    bool has_encoding = _z_view_encoding_check(&err->_encoding);
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }
@@ -559,7 +559,7 @@ z_result_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Encode encoding
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &err->_encoding));
+        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &err->_encoding));
     }
     // Encode extensions
     if (has_sinfo_ext) {

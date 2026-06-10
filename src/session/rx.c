@@ -113,8 +113,9 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
         case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
             _z_msg_put_t put = req->_body._put;
+            _z_encoding_t encoding = _z_encoding_alias_view_encoding(&put._encoding);
             // Memory cleaning must be done in the feature layer
-            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &put._encoding,
+            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &encoding,
                                                           &put._commons._timestamp, req->_ext_qos, &put._attachment,
                                                           reliability, &put._commons._source_info, peer));
 #endif

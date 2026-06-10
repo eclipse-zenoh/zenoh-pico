@@ -1505,7 +1505,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
         encoding = _z_encoding_alias(
             &pub->_encoding);  // it is safe to use alias, since it will be unaffected by clear operation
     } else {
-        encoding = _z_encoding_steal(&opt.encoding->_this._val);
+        encoding = _z_encoding_alias(&opt.encoding->_this._val);
     }
 
     _z_session_t *session = NULL;
@@ -1903,7 +1903,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         encoding = _z_encoding_alias(
             &querier->_encoding);  // it is safe to use alias, since it is unaffected by clear operation
     } else {
-        encoding = _z_encoding_steal(&opt.encoding->_this._val);
+        encoding = _z_encoding_alias(&opt.encoding->_this._val);
     }
 
     _z_session_t *session = NULL;

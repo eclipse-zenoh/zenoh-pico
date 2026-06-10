@@ -79,7 +79,7 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
     _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
-    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_alias(encoding);
 
     _z_network_message_t msg;
     switch (kind) {
@@ -132,7 +132,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     _z_slice_t parameters2 = parameters == NULL ? _z_slice_null() : _z_slice_alias(*parameters);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
-    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_alias(encoding);
 
     _z_zenoh_message_t msg;
     _z_n_msg_make_query(&msg, &wireexpr, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
@@ -176,7 +176,7 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
-    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_alias(encoding);
 
     _z_network_message_t msg;
     switch (kind) {
@@ -205,7 +205,7 @@ z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _
     }
 
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
-    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_alias(encoding);
 
     _z_network_message_t msg;
     _z_n_msg_make_reply_err(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, Z_RELIABILITY_DEFAULT, qos,

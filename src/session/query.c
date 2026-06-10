@@ -127,7 +127,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     }
     // Build the reply
     _z_reply_t reply;
-    _z_reply_steal_data(&reply, keyexpr, *replier_id, &msg->_payload, &msg->_commons._timestamp, &msg->_encoding, kind,
+    _z_encoding_t encoding = _z_encoding_alias_view_encoding(&msg->_encoding);
+    _z_reply_steal_data(&reply, keyexpr, *replier_id, &msg->_payload, &msg->_commons._timestamp, &encoding, kind,
                         &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
@@ -201,19 +202,18 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg,
                                       _z_entity_global_id_t *replier_id) {
     // Retrieve query
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_bytes_drop(&msg->_payload);
-                           _z_encoding_clear(&msg->_encoding));
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_bytes_drop(&msg->_payload));
     _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     _z_session_mutex_unlock(zn);
     if (pen_qry == NULL) {
         // Not concerned by the reply
         _z_bytes_drop(&msg->_payload);
-        _z_encoding_clear(&msg->_encoding);
         return _Z_RES_OK;
     }
     // Trigger the user callback
     _z_reply_t reply;
-    _z_reply_err_steal_data(&reply, &msg->_payload, &msg->_encoding, *replier_id);
+    _z_encoding_t encoding = _z_encoding_alias_view_encoding(&msg->_encoding);
+    _z_reply_err_steal_data(&reply, &msg->_payload, &encoding, *replier_id);
     pen_qry->_callback(&reply, pen_qry->_arg);
     _z_reply_clear(&reply);
     return _Z_RES_OK;

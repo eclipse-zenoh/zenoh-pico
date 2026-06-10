@@ -205,7 +205,8 @@ void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_wireexpr_t *key,
     dst->_body._push._body._body._put._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
     dst->_body._push._body._body._put._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._push._body._body._put._encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
+    dst->_body._push._body._body._put._encoding =
+        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
     dst->_body._push._body._body._put._attachment = (attachment == NULL) ? _z_bytes_null() : *attachment;
 }
 
@@ -241,7 +242,8 @@ void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _
     dst->_body._response._body._reply._body._body._put._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
     dst->_body._response._body._reply._body._body._put._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._response._body._reply._body._body._put._encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
+    dst->_body._response._body._reply._body._body._put._encoding =
+        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
     dst->_body._response._body._reply._body._body._put._attachment =
         (attachment == NULL) ? _z_bytes_null() : *attachment;
     dst->_body._response._ext_qos = qos;
@@ -282,7 +284,8 @@ void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_z
     dst->_body._response._request_id = rid;
     dst->_body._response._key = _z_wireexpr_null();
     dst->_body._response._body._err._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._response._body._err._encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
+    dst->_body._response._body._err._encoding =
+        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
     dst->_body._response._body._err._ext_source_info = (source_info == NULL) ? _z_source_info_null() : *source_info;
     dst->_body._response._ext_timestamp = _z_timestamp_null();
     dst->_body._response._ext_qos = qos;

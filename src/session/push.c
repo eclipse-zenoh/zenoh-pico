@@ -29,8 +29,9 @@ z_result_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliabilit
     // Memory cleaning must be done in the feature layer
     if (push->_body._is_put) {
         _z_msg_put_t *put = &push->_body._body._put;
+        _z_encoding_t encoding = _z_encoding_alias_view_encoding(&put->_encoding);
         ret =
-            _z_trigger_subscriptions_put(zn, &push->_key, &put->_payload, &put->_encoding, &put->_commons._timestamp,
+            _z_trigger_subscriptions_put(zn, &push->_key, &put->_payload, &encoding, &put->_commons._timestamp,
                                          push->_qos, &put->_attachment, reliability, &put->_commons._source_info, peer);
     } else {
         _z_msg_del_t *del = &push->_body._body._del;
