@@ -20,6 +20,9 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      ARDUINO_BASE: ${{ runner.temp }}/arduino_esp32project
+      ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false
       matrix:
@@ -41,93 +44,65 @@ jobs:
 
       - name: Set up project
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          mkdir -p $ARDUINO_BASE
-          cd $ARDUINO_BASE
+          mkdir -p "$ARDUINO_BASE"
+          cd "$ARDUINO_BASE"
           pio init -b esp32thing_plus -O "-DZ_FEATURE_LINK_BLUETOOTH=1 -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG" -O "lib_ldf_mode=deep+"
 
-          cd $ARDUINO_BASE/lib
-          ln -s $ZENOH_PICO_BASE
+          cd "$ARDUINO_BASE/lib"
+          ln -sfn "$ZENOH_PICO_BASE" "$ARDUINO_BASE/lib/zenoh-pico"
 
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
 
       - name: Build z_pub example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_pub.ino" "$ARDUINO_BASE/src/z_pub.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_pub.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run
 
       - name: Build z_sub example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_sub.ino" "$ARDUINO_BASE/src/z_sub.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_sub.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run
 
       - name: Build z_pull example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_pull.ino" "$ARDUINO_BASE/src/z_pull.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_pull.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run
 
       - name: Build z_get example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_get.ino" "$ARDUINO_BASE/src/z_get.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_get.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run
 
       - name: Build z_queryable example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_queryable.ino" "$ARDUINO_BASE/src/z_queryable.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_queryable.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run
 
       - name: Build z_scout example
         run: |
-          cd $HOME
-          export ARDUINO_BASE=$HOME/work/arduino_esp32project/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ARDUINO_BASE"/src/*
+          cd "$ARDUINO_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/arduino/z_scout.ino" "$ARDUINO_BASE/src/z_scout.ino"
 
-          rm -rf $ARDUINO_BASE/src/*
-          cd $ARDUINO_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/arduino/z_scout.ino
-
-          cd $ARDUINO_BASE
+          cd "$ARDUINO_BASE"
           pio run

@@ -20,6 +20,9 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      MBED_BASE: ${{ runner.temp }}/mbedproject
+      ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false
       matrix:
@@ -41,93 +44,65 @@ jobs:
 
       - name: Set up project
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          mkdir -p $MBED_BASE
-          cd $MBED_BASE
+          mkdir -p "$MBED_BASE"
+          cd "$MBED_BASE"
           pio init -b nucleo_f767zi --project-option="framework=mbed" --project-option="board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG"
 
-          cd $MBED_BASE/lib
-          ln -s $ZENOH_PICO_BASE
+          cd "$MBED_BASE/lib"
+          ln -sfn "$ZENOH_PICO_BASE" "$MBED_BASE/lib/zenoh-pico"
 
-          cd $MBED_BASE
+          cd "$MBED_BASE"
 
       - name: Build z_pub example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_pub.cpp" "$MBED_BASE/src/z_pub.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_pub.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run
 
       - name: Build z_sub example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_sub.cpp" "$MBED_BASE/src/z_sub.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_sub.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run
 
       - name: Build z_pull example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_pull.cpp" "$MBED_BASE/src/z_pull.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_pull.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run
 
       - name: Build z_get example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_get.cpp" "$MBED_BASE/src/z_get.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_get.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run
 
       - name: Build z_queryable example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_queryable.cpp" "$MBED_BASE/src/z_queryable.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_queryable.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run
 
       - name: Build z_scout example
         run: |
-          cd $HOME
-          export MBED_BASE=$HOME/work/mbedproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$MBED_BASE"/src/*
+          cd "$MBED_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/mbed/z_scout.cpp" "$MBED_BASE/src/z_scout.cpp"
 
-          rm -rf $MBED_BASE/src/*
-          cd $MBED_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/mbed/z_scout.cpp
-
-          cd $MBED_BASE
+          cd "$MBED_BASE"
           pio run

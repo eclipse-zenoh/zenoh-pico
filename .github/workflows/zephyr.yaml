@@ -20,6 +20,9 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      ZEPHYR_BASE: ${{ runner.temp }}/zephyrproject
+      ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false
       matrix:
@@ -41,96 +44,62 @@ jobs:
 
       - name: Set up project
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          mkdir -p $ZEPHYR_BASE
-          cd $ZEPHYR_BASE
+          mkdir -p "$ZEPHYR_BASE"
+          cd "$ZEPHYR_BASE"
           pio init -b nucleo_f767zi --project-option="framework=zephyr" --project-option="board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1" --project-option="build_flags=-DZENOH_LOG_DEBUG"
 
-          cd $ZEPHYR_BASE/lib
-          ln -s $ZENOH_PICO_BASE
+          cd "$ZEPHYR_BASE/lib"
+          ln -s "$ZENOH_PICO_BASE"
 
-          mkdir -p $ZEPHYR_BASE/zephyr
-          cd $ZEPHYR_BASE/zephyr
-          ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf prj.conf
-          ln -s $ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt CMakeLists.txt
+          mkdir -p "$ZEPHYR_BASE/zephyr"
+          cd "$ZEPHYR_BASE/zephyr"
+          ln -s "$ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/prj.conf" prj.conf
+          ln -s "$ZENOH_PICO_BASE/docs/zephyr/nucleo_f767zi/CMakeLists.txt" CMakeLists.txt
 
       - name: Build z_pub example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pub.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_pub.c"
+          cd "$ZEPHYR_BASE"
           pio run
 
       - name: Build z_sub example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_sub.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_sub.c"
+          cd "$ZEPHYR_BASE"
           pio run
 
       - name: Build z_pull example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_pull.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_pull.c"
+          cd "$ZEPHYR_BASE"
           pio run
 
       - name: Build z_get example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_get.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_get.c"
+          cd "$ZEPHYR_BASE"
           pio run
 
       - name: Build z_queryable example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_queryable.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_queryable.c"
+          cd "$ZEPHYR_BASE"
           pio run
 
       - name: Build z_scout example
         run: |
-          cd $HOME
-          export ZEPHYR_BASE=$HOME/work/zephyrproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          rm -rf $ZEPHYR_BASE/src/*
-          cd $ZEPHYR_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/zephyr/z_scout.c
-
-          cd $ZEPHYR_BASE
+          rm -rf "$ZEPHYR_BASE"/src/*
+          cd "$ZEPHYR_BASE/src"
+          ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_scout.c"
+          cd "$ZEPHYR_BASE"
           pio run
