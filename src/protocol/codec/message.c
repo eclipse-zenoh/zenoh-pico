@@ -285,7 +285,7 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
 
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &pshb->_body._put._encoding));
+        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &pshb->_body._put._encoding));
     }
 
     if (has_source_info) {
@@ -559,7 +559,7 @@ z_result_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Encode encoding
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &err->_encoding));
+        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &err->_encoding));
     }
     // Encode extensions
     if (has_sinfo_ext) {
