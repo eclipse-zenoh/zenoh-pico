@@ -154,9 +154,10 @@ z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, const _z_str
         return _Z_RES_OK;
     }
 
-    const char *p_end = (char *)memchr(_z_string_data(str), ENDPOINT_CONFIG_SEPARATOR, _z_string_len(str));
+    size_t metadata_len = _z_string_len(str) - start_offset;
+    const char *p_end = (char *)memchr(p_start, ENDPOINT_CONFIG_SEPARATOR, metadata_len);
     if (p_end == NULL) {
-        p_end = _z_cptr_char_offset(_z_string_data(str), (ptrdiff_t)_z_string_len(str) + 1);
+        p_end = _z_cptr_char_offset(p_start, (ptrdiff_t)metadata_len);
     }
 
     if (p_start != p_end) {
