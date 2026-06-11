@@ -45,8 +45,10 @@ typedef struct {
 
 static hstring_t hstring_make(const char *s) {
     hstring_t h;
-    h.ptr = strdup(s);
+    size_t l = strlen(s);
+    h.ptr = (char *)malloc(l + 1);
     assert(h.ptr);
+    strcpy(h.ptr, s);
     return h;
 }
 
