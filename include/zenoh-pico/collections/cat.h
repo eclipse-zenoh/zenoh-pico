@@ -16,4 +16,8 @@
 #define ZENOH_PICO_COLLECTIONS_CAT_H
 #define _ZP_CAT_INNER(a, b) a##_##b
 #define _ZP_CAT(a, b) _ZP_CAT_INNER(a, b)
+
+// Variadic arguments counting, up to 10
+#define _ZP_VA_NARGS_IMPL(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
+#define _ZP_VA_NARGS(...) _ZP_VA_NARGS_IMPL(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
 #endif

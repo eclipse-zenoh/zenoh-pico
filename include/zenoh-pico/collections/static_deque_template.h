@@ -18,10 +18,10 @@
 //   (optional, default is derived from the element type and size)
 // - _ZP_STATIC_DEQUE_TEMPLATE_SIZE: the maximum size of the fixed-capacity circular buffer
 //   stored in the generated struct (optional, default is 16)
-// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME: the function-like macro used to destroy
+// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
-// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME: the function-like macro used to move an
-//   element (optional, default performs assignment and then destroys the source element)
+// - _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
+//   element (optional, default performs assignment without destroying the source element)
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -40,13 +40,11 @@
     _ZP_CAT(_ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE, deque), _ZP_STATIC_DEQUE_TEMPLATE_SIZE)
 #endif
 
-#ifndef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(x) (void)(x)
+#ifndef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
 #endif
-#ifndef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(dst, src) \
-    *(dst) = *(src);                                          \
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(src);
+#ifndef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
 
 #define _ZP_STATIC_DEQUE_TEMPLATE_TYPE _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, t)
@@ -75,7 +73,7 @@ static inline void _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, destroy)(_ZP_STATIC_D
         if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
             idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
         }
-        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[idx]);
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(&deque->_buffer[idx]);
     }
     deque->_start = 0;
     deque->_size = 0;
@@ -97,7 +95,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, push_back)(_ZP_STATIC
     if (idx >= _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
         idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
     }
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(&deque->_buffer[idx], elem);
+    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(&deque->_buffer[idx], elem);
     deque->_size++;
     return true;
 }
@@ -115,9 +113,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, pop_back)(_ZP_STATIC_
         idx -= _ZP_STATIC_DEQUE_TEMPLATE_SIZE;
     }
     if (out != NULL) {
-        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[idx]);
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(out, &deque->_buffer[idx]);
     } else {
-        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[idx]);
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(&deque->_buffer[idx]);
     }
     if (deque->_size == 1) {
         deque->_start = 0;  // reset to initial state when empty
@@ -152,7 +150,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, push_front)(_ZP_STATI
     }
     deque->_start--;
     deque->_size++;
-    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(&deque->_buffer[deque->_start], elem);
+    _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(&deque->_buffer[deque->_start], elem);
     return true;
 }
 
@@ -165,9 +163,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_DEQUE_TEMPLATE_NAME, pop_front)(_ZP_STATIC
         return false;
     }
     if (out != NULL) {
-        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME(out, &deque->_buffer[deque->_start]);
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(out, &deque->_buffer[deque->_start]);
     } else {
-        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME(&deque->_buffer[deque->_start]);
+        _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(&deque->_buffer[deque->_start]);
     }
     deque->_start++;
     if (deque->_start == _ZP_STATIC_DEQUE_TEMPLATE_SIZE) {
@@ -191,6 +189,6 @@ static inline _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_DEQUE_TEMP
 #undef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE
 #undef _ZP_STATIC_DEQUE_TEMPLATE_NAME
 #undef _ZP_STATIC_DEQUE_TEMPLATE_NODE_TYPE
-#undef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN_NAME
-#undef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN_NAME
+#undef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN
+#undef _ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN
 #undef _ZP_STATIC_DEQUE_TEMPLATE_SIZE
