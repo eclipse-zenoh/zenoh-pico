@@ -221,9 +221,8 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
     _z_network_message_t curr_nmsg = {0};
-    _z_arc_slice_t arcs = _z_arc_slice_empty();
     while (_z_zbuf_len(msg->_payload) > 0) {
-        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs));
+        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &entry->common));
     }
@@ -336,8 +335,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         }
         // Decode message
         _z_zenoh_message_t zm = {0};
-        _z_arc_slice_t arcs = _z_arc_slice_empty();
-        ret = _z_network_message_decode(&zm, &zbf, &arcs);
+        ret = _z_network_message_decode(&zm, &zbf);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             // Memory clear of the network message data must be handled by the network message layer

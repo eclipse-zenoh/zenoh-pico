@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -103,6 +104,40 @@ z_result_t _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
 bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_free(_z_slice_t **bs);
 bool _z_slice_is_alloced(const _z_slice_t *s);
+
+// Atomically reference-counted slice, used internally by the zbuf to share a backing buffer.
+_Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
+
+/*-------- View Slice --------*/
+/**
+ * A non-owning view of an array of bytes.
+ *
+ * Members:
+ *   size_t len: The length of the bytes array.
+ *   uint8_t *start: A pointer to the bytes array.
+ */
+typedef struct {
+    size_t len;
+    const uint8_t *start;
+} _z_view_slice_t;
+
+static inline _z_view_slice_t _z_view_slice_make(const uint8_t *start, size_t len) {
+    _z_view_slice_t slice;
+    slice.start = start;
+    slice.len = len;
+    return slice;
+}
+
+static inline _z_view_slice_t _z_view_slice_empty(void) {
+    _z_view_slice_t slice = {0};
+    return slice;
+}
+
+static inline bool _z_view_slice_is_empty(const _z_view_slice_t *slice) { return slice->len == 0; }
+
+static inline size_t _z_view_slice_len(const _z_view_slice_t *slice) { return slice->len; }
+
+static inline const uint8_t *_z_view_slice_data(const _z_view_slice_t *slice) { return slice->start; }
 
 #ifdef __cplusplus
 }

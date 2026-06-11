@@ -75,16 +75,6 @@ _z_push_body_t _z_push_body_steal(_z_push_body_t *msg) {
     return ret;
 }
 
-static z_result_t _z_push_body_copy(_z_push_body_t *dst, const _z_push_body_t *src) {
-    if (src->_is_put) {
-        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._put._attachment, &src->_body._put._attachment));
-        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._put._payload, &src->_body._put._payload));
-    } else {
-        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._del._attachment, &src->_body._del._attachment));
-    }
-    return _Z_RES_OK;
-}
-
 void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg) { (void)(msg); }
 
 void _z_n_msg_push_clear(_z_n_msg_push_t *msg) {

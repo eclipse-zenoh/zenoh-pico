@@ -285,7 +285,7 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
 
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &pshb->_body._put._encoding));
+        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &pshb->_body._put._encoding));
     }
 
     if (has_source_info) {
@@ -329,7 +329,7 @@ z_result_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header) {
     z_result_t ret = _Z_RES_OK;
     switch (_Z_MID(header)) {
         case _Z_MID_Z_PUT: {
@@ -344,7 +344,7 @@ z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t hea
                 _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
             }
             if (ret == _Z_RES_OK) {
-                _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf, arcs));
+                _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf));
             }
             break;
         }
@@ -370,10 +370,10 @@ z_result_t _z_put_encode(_z_wbuf_t *wbf, const _z_msg_put_t *put) {
     _z_push_body_t body = {._is_put = true, ._body = {._put = *put}};
     return _z_push_body_encode(wbf, &body);
 }
-z_result_t _z_put_decode(_z_msg_put_t *put, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_put_decode(_z_msg_put_t *put, _z_zbuf_t *zbf, uint8_t header) {
     assert(_Z_MID(header) == _Z_MID_Z_PUT);
     _z_push_body_t body = {._is_put = true, ._body = {._put = *put}};
-    z_result_t ret = _z_push_body_decode(&body, zbf, header, arcs);
+    z_result_t ret = _z_push_body_decode(&body, zbf, header);
     *put = body._body._put;
     return ret;
 }
@@ -385,7 +385,7 @@ z_result_t _z_del_encode(_z_wbuf_t *wbf, const _z_msg_del_t *del) {
 z_result_t _z_del_decode(_z_msg_del_t *del, _z_zbuf_t *zbf, uint8_t header) {
     assert(_Z_MID(header) == _Z_MID_Z_DEL);
     _z_push_body_t body = {._is_put = false, ._body = {._del = *del}};
-    z_result_t ret = _z_push_body_decode(&body, zbf, header, NULL);
+    z_result_t ret = _z_push_body_decode(&body, zbf, header);
     *del = body._body._del;
     return ret;
 }
@@ -527,7 +527,7 @@ z_result_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     }
     return ret;
 }
-z_result_t _z_reply_decode(_z_msg_reply_t *reply, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_reply_decode(_z_msg_reply_t *reply, _z_zbuf_t *zbf, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R_C)) {
         _Z_RETURN_IF_ERR(_z_uint8_decode((uint8_t *)&reply->_consolidation, zbf));
     } else {
@@ -538,7 +538,7 @@ z_result_t _z_reply_decode(_z_msg_reply_t *reply, _z_zbuf_t *zbf, uint8_t header
     }
     uint8_t put_header = 0;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&put_header, zbf));
-    _Z_RETURN_IF_ERR(_z_push_body_decode(&reply->_body, zbf, put_header, arcs));
+    _Z_RETURN_IF_ERR(_z_push_body_decode(&reply->_body, zbf, put_header));
     return _Z_RES_OK;
 }
 
@@ -559,7 +559,7 @@ z_result_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Encode encoding
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_view_encoding_encode(wbf, &err->_encoding));
+        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &err->_encoding));
     }
     // Encode extensions
     if (has_sinfo_ext) {
@@ -587,14 +587,14 @@ z_result_t _z_err_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     }
     return ret;
 }
-z_result_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_E_E)) {
         _Z_RETURN_IF_ERR(_z_encoding_decode(&err->_encoding, zbf));
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_err_decode_extension, err));
     }
-    _Z_RETURN_IF_ERR(_z_bytes_decode(&err->_payload, zbf, arcs));
+    _Z_RETURN_IF_ERR(_z_bytes_decode(&err->_payload, zbf));
     return _Z_RES_OK;
 }
 

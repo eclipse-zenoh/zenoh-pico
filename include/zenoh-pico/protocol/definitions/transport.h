@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/protocol/iobuf.h"
 
 #ifdef __cplusplus
 extern "C" {

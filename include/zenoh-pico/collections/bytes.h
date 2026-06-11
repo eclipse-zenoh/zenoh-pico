@@ -19,61 +19,89 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "arc_slice.h"
-#include "vec.h"
-#include "zenoh-pico/protocol/iobuf.h"
+#include "buf.h"
+#include "slice.h"
+#include "zenoh-pico/system/common/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move,
-               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
+// _z_bytes_t stores its payload as either a single owning slice (the common case,
+// avoiding any heap allocation for the slice vector) or, when it holds multiple
+// slices, as a dynamically allocated vector of plain (owning) slices.
+#define _ZP_VECTOR_TEMPLATE_ELEM_TYPE _z_slice_t
+#define _ZP_VECTOR_TEMPLATE_NAME _z_slice_vec
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) _z_slice_clear(x)
+#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) (*(dst) = *(src), *(src) = _z_slice_null())
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN z_malloc
+#define _ZP_VECTOR_TEMPLATE_REALLOC_FN z_realloc
+#define _ZP_VECTOR_TEMPLATE_FREE_FN z_free
+#include "zenoh-pico/collections/vector_template.h"
+
+// Variant holding either a single slice (alternative `slice`) or a vector of
+// slices (alternative `vec`). The NONE state represents empty bytes.
+#define _ZP_VARIANT_TEMPLATE_NAME _z_slice_single_or_vec
+#define _ZP_VARIANT_TEMPLATE_1_TYPE _z_slice_t
+#define _ZP_VARIANT_TEMPLATE_1_NAME slice
+#define _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(ptr) _z_slice_clear(ptr)
+#define _ZP_VARIANT_TEMPLATE_1_MOVE_FN(dst, src) (*(dst) = *(src), *(src) = _z_slice_null())
+#define _ZP_VARIANT_TEMPLATE_2_TYPE _z_slice_vec_t
+#define _ZP_VARIANT_TEMPLATE_2_NAME vec
+#define _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr) _z_slice_vec_destroy(ptr)
+#define _ZP_VARIANT_TEMPLATE_2_MOVE_FN(dst, src) (*(dst) = *(src), _z_slice_vec_init(src))
+#include "zenoh-pico/collections/variant_template.h"
 
 /*-------- Bytes --------*/
 /**
- * A container for slices.
+ * A container for slices, optimized for the common single-slice case.
  *
  * Members:
- *   _z_slice_vec_t _slices: contents of the container.
+ *   _z_slice_single_or_vec_t _inner: either a single slice or a vector of slices.
  */
 
 typedef struct {
-    _z_arc_slice_svec_t _slices;
+    _z_slice_single_or_vec_t _inner;
 } _z_bytes_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
-static inline void _z_bytes_alias_arc_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    dst->_slices = _z_arc_slice_svec_alias_element(s);
-}
+// Shallow alias: the returned value shares the same underlying buffer and slices as `src`.
+// It must NOT be dropped/cleared, as that would free memory still owned by `src`.
 static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
     if (src == NULL) {
         return _z_bytes_null();
     }
     _z_bytes_t dst;
-    dst._slices = src->_slices;
+    dst._inner = src->_inner;
     return dst;
 }
 static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
     _z_bytes_t b = *src;
-    src->_slices._len = 0;
-    src->_slices._val = NULL;
+    src->_inner = _z_slice_single_or_vec_none();
     return b;
 }
-static inline size_t _z_bytes_num_slices(const _z_bytes_t *bs) { return _z_arc_slice_svec_len(&bs->_slices); }
-static inline _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
-    if (i >= _z_bytes_num_slices(bs)) return NULL;
-    return _z_arc_slice_svec_get(&bs->_slices, i);
+static inline size_t _z_bytes_num_slices(const _z_bytes_t *bs) {
+    _ZP_VARIANT_CONST_VISIT(_z_slice_single_or_vec, &bs->_inner,
+        (slice, return 1),
+        (vec, return _z_slice_vec_size(_)),
+        (none, return 0)
+    );
 }
-static inline void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
+
+static inline const _z_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
+    _ZP_VARIANT_CONST_VISIT(_z_slice_single_or_vec, &bs->_inner,
+        (slice, return (i == 0) ? _ : NULL),
+        (vec, return _z_slice_vec_const_get(_, i)),
+        (none, return NULL)
+    );
+}
+static inline void _z_bytes_drop(_z_bytes_t *bytes) { _z_slice_single_or_vec_destroy(&bytes->_inner); }
 
 bool _z_bytes_check(const _z_bytes_t *bytes);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
-z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
+z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
-_z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_free(_z_bytes_t **bs);
 size_t _z_bytes_len(const _z_bytes_t *bs);
@@ -82,7 +110,7 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s);
 z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s);
 size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len);
 z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len);
-_z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs);
+const _z_slice_t *_z_bytes_try_get_contiguous(const _z_bytes_t *bs);
 
 typedef struct {
     size_t slice_idx;
@@ -98,7 +126,7 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
 size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len);
 
 typedef struct {
-    _z_arc_slice_t *cache;
+    _z_write_buf_t cache;  // Contiguous write cache; flushed into `bytes` as a single slice on append/finish.
     _z_bytes_t bytes;
 } _z_bytes_writer_t;
 
@@ -108,11 +136,36 @@ _z_bytes_writer_t _z_bytes_writer_from_bytes(_z_bytes_t *bytes);
 _z_bytes_writer_t _z_bytes_writer_empty(void);
 z_result_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
 z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t *bytes);
-z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_arc_slice_t *bytes);
+z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_slice_t *bytes);
 _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer);
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
 z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
 size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader);
+
+// A view into bytes that does not own the underlying buffer and slices. It is the caller's responsibility to ensure that the viewed bytes outlive the view.
+typedef struct _z_view_bytes_t{
+    _z_bytes_t _bytes;
+} _z_view_bytes_t;
+
+static inline _z_view_bytes_t _z_view_bytes_null(void) { return (_z_view_bytes_t){0}; }
+static inline bool _z_view_bytes_check(const _z_view_bytes_t *bytes) {
+    return _z_bytes_check(&bytes->_bytes);
+}
+
+static inline _z_view_bytes_t _z_view_bytes_from_slice(const _z_slice_t *slice) {
+    _z_view_bytes_t view_bytes;
+    view_bytes._bytes = _z_bytes_null();
+    _z_slice_t s = *slice;
+    // append non-owning slice to the view bytes; the view will alias the slice's buffer without taking ownership of it.
+    _z_bytes_append_slice(&view_bytes._bytes, &s);
+    return view_bytes;
+}
+
+static inline _z_view_bytes_t _z_view_bytes_from_bytes(const _z_bytes_t *bytes) {
+    _z_view_bytes_t view_bytes;
+    view_bytes._bytes = *bytes;
+    return view_bytes;
+}
 
 #ifdef __cplusplus
 }

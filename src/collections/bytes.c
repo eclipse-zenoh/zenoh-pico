@@ -28,28 +28,30 @@
 bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
 
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
-    return _z_arc_slice_svec_copy(&dst->_slices, &src->_slices, true);
-}
-
-_z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
-    _z_bytes_t dst = _z_bytes_null();
-    _z_bytes_copy(&dst, src);
-    return dst;
+    *dst = _z_bytes_null();
+    size_t num_slices = _z_bytes_num_slices(src);
+    if (num_slices == 0) {
+        return _Z_RES_OK;
+    }
+    for (size_t i = 0; i < num_slices; ++i) {
+        _z_slice_t s = _z_slice_null();
+        _Z_CLEAN_RETURN_IF_ERR(_z_slice_copy(&s, _z_bytes_get_slice(src, i)), _z_bytes_drop(dst));
+        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(dst, &s), _z_bytes_drop(dst));
+    }
+    return _Z_RES_OK;
 }
 
 size_t _z_bytes_len(const _z_bytes_t *bs) {
     size_t len = 0;
-    for (size_t i = 0; i < _z_arc_slice_svec_len(&bs->_slices); ++i) {
-        const _z_arc_slice_t *s = _z_arc_slice_svec_get(&bs->_slices, i);
-        len += _z_arc_slice_len(s);
+    for (size_t i = 0; i < _z_bytes_num_slices(bs); ++i) {
+        len += _z_bytes_get_slice(bs, i)->len;
     }
     return len;
 }
 
 bool _z_bytes_is_empty(const _z_bytes_t *bs) {
-    for (size_t i = 0; i < _z_arc_slice_svec_len(&bs->_slices); i++) {
-        const _z_arc_slice_t *s = _z_arc_slice_svec_get(&bs->_slices, i);
-        if (_z_arc_slice_len(s) > 0) return false;
+    for (size_t i = 0; i < _z_bytes_num_slices(bs); i++) {
+        if (_z_bytes_get_slice(bs, i)->len > 0) return false;
     }
     return true;
 }
@@ -70,10 +72,10 @@ size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
     size_t remaining = len;
     for (size_t i = 0; i < _z_bytes_num_slices(bytes) && remaining > 0; ++i) {
         // Recopy data
-        _z_arc_slice_t *s = _z_bytes_get_slice(bytes, i);
-        size_t s_len = _z_arc_slice_len(s);
+        const _z_slice_t *s = _z_bytes_get_slice(bytes, i);
+        size_t s_len = s->len;
         size_t len_to_copy = remaining >= s_len ? s_len : remaining;
-        memcpy(start, _z_arc_slice_data(s), len_to_copy);
+        memcpy(start, s->start, len_to_copy);
         start += len_to_copy;
         remaining -= len_to_copy;
     }
@@ -82,9 +84,7 @@ size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
 }
 z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s) {
     *b = _z_bytes_null();
-    _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, s->len);
-    if (_z_arc_slice_len(&arc_s) != s->len) _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    return _z_arc_slice_svec_append(&b->_slices, &arc_s, true);
+    return _z_bytes_append_slice(b, s);
 }
 
 z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
@@ -96,8 +96,6 @@ z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
 }
 
 z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
-    // TODO: consider return a slice with custom deleter referencing the corresponding _arc_slice
-    // to avoid extra copy
     // Allocate slice
     size_t len = _z_bytes_len(bytes);
     *s = _z_slice_make(len);
@@ -107,29 +105,62 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
     uint8_t *start = (uint8_t *)s->start;
     for (size_t i = 0; i < _z_bytes_num_slices(bytes); ++i) {
         // Recopy data
-        _z_arc_slice_t *arc_s = _z_bytes_get_slice(bytes, i);
-        size_t s_len = _z_arc_slice_len(arc_s);
-        memcpy(start, _z_arc_slice_data(arc_s), s_len);
+        const _z_slice_t *sl = _z_bytes_get_slice(bytes, i);
+        size_t s_len = sl->len;
+        memcpy(start, sl->start, s_len);
         start += s_len;
     }
 
     return _Z_RES_OK;
 }
 
-z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    z_result_t ret = _Z_RES_OK;
-    ret = _z_arc_slice_svec_append(&dst->_slices, s, true);
-    if (ret != _Z_RES_OK) {
-        _z_arc_slice_drop(s);
+z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_slice_t *s) {
+    switch (_z_slice_single_or_vec_tag(&dst->_inner)) {
+        case _z_slice_single_or_vec_tag_none: {
+            // Empty bytes: store the slice inline (common single-slice case, no allocation).
+            dst->_inner = _z_slice_single_or_vec_from_slice(s);
+            return _Z_RES_OK;
+        }
+        case _z_slice_single_or_vec_tag_slice: {
+            // Promote from a single inline slice to a vector holding both slices.
+            _z_slice_vec_t vec = _z_slice_vec_new();
+            if (!_z_slice_vec_reserve(&vec, 2)) {
+                _z_slice_clear(s);
+                _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+            }
+            _z_slice_t first = _z_slice_null();
+            // Move the existing inline slice out of the variant into the vector.
+            (void)_z_slice_single_or_vec_take_slice(&dst->_inner, &first);
+            _z_slice_vec_push_back(&vec, &first);
+            _z_slice_vec_push_back(&vec, s);
+            dst->_inner = _z_slice_single_or_vec_from_vec(&vec);
+            return _Z_RES_OK;
+        }
+        case _z_slice_single_or_vec_tag_vec: {
+            _z_slice_vec_t *vec = _z_slice_single_or_vec_get_vec(&dst->_inner);
+            if (!_z_slice_vec_push_back(vec, s)) {
+                _z_slice_clear(s);
+                _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+            }
+            return _Z_RES_OK;
+        }
     }
-    return ret;
 }
 
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
+    // Fast path: if `dst` is empty, just move `src` wholesale, preserving its
+    // single-slice or vector representation (and avoiding any reallocation).
+    if (_z_slice_single_or_vec_is_none(&dst->_inner)) {
+        return _z_bytes_move(dst, src);
+    }
+
     z_result_t res = _Z_RES_OK;
     for (size_t i = 0; i < _z_bytes_num_slices(src); ++i) {
-        _z_arc_slice_t s;
-        _z_arc_slice_move(&s, _z_bytes_get_slice(src, i));
+        _z_slice_t s = _z_slice_null();
+        // Move the slice out of `src` so ownership is transferred to `dst`
+        _z_slice_t *src_slice = (_z_slice_t *)_z_bytes_get_slice(src, i);
+        s = *src_slice;
+        *src_slice = _z_slice_null();
         res = _z_bytes_append_slice(dst, &s);
         if (res != _Z_RES_OK) {
             break;
@@ -140,21 +171,14 @@ z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
     return res;
 }
 
-_z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
+const _z_slice_t *_z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
     if (_z_bytes_num_slices(bs) == 1) {
-        _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, 0);
-        return _z_slice_alias_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
+        return _z_bytes_get_slice(bs, 0);
     }
-    return _z_slice_null();
+    return NULL;
 }
 
 z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
-    if (src->_slices._aliased) {
-        *dst = _z_bytes_null();
-        _z_bytes_t csrc;
-        _Z_RETURN_IF_ERR(_z_arc_slice_svec_copy(&csrc._slices, &src->_slices, false));
-        *src = csrc;
-    }
     *dst = *src;
     *src = _z_bytes_null();
     return _Z_RES_OK;
@@ -172,8 +196,8 @@ _z_bytes_reader_t _z_bytes_get_reader(const _z_bytes_t *bytes) {
 z_result_t _z_bytes_reader_seek_forward(_z_bytes_reader_t *reader, size_t offset) {
     size_t start_slice = reader->slice_idx;
     for (size_t i = start_slice; i < _z_bytes_num_slices(reader->bytes); ++i) {
-        _z_arc_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
-        size_t remaining = _z_arc_slice_len(s) - reader->in_slice_idx;
+        const _z_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
+        size_t remaining = s->len - reader->in_slice_idx;
         if (offset >= remaining) {
             reader->slice_idx += 1;
             reader->in_slice_idx = 0;
@@ -196,8 +220,8 @@ z_result_t _z_bytes_reader_seek_backward(_z_bytes_reader_t *reader, size_t offse
         if (reader->in_slice_idx == 0) {
             if (reader->slice_idx == 0) _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
             reader->slice_idx--;
-            _z_arc_slice_t *s = _z_bytes_get_slice(reader->bytes, reader->slice_idx);
-            reader->in_slice_idx = _z_arc_slice_len(s);
+            const _z_slice_t *s = _z_bytes_get_slice(reader->bytes, reader->slice_idx);
+            reader->in_slice_idx = s->len;
         }
 
         if (offset > reader->in_slice_idx) {
@@ -248,17 +272,17 @@ size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len)
     uint8_t *buf_start = buf;
     size_t to_read = len;
     for (size_t i = reader->slice_idx; i < _z_bytes_num_slices(reader->bytes); ++i) {
-        _z_arc_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
-        size_t remaining = _z_arc_slice_len(s) - reader->in_slice_idx;
+        const _z_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
+        size_t remaining = s->len - reader->in_slice_idx;
         if (len >= remaining) {
-            memcpy(buf_start, _z_arc_slice_data(s) + reader->in_slice_idx, remaining);
+            memcpy(buf_start, s->start + reader->in_slice_idx, remaining);
             reader->slice_idx += 1;
             reader->in_slice_idx = 0;
             reader->byte_idx += remaining;
             len -= remaining;
             buf_start += remaining;
         } else {
-            memcpy(buf_start, _z_arc_slice_data(s) + reader->in_slice_idx, len);
+            memcpy(buf_start, s->start + reader->in_slice_idx, len);
             reader->in_slice_idx += len;
             reader->byte_idx += len;
             len = 0;
@@ -274,12 +298,13 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
     z_result_t res = _Z_RES_OK;
 
     for (size_t i = reader->slice_idx; i < _z_bytes_num_slices(reader->bytes) && len > 0; ++i) {
-        _z_arc_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
-        size_t s_len = _z_arc_slice_len(s);
+        const _z_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
+        size_t s_len = s->len;
 
         size_t remaining = s_len - reader->in_slice_idx;
         size_t len_to_copy = remaining > len ? len : remaining;
-        _z_arc_slice_t ss = _z_arc_slice_get_subslice(s, reader->in_slice_idx, len_to_copy);
+        _z_slice_t ss = _z_slice_null();
+        res = _z_slice_n_copy(&ss, s, reader->in_slice_idx, len_to_copy);
         reader->in_slice_idx += len_to_copy;
         reader->byte_idx += len_to_copy;
         if (reader->in_slice_idx == s_len) {
@@ -287,7 +312,7 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
             reader->in_slice_idx = 0;
         }
 
-        if (_z_slice_simple_rc_is_null(&ss.slice)) {
+        if (res != _Z_RES_OK) {
             _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             res = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             break;
@@ -295,7 +320,6 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
 
         res = _z_bytes_append_slice(out, &ss);
         if (res != _Z_RES_OK) {
-            _z_arc_slice_drop(&ss);
             break;
         }
         len -= len_to_copy;
@@ -313,104 +337,74 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
 
 _z_bytes_writer_t _z_bytes_writer_from_bytes(_z_bytes_t *bytes) {
     _z_bytes_writer_t writer;
-    writer.cache = NULL;
+    writer.cache = (_z_write_buf_t){0};
     writer.bytes = _z_bytes_steal(bytes);
     return writer;
 }
 
 _z_bytes_writer_t _z_bytes_writer_empty(void) {
     _z_bytes_writer_t writer;
-    writer.cache = NULL;
+    writer.cache = (_z_write_buf_t){0};
     writer.bytes = _z_bytes_null();
     return writer;
 }
 
-bool _z_bytes_writer_is_empty(const _z_bytes_writer_t *writer) { return _z_bytes_is_empty(&writer->bytes); }
+bool _z_bytes_writer_is_empty(const _z_bytes_writer_t *writer) {
+    return _z_bytes_is_empty(&writer->bytes) && _z_uint8_vec_is_empty(&writer->cache._buffer);
+}
 
 bool _z_bytes_writer_check(const _z_bytes_writer_t *writer) { return !_z_bytes_writer_is_empty(writer); }
 
-z_result_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
-    assert(writer->cache != NULL);
-
-    if (_z_slice_simple_rc_value(&writer->cache->slice)->len > writer->cache->len) {
+// Flushes the contiguous write cache into `bytes` as a single owned slice.
+// The cache buffer's ownership is transferred to the slice and the cache is
+// reinitialized empty (without freeing the moved-out buffer). No-op if empty.
+static z_result_t _z_bytes_writer_flush_cache(_z_bytes_writer_t *writer) {
+    if (_z_uint8_vec_is_empty(&writer->cache._buffer)) {
         return _Z_RES_OK;
     }
-    // otherwise we allocate a new cache
-    _z_slice_t s = _z_slice_make(writer->cache->len * 2);
-    if (s.start == NULL) _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    _z_arc_slice_t cache = _z_arc_slice_wrap(&s, 0, 0);
-    if (_z_slice_simple_rc_is_null(&cache.slice)) {
-        _z_slice_clear(&s);
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(&writer->bytes, &cache), _z_arc_slice_drop(&cache));
-    writer->cache = _z_bytes_get_slice(&writer->bytes, _z_bytes_num_slices(&writer->bytes) - 1);
-    return _Z_RES_OK;
-}
-
-z_result_t _z_bytes_writer_init_cache(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    assert(writer->cache == NULL);
-
-    _z_slice_t s = _z_slice_copy_from_buf(src, len);
-    if (s.len != len) _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    _z_arc_slice_t arc_s = _z_arc_slice_wrap(&s, 0, len);
-    if (_z_slice_simple_rc_is_null(&arc_s.slice)) {
-        _z_slice_clear(&s);
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-
-    _Z_RETURN_IF_ERR(_z_bytes_append_slice(&writer->bytes, &arc_s));
-    writer->cache = _z_bytes_get_slice(&writer->bytes, _z_bytes_num_slices(&writer->bytes) - 1);
+    _z_slice_t s = _z_write_buf_into_slice(&writer->cache);
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(&writer->bytes, &s), _z_slice_clear(&s));
     return _Z_RES_OK;
 }
 
 z_result_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    if (writer->cache == NULL) {  // no cache - append data as a single slice
-        return _z_bytes_writer_init_cache(writer, src, len);
+    if (len == 0) {
+        return _Z_RES_OK;
     }
-
-    while (len > 0) {
-        _Z_RETURN_IF_ERR(_z_bytes_writer_ensure_cache(writer));
-        size_t remaining_in_cache = _z_slice_simple_rc_value(&writer->cache->slice)->len - writer->cache->len;
-        size_t to_copy = remaining_in_cache < len ? remaining_in_cache : len;
-        uint8_t *buffer_start = (uint8_t *)_z_slice_simple_rc_value(&writer->cache->slice)->start + writer->cache->len;
-        memcpy(buffer_start, src, to_copy);
-        len -= to_copy;
-        writer->cache->len += to_copy;
-        src += to_copy;
-    }
-    return _Z_RES_OK;
+    return _z_write_buf_write_bytes(&writer->cache, src, len);
 }
 
 z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t *src) {
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_flush_cache(writer), _z_bytes_drop(src));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(&writer->bytes, src), _z_bytes_drop(src));
-    writer->cache = NULL;
     return _Z_RES_OK;
 }
 
-z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_arc_slice_t *src) {
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(&writer->bytes, src), _z_arc_slice_drop(src));
-    writer->cache = NULL;
+z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_slice_t *src) {
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_flush_cache(writer), _z_slice_clear(src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(&writer->bytes, src), _z_slice_clear(src));
     return _Z_RES_OK;
 }
 
 _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer) {
-    _z_bytes_t out;
+    _z_bytes_t out = _z_bytes_null();
+    if (_z_bytes_writer_flush_cache(writer) != _Z_RES_OK) {
+        _z_bytes_writer_clear(writer);
+        return out;
+    }
     _z_bytes_move(&out, &writer->bytes);
-    writer->cache = NULL;
     return out;
 }
 
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer) {
+    _z_write_buf_destroy(&writer->cache);
     _z_bytes_drop(&writer->bytes);
-    writer->cache = NULL;
 }
 
 z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {
     dst->cache = src->cache;
     _z_bytes_move(&dst->bytes, &src->bytes);
-    src->cache = NULL;
+    src->cache = (_z_write_buf_t){0};
     return _Z_RES_OK;
 }
 

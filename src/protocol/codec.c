@@ -261,23 +261,24 @@ z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_sli
     return _Z_RES_OK;
 }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
-    // Decode slice
+z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+    // Decode slice (aliases the decoding buffer)
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    // Calc offset
-    size_t offset = _z_ptr_u8_diff(s.start, _z_slice_simple_rc_value(&zbf->_slice)->start);
-    // Get ownership of subslice
-    *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
-    _z_bytes_alias_arc_slice(bs, arcs);
-    return _Z_RES_OK;
+    // Take ownership of the data by duplicating it, as `_z_bytes_t` no longer shares the decoding buffer
+    _z_slice_t owned = _z_slice_duplicate(&s);
+    if (owned.len != s.len) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    *bs = _z_bytes_null();
+    return _z_bytes_from_slice(bs, &owned);
 }
 
 static inline z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     z_result_t ret = _Z_RES_OK;
     for (size_t i = 0; i < _z_bytes_num_slices(bs); ++i) {
-        const _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, i);
-        _Z_RETURN_IF_ERR(_z_buf_encode(wbf, _z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s)))
+        const _z_slice_t *s = _z_bytes_get_slice(bs, i);
+        _Z_RETURN_IF_ERR(_z_buf_encode(wbf, s->start, s->len))
     }
     return ret;
 }

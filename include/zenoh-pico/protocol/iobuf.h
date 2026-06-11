@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
-#include "zenoh-pico/collections/arc_slice.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
