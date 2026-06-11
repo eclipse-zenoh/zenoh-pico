@@ -551,7 +551,11 @@ static void test_visit_2type(void) {
     int x = 10;
     my_variant_t v = my_variant_from_1(&x);
     g_visit_called_arm = 0;
-    _ZP_VARIANT_VISIT(my_variant, &v, (1, visit2_a), (2, visit2_b));
+    _ZP_VARIANT_VISIT(my_variant, &v, 
+        (1, visit2_a(_)), 
+        (2, visit2_b(_)), 
+        (none, )
+    );
     assert(g_visit_called_arm == 1);
     my_variant_destroy(&v);
 
@@ -559,7 +563,11 @@ static void test_visit_2type(void) {
     hstring_t s = hstring_make("visit-b");
     v = my_variant_from_2(&s);
     g_visit_called_arm = 0;
-    _ZP_VARIANT_VISIT(my_variant, &v, (1, visit2_a), (2, visit2_b));
+    _ZP_VARIANT_VISIT(my_variant, &v, 
+        (1, visit2_a(_)), 
+        (2, visit2_b(_)), 
+        (none, )
+    );
     assert(g_visit_called_arm == 2);
     my_variant_destroy(&v);
 
@@ -587,21 +595,36 @@ static void test_visit_3type(void) {
     int i = 5;
     my_tri_t v = my_tri_from_i32(&i);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
+    _ZP_VARIANT_VISIT(my_tri, &v, 
+        (i32, visit3_i32(_)), 
+        (f64, visit3_f64(_)), 
+        (str, visit3_str(_)), 
+        (none, )
+    );
     assert(g_visit3_called == 1);
     my_tri_destroy(&v);
 
     double d = 1.5;
     v = my_tri_from_f64(&d);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
+    _ZP_VARIANT_VISIT(my_tri, &v, 
+        (i32, visit3_i32(_)), 
+        (f64, visit3_f64(_)), 
+        (str, visit3_str(_)), 
+        (none, )
+    );
     assert(g_visit3_called == 2);
     my_tri_destroy(&v);
 
     hstring_t s = hstring_make("tri-str");
     v = my_tri_from_str(&s);
     g_visit3_called = 0;
-    _ZP_VARIANT_VISIT(my_tri, &v, (i32, visit3_i32), (f64, visit3_f64), (str, visit3_str));
+    _ZP_VARIANT_VISIT(my_tri, &v, 
+        (i32, visit3_i32(_)), 
+        (f64, visit3_f64(_)), 
+        (str, visit3_str(_)), 
+        (none, )
+    );
     assert(g_visit3_called == 3);
     my_tri_destroy(&v);
 
@@ -633,28 +656,52 @@ static void test_visit_4type(void) {
     int i = 1;
     my_quad_t v = my_quad_from_1(&i);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
+    _ZP_VARIANT_VISIT(my_quad, &v, 
+        (1, visit4_a(_)), 
+        (2, visit4_b(_)), 
+        (3, visit4_c(_)), 
+        (4, visit4_d(_)), 
+        (none, )
+    );
     assert(g_visit4_called == 1);
     my_quad_destroy(&v);
 
     double d = 2.0;
     v = my_quad_from_2(&d);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
+    _ZP_VARIANT_VISIT(my_quad, &v, 
+        (1, visit4_a(_)), 
+        (2, visit4_b(_)), 
+        (3, visit4_c(_)), 
+        (4, visit4_d(_)), 
+        (none, )
+    );
     assert(g_visit4_called == 2);
     my_quad_destroy(&v);
 
     float f = 3.0f;
     v = my_quad_from_3(&f);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
+    _ZP_VARIANT_VISIT(my_quad, &v, 
+        (1, visit4_a(_)), 
+        (2, visit4_b(_)), 
+        (3, visit4_c(_)), 
+        (4, visit4_d(_)), 
+        (none, )
+    );
     assert(g_visit4_called == 3);
     my_quad_destroy(&v);
 
     hstring_t s = hstring_make("quad-d");
     v = my_quad_from_4(&s);
     g_visit4_called = 0;
-    _ZP_VARIANT_VISIT(my_quad, &v, (1, visit4_a), (2, visit4_b), (3, visit4_c), (4, visit4_d));
+    _ZP_VARIANT_VISIT(my_quad, &v, 
+        (1, visit4_a(_)), 
+        (2, visit4_b(_)), 
+        (3, visit4_c(_)), 
+        (4, visit4_d(_)), 
+        (none, )
+    );
     assert(g_visit4_called == 4);
     my_quad_destroy(&v);
 
@@ -667,19 +714,39 @@ static void test_visit_generic(void) {
 
     int out[3] = {3, 42, 1234};
 
-#define DOUBLE_TO_INT(d) \
-    { r = (int)(*d); }
-#define IDENTITY(x) \
-    { r = *x; }
-#define STR_TO_INT(s) \
-    { r = atoi((s)->ptr); }
     for (int i = 0; i < 3; i++) {
         int r = 0;
-        _ZP_VARIANT_VISIT(my_tri, &v[i], (f64, DOUBLE_TO_INT), (i32, IDENTITY), (str, STR_TO_INT));
+        _ZP_VARIANT_VISIT(my_tri, &v[i], 
+            (f64, r = (int)(*_)), 
+            (i32, r = *_), 
+            (str, r = atoi(_->ptr)), 
+            (none, )
+        );
         assert(r == out[i]);
     }
 
     printf("  test_visit_generic             OK\n");
+}
+
+static void test_const_visit_generic(void) {
+    my_tri_t v[3] = {my_tri_from_f64(&(double){3.5}), my_tri_from_i32(&(int){42}),
+                     my_tri_from_str(&(hstring_t){.ptr = "1234"})};
+
+    int out[3] = {3, 42, 1234};
+
+    for (int i = 0; i < 3; i++) {
+        const my_tri_t *cv = &v[i];  // visit through a const pointer
+        int r = 0;
+        _ZP_VARIANT_CONST_VISIT(my_tri, cv, 
+            (f64, r = (int)(*_)), 
+            (i32, r = *_), 
+            (str, r = atoi(_->ptr)), 
+            (none, )
+        );
+        assert(r == out[i]);
+    }
+
+    printf("  test_const_visit_generic       OK\n");
 }
 
 int main(void) {
@@ -709,6 +776,7 @@ int main(void) {
     test_visit_3type();
     test_visit_4type();
     test_visit_generic();
+    test_const_visit_generic();
     printf("All variant_template tests passed.\n");
     return 0;
 }

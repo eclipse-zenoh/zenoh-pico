@@ -78,6 +78,15 @@
 // Types:
 //   NAME_t        — the variant struct
 //   NAME_tag_t    — tag enum { NAME_TAG_NONE=0, NAME_TAG_1N, NAME_TAG_2N[, ...] }
+//   NAME_none_t   — alias for void (the empty/uninitialised state holds no value)
+//   NAME_1N_t     — alias for 1_TYPE   — only if 1_TYPE defined
+//   NAME_2N_t     — alias for 2_TYPE   — only if 2_TYPE defined
+//   NAME_3N_t     — alias for 3_TYPE   — only if 3_TYPE defined
+//   NAME_4N_t     — alias for 4_TYPE   — only if 4_TYPE defined
+//   NAME_5N_t     — alias for 5_TYPE   — only if 5_TYPE defined
+//   NAME_6N_t     — alias for 6_TYPE   — only if 6_TYPE defined
+//   NAME_7N_t     — alias for 7_TYPE   — only if 7_TYPE defined
+//   NAME_8N_t     — alias for 8_TYPE   — only if 8_TYPE defined
 //
 // Construction / destruction:
 //   NAME_t  NAME_none(void)
@@ -274,95 +283,6 @@
 #endif
 #endif
 
-#ifndef _ZP_VARIANT_VISIT
-
-#define _ZP_VARIANT_INNER_GET_TAG(tag, f) tag
-#define _ZP_VARIANT_INNER_GET_F(tag, f) f
-
-// Build the anonymous-union member name ("_" + alternative name) and take its
-// address directly on `v`.  Reading the union member (instead of the
-// NAME_get_* accessor, which only accepts a non-const pointer) preserves the
-// const-qualification of `v`, so _ZP_VARIANT_VISIT works on both `NAME_t *`
-// and `const NAME_t *`.
-#define _ZP_VARIANT_INNER_MEMBER_INNER(tag) _##tag
-#define _ZP_VARIANT_INNER_MEMBER(tag) _ZP_VARIANT_INNER_MEMBER_INNER(tag)
-#define _ZP_VARIANT_INNER_GET_PTR(v, tag_f) (&(v)->_ZP_VARIANT_INNER_MEMBER(_ZP_VARIANT_INNER_GET_TAG tag_f))
-
-// One switch arm: calls the visitor with a pointer into the active union member.
-#define _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f)                     \
-    case _ZP_CAT(variant_name, _ZP_CAT(tag, _ZP_VARIANT_INNER_GET_TAG tag_f)): { \
-        _ZP_VARIANT_INNER_GET_F tag_f(_ZP_VARIANT_INNER_GET_PTR(v, tag_f));      \
-        break;                                                                   \
-    }
-// The trailing NONE arm: hitting it means the variant was empty/moved-from.
-#define _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    case _ZP_CAT(variant_name, _ZP_CAT(tag, none)):     \
-        assert(0 && #variant_name " variant value is undefined");
-
-#define _ZP_VARIANT_VISIT_1(variant_name, v, tag_f1)                                                          \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_2(variant_name, v, tag_f1, tag_f2)                                                  \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_3(variant_name, v, tag_f1, tag_f2, tag_f3)                                          \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_4(variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4)                                  \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f4) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_5(variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5)                          \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f4)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f5) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_6(variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6)                  \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f4)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f5)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f6) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_7(variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6, tag_f7)          \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f4)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f5)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f6)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f7) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT_8(variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6, tag_f7, tag_f8)  \
-    switch ((v)->_tag) {                                                                                      \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f1)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f2)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f3)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f4)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f5)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f6)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f7)                                                 \
-        _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f8) _ZP_VARIANT_INNER_VISIT_NONE_CASE(variant_name) \
-    }
-#define _ZP_VARIANT_VISIT(variant_name, v, ...) \
-    _ZP_CAT(_ZP_VARIANT_VISIT, _ZP_VA_NARGS(__VA_ARGS__))(variant_name, v, __VA_ARGS__)
-#undef _ZP_VARIANT_TEMPLATE_DEFINE_VISIT_FN_CHECKER_TYPE
-#endif
 // ── Internal name helpers ─────────────────────────────────────────────────────
 //
 // All public symbols are derived from NAME and the user-supplied alternative
@@ -372,6 +292,42 @@
 
 #define _ZP_VARIANT_TEMPLATE_TYPE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, t)
 #define _ZP_VARIANT_TEMPLATE_TAG_TYPE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, tag_t)
+
+// Alternative type aliases (NAME_XN_t) and the empty-state alias (NAME_none_t)
+#define _ZP_VARIANT_ALIAS_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, none_t)
+typedef void _ZP_VARIANT_ALIAS_NONE;
+#ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
+#define _ZP_VARIANT_ALIAS_1 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_1_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_1_TYPE _ZP_VARIANT_ALIAS_1;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_2_TYPE
+#define _ZP_VARIANT_ALIAS_2 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_2_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_2_TYPE _ZP_VARIANT_ALIAS_2;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_3_TYPE
+#define _ZP_VARIANT_ALIAS_3 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_3_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_3_TYPE _ZP_VARIANT_ALIAS_3;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_4_TYPE
+#define _ZP_VARIANT_ALIAS_4 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_4_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_4_TYPE _ZP_VARIANT_ALIAS_4;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_5_TYPE
+#define _ZP_VARIANT_ALIAS_5 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_5_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_5_TYPE _ZP_VARIANT_ALIAS_5;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_6_TYPE
+#define _ZP_VARIANT_ALIAS_6 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_6_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_6_TYPE _ZP_VARIANT_ALIAS_6;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_7_TYPE
+#define _ZP_VARIANT_ALIAS_7 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_7_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_7_TYPE _ZP_VARIANT_ALIAS_7;
+#endif
+#ifdef _ZP_VARIANT_TEMPLATE_8_TYPE
+#define _ZP_VARIANT_ALIAS_8 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(_ZP_VARIANT_TEMPLATE_8_NAME, t))
+typedef _ZP_VARIANT_TEMPLATE_8_TYPE _ZP_VARIANT_ALIAS_8;
+#endif
 
 // Tag enum values
 #define _ZP_VARIANT_TAG_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, tag_none)
@@ -401,6 +357,9 @@
 #endif
 
 // Function names
+#define _ZP_VARIANT_FN_GET_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, get_none)
+#define _ZP_VARIANT_FN_CONST_GET_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, const_get_none)
+
 #define _ZP_VARIANT_FN_VISIT _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, visit)
 #define _ZP_VARIANT_FN_VISIT_CTX _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, visit_ctx)
 #ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
@@ -810,6 +769,12 @@ static inline bool _ZP_VARIANT_FN_IS_8(const _ZP_VARIANT_TEMPLATE_TYPE *v) { ret
 // UB if the variant does not hold the requested alternative.
 // For read-only access cast the result to const at the call site.
 
+// For the NONE alternative, returns NULL instead of a pointer to a non-existent member.
+static inline void *_ZP_VARIANT_FN_GET_NONE(_ZP_VARIANT_TEMPLATE_TYPE *v) {
+    (void)v;
+    return NULL;
+}
+
 #ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
 static inline _ZP_VARIANT_TEMPLATE_1_TYPE *_ZP_VARIANT_FN_GET_1(_ZP_VARIANT_TEMPLATE_TYPE *v) {
     return &v->_ZP_VARIANT_MEMBER_1;
@@ -861,6 +826,11 @@ static inline _ZP_VARIANT_TEMPLATE_8_TYPE *_ZP_VARIANT_FN_GET_8(_ZP_VARIANT_TEMP
 // ── NAME_const_get_XN ─────────────────────────────────────────────────────────
 // Returns a const pointer to the active member.
 // UB if the variant does not hold the requested alternative.
+
+static inline const void *_ZP_VARIANT_FN_CONST_GET_NONE(const _ZP_VARIANT_TEMPLATE_TYPE *v) {
+    (void)v;
+    return NULL;
+}
 
 #ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
 static inline const _ZP_VARIANT_TEMPLATE_1_TYPE *_ZP_VARIANT_FN_CONST_GET_1(const _ZP_VARIANT_TEMPLATE_TYPE *v) {
@@ -1002,6 +972,95 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
     return true;
 }
 #endif
+
+#ifndef _ZP_VARIANT_VISIT
+
+#define _ZP_VARIANT_INNER_GET_TAG(tag, f) tag
+#define _ZP_VARIANT_INNER_GET_F(tag, f) f
+
+// One switch arm: calls the visitor with a pointer into the active union member.
+#define _ZP_VARIANT_INNER_VISIT_CASE(variant_name, v, tag_f)                         \
+    case _ZP_CAT(variant_name, _ZP_CAT(tag, _ZP_VARIANT_INNER_GET_TAG tag_f)): {     \
+        _ZP_CAT(_ZP_CAT(variant_name, _ZP_VARIANT_INNER_GET_TAG tag_f), t) *_ =      \
+            _ZP_CAT(variant_name, _ZP_CAT(get, _ZP_VARIANT_INNER_GET_TAG tag_f)(v)); \
+        (void)_;                                                                     \
+        _ZP_VARIANT_INNER_GET_F tag_f;                                               \
+        break;                                                                       \
+    }
+// Const counterpart of _ZP_VARIANT_INNER_VISIT_CASE: binds `_` to a read-only
+// pointer into the active union member (obtained via NAME_const_get_XN), so it
+// can be used on a `const variant_t *`.
+#define _ZP_VARIANT_INNER_CONST_VISIT_CASE(variant_name, v, tag_f)                         \
+    case _ZP_CAT(variant_name, _ZP_CAT(tag, _ZP_VARIANT_INNER_GET_TAG tag_f)): {           \
+        const _ZP_CAT(_ZP_CAT(variant_name, _ZP_VARIANT_INNER_GET_TAG tag_f), t) *_ =      \
+            _ZP_CAT(variant_name, _ZP_CAT(const_get, _ZP_VARIANT_INNER_GET_TAG tag_f)(v)); \
+        (void)_;                                                                           \
+        _ZP_VARIANT_INNER_GET_F tag_f;                                                     \
+        break;                                                                             \
+    }
+
+// Arity-specific switch builders, shared between the mutable and const visitors.
+// `case_macro` (either _ZP_VARIANT_INNER_VISIT_CASE or its const counterpart) is
+// the per-arm builder; it is invoked once per alternative, so the switch
+// skeletons are written exactly once.
+#define _ZP_VARIANT_VISIT_IMPL_1(case_macro, variant_name, v, tag_f1) \
+    switch ((v)->_tag) { case_macro(variant_name, v, tag_f1) }
+#define _ZP_VARIANT_VISIT_IMPL_2(case_macro, variant_name, v, tag_f1, tag_f2) \
+    switch ((v)->_tag) { case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) }
+#define _ZP_VARIANT_VISIT_IMPL_3(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3)                               \
+    switch ((v)->_tag) {                                                                                            \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3) \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_4(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4)                       \
+    switch ((v)->_tag) {                                                                                            \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3) \
+            case_macro(variant_name, v, tag_f4)                                                                     \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_5(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5)               \
+    switch ((v)->_tag) {                                                                                            \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3) \
+            case_macro(variant_name, v, tag_f4) case_macro(variant_name, v, tag_f5)                                 \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_6(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6)       \
+    switch ((v)->_tag) {                                                                                            \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3) \
+            case_macro(variant_name, v, tag_f4) case_macro(variant_name, v, tag_f5)                                 \
+                case_macro(variant_name, v, tag_f6)                                                                 \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_7(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6, tag_f7) \
+    switch ((v)->_tag) {                                                                                              \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3)   \
+            case_macro(variant_name, v, tag_f4) case_macro(variant_name, v, tag_f5)                                   \
+                case_macro(variant_name, v, tag_f6) case_macro(variant_name, v, tag_f7)                               \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_8(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6, tag_f7, \
+                                 tag_f8)                                                                              \
+    switch ((v)->_tag) {                                                                                              \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3)   \
+            case_macro(variant_name, v, tag_f4) case_macro(variant_name, v, tag_f5)                                   \
+                case_macro(variant_name, v, tag_f6) case_macro(variant_name, v, tag_f7)                               \
+                    case_macro(variant_name, v, tag_f8)                                                               \
+    }
+#define _ZP_VARIANT_VISIT_IMPL_9(case_macro, variant_name, v, tag_f1, tag_f2, tag_f3, tag_f4, tag_f5, tag_f6, tag_f7, \
+                                 tag_f8, tag_f9)                                                                      \
+    switch ((v)->_tag) {                                                                                              \
+        case_macro(variant_name, v, tag_f1) case_macro(variant_name, v, tag_f2) case_macro(variant_name, v, tag_f3)   \
+            case_macro(variant_name, v, tag_f4) case_macro(variant_name, v, tag_f5)                                   \
+                case_macro(variant_name, v, tag_f6) case_macro(variant_name, v, tag_f7)                               \
+                    case_macro(variant_name, v, tag_f8) case_macro(variant_name, v, tag_f9)                           \
+    }
+
+// Public entry points: pick the arity-specific builder, then plug in the
+// mutable or read-only arm macro.  Both share the same switch skeletons above.
+#define _ZP_VARIANT_VISIT(variant_name, v, ...)                \
+    _ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__)) \
+    (_ZP_VARIANT_INNER_VISIT_CASE, variant_name, v, __VA_ARGS__)
+#define _ZP_VARIANT_CONST_VISIT(variant_name, v, ...)          \
+    _ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__)) \
+    (_ZP_VARIANT_INNER_CONST_VISIT_CASE, variant_name, v, __VA_ARGS__)
+#undef _ZP_VARIANT_TEMPLATE_DEFINE_VISIT_FN_CHECKER_TYPE
+#endif
+
 // ── Undef all macros ──────────────────────────────────────────────────────────
 #undef _ZP_VARIANT_TEMPLATE_SENTINEL_TYPE
 #undef _ZP_VARIANT_TEMPLATE_NAME
@@ -1039,6 +1098,15 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 #undef _ZP_VARIANT_TEMPLATE_8_MOVE_FN
 #undef _ZP_VARIANT_TEMPLATE_TYPE
 #undef _ZP_VARIANT_TEMPLATE_TAG_TYPE
+#undef _ZP_VARIANT_ALIAS_NONE
+#undef _ZP_VARIANT_ALIAS_1
+#undef _ZP_VARIANT_ALIAS_2
+#undef _ZP_VARIANT_ALIAS_3
+#undef _ZP_VARIANT_ALIAS_4
+#undef _ZP_VARIANT_ALIAS_5
+#undef _ZP_VARIANT_ALIAS_6
+#undef _ZP_VARIANT_ALIAS_7
+#undef _ZP_VARIANT_ALIAS_8
 #undef _ZP_VARIANT_TAG_NONE
 #undef _ZP_VARIANT_TAG_1
 #undef _ZP_VARIANT_TAG_2
@@ -1064,6 +1132,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 #undef _ZP_VARIANT_FN_IS_6
 #undef _ZP_VARIANT_FN_IS_7
 #undef _ZP_VARIANT_FN_IS_8
+#undef _ZP_VARIANT_FN_GET_NONE
 #undef _ZP_VARIANT_FN_GET_1
 #undef _ZP_VARIANT_FN_GET_2
 #undef _ZP_VARIANT_FN_GET_3
@@ -1072,6 +1141,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 #undef _ZP_VARIANT_FN_GET_6
 #undef _ZP_VARIANT_FN_GET_7
 #undef _ZP_VARIANT_FN_GET_8
+#undef _ZP_VARIANT_FN_CONST_GET_NONE
 #undef _ZP_VARIANT_FN_CONST_GET_1
 #undef _ZP_VARIANT_FN_CONST_GET_2
 #undef _ZP_VARIANT_FN_CONST_GET_3
