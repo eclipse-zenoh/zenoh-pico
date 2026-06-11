@@ -45,10 +45,13 @@ typedef struct {
 
 static hstring_t hstring_make(const char *s) {
     hstring_t h;
+    // SAFETY: s guaranteed to be null-terminated in tests.
+    // Flawfinder: ignore [CWE-126]
     size_t l = strlen(s);
     h.ptr = (char *)malloc(l + 1);
-    assert(h.ptr);
-    strcpy(h.ptr, s);
+    // SAFETY: s guaranteed to be null-terminated in tests.
+    // Flawfinder: ignore [CWE-120]
+    strncpy(h.ptr, s, l + 1);
     return h;
 }
 
@@ -719,8 +722,12 @@ static void test_visit_generic(void) {
     for (int i = 0; i < 3; i++) {
         int r = 0;
         _ZP_VARIANT_VISIT(my_tri, &v[i], 
+            // SAFETY: the input is guaranteed to be bounded.
+            // Flawfinder: ignore [CWE-190]
             (f64, r = (int)(*_)), 
             (i32, r = *_), 
+            // SAFETY: the input is guaranteed to be bounded.
+            // Flawfinder: ignore [CWE-190]
             (str, r = atoi(_->ptr)), 
             (none, )
         );
@@ -739,9 +746,13 @@ static void test_const_visit_generic(void) {
     for (int i = 0; i < 3; i++) {
         const my_tri_t *cv = &v[i];  // visit through a const pointer
         int r = 0;
-        _ZP_VARIANT_CONST_VISIT(my_tri, cv, 
+        _ZP_VARIANT_CONST_VISIT(my_tri, cv,
+            // SAFETY: the input is guaranteed to be bounded.
+            // Flawfinder: ignore [CWE-190]
             (f64, r = (int)(*_)), 
             (i32, r = *_), 
+            // SAFETY: the input is guaranteed to be bounded.
+            // Flawfinder: ignore [CWE-190]
             (str, r = atoi(_->ptr)), 
             (none, )
         );

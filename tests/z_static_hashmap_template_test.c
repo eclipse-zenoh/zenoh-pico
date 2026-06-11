@@ -430,7 +430,7 @@ static void test_algorithms_foreach_val(void) {
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
         sum += i;
     }
-    uint32_t *val;
+    uint32_t *val = NULL;
     uint32_t got_sum = 0;
     _ZP_FOREACH_VAL (u32map, &m, val) {
         got_sum += *val;
@@ -461,7 +461,7 @@ static void test_algorithms_find_val(void) {
         uint32_t k = i, v = i * 2;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-    const uint32_t *found_val;
+    const uint32_t *found_val = NULL;
     _ZP_CONST_FIND_VAL(u32map, &m, found_val, *_ == 10);  // key 5 -> val 10
     assert(found_val != NULL && *found_val == 10);
     _ZP_CONST_FIND_VAL(u32map, &m, found_val, *_ == 99);

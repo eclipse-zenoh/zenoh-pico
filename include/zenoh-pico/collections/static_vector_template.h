@@ -151,6 +151,8 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, append)(_ZP_STATIC_V
         return false;
     }
 #if defined(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    // SAFETY: The check above ensures we have enough capacity in the vector to hold all len elements.
+    // Flawfinder: ignore [CWE-120]
     memcpy(&vec->_buffer[vec->_size], elems, len * sizeof(_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE));
 #else
     for (size_t i = 0; i < len; i++) {

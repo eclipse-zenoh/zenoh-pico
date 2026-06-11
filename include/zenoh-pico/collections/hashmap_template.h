@@ -292,6 +292,8 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     // free-list _next links are all carried over verbatim, so the existing free
     // list rooted at map->_free_head stays valid (see free-list note below).
     if (map->_capacity > 0) {
+        // SAFETY: new_slots is guaranteed to have higher capacity then map->_capacity by construction.
+        // Flawfinder: ignore [CWE-120]
         memcpy(new_slots, map->_slots, map->_capacity * sizeof(_ZP_HASHMAP_TEMPLATE_SLOT_TYPE));
     }
 #else

@@ -189,6 +189,8 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
         return false;
     }
 #if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    // SAFETY: new_buffer is guaranteed to have enough capacity for all existing elements by construction.
+    // Flawfinder: ignore [CWE-120]
     memcpy(new_buffer, vec->_buffer, vec->_size * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
 #else
     for (size_t i = 0; i < vec->_size; i++) {
@@ -236,6 +238,8 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, append)(_ZP_VECTOR_TEMPLATE
         }
     }
 #if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    // SAFETY: vec->_buffer is guaranteed to have enough capacity for elements to append by construction.
+    // Flawfinder: ignore [CWE-120]
     memcpy(&vec->_buffer[vec->_size], elems, len * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
 #else
     for (size_t i = 0; i < len; i++) {
