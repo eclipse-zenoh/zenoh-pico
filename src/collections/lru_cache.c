@@ -193,14 +193,13 @@ static size_t _z_lru_cache_delete_slist(_z_lru_cache_t *cache, _z_lru_cache_node
 }
 
 // Main static functions
-static size_t _z_lru_cache_delete_last(_z_lru_cache_t *cache, _z_lru_val_cmp_f compare) {
+static _z_lru_cache_node_t *_z_lru_cache_detach_last(_z_lru_cache_t *cache, _z_lru_val_cmp_f compare, size_t *del_idx) {
     _z_lru_cache_node_t *last = cache->tail;
     assert(last != NULL);
     _z_lru_cache_remove_list_node(cache, last);
-    size_t del_idx = _z_lru_cache_delete_slist(cache, last, compare);
-    z_free(last);
+    *del_idx = _z_lru_cache_delete_slist(cache, last, compare);
     cache->len--;
-    return del_idx;
+    return last;
 }
 
 static void _z_lru_cache_insert_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare,
@@ -233,7 +232,8 @@ void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f comp
     return _z_lru_cache_node_value(node);
 }
 
-z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare) {
+z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare,
+                               z_element_clear_f clear) {
     assert(cache->capacity > 0);
     // Init slist
     if (cache->slist == NULL) {
@@ -247,17 +247,22 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
     _z_lru_cache_node_t *node = _z_lru_cache_node_create(value, value_size);
     size_t *del_idx_addr = NULL;
     size_t del_idx = 0;
+    _z_lru_cache_node_t *deleted = NULL;
     if (node == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     // Check capacity
     if (cache->len == cache->capacity) {
-        // Delete lru entry
-        del_idx = _z_lru_cache_delete_last(cache, compare);
+        // Detach the LRU entry, but keep its value valid until the sorted list has been updated.
+        deleted = _z_lru_cache_detach_last(cache, compare, &del_idx);
         del_idx_addr = &del_idx;
     }
     // Update the cache
     _z_lru_cache_insert_node(cache, node, compare, del_idx_addr);
+    if (deleted != NULL) {
+        clear(_z_lru_cache_node_value(deleted));
+        z_free(deleted);
+    }
     return _Z_RES_OK;
 }
 
