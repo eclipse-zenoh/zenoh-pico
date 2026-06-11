@@ -175,6 +175,7 @@ _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_ki
         *s = _z_subscription_null();
         return _z_subscription_rc_null();
     }
+    _z_unsafe_subscription_cache_invalidate(zn);
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         zn->_subscriptions = _z_subscription_rc_slist_push_empty(zn->_subscriptions);
         ret = _z_subscription_rc_slist_value(zn->_subscriptions);
