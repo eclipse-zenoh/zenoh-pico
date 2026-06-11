@@ -7,3 +7,8 @@ PointerAlignment: Right
 WhitespaceSensitiveMacros:
     - _ZP_VARIANT_VISIT
     - _ZP_VARIANT_CONST_VISIT
+ForEachMacros:
+    - _ZP_FOREACH
+    - _ZP_FOREACH_VAL
+    - _ZP_CONST_FOREACH
+    - _ZP_CONST_FOREACH_VAL

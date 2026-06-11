@@ -26,52 +26,12 @@
              : (var_name = transform(collection_name##_at(collection_ptr, __iter)), true); \
          __iter = collection_name##_iter_next(collection_ptr, __iter))
 
-#define _ZP_CFOREACH_TRANSFORM(collection_name, collection_ptr, var_name, transform)             \
+#define _ZP_CONST_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, transform)        \
     for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);              \
          __iter == collection_name##_end(collection_ptr)                                         \
              ? false                                                                             \
              : (var_name = transform(collection_name##_const_at(collection_ptr, __iter)), true); \
          __iter = collection_name##_iter_next(collection_ptr, __iter))
-
-#define _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, transform) \
-    var_name = NULL;                                                                        \
-    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);         \
-         __iter != collection_name##_end(collection_ptr);                                   \
-         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                    \
-        collection_name##_elem_t *__node = collection_name##_at(collection_ptr, __iter);    \
-        if (predicate(transform(__node))) {                                                 \
-            var_name = transform(__node);                                                   \
-            break;                                                                          \
-        }                                                                                   \
-    }
-
-#define _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, transform)         \
-    var_name = NULL;                                                                                 \
-    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);                  \
-         __iter != collection_name##_end(collection_ptr);                                            \
-         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                             \
-        const collection_name##_elem_t *__node = collection_name##_const_at(collection_ptr, __iter); \
-        if (predicate(transform(__node))) {                                                          \
-            var_name = transform(__node);                                                            \
-            break;                                                                                   \
-        }                                                                                            \
-    }
-
-#define _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, transform) \
-    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) {          \
-        collection_name##_elem_t *__node = collection_name##_at(collection_ptr, begin);         \
-        if (predicate(transform(__node))) {                                                     \
-            break;                                                                              \
-        }                                                                                       \
-    }
-
-#define _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, transform)    \
-    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) {              \
-        const collection_name##_elem_t *__node = collection_name##_const_at(collection_ptr, begin); \
-        if (predicate(transform(__node))) {                                                         \
-            break;                                                                                  \
-        }                                                                                           \
-    }
 
 // For loop over collection elements.  var_name is a pointer to the element type which should be declared by user before
 // the loop.
@@ -79,29 +39,101 @@
     _ZP_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_IDENTITY)
 // For loop over const collection elements.  var_name is a pointer to the element type which should be declared by user
 // before the loop.
-#define _ZP_CFOREACH(collection_name, collection_ptr, var_name) \
-    _ZP_CFOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_IDENTITY)
+#define _ZP_CONST_FOREACH(collection_name, collection_ptr, var_name) \
+    _ZP_CONST_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_IDENTITY)
+
+// Find first element matching predicate.  var_name is a pointer to the element type which should be declared by
+// user before the loop.  It is set to NULL if no matching element is found
+#define _ZP_FIND(collection_name, collection_ptr, var_name, predicate)              \
+    var_name = NULL;                                                                \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr); \
+         __iter != collection_name##_end(collection_ptr);                           \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {            \
+        collection_name##_elem_t *_ = collection_name##_at(collection_ptr, __iter); \
+        if (predicate) {                                                            \
+            var_name = _;                                                           \
+            break;                                                                  \
+        }                                                                           \
+    }
 
 // Find first const element matching predicate.  var_name is a pointer to the element type which should be declared by
-// user before the loop.  It is set to NULL if no matching element is found.
-#define _ZP_FIND(collection_name, collection_ptr, var_name, predicate) \
-    _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_IDENTITY)
+// user before the loop.  It is set to NULL if no matching element is found
+#define _ZP_CONST_FIND(collection_name, collection_ptr, var_name, predicate)                    \
+    var_name = NULL;                                                                            \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);             \
+         __iter != collection_name##_end(collection_ptr);                                       \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                        \
+        const collection_name##_elem_t *_ = collection_name##_const_at(collection_ptr, __iter); \
+        if (predicate) {                                                                        \
+            var_name = _;                                                                       \
+            break;                                                                              \
+        }                                                                                       \
+    }
+
+// Find first value matching predicate.  var_name is a pointer to the element type which should be declared by
+// user before the loop.  It is set to NULL if no matching element is found
+#define _ZP_FIND_VAL(collection_name, collection_ptr, var_name, predicate)               \
+    var_name = NULL;                                                                     \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);      \
+         __iter != collection_name##_end(collection_ptr);                                \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                 \
+        collection_name##_val_t *_ = &collection_name##_at(collection_ptr, __iter)->val; \
+        if (predicate) {                                                                 \
+            var_name = _;                                                                \
+            break;                                                                       \
+        }                                                                                \
+    }
 
 // Find first const element matching predicate.  var_name is a pointer to the element type which should be declared by
-// user before the loop.  It is set to NULL if no matching element is found.
-#define _ZP_CFIND(collection_name, collection_ptr, var_name, predicate) \
-    _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_IDENTITY)
+// user before the loop.  It is set to NULL if no matching element is found
+#define _ZP_CONST_FIND(collection_name, collection_ptr, var_name, predicate)                    \
+    var_name = NULL;                                                                            \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);             \
+         __iter != collection_name##_end(collection_ptr);                                       \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                        \
+        const collection_name##_elem_t *_ = collection_name##_const_at(collection_ptr, __iter); \
+        if (predicate) {                                                                        \
+            var_name = _;                                                                       \
+            break;                                                                              \
+        }                                                                                       \
+    }
+
+// Find first value matching predicate.  var_name is a pointer to the element type which should be declared by
+// user before the loop.  It is set to NULL if no matching element is found
+#define _ZP_CONST_FIND_VAL(collection_name, collection_ptr, var_name, predicate)                     \
+    var_name = NULL;                                                                                 \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);                  \
+         __iter != collection_name##_end(collection_ptr);                                            \
+         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                             \
+        const collection_name##_val_t *_ = &collection_name##_const_at(collection_ptr, __iter)->val; \
+        if (predicate) {                                                                             \
+            var_name = _;                                                                            \
+            break;                                                                                   \
+        }                                                                                            \
+    }
 
 // Set begin iterator to point to the first element satisfying predicate within [begin, end) range.
 // Will be set to end if no matching element is found.
-#define _ZP_ITFIND(collection_name, collection_ptr, begin, end, predicate) \
-    _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_IDENTITY)
+#define _ZP_IT_FIND(collection_name, collection_ptr, begin, end, predicate)            \
+    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) { \
+        collection_name##_elem_t *_ = collection_name##_at(collection_ptr, begin);     \
+        (void)_;                                                                       \
+        if (predicate) {                                                               \
+            break;                                                                     \
+        }                                                                              \
+    }
 
 // Set begin iterator to point to the first element satisfying predicate within [begin, end) range.
 // Will be set to end if no matching element is found.
 // Iterates over const collection.
-#define _ZP_CITFIND(collection_name, collection_ptr, begin, end, predicate) \
-    _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_IDENTITY)
+#define _ZP_CONST_IT_FIND(collection_name, collection_ptr, begin, end, predicate)              \
+    for (; begin != end; begin = collection_name##_iter_next(collection_ptr, begin)) {         \
+        const collection_name##_elem_t *_ = collection_name##_const_at(collection_ptr, begin); \
+        (void)_;                                                                               \
+        if (predicate) {                                                                       \
+            break;                                                                             \
+        }                                                                                      \
+    }
 
 // For loop over hashmap values.  var_name is a pointer to the value type which should be declared by user before
 // the loop.
@@ -109,40 +141,20 @@
     _ZP_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_VAL)
 // For loop over const hashmap values.  var_name is a pointer to the value type which should be declared by user before
 // the loop.
-#define _ZP_CFOREACH_VAL(collection_name, collection_ptr, var_name) \
-    _ZP_CFOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_VAL)
-
-// Find first hashmap value matching predicate.  var_name is a pointer to the value type which should be declared by
-// user before the loop.  It is set to NULL if no matching element is found.
-#define _ZP_FIND_VAL(collection_name, collection_ptr, var_name, predicate) \
-    _ZP_FIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_VAL)
-
-// Find first const hashmap value matching predicate.  var_name is a pointer to the value type which should be declared
-// by user before the loop.  It is set to NULL if no matching element is found.
-#define _ZP_CFIND_VAL(collection_name, collection_ptr, var_name, predicate) \
-    _ZP_CFIND_TRANSFORM(collection_name, collection_ptr, var_name, predicate, _ZP_TRANSFORM_VAL)
-
-// Set begin iterator to point to the first element with value satisfying predicate within [begin, end) range.
-// Will be set to end if no matching element is found.
-#define _ZP_ITFIND_VAL(collection_name, collection_ptr, begin, end, predicate) \
-    _ZP_ITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_VAL)
-
-// Set begin iterator to point to the first element with value satisfying predicate within [begin, end) range.
-// Will be set to end if no matching element is found.
-// Iterates over const collection.
-#define _ZP_CITFIND_VAL(collection_name, collection_ptr, begin, end, predicate) \
-    _ZP_CITFIND_TRANSFORM(collection_name, collection_ptr, begin, end, predicate, _ZP_TRANSFORM_VAL)
+#define _ZP_CONST_FOREACH_VAL(collection_name, collection_ptr, var_name) \
+    _ZP_CONST_FOREACH_TRANSFORM(collection_name, collection_ptr, var_name, _ZP_TRANSFORM_VAL)
 
 // Remove all elements matching predicate.  Behaviour is undefined if predicate has side effects that modify the
 // collection.
-#define _ZP_REMOVE(collection_name, collection_ptr, predicate)                                       \
-    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);                  \
-         __iter != collection_name##_end(collection_ptr);) {                                         \
-        const collection_name##_elem_t *__node = collection_name##_const_at(collection_ptr, __iter); \
-        if (predicate(__node)) {                                                                     \
-            collection_name##_remove_at(collection_ptr, __iter, NULL, &__iter);                      \
-        } else {                                                                                     \
-            __iter = collection_name##_iter_next(collection_ptr, __iter);                            \
-        }                                                                                            \
+#define _ZP_REMOVE(collection_name, collection_ptr, predicate)                            \
+    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);       \
+         __iter != collection_name##_end(collection_ptr);) {                              \
+        const collection_name##_elem_t *_ = collection_name##_at(collection_ptr, __iter); \
+        (void)_;                                                                          \
+        if (predicate) {                                                                  \
+            collection_name##_remove_at(collection_ptr, __iter, NULL, &__iter);           \
+        } else {                                                                          \
+            __iter = collection_name##_iter_next(collection_ptr, __iter);                 \
+        }                                                                                 \
     }
 #endif

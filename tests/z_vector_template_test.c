@@ -452,14 +452,16 @@ static void test_heap_foreach(void) {
         assert(intvec_push_back(&v, &i));
         sum += i;
     }
-    int *elem;
+    int *elem = NULL;
     int got_sum = 0;
-    _ZP_FOREACH(intvec, &v, elem) { got_sum += *elem; }
+    _ZP_FOREACH (intvec, &v, elem) {
+        got_sum += *elem;
+    }
     assert(got_sum == sum);
 
     // Verify order
     int expected = 1;
-    _ZP_FOREACH(intvec, &v, elem) {
+    _ZP_FOREACH (intvec, &v, elem) {
         assert(*elem == expected);
         expected++;
     }
@@ -467,14 +469,14 @@ static void test_heap_foreach(void) {
 }
 
 static void test_heap_cforeach(void) {
-    printf("  _ZP_CFOREACH visits every element via const pointer\n");
+    printf("  _ZP_CONST_FOREACH visits every element via const pointer\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 8; i++) {
         assert(intvec_push_back(&v, &i));
     }
-    const int *elem;
+    const int *elem = NULL;
     int idx = 0;
-    _ZP_CFOREACH(intvec, &v, elem) {
+    _ZP_CONST_FOREACH (intvec, &v, elem) {
         assert(*elem == idx);
         idx++;
     }
@@ -483,34 +485,28 @@ static void test_heap_cforeach(void) {
 }
 
 static void test_heap_find(void) {
-    printf("  _ZP_CFIND locates first matching element, returns NULL when absent\n");
+    printf("  _ZP_CONST_FIND locates first matching element, returns NULL when absent\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 10; i++) {
         assert(intvec_push_back(&v, &i));
     }
-    const int *found;
-#define pred_eq7(e) (*(e) == 7)
-    _ZP_CFIND(intvec, &v, found, pred_eq7);
-#undef pred_eq7
+    const int *found = NULL;
+    _ZP_CONST_FIND(intvec, &v, found, *_ == 7);
     assert(found != NULL && *found == 7);
 
-#define pred_eq99(e) (*(e) == 99)
-    _ZP_CFIND(intvec, &v, found, pred_eq99);
-#undef pred_eq99
+    _ZP_CONST_FIND(intvec, &v, found, *_ == 99);
     assert(found == NULL);
 
     // Empty vector returns NULL
     intvec_t empty = intvec_new();
-#define pred_eq0(e) (*(e) == 0)
-    _ZP_CFIND(intvec, &empty, found, pred_eq0);
-#undef pred_eq0
+    _ZP_CONST_FIND(intvec, &empty, found, *_ == 0);
     assert(found == NULL);
     intvec_destroy(&empty);
     intvec_destroy(&v);
 }
 
 static void test_heap_itfind(void) {
-    printf("  _ZP_ITFIND positions iterator on first match within [begin, end)\n");
+    printf("  _ZP_IT_FIND positions iterator on first match within [begin, end)\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 10; i++) {
         assert(intvec_push_back(&v, &i));  // value i at index i
@@ -519,42 +515,32 @@ static void test_heap_itfind(void) {
     // Found: begin lands on the matching element.
     intvec_iter_t it = intvec_begin(&v);
     intvec_iter_t end_it = intvec_end(&v);
-#define pred_eq6(p) (*(p) == 6)
-    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq6);
-#undef pred_eq6
+    _ZP_IT_FIND(intvec, &v, it, end_it, *_ == 6);
     assert(it != end_it);
     assert(*intvec_at(&v, it) == 6);
 
     // Not found: begin advances to end.
     it = intvec_begin(&v);
     end_it = intvec_end(&v);
-#define pred_eq99(p) (*(p) == 99)
-    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq99);
-#undef pred_eq99
+    _ZP_IT_FIND(intvec, &v, it, end_it, *_ == 99);
     assert(it == end_it);
 
     // Respects begin bound: a match located before begin is not found.
     it = 7;  // start past index 3
     end_it = intvec_end(&v);
-#define pred_eq3(p) (*(p) == 3)
-    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq3);
-#undef pred_eq3
+    _ZP_IT_FIND(intvec, &v, it, end_it, *_ == 3);
     assert(it == end_it);
 
     // Respects end bound: a match located at/after end is not found.
     it = intvec_begin(&v);
     end_it = 5;  // restrict search to indices [0, 5)
-#define pred_eq8(p) (*(p) == 8)
-    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq8);
-#undef pred_eq8
+    _ZP_IT_FIND(intvec, &v, it, end_it, *_ == 8);
     assert(it == end_it);
 
     // Positive sub-range search: finds a match that lies strictly inside [begin, end).
     it = 2;
     end_it = 8;
-#define pred_eq5(p) (*(p) == 5)
-    _ZP_ITFIND(intvec, &v, it, end_it, pred_eq5);
-#undef pred_eq5
+    _ZP_IT_FIND(intvec, &v, it, end_it, *_ == 5);
     assert(it == 5);
     assert(*intvec_at(&v, it) == 5);
 
@@ -562,7 +548,7 @@ static void test_heap_itfind(void) {
 }
 
 static void test_heap_citfind(void) {
-    printf("  _ZP_CITFIND positions iterator on first match via const access\n");
+    printf("  _ZP_CONST_IT_FIND positions iterator on first match via const access\n");
     intvec_t v = intvec_new();
     for (int i = 0; i < 10; i++) {
         assert(intvec_push_back(&v, &i));
@@ -571,26 +557,20 @@ static void test_heap_citfind(void) {
     // Found via const access.
     intvec_iter_t it = intvec_begin(&v);
     intvec_iter_t end_it = intvec_end(&v);
-#define pred_eq4(p) (*(p) == 4)
-    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq4);
-#undef pred_eq4
+    _ZP_CONST_IT_FIND(intvec, &v, it, end_it, *_ == 4);
     assert(it != end_it);
     assert(*intvec_const_at(&v, it) == 4);
 
     // Not found.
     it = intvec_begin(&v);
     end_it = intvec_end(&v);
-#define pred_eq42(p) (*(p) == 42)
-    _ZP_CITFIND(intvec, &v, it, end_it, pred_eq42);
-#undef pred_eq42
+    _ZP_CONST_IT_FIND(intvec, &v, it, end_it, *_ == 42);
     assert(it == end_it);
 
     // Empty range (begin == end) finds nothing.
     it = intvec_begin(&v);
     end_it = it;
-#define pred_any(p) ((void)(p), true)
-    _ZP_CITFIND(intvec, &v, it, end_it, pred_any);
-#undef pred_any
+    _ZP_CONST_IT_FIND(intvec, &v, it, end_it, true);
     assert(it == end_it);
 
     intvec_destroy(&v);
