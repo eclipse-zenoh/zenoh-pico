@@ -17,11 +17,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "zenoh-pico/link/transport/socket.h"
-#if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/transport/tls_stream.h"
-#endif
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -92,8 +89,8 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
             ret = _z_unicast_transport_create(zt, zl, &tp_param);
             // Fill peer list
             if (ret == _Z_RES_OK) {
-                ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl), false,
-                                                    NULL);
+                _z_link_peer_t link_peer = _z_link_peer_from_socket(*_z_link_get_socket(zl), false);
+                ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, NULL);
             }
             break;
         }
@@ -153,8 +150,8 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
             _Z_SET_IF_OK(ret, _z_socket_set_blocking(_z_link_get_socket(zl), false));
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
-                    ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
-                                                        false, NULL);
+                    _z_link_peer_t link_peer = _z_link_peer_from_socket(*_z_link_get_socket(zl), false);
+                    ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, NULL);
                 } else {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1
                     _z_fut_t f = _z_fut_null();
@@ -221,32 +218,30 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
                 ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
             }
             _Z_RETURN_IF_ERR(ret);
+            _z_link_peer_t link_peer = _z_link_peer_from_socket(socket, true);
             _z_transport_unicast_establish_param_t tp_param = {0};
             ret = _z_unicast_open_peer(&tp_param, zt->_transport._unicast._common._link, session_id, _Z_PEER_OP_OPEN,
-                                       &socket);
+                                       &link_peer);
             if (ret != _Z_RES_OK) {
-#if Z_FEATURE_LINK_TLS == 1
-                _z_close_tls_socket(&socket);
-#endif
-                _z_socket_close(&socket);
+                _z_link_peer_clear(&link_peer);
                 return ret;
             }
-            ret = _z_socket_set_blocking(&socket, false);
+            ret = _z_socket_set_blocking(_z_link_peer_get_socket(&link_peer), false);
             if (ret != _Z_RES_OK) {
-#if Z_FEATURE_LINK_TLS == 1
-                _z_close_tls_socket(&socket);
-#endif
-                _z_socket_close(&socket);
+                _z_link_peer_clear(&link_peer);
                 return ret;
             }
             _z_transport_peer_unicast_t *peer = NULL;
-            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, socket, true, &peer);
-            if ((ret == _Z_RES_OK) && (peer != NULL)) {
+            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, &peer);
+            if (ret != _Z_RES_OK) {
+                return ret;
+            }
+            if (peer != NULL) {
                 (void)_z_interest_push_declarations_to_peer(
                     _z_transport_common_get_session(&zt->_transport._unicast._common), &peer->common);
             }
 #if Z_FEATURE_CONNECTIVITY == 1
-            if ((ret == _Z_RES_OK) && (peer != NULL)) {
+            if (peer != NULL) {
                 _z_new_peer_dispatch_connected_event(&zt->_transport._unicast, peer);
             }
 #endif

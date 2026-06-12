@@ -12,11 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/link/transport/socket.h"
-#if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/transport/tls_stream.h"
-#endif
 #include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -151,22 +148,14 @@ bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
 
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
     _z_zbuf_clear(&src->flow_buff);
-    if (src->_owns_socket) {
-        _z_sys_net_socket_t *socket = _z_transport_peer_unicast_socket(src);
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(socket);
-#endif
-        _z_socket_close(socket);
-        src->_owns_socket = false;
-    }
+    _z_link_peer_clear(&src->_link_peer);
     _z_transport_peer_common_clear(&src->common);
 }
 
 void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_transport_peer_unicast_t *src) {
     dst->_sn_rx_reliable = src->_sn_rx_reliable;
     dst->_sn_rx_best_effort = src->_sn_rx_best_effort;
-    dst->_link_peer = _z_link_peer_from_socket(*_z_transport_peer_unicast_socket_const(src));
-    dst->_owns_socket = false;  // Ownership is not copied
+    dst->_link_peer = _z_link_peer_alias(&src->_link_peer);
     dst->_pending = false;
     dst->flow_state = _Z_FLOW_STATE_INACTIVE;
     dst->flow_curr_size = 0;
@@ -184,8 +173,7 @@ bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const
 }
 
 z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
-                                         _z_sys_net_socket_t socket, bool owns_socket,
-                                         _z_transport_peer_unicast_t **output_peer) {
+                                         _z_link_peer_t *link_peer, _z_transport_peer_unicast_t **output_peer) {
 #if Z_FEATURE_CONNECTIVITY == 1
     bool dispatch_connected_event = output_peer == NULL;
     _z_session_t *session = _z_transport_common_get_session(&ztu->_common);
@@ -199,18 +187,20 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
 
     _z_transport_peer_mutex_lock(&ztu->_common);
     // Create peer
-    ztu->_peers = _z_transport_peer_unicast_slist_push_empty(ztu->_peers);
-    if (ztu->_peers == NULL) {
+    _z_transport_peer_unicast_slist_t *new_head = _z_transport_peer_unicast_slist_push_empty(ztu->_peers);
+    if (new_head == ztu->_peers) {
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        _z_link_peer_clear(link_peer);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
+    ztu->_peers = new_head;
     // Fill peer data
     _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     peer->flow_state = _Z_FLOW_STATE_INACTIVE;
     peer->flow_curr_size = 0;
     peer->flow_buff = _z_zbuf_null();
     peer->_pending = false;
-    peer->_link_peer = _z_link_peer_from_socket(socket);
-    peer->_owns_socket = owns_socket;
+    _z_link_peer_move(&peer->_link_peer, link_peer);
     _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_common._sn_res, param->_initial_sn_rx);
     peer->_sn_rx_reliable = initial_sn_rx;
     peer->_sn_rx_best_effort = initial_sn_rx;

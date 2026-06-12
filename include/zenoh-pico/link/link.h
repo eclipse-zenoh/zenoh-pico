@@ -106,12 +106,32 @@ static inline size_t _z_noop_link_read_socket(const _z_sys_net_socket_t socket, 
 
 typedef struct _z_link_peer_t {
     _z_sys_net_socket_t _socket;
+    // FIXME: Temporary ownership flag to avoid double-closing sockets
+    // when link and peer structs alias the same underlying fd/TLS.
+    // This should be replaced by proper, explicit ownership semantics
+    // (e.g. a ref-counted socket/TLS handle or single authoritative owner).
+    bool _owns_socket;
 } _z_link_peer_t;
 
-static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket) {
-    _z_link_peer_t peer;
-    peer._socket = socket;
+static inline _z_link_peer_t _z_link_peer_null(void) {
+    _z_link_peer_t peer = {0};
     return peer;
+}
+
+static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket, bool owns_socket) {
+    _z_link_peer_t peer = _z_link_peer_null();
+    peer._socket = socket;
+    peer._owns_socket = owns_socket;
+    return peer;
+}
+
+static inline _z_link_peer_t _z_link_peer_alias(const _z_link_peer_t *peer) {
+    return _z_link_peer_from_socket(peer->_socket, false);
+}
+
+static inline void _z_link_peer_move(_z_link_peer_t *dst, _z_link_peer_t *src) {
+    *dst = *src;
+    *src = _z_link_peer_null();
 }
 
 static inline _z_sys_net_socket_t *_z_link_peer_get_socket(_z_link_peer_t *peer) { return &peer->_socket; }
@@ -119,6 +139,9 @@ static inline _z_sys_net_socket_t *_z_link_peer_get_socket(_z_link_peer_t *peer)
 static inline const _z_sys_net_socket_t *_z_link_peer_get_socket_const(const _z_link_peer_t *peer) {
     return &peer->_socket;
 }
+
+void _z_link_peer_close(_z_link_peer_t *peer);
+void _z_link_peer_clear(_z_link_peer_t *peer);
 
 enum _z_link_type_e {
     _Z_LINK_TYPE_TCP,

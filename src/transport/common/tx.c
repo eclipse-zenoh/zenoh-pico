@@ -514,8 +514,9 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                     // Send to a single peer, convert to peer list
                     _z_transport_peer_unicast_slist_t *dst_list = _z_transport_peer_unicast_slist_push_empty(NULL);
                     if (dst_list != NULL) {
-                        memcpy(_z_transport_peer_unicast_slist_value(dst_list), (_z_transport_peer_unicast_t *)peer,
-                               sizeof(_z_transport_peer_unicast_t));
+                        _z_transport_peer_unicast_t *dst_peer = _z_transport_peer_unicast_slist_value(dst_list);
+                        memcpy(dst_peer, (_z_transport_peer_unicast_t *)peer, sizeof(_z_transport_peer_unicast_t));
+                        dst_peer->_link_peer._owns_socket = false;
                         // Send message
                         ret = _z_transport_tx_send_n_msg(ztc, z_msg, reliability, cong_ctrl, dst_list);
                         z_free(dst_list);

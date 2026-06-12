@@ -81,33 +81,27 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
         }
         return _z_fut_fn_result_wake_up_after(1000);
     }
+    _z_link_peer_t link_peer = _z_link_peer_from_socket(con_socket, true);
 
     if (_z_transport_peer_unicast_slist_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
         _Z_INFO("Refusing connection as max connections currently reached");
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&con_socket);
-#endif
-        _z_socket_close(&con_socket);
+        _z_link_peer_clear(&link_peer);
         return _z_fut_fn_result_wake_up_after(1000);
     }
 
-    ret = _z_socket_set_blocking(&con_socket, true);
+    ret = _z_socket_set_blocking(_z_link_peer_get_socket(&link_peer), true);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Failed to set socket blocking with error %d", ret);
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&con_socket);
-#endif
-        _z_socket_close(&con_socket);
+        _z_link_peer_clear(&link_peer);
         return _z_fut_fn_result_continue();
     }
 
 #if Z_FEATURE_LINK_TLS == 1
     if (ztu->_common._link->_type == _Z_LINK_TYPE_TLS) {
-        ret = _z_tls_accept(&con_socket, &listen_socket);
+        ret = _z_tls_accept(_z_link_peer_get_socket(&link_peer), &listen_socket);
         if (ret != _Z_RES_OK) {
             _Z_INFO("TLS handshake failed with error %d", ret);
-            _z_close_tls_socket(&con_socket);
-            _z_socket_close(&con_socket);
+            _z_link_peer_clear(&link_peer);
             return _z_fut_fn_result_continue();
         }
     }
@@ -116,32 +110,22 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
     _z_transport_unicast_establish_param_t param = {0};
     ret = _z_unicast_handshake_listen(&param, ztu->_common._link,
                                       &_z_transport_common_get_session(&ztu->_common)->_local_zid, Z_WHATAMI_PEER,
-                                      &con_socket);
+                                      &link_peer);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Connection accept handshake failed with error %d", ret);
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&con_socket);
-#endif
-        _z_socket_close(&con_socket);
+        _z_link_peer_clear(&link_peer);
         return _z_fut_fn_result_continue();
     }
 
-    if (_z_socket_set_blocking(&con_socket, false) != _Z_RES_OK) {
+    if (_z_socket_set_blocking(_z_link_peer_get_socket(&link_peer), false) != _Z_RES_OK) {
         _Z_INFO("Failed to set socket non blocking");
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&con_socket);
-#endif
-        _z_socket_close(&con_socket);
+        _z_link_peer_clear(&link_peer);
         return _z_fut_fn_result_continue();
     }
 
     _z_transport_peer_unicast_t *new_peer = NULL;
-    ret = _z_transport_peer_unicast_add(ztu, &param, con_socket, true, &new_peer);
+    ret = _z_transport_peer_unicast_add(ztu, &param, &link_peer, &new_peer);
     if (ret != _Z_RES_OK) {
-#if Z_FEATURE_LINK_TLS == 1
-        _z_close_tls_socket(&con_socket);
-#endif
-        _z_socket_close(&con_socket);
         return _z_fut_fn_result_continue();
     }
 

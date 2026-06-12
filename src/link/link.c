@@ -19,6 +19,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/transport/socket.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/transport/tls_stream.h"
+#endif
 #include "zenoh-pico/utils/logging.h"
 
 z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket) {
@@ -174,6 +178,24 @@ void _z_link_free(_z_link_t **l) {
 
         z_free(ptr);
         *l = NULL;
+    }
+}
+
+void _z_link_peer_close(_z_link_peer_t *peer) {
+    if ((peer == NULL) || !peer->_owns_socket) {
+        return;
+    }
+#if Z_FEATURE_LINK_TLS == 1
+    _z_close_tls_socket(&peer->_socket);
+#endif
+    _z_socket_close(&peer->_socket);
+    peer->_owns_socket = false;
+}
+
+void _z_link_peer_clear(_z_link_peer_t *peer) {
+    if (peer != NULL) {
+        _z_link_peer_close(peer);
+        *peer = _z_link_peer_null();
     }
 }
 
