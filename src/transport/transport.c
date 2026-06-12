@@ -151,6 +151,8 @@ _z_pending_peers_t _z_pending_peers_null(void) {
     pending_peers._timeout_ms = 0;
     pending_peers._start = (z_clock_t){0};
     pending_peers._sleep_ms = _Z_SLEEP_BACKOFF_MIN_MS;
+    pending_peers._next_peer_idx = 0;
+    pending_peers._remaining_attempts = 0;
 
     return pending_peers;
 }
@@ -190,19 +192,54 @@ z_result_t _z_pending_peers_copy_from_locators(_z_pending_peers_t *pending_peers
     return _Z_RES_OK;
 }
 
-bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers) {
+size_t _z_pending_peers_count_pending(const _z_pending_peers_t *pending_peers) {
     if (pending_peers == NULL) {
-        return false;
+        return 0;
     }
 
+    size_t count = 0;
     size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
     for (size_t i = 0; i < len; i++) {
         const _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, i);
         if (peer->_state == _Z_PENDING_PEER_STATE_PENDING) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+bool _z_pending_peers_has_pending(const _z_pending_peers_t *pending_peers) {
+    return _z_pending_peers_count_pending(pending_peers) > 0;
+}
+
+bool _z_pending_peers_next_pending_idx(_z_pending_peers_t *pending_peers, size_t *idx) {
+    if ((pending_peers == NULL) || (idx == NULL)) {
+        return false;
+    }
+
+    size_t len = _z_pending_peer_svec_len(&pending_peers->_peers);
+    if (len == 0) {
+        pending_peers->_next_peer_idx = 0;
+        return false;
+    }
+
+    if (pending_peers->_next_peer_idx >= len) {
+        pending_peers->_next_peer_idx = 0;
+    }
+
+    for (size_t scanned = 0; scanned < len; scanned++) {
+        size_t peer_idx = (pending_peers->_next_peer_idx + scanned) % len;
+        const _z_pending_peer_t *peer = _z_pending_peer_svec_get(&pending_peers->_peers, peer_idx);
+
+        if (peer->_state == _Z_PENDING_PEER_STATE_PENDING) {
+            *idx = peer_idx;
+            pending_peers->_next_peer_idx = (peer_idx + 1) % len;
             return true;
         }
     }
 
+    pending_peers->_next_peer_idx = 0;
     return false;
 }
 

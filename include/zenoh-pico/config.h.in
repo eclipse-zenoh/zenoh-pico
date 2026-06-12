@@ -31,6 +31,7 @@
 #define Z_RUNTIME_MAX_TASKS @Z_RUNTIME_MAX_TASKS@
 #define Z_TRANSPORT_ACCEPT_TIMEOUT @Z_TRANSPORT_ACCEPT_TIMEOUT@
 #define Z_TRANSPORT_CONNECT_TIMEOUT @Z_TRANSPORT_CONNECT_TIMEOUT@
+#define Z_LISTEN_MAX_CONNECTION_NB @Z_LISTEN_MAX_CONNECTION_NB@
 
 #cmakedefine Z_FEATURE_UNSTABLE_API
 #define Z_FEATURE_CONNECTIVITY @Z_FEATURE_CONNECTIVITY@
@@ -304,11 +305,6 @@
  * Default get timeout in milliseconds.
  */
 #define Z_GET_TIMEOUT_DEFAULT 10000
-
-/**
- * Maximum number of connections for unicast listen sockets.
- */
-#define Z_LISTEN_MAX_CONNECTION_NB 10
 
 /**
  * Default "nop" instruction

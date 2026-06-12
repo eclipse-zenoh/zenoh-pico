@@ -179,7 +179,6 @@ These options can be changed manually in `config.h.in` if your build system invo
 * `Z_REQ_RESOLUTION`: Length of the request id as enum value (0: 8bits, 1: 16 bits, 2: 32 bits, 3: 64 bits)
 * `Z_RX_CACHE_SIZE`: Width of the rx cache, when activated.
 * `Z_GET_TIMEOUT_DEFAULT`: Default value for a request timeout, in milliseconds.
-* `Z_LISTEN_MAX_CONNECTION_NB`: Maximum number of connections on a listening socket.
 * `ZP_ASM_NOP`: Change this options if your platform doesn't have a standard `nop` instruction.
 
 Generated compile-time options
@@ -194,6 +193,7 @@ All the generated options must be changed in zenoh-pico's CMake (beware of CMake
 * `Z_TRANSPORT_LEASE`: Maximum time without receiving messages from a connection before closing it, in milliseconds.
 * `Z_TRANSPORT_ACCEPT_TIMEOUT`: Link accept timeout in P2P mode in milliseconds (maximum amount of time the listening peer would wait to receive a response).
 * `Z_TRANSPORT_CONNECT_TIMEOUT`: Link connect timeout in milliseconds (maximum amount of time the connecting peer would wait to receive a response).
+* `Z_LISTEN_MAX_CONNECTION_NB`: Maximum number of connections for unicast listen sockets.
 * `Z_FEATURE_TCP_NODELAY`: (DEFAULT: ON) Toggle the `TCP_NODELAY` socket option that disables Nagle's algorithm as it can cause latency spikes.
 * `Z_FEATURE_AUTO_RECONNECT`: (DEFAULT: ON) Toggle the auto reconnection feature.
 * `Z_FEATURE_MULTICAST_DECLARATIONS`: (DEFAULT: OFF) Toggle multicast declarations. It lets nodes declare key expressions and activate write filtering but requires each node to send all the declarations every time a new node join the network. 
