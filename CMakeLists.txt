@@ -547,6 +547,7 @@ file(GLOB_RECURSE Sources
   "src/system/common/*.c"
 )
 file(GLOB LinkSources
+  "src/link/common/*.c"
   "src/link/config/*.c"
   "src/link/multicast/*.c"
   "src/link/unicast/*.c"

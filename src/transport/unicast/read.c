@@ -78,8 +78,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
     switch (ztu->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_readable_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                         *_z_transport_peer_unicast_socket(peer));
+                _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
                 if (_z_zbuf_readable_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztu->_common._zbuf);
                     return false;
@@ -89,8 +88,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
             *to_read = _z_read_stream_size(&ztu->_common._zbuf);
             // Read data
             if (_z_zbuf_readable_len(&ztu->_common._zbuf) < *to_read) {
-                _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                         *_z_transport_peer_unicast_socket(peer));
+                _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
                 if (_z_zbuf_readable_len(&ztu->_common._zbuf) < *to_read) {
                     _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     _z_zbuf_compact(&ztu->_common._zbuf);
@@ -100,8 +98,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
             break;
         case Z_LINK_CAP_FLOW_DATAGRAM:
             _z_zbuf_compact(&ztu->_common._zbuf);
-            *to_read = _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                                *_z_transport_peer_unicast_socket(peer));
+            *to_read = _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
             if (*to_read == SIZE_MAX) {
                 return false;
             }
@@ -212,8 +209,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
                     _z_zbuf_clear(&peer->flow_buff);  // fall through
                 default:                              // fall through
                 case _Z_FLOW_STATE_INACTIVE:
-                    read_size = _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                                         *_z_transport_peer_unicast_socket(peer));
+                    read_size = _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
                         return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
@@ -241,8 +237,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
                     }
                     break;
                 case _Z_FLOW_STATE_PENDING_SIZE:
-                    read_size = _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                                         *_z_transport_peer_unicast_socket(peer));
+                    read_size = _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
                         return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
@@ -262,8 +257,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
                     }
                     break;
                 case _Z_FLOW_STATE_PENDING_DATA:
-                    read_size = _z_link_socket_recv_zbuf(ztu->_common._link, &peer->flow_buff,
-                                                         *_z_transport_peer_unicast_socket(peer));
+                    read_size = _z_link_peer_recv_zbuf(ztu->_common._link, &peer->flow_buff, &peer->_link_peer);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
                         return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
@@ -281,8 +275,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
 
             break;
         case Z_LINK_CAP_FLOW_DATAGRAM:
-            *to_read = _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf,
-                                                *_z_transport_peer_unicast_socket(peer));
+            *to_read = _z_link_peer_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, &peer->_link_peer);
             if (*to_read == SIZE_MAX) {
                 return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
             }
@@ -304,7 +297,7 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
         _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
         if (curr_peer->_pending) {
             curr_peer->_pending = false;
-            // Read data from socket
+            // Read data from peer
             int res = _z_unicast_peer_read(ztu, curr_peer, &to_read);
             if (res == _Z_UNICAST_PEER_READ_STATUS_OK) {  // Messages to process
                 bool message_to_process = false;

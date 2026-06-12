@@ -79,10 +79,6 @@ size_t _z_f_link_read_exact_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _
     }
 }
 
-size_t _z_f_link_tcp_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    return _z_tcp_read(socket, ptr, len);
-}
-
 uint16_t _z_get_link_mtu_tcp(void) {
     // Maximum MTU for TCP
     return 65535;
@@ -122,7 +118,6 @@ z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_write_all_f = _z_f_link_write_all_tcp;
     zl->_read_f = _z_f_link_read_tcp;
     zl->_read_exact_f = _z_f_link_read_exact_tcp;
-    zl->_read_socket_f = _z_f_link_tcp_read_socket;
 
     return ret;
 }

@@ -82,7 +82,8 @@ typedef struct _z_link_capabilities_t {
     uint8_t _reserved : 4;
 } _z_link_capabilities_t;
 
-struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
+struct _z_link_t;       // Forward declaration to be used in _z_f_link_*
+struct _z_link_peer_t;  // Forward declaration to be used in _z_link_peer_ops_t
 
 typedef z_result_t (*_z_f_link_open)(struct _z_link_t *self);
 typedef z_result_t (*_z_f_link_listen)(struct _z_link_t *self);
@@ -93,18 +94,18 @@ typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_
 typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
                                        _z_sys_net_socket_t *socket);
-typedef size_t (*_z_f_link_read_socket)(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
 
-static inline size_t _z_noop_link_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    _ZP_UNUSED(socket);
-    _ZP_UNUSED(ptr);
-    _ZP_UNUSED(len);
-    _Z_ERROR("Function not implemented");
-    return 0;
-}
+typedef struct _z_link_peer_ops_t {
+    size_t (*_read_f)(const struct _z_link_t *link, const struct _z_link_peer_t *peer, uint8_t *ptr, size_t len);
+    size_t (*_write_f)(const struct _z_link_t *link, struct _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+    void (*_close_f)(struct _z_link_peer_t *peer);
+    void (*_clear_f)(struct _z_link_peer_t *peer);
+} _z_link_peer_ops_t;
 
 typedef struct _z_link_peer_t {
+    const _z_link_peer_ops_t *_ops;
+    void *_state;
     _z_sys_net_socket_t _socket;
     // FIXME: Temporary ownership flag to avoid double-closing sockets
     // when link and peer structs alias the same underlying fd/TLS.
@@ -113,6 +114,8 @@ typedef struct _z_link_peer_t {
     bool _owns_socket;
 } _z_link_peer_t;
 
+const _z_link_peer_ops_t *_z_link_peer_socket_ops(void);
+
 static inline _z_link_peer_t _z_link_peer_null(void) {
     _z_link_peer_t peer = {0};
     return peer;
@@ -120,13 +123,16 @@ static inline _z_link_peer_t _z_link_peer_null(void) {
 
 static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket, bool owns_socket) {
     _z_link_peer_t peer = _z_link_peer_null();
+    peer._ops = _z_link_peer_socket_ops();
     peer._socket = socket;
     peer._owns_socket = owns_socket;
     return peer;
 }
 
 static inline _z_link_peer_t _z_link_peer_alias(const _z_link_peer_t *peer) {
-    return _z_link_peer_from_socket(peer->_socket, false);
+    _z_link_peer_t alias = *peer;
+    alias._owns_socket = false;
+    return alias;
 }
 
 static inline void _z_link_peer_move(_z_link_peer_t *dst, _z_link_peer_t *src) {
@@ -142,6 +148,8 @@ static inline const _z_sys_net_socket_t *_z_link_peer_get_socket_const(const _z_
 
 void _z_link_peer_close(_z_link_peer_t *peer);
 void _z_link_peer_clear(_z_link_peer_t *peer);
+size_t _z_link_peer_read(const struct _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len);
+size_t _z_link_peer_write(const struct _z_link_t *link, _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
 
 enum _z_link_type_e {
     _Z_LINK_TYPE_TCP,
@@ -187,7 +195,6 @@ typedef struct _z_link_t {
     _z_f_link_write_all _write_all_f;
     _z_f_link_read _read_f;
     _z_f_link_read_exact _read_exact_f;
-    _z_f_link_read_socket _read_socket_f;
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
@@ -201,10 +208,11 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_conf
 z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg);
 
 z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf, _z_sys_net_socket_t *socket);
+z_result_t _z_link_peer_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf, _z_link_peer_t *peer);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
 size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr,
                                _z_sys_net_socket_t *socket);
-size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket);
+size_t _z_link_peer_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, const _z_link_peer_t *peer);
 const _z_sys_net_socket_t *_z_link_get_socket(const _z_link_t *link);
 
 #ifdef __cplusplus

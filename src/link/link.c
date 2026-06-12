@@ -19,10 +19,6 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/config/raweth.h"
 #include "zenoh-pico/link/manager.h"
-#include "zenoh-pico/link/transport/socket.h"
-#if Z_FEATURE_LINK_TLS == 1
-#include "zenoh-pico/link/transport/tls_stream.h"
-#endif
 #include "zenoh-pico/utils/logging.h"
 
 z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket) {
@@ -58,33 +54,27 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_conf
         // Create transport link
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
-        } else
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
-            if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);
-        } else
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
-        } else
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-            if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_serial(zl, ep);
-        } else
 #endif
 #if Z_FEATURE_LINK_WS == 1
-            if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_ws(zl, &ep);
-        } else
 #endif
 #if Z_FEATURE_LINK_TLS == 1
-            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tls(zl, &ep, session_cfg);
-        } else
 #endif
-        {
+        } else {
             _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
@@ -119,24 +109,22 @@ z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_co
         // Create transport link
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
-        } else
 #if Z_FEATURE_LINK_TLS == 1
-            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tls(zl, &ep, session_cfg);
-        } else
 #endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-            if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
-        } else
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
+        } else if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_bt(zl, ep);
-        } else
 #endif
-            if (_z_endpoint_raweth_valid(&ep) == _Z_RES_OK) {
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+        } else if (_z_endpoint_raweth_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_raweth(zl, ep);
+#endif
         } else {
             _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
@@ -182,21 +170,33 @@ void _z_link_free(_z_link_t **l) {
 }
 
 void _z_link_peer_close(_z_link_peer_t *peer) {
-    if ((peer == NULL) || !peer->_owns_socket) {
-        return;
+    if ((peer != NULL) && (peer->_ops != NULL) && (peer->_ops->_close_f != NULL)) {
+        peer->_ops->_close_f(peer);
     }
-#if Z_FEATURE_LINK_TLS == 1
-    _z_close_tls_socket(&peer->_socket);
-#endif
-    _z_socket_close(&peer->_socket);
-    peer->_owns_socket = false;
 }
 
 void _z_link_peer_clear(_z_link_peer_t *peer) {
-    if (peer != NULL) {
-        _z_link_peer_close(peer);
-        *peer = _z_link_peer_null();
+    if (peer == NULL) {
+        return;
     }
+    if ((peer->_ops != NULL) && (peer->_ops->_clear_f != NULL)) {
+        peer->_ops->_clear_f(peer);
+    }
+    *peer = _z_link_peer_null();
+}
+
+size_t _z_link_peer_read(const _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len) {
+    if ((peer == NULL) || (peer->_ops == NULL) || (peer->_ops->_read_f == NULL)) {
+        return SIZE_MAX;
+    }
+    return peer->_ops->_read_f(link, peer, ptr, len);
+}
+
+size_t _z_link_peer_write(const _z_link_t *link, _z_link_peer_t *peer, const uint8_t *ptr, size_t len) {
+    if ((peer == NULL) || (peer->_ops == NULL) || (peer->_ops->_write_f == NULL)) {
+        return SIZE_MAX;
+    }
+    return peer->_ops->_write_f(link, peer, ptr, len);
 }
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
@@ -216,8 +216,8 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
     return rb;
 }
 
-size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket) {
-    size_t rb = link->_read_socket_f(socket, _z_zbuf_get_wptr(zbf), _z_zbuf_writable_space_left(zbf));
+size_t _z_link_peer_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_link_peer_t *peer) {
+    size_t rb = _z_link_peer_read(link, peer, _z_zbuf_get_wptr(zbf), _z_zbuf_writable_space_left(zbf));
     if (rb != SIZE_MAX) {
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     }
@@ -239,6 +239,33 @@ z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf, _z_sys
                 break;
             }
             if (link_is_streamed && wb != n) {
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
+                ret = _Z_ERR_TRANSPORT_TX_FAILED;
+                break;
+            }
+            n = n - wb;
+            bs.start = bs.start + (bs.len - n);
+        } while (n > (size_t)0);
+    }
+
+    return ret;
+}
+
+z_result_t _z_link_peer_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf, _z_link_peer_t *peer) {
+    z_result_t ret = _Z_RES_OK;
+    bool link_is_streamed = link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
+
+    if ((peer == NULL) || (peer->_ops == NULL) || (peer->_ops->_write_f == NULL)) {
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
+    }
+
+    for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)) && (ret == _Z_RES_OK); i++) {
+        _z_slice_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
+        size_t n = bs.len;
+        do {
+            size_t wb = peer->_ops->_write_f(link, peer, bs.start, n);
+            if ((wb == SIZE_MAX) || (wb > n) || (link_is_streamed && wb != n)) {
                 _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;

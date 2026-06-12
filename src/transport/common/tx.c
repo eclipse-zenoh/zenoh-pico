@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/transport/common/tx.h"
 
+#include <string.h>
+
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/network.h"
@@ -90,8 +92,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
             _z_transport_peer_unicast_slist_t *curr_list = peers;
             while (curr_list != NULL) {
                 _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-                // Send on peer socket
-                _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, _z_transport_peer_unicast_socket(curr_peer));
+                _Z_RETURN_IF_ERR(_z_link_peer_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_link_peer));
                 curr_list = _z_transport_peer_unicast_slist_next(curr_list);
             }
         }
@@ -146,8 +147,7 @@ static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc, _z_tr
         _z_transport_peer_unicast_slist_t *curr_list = peers;
         while (curr_list != NULL) {
             _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-            // Send on peer socket
-            _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, _z_transport_peer_unicast_socket(curr_peer));
+            _Z_RETURN_IF_ERR(_z_link_peer_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_link_peer));
             curr_list = _z_transport_peer_unicast_slist_next(curr_list);
         }
     }
@@ -515,8 +515,12 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                     _z_transport_peer_unicast_slist_t *dst_list = _z_transport_peer_unicast_slist_push_empty(NULL);
                     if (dst_list != NULL) {
                         _z_transport_peer_unicast_t *dst_peer = _z_transport_peer_unicast_slist_value(dst_list);
-                        memcpy(dst_peer, (_z_transport_peer_unicast_t *)peer, sizeof(_z_transport_peer_unicast_t));
-                        dst_peer->_link_peer._owns_socket = false;
+                        const _z_transport_peer_unicast_t *src_peer = (const _z_transport_peer_unicast_t *)peer;
+                        // SAFETY: dst_peer points to a _z_transport_peer_unicast_t slist node and the copy is bounded
+                        // by that exact object size.
+                        // Flawfinder: ignore [CWE-120]
+                        memcpy(dst_peer, src_peer, sizeof(*dst_peer));
+                        dst_peer->_link_peer = _z_link_peer_alias(&src_peer->_link_peer);
                         // Send message
                         ret = _z_transport_tx_send_n_msg(ztc, z_msg, reliability, cong_ctrl, dst_list);
                         z_free(dst_list);

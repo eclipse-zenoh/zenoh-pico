@@ -178,14 +178,6 @@ static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size
     return n;
 }
 
-static size_t _z_f_link_tls_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    if (socket._tls_sock == NULL) {
-        _Z_ERROR("TLS context not found in socket");
-        return SIZE_MAX;
-    }
-    return _z_read_tls((_z_tls_socket_t *)socket._tls_sock, ptr, len);
-}
-
 static void _z_f_link_free_tls(_z_link_t *self) { _ZP_UNUSED(self); }
 
 z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_config_t *session_cfg) {
@@ -210,7 +202,6 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
     zl->_write_all_f = _z_f_link_write_all_tls;
     zl->_read_f = _z_f_link_read_tls;
     zl->_read_exact_f = _z_f_link_read_exact_tls;
-    zl->_read_socket_f = _z_f_link_tls_read_socket;
     zl->_free_f = _z_f_link_free_tls;
 
     return _Z_RES_OK;
