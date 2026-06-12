@@ -118,6 +118,7 @@ jobs:
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
+          Z_FEATURE_RX_CACHE: 1
           ASAN: 1
 
       - name: Test debug
@@ -129,5 +130,9 @@ jobs:
           BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
           Z_FEATURE_LINK_TLS: 1
           Z_FEATURE_UNSTABLE_API: 1
+          Z_FEATURE_LOCAL_QUERYABLE: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          Z_FEATURE_ADVANCED_PUBLICATION: 1
+          Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
+          Z_FEATURE_RX_CACHE: 1
           ZENOH_BRANCH: main
