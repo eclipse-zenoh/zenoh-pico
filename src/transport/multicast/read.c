@@ -85,7 +85,15 @@ _z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *exec
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
         return _z_fut_fn_result_suspend();
     }
-    if (_zp_multicast_process_messages(ztm) < _Z_RES_OK) {
+    z_result_t ret = _zp_multicast_process_messages(ztm);
+    if (ret == _Z_NO_DATA_PROCESSED) {
+#if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
+        return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
+#else
+        return _z_fut_fn_result_continue();
+#endif
+    }
+    if (ret < _Z_RES_OK) {
         // TODO: report failure and disconnect ?
         _Z_WARN("Multicast read task failed");
         return _zp_multicast_failed_result(ztm, executor);

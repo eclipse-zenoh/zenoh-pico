@@ -238,18 +238,18 @@ static inline void _z_executor_destroy(_z_executor_t *executor) {
 // future is finished or cancelled. The caller can use the future handle to cancel the future or check its status.
 _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut);
 
-typedef enum _z_executor_spin_result_status_t {
-    _Z_EXECUTOR_SPIN_RESULT_NO_TASKS,
-    _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK,
-    _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT,
-    _Z_EXECUTOR_SPIN_RESULT_FAILED,
-} _z_executor_spin_result_status_t;
-typedef struct _z_executor_spin_result_t {
-    _z_executor_spin_result_status_t status;
+typedef enum _z_executor_state_t {
+    _Z_EXECUTOR_STATE_NO_TASKS,
+    _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK,
+    _Z_EXECUTOR_STATE_SHOULD_WAIT,
+} _z_executor_state_t;
+typedef struct _z_executor_status_t {
+    _z_executor_state_t status;
     z_clock_t next_wake_up_time;
-} _z_executor_spin_result_t;
+} _z_executor_status_t;
 
-_z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor);
+_z_executor_status_t _z_executor_get_status(const _z_executor_t *executor);
+_z_executor_status_t _z_executor_spin(_z_executor_t *executor);
 
 _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const _z_fut_handle_t *handle);
 bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *handle);

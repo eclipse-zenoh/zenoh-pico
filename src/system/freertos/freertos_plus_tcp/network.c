@@ -37,11 +37,9 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
 z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout_ms) {
-    z_result_t ret = _Z_RES_OK;
-
     _z_socket_wait_iter_reset(iter);
     if (!_z_socket_wait_iter_next(iter)) {
-        return _Z_RES_OK;
+        return _Z_NO_DATA_PROCESSED;
     }
 
     SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
@@ -56,19 +54,22 @@ z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout
     } while (_z_socket_wait_iter_next(iter));
 
     BaseType_t result = FreeRTOS_select(socketSet, pdMS_TO_TICKS(timeout_ms));
-    if (result != 0) {
-        _Z_ERROR_LOG(_Z_ERR_GENERIC);
-        ret = _Z_ERR_GENERIC;
+    if (result == 0) {
+        FreeRTOS_DeleteSocketSet(socketSet);
+        return _Z_NO_DATA_PROCESSED;
     }
 
+    bool has_data = false;
     _z_socket_wait_iter_reset(iter);
     while (_z_socket_wait_iter_next(iter)) {
         const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
-        _z_socket_wait_iter_set_ready(iter, FreeRTOS_FD_ISSET(sock->_socket, socketSet) != 0);
+        bool is_ready = FreeRTOS_FD_ISSET(sock->_socket, socketSet) != 0;
+        _z_socket_wait_iter_set_ready(iter, is_ready);
+        has_data |= is_ready;
     }
 
     FreeRTOS_DeleteSocketSet(socketSet);
-    return ret;
+    return has_data ? _Z_RES_OK : _Z_NO_DATA_PROCESSED;
 }
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1

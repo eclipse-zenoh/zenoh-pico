@@ -81,13 +81,16 @@ z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
+    bool has_data = false;
     _z_socket_wait_iter_reset(iter);
     while (_z_socket_wait_iter_next(iter)) {
         const _z_sys_net_socket_t *sock = _z_socket_wait_iter_get_socket(iter);
-        _z_socket_wait_iter_set_ready(iter, FD_ISSET(sock->_fd, &read_fds));
+        bool is_ready = FD_ISSET(sock->_fd, &read_fds);
+        _z_socket_wait_iter_set_ready(iter, is_ready);
+        has_data |= is_ready;
     }
 
-    return _Z_RES_OK;
+    return has_data ? _Z_RES_OK : _Z_NO_DATA_PROCESSED;
 }
 
 #if Z_FEATURE_LINK_BLUETOOTH == 1

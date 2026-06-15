@@ -66,11 +66,11 @@ z_result_t _z_background_executor_inner_run_forever(_z_background_executor_inner
         if (thread_idx < be->_thread_idx) {
             break;  // stop requested, exit the loop and end the thread
         }
-        _z_executor_spin_result_t res = _z_executor_spin(&be->_executor);
-        if (res.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS) {  // no pending tasks, sleep until next task is added
+        _z_executor_status_t res = _z_executor_spin(&be->_executor);
+        if (res.status == _Z_EXECUTOR_STATE_NO_TASKS) {  // no pending tasks, sleep until next task is added
             _Z_CLEAN_RETURN_IF_ERR(_z_condvar_wait(&be->_condvar, &be->_mutex), _z_mutex_unlock(&be->_mutex));
-        } else if (res.status == _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT) {  // we have pending timed tasks but they are not
-                                                                         // ready yet, sleep until the next one is ready
+        } else if (res.status == _Z_EXECUTOR_STATE_SHOULD_WAIT) {  // we have pending timed tasks but they are not
+                                                                   // ready yet, sleep until the next one is ready
             z_clock_t now = z_clock_now();
             if (zp_clock_elapsed_ms_since(&res.next_wake_up_time, &now) > 1) {  // sleep until next task is ready
                 z_result_t wait_result = _z_condvar_wait_until(&be->_condvar, &be->_mutex, &res.next_wake_up_time);

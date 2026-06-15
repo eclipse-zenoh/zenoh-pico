@@ -33,9 +33,35 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     return handle;
 }
 
-_z_executor_spin_result_t _z_executor_get_next_fut(_z_executor_t *executor, _z_fut_data_hmap_index_t *task_idx) {
-    _z_executor_spin_result_t result;
-    result.status = _Z_EXECUTOR_SPIN_RESULT_NO_TASKS;
+_z_executor_status_t _z_executor_get_status(const _z_executor_t *executor) {
+    _z_executor_status_t result;
+    if (!_z_fut_data_hmap_index_deque_is_empty(&executor->_ready_tasks)) {
+        result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
+        return result;
+    }
+    _z_fut_data_hmap_index_t *sleeping_idx_ptr =
+        _z_sleeping_fut_pqueue_peek((_z_sleeping_fut_pqueue_t *)&executor->_sleeping_tasks);
+    if (sleeping_idx_ptr != NULL) {
+        z_clock_t now = z_clock_now();
+        uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
+            _z_fut_data_hmap_node_at((_z_fut_data_hmap_t *)&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
+        z_clock_t wake_up_time = executor->_epoch;
+        z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
+        if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
+            result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
+        } else {
+            result.status = _Z_EXECUTOR_STATE_SHOULD_WAIT;
+            result.next_wake_up_time = wake_up_time;
+        }
+    } else {
+        result.status = _Z_EXECUTOR_STATE_NO_TASKS;
+    }
+    return result;
+}
+
+_z_executor_status_t _z_executor_get_next_fut(_z_executor_t *executor, _z_fut_data_hmap_index_t *task_idx) {
+    _z_executor_status_t result;
+    result.status = _Z_EXECUTOR_STATE_NO_TASKS;
     _z_fut_data_hmap_index_t *sleeping_idx_ptr = _z_sleeping_fut_pqueue_peek(&executor->_sleeping_tasks);
     if (sleeping_idx_ptr != NULL) {
         z_clock_t now = z_clock_now();
@@ -58,33 +84,33 @@ _z_executor_spin_result_t _z_executor_get_next_fut(_z_executor_t *executor, _z_f
                 // No non-sleeping task, execute the ready sleeping task directly.
                 *task_idx = sleeping_idx;
             }
-            result.status = _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK;
+            result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
         } else if (_z_fut_data_hmap_index_deque_pop_front(&executor->_ready_tasks, task_idx)) {
             // We have a non-sleeping task to execute
-            result.status = _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK;
+            result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
         } else {
             // No non-sleeping task, we should wait for the sleeping task to be ready.
-            result.status = _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT;
+            result.status = _Z_EXECUTOR_STATE_SHOULD_WAIT;
             result.next_wake_up_time = wake_up_time;
         }
     } else if (_z_fut_data_hmap_index_deque_pop_front(&executor->_ready_tasks, task_idx)) {
         // We have a non-sleeping task to execute
-        result.status = _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK;
+        result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
     }
     return result;
 }
 
-_z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
+_z_executor_status_t _z_executor_spin(_z_executor_t *executor) {
     _z_fut_data_hmap_index_t fut_idx;
     _z_fut_data_t *fut_data = NULL;
-    _z_executor_spin_result_t result;
+    _z_executor_status_t result;
     // Set context before spinning to make sure the sleeping task queue can access the task pool to compare the wake-up
     // time, in case executor was moved.
     _z_sleeping_fut_pqueue_set_ctx(&executor->_sleeping_tasks, &executor->_tasks);
     while (true) {  // Loop until we find non-null task to execute
         result = _z_executor_get_next_fut(executor, &fut_idx);
-        if (result.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS ||
-            result.status == _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT) {  // No tasks to execute
+        if (result.status == _Z_EXECUTOR_STATE_NO_TASKS ||
+            result.status == _Z_EXECUTOR_STATE_SHOULD_WAIT) {  // No tasks to execute
             return result;
         }
         fut_data = &_z_fut_data_hmap_node_at(&executor->_tasks, fut_idx)->val;
@@ -116,7 +142,7 @@ _z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor) {
         // in the next spin until it's resumed by external events.
         fut_data->_schedule = _z_fut_schedule_suspended();
     }
-    return result;
+    return _z_executor_get_status(executor);
 }
 
 _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const _z_fut_handle_t *handle) {
