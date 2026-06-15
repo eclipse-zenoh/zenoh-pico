@@ -55,6 +55,12 @@
 //       E.g. 1_NAME=ok, 2_NAME=err produces NAME_from_ok / NAME_is_ok /
 //       NAME_get_ok / NAME_take_ok and NAME_TAG_ok.
 //
+// Optional suppression:
+//   _ZP_VARIANT_TEMPLATE_NO_MOVE_FN
+//       When defined, the NAME_move(dst, src) function is NOT generated.
+//       Useful when the variant is only ever constructed/destroyed in-place and
+//       the move helper would create an unused-function warning.
+//
 // Optional callbacks (default: no-op destroy, shallow-copy move):
 //   _ZP_VARIANT_TEMPLATE_1_DESTROY_FN(ptr)
 //   _ZP_VARIANT_TEMPLATE_2_DESTROY_FN(ptr)
@@ -100,7 +106,7 @@
 //   NAME_t  NAME_from_8N(8_TYPE *val)   — only if 8_TYPE defined
 //   void    NAME_destroy(NAME_t *v)
 //
-// Move (variant-to-variant):
+// Move (variant-to-variant)  — omitted when _ZP_VARIANT_TEMPLATE_NO_MOVE_FN is defined:
 //   void    NAME_move(NAME_t *dst, NAME_t *src)
 //
 // Inspection:
@@ -661,10 +667,11 @@ static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, destroy)(_ZP_VARIANT_TEMPL
 // ── NAME_move ─────────────────────────────────────────────────────────────────
 // Moves *src into *dst.  Previous contents of *dst are destroyed.
 // *src is left in NONE state.
+// Generated only when _ZP_VARIANT_TEMPLATE_NO_MOVE_FN is NOT defined.
 
+#ifndef _ZP_VARIANT_TEMPLATE_NO_MOVE_FN
 static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, move)(_ZP_VARIANT_TEMPLATE_TYPE *dst,
                                                             _ZP_VARIANT_TEMPLATE_TYPE *src) {
-    _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, destroy)(dst);
     switch (src->_tag) {
 #ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
         case _ZP_VARIANT_TAG_1:
@@ -720,6 +727,7 @@ static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, move)(_ZP_VARIANT_TEMPLATE
     }
     src->_tag = _ZP_VARIANT_TAG_NONE;
 }
+#endif  // _ZP_VARIANT_TEMPLATE_NO_MOVE_FN
 
 // ── NAME_tag / NAME_is_none / NAME_is_XN ─────────────────────────────────────
 
@@ -1064,6 +1072,7 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 // ── Undef all macros ──────────────────────────────────────────────────────────
 #undef _ZP_VARIANT_TEMPLATE_SENTINEL_TYPE
 #undef _ZP_VARIANT_TEMPLATE_NAME
+#undef _ZP_VARIANT_TEMPLATE_NO_MOVE_FN
 #undef _ZP_VARIANT_TEMPLATE_1_TYPE
 #undef _ZP_VARIANT_TEMPLATE_2_TYPE
 #undef _ZP_VARIANT_TEMPLATE_3_TYPE
