@@ -1,0 +1,4 @@
+---
+exclude_paths:
+  - "include/zenoh-pico/collections/*_template.h"
+  - "tests/*_template_test.c"
