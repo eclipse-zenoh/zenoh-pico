@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/config.h"
 
-#define _ZP_EXECUTOR_MAX_NUM_FUTURES Z_RUNTIME_MAX_TASKS
 #if Z_FEATURE_MULTI_THREAD == 1
 #include "zenoh-pico/runtime/background_executor.h"
 #else

@@ -24,6 +24,7 @@ _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     _z_fut_data_hmap_index_t idx = _z_fut_data_hmap_insert(&executor->_tasks, &executor->_next_fut_id, &fut_data);
     _z_fut_handle_t handle = _z_fut_handle_null();
     if (!_z_fut_data_hmap_index_valid(idx)) {
+        _z_fut_data_destroy(&fut_data);
         return handle;
     }
     handle._id = executor->_next_fut_id;
