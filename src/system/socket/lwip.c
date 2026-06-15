@@ -74,8 +74,11 @@ z_result_t _z_socket_wait_readable(_z_socket_wait_iter_t *iter, uint32_t timeout
         .tv_sec = (time_t)(timeout_ms / 1000U),
         .tv_usec = (suseconds_t)((timeout_ms % 1000U) * 1000U),
     };
-    if (lwip_select(max_fd + 1, &read_fds, NULL, NULL, &timeout) <= 0) {
+    int res = lwip_select(max_fd + 1, &read_fds, NULL, NULL, &timeout);
+    if (res < 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    } else if (res == 0) {
+        return _Z_NO_DATA_PROCESSED;
     }
 
     bool has_data = false;
