@@ -27,6 +27,8 @@ jobs:
 
     env:
       IDF_COMPONENT_MANAGER: "0"   # ← disable pacman to avoid the pydantic crash
+      ESPIDF_BASE: ${{ github.workspace }}/.ci/espidfproject
+      ZENOH_PICO_BASE: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,12 +46,8 @@ jobs:
 
       - name: Set up project
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-
-          mkdir -p $ESPIDF_BASE
-          cd $ESPIDF_BASE
+          mkdir -p "$ESPIDF_BASE"
+          cd "$ESPIDF_BASE"
           # Temporary workaround: espressif32@7.0.0 pulls in ESP-IDF 6.0 and exposes
           # the existing PlatformIO source-selection issue after the platform
           # restructuring from #1188. Remove this pin once PlatformIO integration is
@@ -60,85 +58,61 @@ jobs:
             --project-option="build_flags=-DZENOH_ESPIDF -DZENOH_LOG_DEBUG" \
             -O "board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1"
 
-          cd $ESPIDF_BASE/lib
-          ln -s $ZENOH_PICO_BASE
+          cd "$ESPIDF_BASE/lib"
+          ln -sfn "$ZENOH_PICO_BASE" "$ESPIDF_BASE/lib/zenoh-pico"
 
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
 
       - name: Build z_pub example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_pub.c" "$ESPIDF_BASE/src/z_pub.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_pub.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
 
       - name: Build z_sub example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_sub.c" "$ESPIDF_BASE/src/z_sub.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_sub.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
 
       - name: Build z_pull example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_pull.c" "$ESPIDF_BASE/src/z_pull.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_pull.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
 
       - name: Build z_get example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_get.c" "$ESPIDF_BASE/src/z_get.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_get.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
 
       - name: Build z_queryable example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_queryable.c" "$ESPIDF_BASE/src/z_queryable.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_queryable.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
 
       - name: Build z_scout example
         run: |
-          cd $HOME
-          export ESPIDF_BASE=$HOME/work/espidfproject/
-          export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
+          rm -rf "$ESPIDF_BASE"/src/*
+          cd "$ESPIDF_BASE/src"
+          ln -sfn "$ZENOH_PICO_BASE/examples/espidf/z_scout.c" "$ESPIDF_BASE/src/z_scout.c"
 
-          rm -rf $ESPIDF_BASE/src/*
-          cd $ESPIDF_BASE/src
-          ln -s $ZENOH_PICO_BASE/examples/espidf/z_scout.c
-
-          cd $ESPIDF_BASE
+          cd "$ESPIDF_BASE"
           pio run
