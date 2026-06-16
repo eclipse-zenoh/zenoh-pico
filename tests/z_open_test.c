@@ -557,19 +557,21 @@ static void test_open_pending_peer_progresses_after_partial_connectivity(void) {
     ASSERT_OK(open_test_task_join(&task));
     ASSERT_OK(ctx.ret);
 
-    z_owned_session_t *initial_sessions[] = {&s1, &ctx.session};
-    ASSERT_TRUE(
-        open_test_wait_for_peer_count(&ctx.session, 1, initial_sessions, _ZP_ARRAY_SIZE(initial_sessions), 1000));
-
-    ASSERT_OK(z_open(&s3, z_move(c3), NULL));
-    z_owned_session_t *late_listener_sessions[] = {&s1, &s3};
-    open_test_settle_listener(late_listener_sessions, _ZP_ARRAY_SIZE(late_listener_sessions));
-
 #if Z_FEATURE_MULTI_THREAD == 0
     open_test_task_t spin_task;
     open_test_async_spin_t spin_ctx;
     open_test_start_async_spin(&spin_task, &spin_ctx, &ctx.session);
+    z_owned_session_t *initial_sessions[] = {&s1};
+#else
+    z_owned_session_t *initial_sessions[] = {&s1, &ctx.session};
 #endif
+
+    ASSERT_TRUE(
+        open_test_wait_for_peer_count(&ctx.session, 1, initial_sessions, _ZP_ARRAY_SIZE(initial_sessions), 5000));
+
+    ASSERT_OK(z_open(&s3, z_move(c3), NULL));
+    z_owned_session_t *late_listener_sessions[] = {&s1, &s3};
+    open_test_settle_listener(late_listener_sessions, _ZP_ARRAY_SIZE(late_listener_sessions));
 
     z_owned_session_t *sessions[] = {&s1, &s3};
     ASSERT_TRUE(open_test_wait_for_peer_count(&ctx.session, 2, sessions, _ZP_ARRAY_SIZE(sessions), 5000));
