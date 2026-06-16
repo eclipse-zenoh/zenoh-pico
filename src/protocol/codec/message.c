@@ -636,7 +636,7 @@ z_result_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header
     msg->_zid = _z_id_empty();
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
         uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
-        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
+        ret |= _z_zbuf_read_exact(zbf, msg->_zid.id, zidlen);
     }
 
     return ret;
@@ -675,11 +675,9 @@ z_result_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t hea
     msg->_whatami = _z_whatami_from_uint8(cbyte);
     uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
 
+    msg->_zid = _z_id_empty();
     if (ret == _Z_RES_OK) {
-        msg->_zid = _z_id_empty();
-        _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
-    } else {
-        msg->_zid = _z_id_empty();
+        ret |= _z_zbuf_read_exact(zbf, msg->_zid.id, zidlen);
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true)) {
