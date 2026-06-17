@@ -3355,8 +3355,13 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to spin executor for.
+ *
+ * Return:
+ *   Returns ``false`` if there are no more tasks that can be executed immediately. This can only happen when
+ * Z_RUNTIME_IDLE_READ_TASK_SLEEP is set to positive value; otherwise read tasks always reschedule immediately, and
+ * ``true`` is always returned unless the session is closed.
  */
-void zp_spin_once(const z_loaned_session_t *zs);
+bool zp_spin_once(const z_loaned_session_t *zs);
 #endif
 
 #ifdef Z_FEATURE_UNSTABLE_API

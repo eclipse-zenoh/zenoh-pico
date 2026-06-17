@@ -390,8 +390,15 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         assert(curr_peer != NULL);
         size_t to_read = 0;
         // Retrieve data
-        if (_z_unicast_client_read(ztu, curr_peer, &to_read) &&
-            _z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+        if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
+            // nothing to read
+#if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
+            return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
+#else
+            return _z_fut_fn_result_continue();
+#endif
+        }
+        if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
             _Z_INFO("Read task failed, closing session\n");
             return _zp_unicast_failed_result(ztu, executor);
         }
@@ -402,8 +409,16 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         if (!has_peers) {
             return _z_fut_fn_result_wake_up_after(100);
         }
+        z_result_t read_res = _z_unicast_wait_peer_event(ztu);
+        if (read_res == _Z_NO_DATA_PROCESSED) {
+#if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
+            return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
+#else
+            return _z_fut_fn_result_continue();
+#endif
+        }
 
-        if (_z_unicast_wait_peer_event(ztu) == _Z_RES_OK && _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
+        if (read_res != _Z_RES_OK || _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
             // TODO: Close transport on error. Probably we should just close the failed peer and
             // initiate reconnection task.
             return _z_fut_fn_result_ready();
