@@ -60,6 +60,7 @@ file(GLOB_RECURSE Sources
   "../src/link/*.c"
   "../src/net/*.c"
   "../src/protocol/*.c"
+  "../src/runtime/*.c"
   "../src/session/*.c"
   "../src/transport/*.c"
   "../src/utils/*.c"
