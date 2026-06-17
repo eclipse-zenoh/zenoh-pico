@@ -105,7 +105,9 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
         const char *p_key_start = start;
         const char *p_key_end = memchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR, curr_len);
 
-        if (p_key_end != NULL) {
+        if (p_key_end == NULL) {
+            break;
+        } else {
             // Verify the key is valid based on the provided mapping
             size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
             bool found = false;
