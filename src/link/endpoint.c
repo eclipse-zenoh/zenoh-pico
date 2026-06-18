@@ -155,9 +155,9 @@ z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, const _z_str
     }
 
     size_t curr_len = _z_string_len(str) - start_offset;
-    const char *p_end = (char *)memchr(p_start, ENDPOINT_CONFIG_SEPARATOR, curr_len);
+    const char *p_end = memchr(p_start, ENDPOINT_CONFIG_SEPARATOR, curr_len);
     if (p_end == NULL) {
-        p_end = _z_cptr_char_offset(_z_string_data(str), (ptrdiff_t)_z_string_len(str));
+        p_end = _z_cptr_char_offset(p_start, (ptrdiff_t)curr_len);
     }
 
     if (p_start != p_end) {
