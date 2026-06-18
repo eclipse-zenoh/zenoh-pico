@@ -3,6 +3,8 @@
 This folder contains `libFuzzer` targets for `zenoh-pico`.
 The following targets will be tested:
 
+- `z_fuzz_endpoint_str`: feeds arbitrary bytes into `_z_endpoint_from_string()`
+  and, on successful parses, round-trips them through `_z_endpoint_to_string()`
 - `z_fuzz_scouting_message_decode`: feeds arbitrary bytes into `_z_scouting_message_decode()`
 
 ## Requirements
@@ -28,16 +30,18 @@ This keeps the normal build separate from the fuzzing build.
 
 ## Build
 
-Build the first fuzz target:
+Build the fuzz targets:
 
 ```bash
 cmake --build build-fuzz --target z_fuzz_scouting_message_decode
+cmake --build build-fuzz --target z_fuzz_endpoint_str
 ```
 
-The executable will be generated at:
+The executables will be generated at:
 
 ```bash
 build-fuzz/fuzz/z_fuzz_scouting_message_decode
+build-fuzz/fuzz/z_fuzz_endpoint_str
 ```
 
 ## Run continuous fuzzing
@@ -46,9 +50,13 @@ You can let `libFuzzer` keep mutating inputs:
 
 ```bash
 mkdir -p fuzz/corpus/scouting_message_decode
+mkdir -p fuzz/corpus/endpoint_str
 ./build-fuzz/fuzz/z_fuzz_scouting_message_decode \
   -timeout=5 \
   fuzz/corpus/scouting_message_decode
+./build-fuzz/fuzz/z_fuzz_endpoint_str \
+  -timeout=5 \
+  fuzz/corpus/endpoint_str
 ```
 
 ## Useful options
@@ -60,6 +68,10 @@ Run for a fixed number of executions:
   -timeout=5 \
   -runs=10000 \
   fuzz/corpus/scouting_message_decode
+./build-fuzz/fuzz/z_fuzz_endpoint_str \
+  -timeout=5 \
+  -runs=10000 \
+  fuzz/corpus/endpoint_str
 ```
 
 Limit generated input size:
@@ -69,12 +81,17 @@ Limit generated input size:
   -timeout=5 \
   -max_len=256 \
   fuzz/corpus/scouting_message_decode
+./build-fuzz/fuzz/z_fuzz_endpoint_str \
+  -timeout=5 \
+  -max_len=256 \
+  fuzz/corpus/endpoint_str
 ```
 
 Replay a saved crashing input:
 
 ```bash
 ./build-fuzz/fuzz/z_fuzz_scouting_message_decode path/to/crash-input
+./build-fuzz/fuzz/z_fuzz_endpoint_str path/to/crash-input
 ```
 
 ## Clean up
