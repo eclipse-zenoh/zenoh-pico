@@ -101,6 +101,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+    _z_rid_to_count_hmap_init(&zn->_received_queries_id_to_count);
     zn->_local_queryable = NULL;
 #if Z_FEATURE_RX_CACHE == 1
     zn->_queryable_cache = _z_queryable_lru_cache_init(Z_RX_CACHE_SIZE);
@@ -188,6 +189,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     _z_flush_subscriptions(zn);
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+    _z_flush_received_queries(zn);
     // Admin space querable cleanup will occur as part of queryable cleanup
     _z_flush_session_queryable(zn);
 #endif

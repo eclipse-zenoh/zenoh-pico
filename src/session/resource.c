@@ -91,38 +91,67 @@ _z_resource_t *_z_get_resource_by_key_inner(_z_resource_slist_t *rl, const _z_ke
     return ret;
 }
 
-static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_t *ret, _z_resource_slist_t *xs,
-                                                     const _z_wireexpr_t *expr, bool alias_wireexpr_if_possible) {
-    *ret = _z_keyexpr_null();
+static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_view_t *ret, _z_resource_slist_t *xs,
+                                                     const _z_wireexpr_t *expr, char *buf, size_t buf_len) {
+    *ret = _z_keyexpr_view_null();
     _z_zint_t id = expr->_id;
-    _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
 
-    if (id == Z_RESOURCE_ID_NONE) {  // Check if ke is already expanded
-        if (alias_wireexpr_if_possible) {
-            ret->_keyexpr = suffix;
-            return _Z_RES_OK;
-        } else {
-            return _z_string_copy(&ret->_keyexpr, &suffix);
-        }
+    if (id == Z_RESOURCE_ID_NONE) {
+        // Check if ke is already expanded. Alias it, it's life time is now determined by wireexpr.
+        *ret = _z_keyexpr_view_from_string_view(&expr->_suffix);
+        return _Z_RES_OK;
     } else {
         _z_resource_t *res = _z_get_resource_by_id_inner(xs, id);
         if (res == NULL) {
             return _Z_ERR_KEYEXPR_UNKNOWN;
         }
-        _z_keyexpr_t ke_prefix = _z_keyexpr_alias(&res->_key);
-        return _z_string_concat(&ret->_keyexpr, &ke_prefix._keyexpr, &suffix, NULL, 0);
+        // Even if wire expression does not contain a suffix, we can not alias
+        // its corresponding resource, since the latter might be undeclared at any moment.
+        size_t prefix_len = _z_string_len(&res->_key._keyexpr);
+        size_t suffix_len = _z_string_len(&expr->_suffix);
+        if (prefix_len + suffix_len > buf_len) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        memcpy(buf, _z_string_data(&res->_key._keyexpr), prefix_len);
+        if (suffix_len > 0) {
+            memcpy(buf + prefix_len, _z_string_data(&expr->_suffix), suffix_len);
+        }
+        _z_string_view_t sv = _z_string_view_make(buf, prefix_len + suffix_len);
+        *ret = _z_keyexpr_view_from_string_view(&sv);
+        return _Z_RES_OK;
     }
 }
 
+z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t *out, const _z_wireexpr_t *expr,
+                                             _z_transport_peer_common_t *peer) {
+    *out = _z_keyexpr_view_null();
+    z_result_t ret = _Z_ERR_NULL;
+    if (expr != NULL && _z_wireexpr_check(expr)) {
+        _z_session_mutex_lock(zn);
+        _z_resource_slist_t *decls =
+            (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
+        ret = _z_get_keyexpr_from_wireexpr_inner(out, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH);
+        _z_session_mutex_unlock(zn);
+    }
+    return ret;
+}
+
 z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
-                                        _z_transport_peer_common_t *peer, bool alias_wireexpr_if_possible) {
+                                        _z_transport_peer_common_t *peer) {
     *out = _z_keyexpr_null();
     z_result_t ret = _Z_ERR_NULL;
     if (expr != NULL && _z_wireexpr_check(expr)) {
         _z_session_mutex_lock(zn);
         _z_resource_slist_t *decls =
             (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
-        ret = _z_get_keyexpr_from_wireexpr_inner(out, decls, expr, alias_wireexpr_if_possible);
+        _z_keyexpr_view_t kv;
+        ret = z_get_keyexpr_from_wireexpr_inner(&kv, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH);
+        if (_z_get_keyexpr_from_wireexpr_inner(&kv, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH) ==
+            _Z_RES_OK) {
+            ret = _z_keyexpr_copy(out, _z_keyexpr_view_deref(&kv));
+        } else {
+            *out = _z_keyexpr_null();
+        }
         _z_session_mutex_unlock(zn);
     }
     return ret;
@@ -142,8 +171,8 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
             return _Z_ERR_ENTITY_DECLARATION_FAILED;
         }
         if (_z_wireexpr_has_suffix(expr)) {
-            _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
-            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, &suffix, NULL, 0) != _Z_RES_OK) {
+            const _z_string_t *suffix = _z_string_view_deref(&expr->_suffix);
+            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, suffix, NULL, 0) != _Z_RES_OK) {
                 _Z_ERROR("Failed to allocate memory for new string");
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
@@ -156,8 +185,7 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
             new_key = _z_keyexpr_alias(&res->_key);
         }
     } else {
-        _z_string_t suffix = _z_string_alias_view_string(&expr->_suffix);
-        new_key = _z_keyexpr_alias_from_string(&suffix);
+        new_key = _z_keyexpr_alias_from_string(_z_string_view_deref(&expr->_suffix));
     }
 
     if (id == Z_RESOURCE_ID_NONE) {

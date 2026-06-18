@@ -28,8 +28,10 @@ uint32_t _z_get_entity_id(_z_session_t *zn);
 
 /*------------------ Resource ------------------*/
 uint16_t _z_get_resource_id(_z_session_t *zn);
+z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t *out, const _z_wireexpr_t *expr,
+                                             _z_transport_peer_common_t *peer);
 z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
-                                        _z_transport_peer_common_t *peer, bool alias_wireexpr_if_possible);
+                                        _z_transport_peer_common_t *peer);
 z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id,
                                 _z_transport_peer_common_t *peer, uint16_t *out_id);
 z_result_t _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer);

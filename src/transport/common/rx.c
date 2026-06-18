@@ -107,6 +107,7 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
     } else {
         _Z_ERROR_LOG(ret);
     }
+    // TODO !!!: do not clean zbbuf here
     _z_zbuf_clear(&zbf);
 
     return ret;

@@ -145,7 +145,7 @@ static inline uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf) { return zbf->_ios
 // Constructs a _borrowing_ reader on `slice`
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
-_z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
+_z_zbuf_t _z_slice_as_zbuf(const _z_slice_t *slice);
 
 void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src);
 void _z_zbuf_copy(_z_zbuf_t *dst, const _z_zbuf_t *src);

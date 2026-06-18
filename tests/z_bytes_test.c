@@ -27,7 +27,7 @@ void test_null_bytes(void) {
     assert(_z_bytes_is_empty(&b));
     assert(!_z_bytes_check(&b));
     assert(_z_bytes_num_slices(&b) == 0);
-    _z_bytes_drop(&b);  // no crush
+    _z_bytes_clear(&b);  // no crush
 }
 
 void test_slice(void) {
@@ -47,7 +47,7 @@ void test_slice(void) {
     assert(_z_bytes_to_buf(&b, data_out, 5) == 5);
     assert(memcmp(data, data_out, 5) == 0);
 
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&b);
     _z_slice_clear(&s_check);
 }
 
@@ -85,7 +85,7 @@ void test_append(void) {
     assert(_z_bytes_to_buf(&b, data_out, 15) == 10);
     assert(memcmp(data_in, data_out, 10) == 0);
 
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&b);
     _z_slice_clear(&s1_check);
     _z_slice_clear(&s2_check);
     _z_slice_clear(&s3_check);
@@ -124,7 +124,7 @@ void test_reader_read(void) {
     assert(_z_bytes_reader_tell(&reader) == 10);
     assert(memcmp(data_out, data_in + 4, 6) == 0);
 
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&b);
 }
 
 void test_reader_seek(void) {
@@ -172,7 +172,7 @@ void test_reader_seek(void) {
     assert(_z_bytes_reader_seek(&reader, -20, SEEK_END) != 0);
     assert(_z_bytes_reader_seek(&reader, 5, SEEK_END) != 0);
 
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&b);
 }
 
 void test_writer(void) {
@@ -195,7 +195,7 @@ void test_writer(void) {
 
     assert(_z_bytes_get_slice(&b, 0)->len == 13);
     assert(memcmp(data_out, _z_bytes_get_slice(&b, 0)->start, 13) == 0);
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&b);
 }
 
 // Verifies the underlying variant representation: a single slice stays inline,
@@ -231,8 +231,8 @@ void test_variant_representation(void) {
     assert(_z_bytes_num_slices(&dst) == 2);
     assert(_z_bytes_num_slices(&copy) == 0);  // moved out
 
-    _z_bytes_drop(&dst);
-    _z_bytes_drop(&b);
+    _z_bytes_clear(&dst);
+    _z_bytes_clear(&b);
 }
 
 int main(void) {

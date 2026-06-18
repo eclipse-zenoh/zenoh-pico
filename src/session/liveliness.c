@@ -38,7 +38,7 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
                                                       const _z_timestamp_t *timestamp,
                                                       _z_transport_peer_common_t *peer) {
     _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, false));
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer));
     z_result_t ret = _Z_RES_OK;
     _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
 
@@ -61,8 +61,7 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
     }
 
     _z_session_mutex_unlock(zn);
-    _z_wireexpr_t wireexpr2 = _z_wireexpr_alias(wireexpr);
-    _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, &wireexpr2, timestamp, peer));
+    _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, wireexpr, timestamp, peer));
     if (ret != _Z_RES_OK) {
         _z_session_mutex_lock(zn);
         // remote tokens kes do not reference any declaration, so it is safe to remove them under session mutex
@@ -152,13 +151,14 @@ _z_liveliness_pending_query_t *_z_unsafe_liveliness_register_pending_query(_z_se
 static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t interest_id,
                                                     const _z_wireexpr_t *wireexpr, const _z_timestamp_t *timestamp,
                                                     _z_transport_peer_common_t *peer) {
-    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_view_string_len(&wireexpr->_suffix),
-             _z_view_string_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
-    _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer, true));
+    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_string_view_len(&wireexpr->_suffix),
+             _z_string_view_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
+    _z_keyexpr_view_t ke_view;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
     z_result_t ret = _Z_RES_OK;
+    const _z_keyexpr_t *ke = _z_keyexpr_view_deref(&ke_view);
 
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
 
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);
@@ -170,29 +170,21 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     _Z_DEBUG("Liveliness pending query reply %i resolve result %i", (int)interest_id, ret);
 
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG("Reply liveliness query for %.*s", (int)_z_string_len(&ke._keyexpr), _z_string_data(&ke._keyexpr));
+        _Z_DEBUG("Reply liveliness query for %.*s", (int)_z_string_len(&ke->_keyexpr), _z_string_data(&ke->_keyexpr));
 
-        if (!_z_keyexpr_intersects(&pq->_key, &ke)) {
+        if (!_z_keyexpr_intersects(&pq->_key, ke)) {
             _Z_ERROR_LOG(_Z_ERR_QUERY_NOT_MATCH);
             ret = _Z_ERR_QUERY_NOT_MATCH;
         }
 
         if (ret == _Z_RES_OK) {
-            _z_encoding_t encoding = _z_encoding_null();
-            _z_bytes_t payload = _z_bytes_null();
-            _z_bytes_t attachment = _z_bytes_null();
-            _z_source_info_t source_info = _z_source_info_null();
             _z_reply_t reply;
-            _z_reply_steal_data(&reply, &ke, _z_entity_global_id_null(), &payload, timestamp, &encoding,
-                                Z_SAMPLE_KIND_PUT, &attachment, &source_info);
-
+            _z_reply_create_ok_view_from_data(&reply, ke, NULL, timestamp, NULL, Z_SAMPLE_KIND_PUT, NULL, NULL, NULL);
             pq->_callback(&reply, pq->_arg);
-            _z_reply_clear(&reply);
         }
     }
 
     _z_session_mutex_unlock(zn);
-    _z_keyexpr_clear(&ke);
 
     return ret;
 }

@@ -68,7 +68,6 @@ z_result_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *pld, _z_zbuf_t *zbf);
 
 z_result_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *pld);
 z_result_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *pld, _z_zbuf_t *zbf);
-z_result_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *pld, _z_zbuf_t *zbf);
 
 #ifdef __cplusplus
 }

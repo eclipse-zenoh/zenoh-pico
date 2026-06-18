@@ -108,19 +108,18 @@ typedef struct {
         _z_decl_final_t _decl_final;
     } _body;
 } _z_declaration_t;
-void _z_declaration_clear(_z_declaration_t* decl);
 
-_z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_wireexpr_t) key);
+_z_declaration_t _z_make_decl_keyexpr(uint16_t id, const _z_wireexpr_t *key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 
-_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_wireexpr_t) key, uint32_t id);
-_z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
+_z_declaration_t _z_make_decl_subscriber(const _z_wireexpr_t *key, uint32_t id);
+_z_declaration_t _z_make_undecl_subscriber(uint32_t id, const _z_wireexpr_t *opt_key);
 
-_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_wireexpr_t) key, uint32_t id, bool complete, uint16_t distance);
-_z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
+_z_declaration_t _z_make_decl_queryable(const _z_wireexpr_t *key, uint32_t id, bool complete, uint16_t distance);
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, const _z_wireexpr_t *opt_key);
 
-_z_declaration_t _z_make_decl_token(_Z_MOVE(_z_wireexpr_t) key, uint32_t id);
-_z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL _Z_MOVE(_z_wireexpr_t) key);
+_z_declaration_t _z_make_decl_token(const _z_wireexpr_t *key, uint32_t id);
+_z_declaration_t _z_make_undecl_token(uint32_t id, const _z_wireexpr_t *opt_key);
 
 _z_declaration_t _z_make_decl_final(void);
 

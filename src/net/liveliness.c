@@ -153,11 +153,10 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
 
     _z_keyexpr_slist_t *pos = tokens_list;
     while (pos != NULL) {
-        _z_sample_t s = _z_sample_null();
-        s.kind = Z_SAMPLE_KIND_PUT;
-        s.keyexpr._inner = _z_keyexpr_alias(_z_keyexpr_slist_value(pos));
+        _z_sample_t s;
+        _z_sample_create_view_from_data(&s, _z_keyexpr_slist_value(pos), NULL, NULL, NULL, Z_SAMPLE_KIND_PUT,
+                                        _Z_N_QOS_DEFAULT, NULL, NULL, Z_RELIABILITY_DEFAULT);
         sub->_callback(&s, sub->_arg);
-        _z_sample_clear(&s);
         pos = _z_keyexpr_slist_next(pos);
     }
     _z_keyexpr_slist_free(&tokens_list);

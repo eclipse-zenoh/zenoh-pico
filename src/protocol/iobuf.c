@@ -141,13 +141,13 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     return v;
 }
 
-_z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
+_z_zbuf_t _z_slice_as_zbuf(const _z_slice_t* slice) {
     return (_z_zbuf_t){
-        ._ios = {._buf = (uint8_t *)slice.start,  // Safety: `_z_zbuf_t` is an immutable buffer
+        ._ios = {._buf = (uint8_t *)slice->start,  // Safety: `_z_zbuf_t` is an immutable buffer
                  ._is_alloc = false,
-                 ._capacity = slice.len,
+                 ._capacity = slice->len,
                  ._r_pos = 0,
-                 ._w_pos = slice.len},
+                 ._w_pos = slice->len},
         ._slice = _z_slice_simple_rc_null(),
     };
 }

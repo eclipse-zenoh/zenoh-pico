@@ -46,70 +46,20 @@ _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *m
     return ret;
 }
 
-void _z_n_msg_request_clear(_z_n_msg_request_t *msg) {
-    _z_wireexpr_clear(&msg->_key);
-    switch (msg->_tag) {
-        case _Z_REQUEST_QUERY: {
-            _z_msg_query_clear(&msg->_body._query);
-        } break;
-        case _Z_REQUEST_PUT: {
-            _z_msg_put_clear(&msg->_body._put);
-        } break;
-        case _Z_REQUEST_DEL: {
-            _z_msg_del_clear(&msg->_body._del);
-        } break;
-    }
-}
-
 /*=============================*/
 /*      Network Messages       */
 /*=============================*/
-void _z_push_body_clear(_z_push_body_t *msg) {
-    if (msg->_is_put) {
-        _z_msg_put_clear(&msg->_body._put);
-    }
-}
-_z_push_body_t _z_push_body_steal(_z_push_body_t *msg) {
-    _z_push_body_t ret = *msg;
-    *msg = _z_push_body_null();
-    return ret;
-}
-
-void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg) { (void)(msg); }
-
-void _z_n_msg_push_clear(_z_n_msg_push_t *msg) {
-    _z_wireexpr_clear(&msg->_key);
-    _z_push_body_clear(&msg->_body);
-}
-
-void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
-    _z_timestamp_clear(&msg->_ext_timestamp);
-    _z_wireexpr_clear(&msg->_key);
-    switch (msg->_tag) {
-        case _Z_RESPONSE_BODY_REPLY: {
-            _z_msg_reply_clear(&msg->_body._reply);
-            break;
-        }
-        case _Z_RESPONSE_BODY_ERR: {
-            _z_msg_err_clear(&msg->_body._err);
-            break;
-        }
-    }
-}
 
 void _z_n_msg_oam_clear(_z_n_msg_oam_t *oam) {
     _z_timestamp_clear(&oam->_ext_timestamp);
     switch (oam->_enc) {
         case _Z_OAM_BODY_UNIT: {
-            _z_msg_ext_clear_unit(&oam->_body._unit);
             break;
         }
         case _Z_OAM_BODY_ZINT: {
-            _z_msg_ext_clear_zint(&oam->_body._zint);
             break;
         }
         case _Z_OAM_BODY_ZBUF: {
-            _z_msg_ext_clear_zbuf(&oam->_body._zbuf);
             break;
         }
     }
@@ -118,22 +68,16 @@ void _z_n_msg_oam_clear(_z_n_msg_oam_t *oam) {
 void _z_n_msg_clear(_z_network_message_t *msg) {
     switch (msg->_tag) {
         case _Z_N_PUSH:
-            _z_n_msg_push_clear(&msg->_body._push);
             break;
         case _Z_N_REQUEST:
-            _z_n_msg_request_clear(&msg->_body._request);
             break;
         case _Z_N_RESPONSE:
-            _z_n_msg_response_clear(&msg->_body._response);
             break;
         case _Z_N_RESPONSE_FINAL:
-            _z_n_msg_response_final_clear(&msg->_body._response_final);
             break;
         case _Z_N_DECLARE:
-            _z_n_msg_declare_clear(&msg->_body._declare);
             break;
         case _Z_N_INTEREST:
-            _z_n_msg_interest_clear(&msg->_body._interest);
             break;
         case _Z_N_OAM:
             _z_n_msg_oam_clear(&msg->_body._oam);
@@ -167,13 +111,12 @@ void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, cons
     msg->_body._request._tag = _Z_REQUEST_QUERY;
     msg->_body._request._rid = qid;
     msg->_body._request._key = *key;
-    msg->_body._request._body._query._parameters = *parameters;
+    msg->_body._request._body._query._parameters = _z_slice_view_from_slice(parameters);
     msg->_body._request._body._query._implicit_anyke = implicit_anyke;
     msg->_body._request._body._query._consolidation = consolidation;
-    msg->_body._request._body._query._ext_value.payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    msg->_body._request._body._query._ext_value.encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
+    _z_value_view_create_from_data(&msg->_body._request._body._query._ext_value, payload, encoding);
     msg->_body._request._body._query._ext_info = (source_info == NULL) ? _z_source_info_null() : *source_info;
-    msg->_body._request._body._query._ext_attachment = (attachment == NULL) ? _z_bytes_null() : *attachment;
+    msg->_body._request._body._query._ext_attachment = _z_bytes_view_from_bytes(attachment);
     msg->_body._request._ext_budget = 0;
     msg->_body._request._ext_qos = qos;
     msg->_body._request._ext_target = Z_QUERY_TARGET_BEST_MATCHING;
@@ -194,10 +137,9 @@ void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_wireexpr_t *key,
     dst->_body._push._body._body._put._commons._timestamp = (timestamp == NULL) ? _z_timestamp_null() : *timestamp;
     dst->_body._push._body._body._put._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
-    dst->_body._push._body._body._put._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._push._body._body._put._encoding =
-        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
-    dst->_body._push._body._body._put._attachment = (attachment == NULL) ? _z_bytes_null() : *attachment;
+    dst->_body._push._body._body._put._payload = _z_bytes_view_from_bytes(payload);
+    dst->_body._push._body._body._put._encoding = _z_encoding_view_from_encoding(encoding);
+    dst->_body._push._body._body._put._attachment = _z_bytes_view_from_bytes(attachment);
 }
 
 void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_wireexpr_t *key, _z_n_qos_t qos,
@@ -212,7 +154,7 @@ void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_wireexpr_t *key,
     dst->_body._push._body._body._del._commons._timestamp = (timestamp == NULL) ? _z_timestamp_null() : *timestamp;
     dst->_body._push._body._body._del._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
-    dst->_body._push._body._body._del._attachment = _z_bytes_null();
+    dst->_body._push._body._body._del._attachment = _z_bytes_view_null();
 }
 
 void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_wireexpr_t *key,
@@ -231,11 +173,9 @@ void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _
         (timestamp == NULL) ? _z_timestamp_null() : *timestamp;
     dst->_body._response._body._reply._body._body._put._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
-    dst->_body._response._body._reply._body._body._put._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._response._body._reply._body._body._put._encoding =
-        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
-    dst->_body._response._body._reply._body._body._put._attachment =
-        (attachment == NULL) ? _z_bytes_null() : *attachment;
+    dst->_body._response._body._reply._body._body._put._payload = _z_bytes_view_from_bytes(payload);
+    dst->_body._response._body._reply._body._body._put._encoding = _z_encoding_view_from_encoding(encoding);
+    dst->_body._response._body._reply._body._body._put._attachment = _z_bytes_view_from_bytes(attachment);
     dst->_body._response._ext_qos = qos;
     dst->_body._response._ext_timestamp = _z_timestamp_null();
     dst->_body._response._ext_responder._eid = 0;
@@ -257,8 +197,7 @@ void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _
         (timestamp == NULL) ? _z_timestamp_null() : *timestamp;
     dst->_body._response._body._reply._body._body._del._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
-    dst->_body._response._body._reply._body._body._del._attachment =
-        (attachment == NULL) ? _z_bytes_null() : *attachment;
+    dst->_body._response._body._reply._body._body._del._attachment = _z_bytes_view_from_bytes(attachment);
     dst->_body._response._ext_timestamp = _z_timestamp_null();
     dst->_body._response._ext_qos = qos;
     dst->_body._response._ext_responder._eid = 0;
@@ -273,9 +212,8 @@ void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_z
     dst->_body._response._tag = _Z_RESPONSE_BODY_ERR;
     dst->_body._response._request_id = rid;
     dst->_body._response._key = _z_wireexpr_null();
-    dst->_body._response._body._err._payload = (payload == NULL) ? _z_bytes_null() : *payload;
-    dst->_body._response._body._err._encoding =
-        (encoding == NULL) ? _z_view_encoding_null() : _z_view_encoding_from_encoding(encoding);
+    dst->_body._response._body._err._payload = _z_bytes_view_from_bytes(payload);
+    dst->_body._response._body._err._encoding = _z_encoding_view_from_encoding(encoding);
     dst->_body._response._body._err._ext_source_info = (source_info == NULL) ? _z_source_info_null() : *source_info;
     dst->_body._response._ext_timestamp = _z_timestamp_null();
     dst->_body._response._ext_qos = qos;

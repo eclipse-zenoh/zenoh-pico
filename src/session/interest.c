@@ -472,23 +472,21 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare
             _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
     }
     // Retrieve key
-    _z_keyexpr_t key;
-    if (_z_get_keyexpr_from_wireexpr(zn, &key, decl_key, peer, true) != _Z_RES_OK) {
-        _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
-    }
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&key));
-    msg.key = &key;
+    _z_keyexpr_view_t key;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &key, decl_key, peer));
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    msg.key = _z_keyexpr_view_deref(&key);
     // NOTE: it is possible that it is a redeclare of an existing entity - so we might need to update it
     _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
     if (prev_decl != NULL) {  // possible change in queryable completness
         prev_decl->_complete = msg.is_complete;
     } else {
         // register new declare
-        _unsafe_z_register_declare(zn, &key, msg.id, decl_type, msg.is_complete, peer);
+        _unsafe_z_register_declare(zn, _z_keyexpr_view_deref(&key), msg.id, decl_type, msg.is_complete, peer);
     }
     // Retrieve interests
     _z_session_interest_rc_slist_t *intrs =
-        __unsafe_z_get_interest_by_key_and_flags(zn, flags, &key, decl->_interest_id);
+        __unsafe_z_get_interest_by_key_and_flags(zn, flags, _z_keyexpr_view_deref(&key), decl->_interest_id);
     _z_session_mutex_unlock(zn);
     // update interests with new value
     _z_session_interest_rc_slist_t *xs = intrs;
@@ -500,7 +498,6 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare
         xs = _z_session_interest_rc_slist_next(xs);
     }
     // Clean up
-    _z_keyexpr_clear(&key);
     _z_session_interest_rc_slist_free(&intrs);
     return _Z_RES_OK;
 }
@@ -615,11 +612,12 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
 #elif Z_FEATURE_RAWETH_TRANSPORT == 1
     _Z_RETURN_IF_ERR(_zp_multicast_send_join(&zn->_tp._transport._raweth));
 #endif
-    _z_keyexpr_t restr_key = _z_keyexpr_null();
+    _z_keyexpr_view_t restr_key = _z_keyexpr_view_null();
+    const _z_keyexpr_t *restr_key_opt = NULL;
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
-        _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &restr_key, wireexpr, peer, true));
+        _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &restr_key, wireexpr, peer));
+        restr_key_opt = _z_keyexpr_view_deref(&restr_key);
     }
-    _z_keyexpr_t *restr_key_opt = _z_keyexpr_check(&restr_key) ? &restr_key : NULL;
     z_result_t ret = _Z_RES_OK;
     // Current flags process
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT)) {
@@ -644,7 +642,6 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
         // Send final declare
         _Z_SET_IF_OK(ret, _z_interest_send_declare_final(zn, interest_id, NULL));
     }
-    _z_keyexpr_clear(&restr_key);
     return ret;
 }
 

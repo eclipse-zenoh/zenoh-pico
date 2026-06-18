@@ -159,14 +159,10 @@ typedef struct {
     uint8_t n;
 } _z_n_msg_request_exts_t;
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg);
-void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef _z_reply_body_t _z_push_body_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_push_body_t _z_push_body_null(void) { return (_z_push_body_t){0}; }
-
-_z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
-void _z_push_body_clear(_z_push_body_t *msg);
 
 /*------------------ Response Final Message ------------------*/
 // Flags:
@@ -184,7 +180,6 @@ void _z_push_body_clear(_z_push_body_t *msg);
 typedef struct {
     _z_zint_t _request_id;
 } _z_n_msg_response_final_t;
-void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg);
 
 // Flags:
 // - N: Named          if N==1 then the keyexpr has name/suffix
@@ -210,7 +205,6 @@ typedef struct {
     _z_n_qos_t _qos;
     _z_push_body_t _body;
 } _z_n_msg_push_t;
-void _z_n_msg_push_clear(_z_n_msg_push_t *msg);
 
 /*------------------ Response Message ------------------*/
 typedef struct {
@@ -231,7 +225,6 @@ typedef struct {
         _z_msg_err_t _err;
     } _body;
 } _z_n_msg_response_t;
-void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
 
 /*------------------ Declare Message ------------------*/
 typedef struct {
@@ -255,7 +248,6 @@ typedef struct {
     _z_n_qos_t _ext_qos;
     _z_optional_id_t _interest_id;
 } _z_n_msg_declare_t;
-static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
 
 /*------------------ Interest Message ------------------*/
 
@@ -294,7 +286,6 @@ static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declarat
 typedef struct {
     _z_interest_t _interest;
 } _z_n_msg_interest_t;
-static inline void _z_n_msg_interest_clear(_z_n_msg_interest_t *msg) { _z_interest_clear(&msg->_interest); }
 
 /*------------------ OAM Message ------------------*/
 

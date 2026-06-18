@@ -67,19 +67,16 @@ extern "C" {
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_msg_ext_unit_t;
-void _z_msg_ext_clear_unit(_z_msg_ext_unit_t *ext);
 
 /*------------------ ZID Extension ------------------*/
 typedef struct {
     uint64_t _val;
 } _z_msg_ext_zint_t;
-void _z_msg_ext_clear_zint(_z_msg_ext_zint_t *ext);
 
 /*------------------ Unknown Extension ------------------*/
 typedef struct {
-    _z_slice_t _val;
+    _z_slice_view_t _val;
 } _z_msg_ext_zbuf_t;
-void _z_msg_ext_clear_zbuf(_z_msg_ext_zbuf_t *ext);
 
 /*------------------ Message Extensions ------------------*/
 typedef union {
@@ -92,12 +89,11 @@ typedef struct {
     _z_msg_ext_body_t _body;
     uint8_t _header;
 } _z_msg_ext_t;
-void _z_msg_ext_clear(_z_msg_ext_t *ext);
 
 /*------------------ Builders ------------------*/
 _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id);
 _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid);
-_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_slice_t zbuf);
+_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, const _z_slice_t *zbuf);
 
 /*------------------ Copy ------------------*/
 void _z_msg_ext_copy(_z_msg_ext_t *clone, const _z_msg_ext_t *ext);
@@ -105,7 +101,7 @@ void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, const _z_msg_ext_unit_t *ext
 void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext);
 void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, const _z_msg_ext_zbuf_t *ext);
 
-_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy, _z_noop_move, _z_noop_eq,
+_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_noop_clear, _z_msg_ext_copy, _z_noop_move, _z_noop_eq,
                _z_noop_cmp, _z_noop_hash)
 _Z_VEC_DEFINE(_z_msg_ext, _z_msg_ext_t)
 

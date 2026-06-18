@@ -97,11 +97,16 @@ static inline _z_string_t _z_string_alias_substr(const char *value, size_t len) 
     s._slice = _z_slice_alias_buf((const uint8_t *)(value), len);
     return s;
 }
-static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+static inline _z_string_t _z_string_from_substr_custom_deleter(char *value, size_t len, _z_delete_context_t c) {
     _z_string_t s;
-    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), len, c);
     return s;
 }
+
+static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+    return _z_string_from_substr_custom_deleter((char *)(value), strlen(value), c);
+}
+
 static inline void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
 static inline void _z_string_clear(_z_string_t *str) { _z_slice_clear(&str->_slice); }
 
@@ -138,43 +143,40 @@ _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
+// Non owning view of _z_string_t
 typedef struct {
-    size_t len;
-    const char *start;
-} _z_view_string_t;
+    _z_string_t _inner;
+} _z_string_view_t;
 
-static inline _z_view_string_t _z_view_string_make(const char *start, size_t len) {
-    _z_view_string_t s;
-    s.start = start;
-    s.len = len;
+static inline _z_string_view_t _z_string_view_make(const char *start, size_t len) {
+    _z_string_view_t s;
+    s._inner = _z_string_from_substr_custom_deleter((char *)start, len, _z_delete_context_null());
     return s;
 }
 
-static inline _z_view_string_t _z_view_string_empty(void) {
-    _z_view_string_t s = {0};
+static inline _z_string_view_t _z_string_view_null(void) {
+    _z_string_view_t s = {0};
     return s;
 }
 
-static inline bool _z_view_string_is_empty(const _z_view_string_t *s) { return s->len == 0; }
+static inline bool _z_string_view_is_empty(const _z_string_view_t *s) { return _z_string_is_empty(&s->_inner); }
 
-static inline size_t _z_view_string_len(const _z_view_string_t *s) { return s->len; }
+static inline size_t _z_string_view_len(const _z_string_view_t *s) { return _z_string_len(&s->_inner); }
 
-static inline const char *_z_view_string_data(const _z_view_string_t *s) { return s->start; }
+static inline const char *_z_string_view_data(const _z_string_view_t *s) { return _z_string_data(&s->_inner); }
 
 // Builds a non-owning view over the data of an existing string.
-static inline _z_view_string_t _z_view_string_from_string(const _z_string_t *s) {
-    return _z_view_string_make(_z_string_data(s), _z_string_len(s));
+static inline _z_string_view_t _z_string_view_from_string(const _z_string_t *s) {
+    _z_string_view_t sv;
+    sv._inner = *s;
+    return sv;
 }
 
-// Builds a non-owning `_z_string_t` aliasing the data of a view string. This is meant to bridge view strings with
-// the APIs that only accept `_z_string_t`; the returned string must not outlive the data referenced by the view.
-static inline _z_string_t _z_string_alias_view_string(const _z_view_string_t *s) {
-    return _z_string_alias_substr(_z_view_string_data(s), _z_view_string_len(s));
-}
+// Dereferences a view string to access the underlying string.
+static inline const _z_string_t *_z_string_view_deref(const _z_string_view_t *s) { return &s->_inner; }
 
-static inline bool _z_view_string_equals(_z_view_string_t left, _z_view_string_t right) {
-    if (left.len != right.len) return false;
-    return memcmp(left.start, right.start, left.len) == 0;
+static inline bool _z_string_view_equals(const _z_string_view_t *left, const _z_string_view_t *right) {
+    return _z_string_equals(&left->_inner, &right->_inner);
 }
 
 #ifdef __cplusplus

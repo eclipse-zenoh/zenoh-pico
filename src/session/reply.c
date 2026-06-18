@@ -19,8 +19,9 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_wireexpr_t *key, _z_msg_reply_t *reply,
-                                    _z_entity_global_id_t *replier_id, _z_transport_peer_common_t *peer) {
+z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wireexpr_t *key,
+                                    const _z_msg_reply_t *reply, const _z_entity_global_id_t *replier_id,
+                                    _z_transport_peer_common_t *peer) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
@@ -38,8 +39,8 @@ z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_wireexpr_
     return ret;
 }
 
-z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error,
-                                _z_entity_global_id_t *replier_id) {
+z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, const _z_msg_err_t *error,
+                                const _z_entity_global_id_t *replier_id) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
@@ -53,7 +54,7 @@ z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *er
     return ret;
 }
 
-z_result_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final) {
+z_result_t _z_trigger_reply_final(_z_session_t *zn, const _z_n_msg_response_final_t *final) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1

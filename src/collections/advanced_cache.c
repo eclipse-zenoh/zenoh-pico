@@ -164,12 +164,13 @@ static void _ze_advanced_cache_query_handler(z_loaned_query_t *query, void *ctx)
     size_t to_send = 0;
     while (max > 0 && _z_sample_ring_reverse_iterator_next(&iter)) {
         _z_sample_t *sample = _z_sample_ring_reverse_iterator_value(&iter);
-        if (range_filter && (!_z_source_info_check(&sample->source_info) ||
-                             !_ze_advanced_cache_range_contains(&params.range, sample->source_info._source_sn))) {
+        const _z_sample_owned_t *ref = _z_sample_get_ref(sample);
+        if (range_filter && (!_z_source_info_check(&ref->source_info) ||
+                             !_ze_advanced_cache_range_contains(&params.range, ref->source_info._source_sn))) {
             continue;
         }
-        if (time_filter && (!_z_timestamp_check(&sample->timestamp) ||
-                            !_z_time_range_contains_at_time(&params.time, sample->timestamp.time, now_ntp64))) {
+        if (time_filter && (!_z_timestamp_check(&ref->timestamp) ||
+                            !_z_time_range_contains_at_time(&params.time, ref->timestamp.time, now_ntp64))) {
             continue;
         }
 
@@ -323,7 +324,7 @@ z_result_t _ze_advanced_cache_add(_ze_advanced_cache_t *cache, _z_sample_t *samp
     if (s == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    _Z_CLEAN_RETURN_IF_ERR(_z_sample_move(s, sample), z_free((void *)s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_sample_move_or_copy(s, sample), z_free((void *)s));
 
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_CLEAN_RETURN_IF_ERR(_z_mutex_lock(&cache->_mutex), z_free((void *)s));

@@ -21,9 +21,6 @@
 #define _Z_DEFAULT_MULTICAST_BATCH_SIZE 8192
 #define _Z_DEFAULT_RESOLUTION_SIZE 2
 
-#define _Z_DECLARE_CLEAR(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m, uint8_t header)
-#define _Z_DECLARE_CLEAR_NOH(layer, name) void _z_##layer##_msg_clear_##name(_z_##name##_t *m)
-
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
 //       in bytes of the message, resulting in the maximum length of a message being 65_535 bytes.
 //       This is necessary in those stream-oriented transports (e.g., TCP) that do not preserve

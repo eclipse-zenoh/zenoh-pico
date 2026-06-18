@@ -111,33 +111,33 @@ _Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
 /*-------- View Slice --------*/
 /**
  * A non-owning view of an array of bytes.
- *
- * Members:
- *   size_t len: The length of the bytes array.
- *   uint8_t *start: A pointer to the bytes array.
  */
 typedef struct {
-    size_t len;
-    const uint8_t *start;
-} _z_view_slice_t;
+    _z_slice_t _inner;
+} _z_slice_view_t;
 
-static inline _z_view_slice_t _z_view_slice_make(const uint8_t *start, size_t len) {
-    _z_view_slice_t slice;
-    slice.start = start;
-    slice.len = len;
+static inline _z_slice_view_t _z_slice_view_from_slice(const _z_slice_t *slice) {
+    _z_slice_view_t view;
+    if (slice == NULL) {
+        view._inner = _z_slice_null();
+    } else {
+        view._inner = *slice;
+    }
+    return view;
+}
+
+static inline _z_slice_view_t _z_slice_view_make(const uint8_t *start, size_t len) {
+    _z_slice_view_t slice;
+    slice._inner = _z_slice_from_buf_custom_deleter(start, len, _z_delete_context_null());
     return slice;
 }
 
-static inline _z_view_slice_t _z_view_slice_empty(void) {
-    _z_view_slice_t slice = {0};
+static inline _z_slice_view_t _z_slice_view_null(void) {
+    _z_slice_view_t slice = {0};
     return slice;
 }
 
-static inline bool _z_view_slice_is_empty(const _z_view_slice_t *slice) { return slice->len == 0; }
-
-static inline size_t _z_view_slice_len(const _z_view_slice_t *slice) { return slice->len; }
-
-static inline const uint8_t *_z_view_slice_data(const _z_view_slice_t *slice) { return slice->start; }
+static inline const _z_slice_t *_z_slice_view_deref(const _z_slice_view_t *slice) { return &slice->_inner; }
 
 #ifdef __cplusplus
 }

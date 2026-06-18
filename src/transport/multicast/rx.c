@@ -492,13 +492,11 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
         case _Z_MID_T_INIT: {
             // Do nothing, multicast transports are not expected to handle INIT messages
-            _z_t_msg_init_clear(&t_msg->_body._init);
             break;
         }
 
         case _Z_MID_T_OPEN: {
             // Do nothing, multicast transports are not expected to handle OPEN messages
-            _z_t_msg_open_clear(&t_msg->_body._open);
             break;
         }
 

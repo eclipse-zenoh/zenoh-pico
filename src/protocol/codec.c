@@ -246,7 +246,7 @@ z_result_t _z_buf_encode(_z_wbuf_t *wbf, const uint8_t *buf, size_t len) {
 
 z_result_t _z_slice_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, bs->len));
-    return _z_slice_val_encode(wbf, bs);
+    return _z_data_encode(wbf, bs->start, bs->len);
 }
 
 z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_slices) {
@@ -256,22 +256,16 @@ z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_sli
     }
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
     for (size_t i = 0; i < num_slices; ++i) {
-        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &bs[i]));
+        _Z_RETURN_IF_ERR(_z_data_encode(wbf, bs[i].start, bs[i].len));
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
-    // Decode slice (aliases the decoding buffer)
-    _z_slice_t s;
+z_result_t _z_bytes_decode(_z_bytes_view_t *bs, _z_zbuf_t *zbf) {
+    _z_slice_view_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    // Take ownership of the data by duplicating it, as `_z_bytes_t` no longer shares the decoding buffer
-    _z_slice_t owned = _z_slice_duplicate(&s);
-    if (owned.len != s.len) {
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-    *bs = _z_bytes_null();
-    return _z_bytes_from_slice(bs, &owned);
+    _z_bytes_view_from_slice(_z_slice_view_deref(&s));
+    return _Z_RES_OK;
 }
 
 static inline z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
@@ -288,15 +282,16 @@ z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     return _z_bytes_encode_val(wbf, bs);
 }
 
-z_result_t _z_string_encode(_z_wbuf_t *wbf, _z_view_string_t s) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_view_string_len(&s)))
+z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_string_len(s)))
     // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_view_string_data(&s), 0, _z_view_string_len(&s));
+    return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(s), 0, _z_string_len(s));
 }
 
-z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
+z_result_t _z_string_decode(_z_string_view_t *str, _z_zbuf_t *zbf) {
     _z_zint_t len = 0;
     // Decode string length
+    *str = _z_string_view_null();
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len) {
@@ -304,7 +299,7 @@ z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
     // Alias string
-    *str = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+    *str = _z_string_view_make((const char *)_z_zbuf_get_rptr(zbf), len);
     _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
     return _Z_RES_OK;
 }
@@ -320,50 +315,53 @@ size_t _z_encoding_len(const _z_encoding_t *en) {
     return en_len;
 }
 
-z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_view_encoding_t *en) {
-    bool has_schema = !_z_view_string_is_empty(&en->schema);
+z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
+    bool has_schema = !_z_string_is_empty(&en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;
     }
     _Z_RETURN_IF_ERR(_z_zint32_encode(wbf, id));
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, en->schema));
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &en->schema));
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_encoding_decode(_z_view_encoding_t *en, _z_zbuf_t *zbf) {
+z_result_t _z_encoding_decode(_z_encoding_view_t *en, _z_zbuf_t *zbf) {
     uint32_t id = 0;
+    *en = _z_encoding_view_null();
     bool has_schema = false;
     _Z_RETURN_IF_ERR(_z_zint32_decode(&id, zbf));
     if ((id & _Z_ENCODING_FLAG_S) != 0) {
         has_schema = true;
     }
-    en->id = (uint16_t)(id >> 1);
+    _z_encoding_t inner = _z_encoding_null();
+    inner.id = (uint16_t)(id >> 1);
     if (has_schema) {
         // Decode the schema as a non-owning view aliasing the buffer.
-        _z_string_t schema = _z_string_null();
+        _z_string_view_t schema = {0};
         _Z_RETURN_IF_ERR(_z_string_decode(&schema, zbf));
-        en->schema = _z_view_string_from_string(&schema);
-    } else {
-        en->schema = _z_view_string_empty();
+        inner.schema = *_z_string_view_deref(&schema);
     }
+    *en = _z_encoding_view_from_encoding(&inner);
     return _Z_RES_OK;
 }
 
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *value) {
     size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
-    _z_view_encoding_t view_encoding = _z_view_encoding_from_encoding(&value->encoding);
-    _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &view_encoding));
+    _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &value->encoding));
     return _z_bytes_encode_val(wbf, &value->payload);
 }
 
-z_result_t _z_value_decode(_z_value_t *value, _z_zbuf_t *zbf) {
-    _z_view_encoding_t view_encoding;
+z_result_t _z_value_decode(_z_value_view_t *value, _z_zbuf_t *zbf) {
+    *value = _z_value_view_null();
+    _z_encoding_view_t view_encoding;
+    _z_bytes_view_t view_payload;
     _Z_RETURN_IF_ERR(_z_encoding_decode(&view_encoding, zbf));
-    value->encoding = _z_encoding_alias_view_encoding(&view_encoding);
-    _Z_RETURN_IF_ERR(_z_bytes_from_buf(&value->payload, (uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf)));
+    _z_slice_t view_slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
+    _z_bytes_view_from_slice(&view_slice);
+    _z_value_view_create_from_data(value, _z_bytes_view_deref(&view_payload), _z_encoding_view_deref(&view_encoding));
     return _Z_RES_OK;
 }

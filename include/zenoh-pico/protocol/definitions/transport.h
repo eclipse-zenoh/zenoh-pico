@@ -323,7 +323,7 @@ void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
 //
 typedef struct {
     _z_id_t _zid;
-    _z_slice_t _cookie;
+    _z_slice_view_t _cookie;
     uint16_t _batch_size;
     z_whatami_t _whatami;
     uint8_t _req_id_res;
@@ -333,7 +333,6 @@ typedef struct {
     uint8_t _patch;
 #endif
 } _z_t_msg_init_t;
-void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -369,9 +368,8 @@ void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 typedef struct {
     _z_zint_t _lease;
     _z_zint_t _initial_sn;
-    _z_slice_t _cookie;
+    _z_slice_view_t _cookie;
 } _z_t_msg_open_t;
-void _z_t_msg_open_clear(_z_t_msg_open_t *msg);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -523,8 +521,8 @@ z_reliability_t _z_t_msg_get_reliability(_z_transport_message_t *msg);
 _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_id_t zid,
                                           _z_conduit_sn_list_t next_sn);
 _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid);
-_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_slice_t cookie);
-_z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_slice_t cookie);
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, const _z_slice_t *cookie);
+_z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, const _z_slice_t *cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);

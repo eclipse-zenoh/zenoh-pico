@@ -68,35 +68,35 @@ static inline _z_slice_t _z_write_buf_into_slice(_z_write_buf_t *buf) {
 }
 
 typedef struct _z_read_buf_t {
-    _z_view_slice_t _buffer;
+    _z_slice_view_t _buffer;
     size_t _read_pos;
 } _z_read_buf_t;
 
 static inline _z_read_buf_t _z_read_buf_new(const uint8_t *data, size_t len) {
     _z_read_buf_t buf;
-    buf._buffer = _z_view_slice_make(data, len);
+    buf._buffer = _z_slice_view_make(data, len);
     buf._read_pos = 0;
     return buf;
 }
 
 static inline size_t _z_read_buf_remaining_len(_z_read_buf_t *buf) {
-    return _z_view_slice_len(&buf->_buffer) - buf->_read_pos;
+    return _z_slice_view_deref(&buf->_buffer)->len - buf->_read_pos;
 }
 
 static inline z_result_t _z_read_buf_read_byte(_z_read_buf_t *buf, uint8_t *out) {
     if (_z_read_buf_remaining_len(buf) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
-    *out = buf->_buffer.start[buf->_read_pos];
+    *out = _z_slice_view_deref(&buf->_buffer)->start[buf->_read_pos];
     buf->_read_pos++;
     return _Z_RES_OK;
 }
 
-static inline z_result_t _z_read_buf_read_bytes(_z_read_buf_t *buf, _z_view_slice_t *bytes, size_t len) {
+static inline z_result_t _z_read_buf_read_bytes(_z_read_buf_t *buf, _z_slice_view_t *bytes, size_t len) {
     if (_z_read_buf_remaining_len(buf) < len) {
         return _Z_ERR_DID_NOT_READ;
     }
-    *bytes = _z_view_slice_make(buf->_buffer.start + buf->_read_pos, len);
+    *bytes = _z_slice_view_make(_z_slice_view_deref(&buf->_buffer)->start + buf->_read_pos, len);
     buf->_read_pos += len;
     return _Z_RES_OK;
 }

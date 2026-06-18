@@ -106,7 +106,7 @@ z_result_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     _z_t_msg_join_t *msg = (_z_t_msg_join_t *)ctx;
     if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_QOS) {
         msg->_next_sn._is_qos = true;
-        _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
+        _z_zbuf_t zbf = _z_slice_as_zbuf(_z_slice_view_deref(&extension->_body._zbuf._val));
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
@@ -200,7 +200,7 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&msg->_cookie)))
     }
 
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -272,7 +272,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
     } else {
-        msg->_cookie = _z_slice_null();
+        msg->_cookie = _z_slice_view_null();
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     msg->_patch = _Z_NO_PATCH;
@@ -298,7 +298,7 @@ z_result_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t 
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_initial_sn))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&msg->_cookie)))
     }
 
     return ret;
@@ -319,10 +319,10 @@ z_result_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_slice_null();
+            msg->_cookie = _z_slice_view_null();
         }
     } else {
-        msg->_cookie = _z_slice_null();
+        msg->_cookie = _z_slice_view_null();
     }
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x02);

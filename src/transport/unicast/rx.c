@@ -294,13 +294,11 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
         case _Z_MID_T_INIT: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-            _z_t_msg_init_clear(&t_msg->_body._init);
             break;
         }
 
         case _Z_MID_T_OPEN: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-            _z_t_msg_open_clear(&t_msg->_body._open);
             break;
         }
 

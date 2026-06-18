@@ -58,11 +58,10 @@ extern "C" {
 ///  +---------------+
 #define _Z_FLAG_Z_E_E 0x40
 typedef struct {
-    _z_view_encoding_t _encoding;
+    _z_encoding_view_t _encoding;
     _z_source_info_t _ext_source_info;
-    _z_bytes_t _payload;
+    _z_bytes_view_t _payload;
 } _z_msg_err_t;
-void _z_msg_err_clear(_z_msg_err_t *err);
 
 typedef struct {
     _z_timestamp_t _timestamp;
@@ -71,7 +70,7 @@ typedef struct {
 
 typedef struct {
     _z_m_push_commons_t _commons;
-    _z_bytes_t _attachment;
+    _z_bytes_view_t _attachment;
 } _z_msg_del_t;
 static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 #define _Z_M_DEL_ID 0x02
@@ -79,11 +78,13 @@ static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 
 typedef struct {
     _z_m_push_commons_t _commons;
-    _z_bytes_t _payload;
-    _z_view_encoding_t _encoding;
-    _z_bytes_t _attachment;
+    // Non-owning views: payload and attachment alias the decoding buffer (or the user-provided data on the send
+    // path). Owned data is materialized only when a sample/reply is constructed, in the trigger layer.
+    _z_bytes_view_t _payload;
+    _z_encoding_view_t _encoding;
+    _z_bytes_view_t _attachment;
 } _z_msg_put_t;
-void _z_msg_put_clear(_z_msg_put_t *);
+
 #define _Z_M_PUT_ID 0x01
 #define _Z_FLAG_Z_P_E 0x40
 #define _Z_FLAG_Z_P_T 0x20
@@ -102,11 +103,11 @@ void _z_msg_put_clear(_z_msg_put_t *);
 #define _Z_FLAG_Z_Q_C 0x20  // 1 << 5 | Consolidation if C==1 then consolidation is present
 #define _Z_FLAG_Z_Q_P 0x40  // 1 << 6 | Params        if P==1 then parameters are present
 typedef struct {
-    _z_slice_t _parameters;
+    _z_slice_view_t _parameters;
     _z_source_info_t _ext_info;
-    _z_value_t _ext_value;
+    _z_value_view_t _ext_value;
     z_consolidation_mode_t _consolidation;
-    _z_bytes_t _ext_attachment;
+    _z_bytes_view_t _ext_attachment;
     bool _implicit_anyke;  // implicit _anyke parameter (i.e it is not listed in _parameters, but is still present)
 } _z_msg_query_t;
 typedef struct {
@@ -115,7 +116,6 @@ typedef struct {
     bool attachment;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
-void _z_msg_query_clear(_z_msg_query_t *msg);
 
 typedef struct {
     bool _is_put;

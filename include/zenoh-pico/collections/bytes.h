@@ -66,16 +66,7 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
-// Shallow alias: the returned value shares the same underlying buffer and slices as `src`.
-// It must NOT be dropped/cleared, as that would free memory still owned by `src`.
-static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
-    if (src == NULL) {
-        return _z_bytes_null();
-    }
-    _z_bytes_t dst;
-    dst._inner = src->_inner;
-    return dst;
-}
+
 static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
     _z_bytes_t b = *src;
     src->_inner = _z_slice_single_or_vec_none();
@@ -96,7 +87,7 @@ static inline const _z_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t 
         (none, return NULL)
     );
 }
-static inline void _z_bytes_drop(_z_bytes_t *bytes) { _z_slice_single_or_vec_destroy(&bytes->_inner); }
+static inline void _z_bytes_clear(_z_bytes_t *bytes) { _z_slice_single_or_vec_destroy(&bytes->_inner); }
 
 bool _z_bytes_check(const _z_bytes_t *bytes);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
@@ -109,7 +100,7 @@ bool _z_bytes_is_empty(const _z_bytes_t *bs);
 z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s);
 z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s);
 size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len);
-z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len);
+z_result_t _z_bytes_copy_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len);
 const _z_slice_t *_z_bytes_try_get_contiguous(const _z_bytes_t *bs);
 
 typedef struct {
@@ -142,18 +133,17 @@ void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
 z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
 size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader);
 
-// A view into bytes that does not own the underlying buffer and slices. It is the caller's responsibility to ensure that the viewed bytes outlive the view.
-typedef struct _z_view_bytes_t{
+// A view into bytes that does not own the underlying buffer and slices. It is the caller's responsibility to ensure
+// that the viewed bytes outlive the view.
+typedef struct _z_bytes_view_t {
     _z_bytes_t _bytes;
-} _z_view_bytes_t;
+} _z_bytes_view_t;
 
-static inline _z_view_bytes_t _z_view_bytes_null(void) { return (_z_view_bytes_t){0}; }
-static inline bool _z_view_bytes_check(const _z_view_bytes_t *bytes) {
-    return _z_bytes_check(&bytes->_bytes);
-}
+static inline _z_bytes_view_t _z_bytes_view_null(void) { return (_z_bytes_view_t){0}; }
+static inline bool _z_bytes_view_check(const _z_bytes_view_t *bytes) { return _z_bytes_check(&bytes->_bytes); }
 
-static inline _z_view_bytes_t _z_view_bytes_from_slice(const _z_slice_t *slice) {
-    _z_view_bytes_t view_bytes;
+static inline _z_bytes_view_t _z_bytes_view_from_slice(const _z_slice_t *slice) {
+    _z_bytes_view_t view_bytes;
     view_bytes._bytes = _z_bytes_null();
     _z_slice_t s = *slice;
     // append non-owning slice to the view bytes; the view will alias the slice's buffer without taking ownership of it.
@@ -161,11 +151,17 @@ static inline _z_view_bytes_t _z_view_bytes_from_slice(const _z_slice_t *slice) 
     return view_bytes;
 }
 
-static inline _z_view_bytes_t _z_view_bytes_from_bytes(const _z_bytes_t *bytes) {
-    _z_view_bytes_t view_bytes;
-    view_bytes._bytes = *bytes;
+static inline _z_bytes_view_t _z_bytes_view_from_bytes(const _z_bytes_t *bytes) {
+    _z_bytes_view_t view_bytes;
+    if (bytes == NULL) {
+        view_bytes._bytes = _z_bytes_null();
+    } else {
+        view_bytes._bytes = *bytes;
+    }
     return view_bytes;
 }
+
+static inline const _z_bytes_t *_z_bytes_view_deref(const _z_bytes_view_t *bytes) { return &bytes->_bytes; }
 
 #ifdef __cplusplus
 }

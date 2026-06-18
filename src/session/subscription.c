@@ -209,8 +209,7 @@ z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _
     _z_bytes_t payload = _z_bytes_null();
     _z_bytes_t attachment = _z_bytes_null();
     _z_source_info_t source_info = _z_source_info_null();
-    _z_wireexpr_t wireexpr2 = _z_wireexpr_alias(wireexpr);
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &wireexpr2, &payload, &encoding,
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &wireexpr, &payload, &encoding,
                                          Z_SAMPLE_KIND_PUT, timestamp, _Z_N_QOS_DEFAULT, &attachment,
                                          Z_RELIABILITY_RELIABLE, &source_info, peer);
 }
@@ -231,7 +230,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
                                             _z_subscription_cache_data_t *out, const _z_wireexpr_t *wireexpr,
                                             _z_transport_peer_common_t *peer) {
     out->is_remote = (peer != NULL);
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &out->ke, wireexpr, peer, true));
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &out->ke, wireexpr, peer));
     _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&out->ke));
     _z_subscription_cache_data_t *cache_entry = NULL;
     z_result_t ret = _Z_RES_OK;
@@ -263,47 +262,34 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
     return ret;
 }
 
-z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_wireexpr_t *wireexpr,
-                                         _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
-                                         const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                         z_reliability_t reliability, _z_source_info_t *source_info,
-                                         _z_transport_peer_common_t *peer) {
-    _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
-    _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, wireexpr, peer),
-                           _z_wireexpr_clear(wireexpr);
-                           _z_encoding_clear(encoding); _z_bytes_drop(payload); _z_bytes_drop(attachment););
-    const _z_subscription_rc_svec_t *subs = _Z_RC_IN_VAL(&sub_infos.infos);
-    size_t sub_nb = _z_subscription_rc_svec_len(subs);
-    _Z_DEBUG("Triggering %ju subs for key %.*s", (uintmax_t)sub_nb, (int)_z_string_len(&sub_infos.ke._keyexpr),
-             _z_string_data(&sub_infos.ke._keyexpr));
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_wireexpr_t *wireexpr,
+                                         const _z_bytes_t *payload, const _z_encoding_t *encoding,
+                                         const _z_zint_t sample_kind, const _z_timestamp_t *timestamp, _z_n_qos_t qos,
+                                         const _z_bytes_t *attachment, z_reliability_t reliability,
+                                         const _z_source_info_t *source_info, _z_transport_peer_common_t *peer) {
+    _z_keyexpr_view_t ke_view;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
+    _z_subscription_rc_svec_t subs;
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    _Z_RETURN_IF_ERR(__unsafe_z_get_subscriptions_by_key(zn, keyexpr, sub_kind, peer != NULL, &subs));
+    // TODO: reintroduce lru cache
+    _z_session_mutex_unlock(zn);
+
+    size_t sub_nb = _z_subscription_rc_svec_len(&subs);
+    _Z_DEBUG("Triggering %ju subs for key %.*s", (uintmax_t)sub_nb, (int)_z_string_len(keyexpr),
+             _z_string_data(keyexpr));
     // Create sample
     z_result_t ret = _Z_RES_OK;
     _z_sample_t sample;
-    _z_sample_steal_data(&sample, &sub_infos.ke, payload, timestamp, encoding, sample_kind, qos, attachment,
-                         reliability, source_info);
-    // Parse subscription infos svec
-    if (sub_nb == 1) {
-        _z_subscription_t *sub_info = _Z_RC_IN_VAL(_z_subscription_rc_svec_get(subs, 0));
+    _z_sample_create_view_from_data(&sample, keyexpr, payload, timestamp, encoding, sample_kind, qos, attachment,
+                                    reliability, source_info);
+
+    for (size_t i = 0; i < sub_nb; i++) {
+        _z_subscription_t *sub_info = _z_subscription_rc_svec_get(&subs, i);
         sub_info->_callback(&sample, sub_info->_arg);
-    } else {
-        for (size_t i = 0; i < sub_nb; i++) {
-            _z_subscription_t *sub_info = _Z_RC_IN_VAL(_z_subscription_rc_svec_get(subs, i));
-            if (i + 1 == sub_nb) {
-                sub_info->_callback(&sample, sub_info->_arg);
-            } else {
-                _z_sample_t sample_copy;
-                ret = _z_sample_copy(&sample_copy, &sample);
-                if (ret != _Z_RES_OK) {
-                    break;
-                }
-                sub_info->_callback(&sample_copy, sub_info->_arg);
-                _z_sample_clear(&sample_copy);
-            }
-        }
     }
-    _z_wireexpr_clear(wireexpr);
-    _z_sample_clear(&sample);
-    _z_subscription_cache_data_clear(&sub_infos);
+    _z_subscription_rc_svec_clear(&subs);
     return ret;
 }
 

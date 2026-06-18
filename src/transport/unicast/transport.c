@@ -218,7 +218,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     _Z_DEBUG("Received Z_INIT(Syn)");
     // Encode InitAck
     _z_slice_t cookie = _z_slice_null();
-    _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, cookie);
+    _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, &cookie);
 
     // If the new node has less representing capabilities adjust settings
     if (tmsg._body._init._seq_num_res < iam._body._init._seq_num_res) {

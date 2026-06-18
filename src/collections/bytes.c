@@ -35,8 +35,8 @@ z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     }
     for (size_t i = 0; i < num_slices; ++i) {
         _z_slice_t s = _z_slice_null();
-        _Z_CLEAN_RETURN_IF_ERR(_z_slice_copy(&s, _z_bytes_get_slice(src, i)), _z_bytes_drop(dst));
-        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(dst, &s), _z_bytes_drop(dst));
+        _Z_CLEAN_RETURN_IF_ERR(_z_slice_copy(&s, _z_bytes_get_slice(src, i)), _z_bytes_clear(dst));
+        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(dst, &s), _z_bytes_clear(dst));
     }
     return _Z_RES_OK;
 }
@@ -60,7 +60,7 @@ void _z_bytes_free(_z_bytes_t **bs) {
     _z_bytes_t *ptr = *bs;
 
     if (ptr != NULL) {
-        _z_bytes_drop(ptr);
+        _z_bytes_clear(ptr);
 
         z_free(ptr);
         *bs = NULL;
@@ -87,7 +87,7 @@ z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s) {
     return _z_bytes_append_slice(b, s);
 }
 
-z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
+z_result_t _z_bytes_copy_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
     *b = _z_bytes_null();
     if (len == 0) return _Z_RES_OK;
     _z_slice_t s = _z_slice_copy_from_buf(src, len);
@@ -167,7 +167,7 @@ z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
         }
     }
 
-    _z_bytes_drop(src);
+    _z_bytes_clear(src);
     return res;
 }
 
@@ -329,7 +329,7 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
         res = _Z_ERR_DID_NOT_READ;
     }
     if (res != _Z_RES_OK) {
-        _z_bytes_drop(out);
+        _z_bytes_clear(out);
         _Z_ERROR_RETURN(res);
     }
     return _Z_RES_OK;
@@ -375,8 +375,8 @@ z_result_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *s
 }
 
 z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t *src) {
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_flush_cache(writer), _z_bytes_drop(src));
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(&writer->bytes, src), _z_bytes_drop(src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_flush_cache(writer), _z_bytes_clear(src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(&writer->bytes, src), _z_bytes_clear(src));
     return _Z_RES_OK;
 }
 
@@ -398,7 +398,7 @@ _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer) {
 
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer) {
     _z_write_buf_destroy(&writer->cache);
-    _z_bytes_drop(&writer->bytes);
+    _z_bytes_clear(&writer->bytes);
 }
 
 z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {

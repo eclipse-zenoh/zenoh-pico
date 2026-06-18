@@ -61,7 +61,7 @@ z_result_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *ext, _z_zbuf_t *zbf) {
 
 z_result_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *ext) {
     z_result_t ret = _Z_RES_OK;
-    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &ext->_val))
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&ext->_val)));
     return ret;
 }
 
@@ -69,10 +69,6 @@ z_result_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
     z_result_t ret = _Z_RES_OK;
     ret |= _z_slice_decode(&ext->_val, zbf);
     return ret;
-}
-
-z_result_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
-    return _z_msg_ext_decode_zbuf(ext, zbf);
 }
 
 /*------------------ Message Extension ------------------*/
@@ -231,7 +227,6 @@ z_result_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, z_result_t (*callback)(_z_msg_
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
         if (ret == _Z_RES_OK) {
             ret |= callback(&ext, context);
-            _z_msg_ext_clear(&ext);
         }
     }
     return ret;

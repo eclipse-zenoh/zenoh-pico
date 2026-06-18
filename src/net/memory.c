@@ -31,18 +31,7 @@ void _z_hello_free(_z_hello_t **hello) {
 
 void _z_value_clear(_z_value_t *value) {
     _z_encoding_clear(&value->encoding);
-    _z_bytes_drop(&value->payload);
-}
-
-void _z_value_free(_z_value_t **value) {
-    _z_value_t *ptr = *value;
-
-    if (ptr != NULL) {
-        _z_value_clear(ptr);
-
-        z_free(ptr);
-        *value = NULL;
-    }
+    _z_bytes_clear(&value->payload);
 }
 
 bool _z_hello_check(const _z_hello_t *hello) { return _z_id_check(hello->_zid); }

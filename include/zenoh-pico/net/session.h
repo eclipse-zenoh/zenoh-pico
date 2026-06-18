@@ -118,6 +118,19 @@ _Z_ELEM_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t, _
 _Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t)
 #endif
 
+typedef struct _z_query_id {
+    uint32_t rid;
+    size_t peer_id;
+} _z_query_id_t;
+
+#define _ZP_HASHMAP_TEMPLATE_NAME _z_rid_to_count_hmap
+#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE _z_query_id_t
+#define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(query_id1, query_id2) \
+    (((query_id1)->rid == (query_id2)->rid) && ((query_id1)->peer_id == (query_id2)->peer_id))
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) ((size_t)((query_id)->rid) ^ (size_t)((query_id)->peer_id))
+#include "zenoh-pico/collections/hashmap_template.h"
+
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
@@ -146,6 +159,8 @@ typedef struct _z_session_t {
 
     // Session declarations
     _z_resource_slist_t *_local_resources;
+    // Buffer for expanding wire-expression into keyexpression when rx buffer aliasing is not possible.
+    char _z_keyexpr_buffer[Z_MAX_KEYEXPR_LENGTH];
 
     // Information for session restoring and asynchronous peer connection
     _z_config_t _config;
@@ -171,6 +186,7 @@ typedef struct _z_session_t {
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
     _z_session_queryable_rc_slist_t *_local_queryable;
+    _z_rid_to_count_hmap_t _received_queries_id_to_count;
 #if Z_FEATURE_RX_CACHE == 1
     _z_queryable_lru_cache_t _queryable_cache;
 #endif

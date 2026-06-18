@@ -65,43 +65,51 @@ z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t
 z_result_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
 z_result_t _z_buf_encode(_z_wbuf_t *wbf, const uint8_t *buf, size_t len);
-static inline z_result_t _z_slice_val_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
-    return _z_buf_encode(wbf, bs->start, bs->len);
+static inline z_result_t _z_data_encode(_z_wbuf_t *wbf, const uint8_t *data, size_t len) {
+    return _z_buf_encode(wbf, data, len);
 }
-static inline z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
+static inline z_result_t _z_slice_data_decode(uint8_t **ptr, size_t len, _z_zbuf_t *zbf) {
     // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < bs->len) {
+    if (_z_zbuf_len(zbf) < len) {
         _Z_WARN("Not enough bytes to read");
-        bs->len = 0;
-        bs->start = NULL;
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
-    *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
-    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
+    *ptr = _z_zbuf_get_rptr(zbf);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
     return _Z_RES_OK;
 }
-static inline z_result_t _z_slice_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
-    _Z_RETURN_IF_ERR(_z_zsize_decode(&bs->len, zbf));
-    return _z_slice_val_decode_na(bs, zbf);
+static inline z_result_t _z_slice_decode(_z_slice_view_t *bs, _z_zbuf_t *zbf) {
+    *bs = _z_slice_view_null();
+    size_t len;
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
+    if (_z_zbuf_len(zbf) < len) {
+        _Z_WARN("Not enough bytes to read");
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
+    }
+    *bs = _z_slice_view_make(_z_zbuf_get_rptr(zbf), len);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
+    return _Z_RES_OK;
 }
-static inline z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val_decode_na(bs, zbf); }
-static inline z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
+
 z_result_t _z_slice_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
+// encodes multiple slices as a single concatenated slice
 z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_slices);
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf);
 z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);
+// Decodes bytes as a non-owning view aliasing the decoding buffer (no allocation/copy).
+// The resulting view must not outlive `zbf`'s backing buffer.
+z_result_t _z_bytes_decode(_z_bytes_view_t *bs, _z_zbuf_t *zbf);
 z_result_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
-z_result_t _z_string_encode(_z_wbuf_t *wbf, _z_view_string_t s);
-z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf);
+z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s);
+z_result_t _z_string_decode(_z_string_view_t *str, _z_zbuf_t *zbf);
 
 size_t _z_encoding_len(const _z_encoding_t *en);
-z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_view_encoding_t *en);
-z_result_t _z_encoding_decode(_z_view_encoding_t *en, _z_zbuf_t *zbf);
+z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en);
+z_result_t _z_encoding_decode(_z_encoding_view_t *en, _z_zbuf_t *zbf);
 
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *en);
-z_result_t _z_value_decode(_z_value_t *en, _z_zbuf_t *zbf);
+z_result_t _z_value_decode(_z_value_view_t *en, _z_zbuf_t *zbf);
 
 z_result_t _z_wireexpr_encode(_z_wbuf_t *buf, bool has_suffix, const _z_wireexpr_t *ke);
 z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *buf, bool has_suffix, bool remote_mapping);
