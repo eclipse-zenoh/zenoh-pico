@@ -162,7 +162,11 @@ z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, const _z_str
 
     if (p_start != p_end) {
         size_t p_len = _z_ptr_char_diff(p_end, p_start);
-        return _z_str_intmap_from_strn(strint, p_start, 0, NULL, p_len);
+        z_result_t ret = _z_str_intmap_from_strn(strint, p_start, 0, NULL, p_len);
+        if (ret == _Z_ERR_CONFIG_INVALID_VALUE) {
+            return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        }
+        return ret;
     }
     return _Z_RES_OK;
 }
