@@ -70,15 +70,6 @@ z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_uint8_decode_as_ref(uint8_t **u8, _z_zbuf_t *zbf) {
-    if (!_z_zbuf_can_read(zbf)) {
-        _Z_WARN("Not enough bytes to read");
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
-    }
-    *u8 = _z_zbuf_read_as_ref(zbf);
-    return _Z_RES_OK;
-}
-
 z_result_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t val) {
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, _z_get_u16_lsb(val)));
     return _z_wbuf_write(wbf, _z_get_u16_msb(val));
@@ -264,7 +255,7 @@ z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_sli
 z_result_t _z_bytes_decode(_z_bytes_view_t *bs, _z_zbuf_t *zbf) {
     _z_slice_view_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    _z_bytes_view_from_slice(_z_slice_view_deref(&s));
+    *bs = _z_bytes_view_from_slice(_z_slice_view_deref(&s));
     return _Z_RES_OK;
 }
 
@@ -358,10 +349,9 @@ z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *value) {
 z_result_t _z_value_decode(_z_value_view_t *value, _z_zbuf_t *zbf) {
     *value = _z_value_view_null();
     _z_encoding_view_t view_encoding;
-    _z_bytes_view_t view_payload;
     _Z_RETURN_IF_ERR(_z_encoding_decode(&view_encoding, zbf));
     _z_slice_t view_slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_bytes_view_from_slice(&view_slice);
+    _z_bytes_view_t view_payload = _z_bytes_view_from_slice(&view_slice);
     _z_value_view_create_from_data(value, _z_bytes_view_deref(&view_payload), _z_encoding_view_deref(&view_encoding));
     return _Z_RES_OK;
 }

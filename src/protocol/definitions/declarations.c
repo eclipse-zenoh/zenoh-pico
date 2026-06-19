@@ -36,7 +36,7 @@ _z_declaration_t _z_make_decl_queryable(const _z_wireexpr_t *key, uint32_t id, b
                                       ._keyexpr = *key,
                                       ._ext_queryable_info = {._complete = complete, ._distance = distance}}}};
 }
-_z_declaration_t _z_make_undecl_queryable(uint32_t id, const _z_wireexpr_t * opt_key) {
+_z_declaration_t _z_make_undecl_queryable(uint32_t id, const _z_wireexpr_t *opt_key) {
     return (_z_declaration_t){
         ._tag = _Z_UNDECL_QUERYABLE,
         ._body = {._undecl_queryable = {._id = id, ._ext_keyexpr = (opt_key == NULL) ? _z_wireexpr_null() : *opt_key}}};

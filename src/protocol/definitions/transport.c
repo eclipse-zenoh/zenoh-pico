@@ -27,58 +27,6 @@ void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 
 void _z_s_msg_hello_clear(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
 
-void _z_t_msg_join_clear(_z_t_msg_join_t *msg) {
-    // Nothing to do
-    _ZP_UNUSED(msg);
-}
-
-void _z_t_msg_close_clear(_z_t_msg_close_t *msg) { _ZP_UNUSED(msg); }
-
-void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg) { _ZP_UNUSED(msg); }
-
-void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) {
-    if (msg->_payload != NULL) {
-        _z_zbuf_reset(msg->_payload);
-    }
-}
-
-void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg) { _z_slice_clear(&msg->_payload); }
-
-void _z_t_msg_clear(_z_transport_message_t *msg) {
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_T_JOIN: {
-            _z_t_msg_join_clear(&msg->_body._join);
-        } break;
-
-        case _Z_MID_T_INIT: {
-        } break;
-
-        case _Z_MID_T_OPEN: {
-        } break;
-
-        case _Z_MID_T_CLOSE: {
-            _z_t_msg_close_clear(&msg->_body._close);
-        } break;
-
-        case _Z_MID_T_KEEP_ALIVE: {
-            _z_t_msg_keep_alive_clear(&msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_T_FRAME: {
-            _z_t_msg_frame_clear(&msg->_body._frame);
-        } break;
-
-        case _Z_MID_T_FRAGMENT: {
-            _z_t_msg_fragment_clear(&msg->_body._fragment);
-        } break;
-
-        default: {
-            _Z_INFO("WARNING: Trying to clear transport message with unknown ID(%d)", mid);
-        } break;
-    }
-}
-
 z_reliability_t _z_t_msg_get_reliability(_z_transport_message_t *msg) {
     if (_Z_HAS_FLAG(msg->_header, _Z_FLAG_T_FRAME_R)) {
         return Z_RELIABILITY_RELIABLE;
@@ -239,7 +187,7 @@ _z_transport_message_t _z_t_msg_make_keep_alive(void) {
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zbuf_t *payload, z_reliability_t reliability) {
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, const _z_zbuf_t *payload, z_reliability_t reliability) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAME;
 
@@ -247,7 +195,7 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zbuf_t *payload, z_r
     if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
-    msg._body._frame._payload = payload;
+    msg._body._frame._payload = _z_slice_view_make(_z_zbuf_start(payload), _z_zbuf_len(payload));
     return msg;
 }
 
@@ -260,16 +208,16 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t 
     if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
-    msg._body._frame._payload = NULL;
+    msg._body._frame._payload = _z_slice_view_null();
     return msg;
 }
 
 /*------------------ Fragment Message ------------------*/
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last,
                                                      bool first, bool drop) {
-    return _z_t_msg_make_fragment(sn, _z_slice_null(), reliability, is_last, first, drop);
+    return _z_t_msg_make_fragment(sn, NULL, reliability, is_last, first, drop);
 }
-_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, z_reliability_t reliability,
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, const _z_slice_t *payload, z_reliability_t reliability,
                                               bool is_last, bool first, bool drop) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
@@ -281,7 +229,7 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
     }
 
     msg._body._fragment._sn = sn;
-    msg._body._fragment._payload = payload;
+    msg._body._fragment._payload = payload != NULL ? _z_slice_view_from_slice(payload) : _z_slice_view_null();
     if (first || drop) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
@@ -291,99 +239,7 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
     return msg;
 }
 
-void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
-    clone->_payload = msg->_payload;
-    _z_slice_copy(&clone->_payload, &msg->_payload);
-    clone->first = msg->first;
-    clone->drop = msg->drop;
-}
-
-void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
-    clone->_version = msg->_version;
-    clone->_whatami = msg->_whatami;
-    clone->_lease = msg->_lease;
-    clone->_seq_num_res = msg->_seq_num_res;
-    clone->_req_id_res = msg->_req_id_res;
-    clone->_batch_size = msg->_batch_size;
-    clone->_next_sn = msg->_next_sn;
-#if Z_FEATURE_FRAGMENTATION == 1
-    clone->_patch = msg->_patch;
-#endif
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-}
-
-void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
-    clone->_version = msg->_version;
-    clone->_whatami = msg->_whatami;
-    clone->_seq_num_res = msg->_seq_num_res;
-    clone->_req_id_res = msg->_req_id_res;
-    clone->_batch_size = msg->_batch_size;
-    memcpy(clone->_zid.id, msg->_zid.id, 16);
-    clone->_cookie = msg->_cookie;
-#if Z_FEATURE_FRAGMENTATION == 1
-    clone->_patch = msg->_patch;
-#endif
-}
-
-void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
-    clone->_lease = msg->_lease;
-    clone->_initial_sn = msg->_initial_sn;
-    clone->_cookie = msg->_cookie;
-}
-
-void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) { clone->_reason = msg->_reason; }
-
-void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg) {
-    (void)(clone);
-    (void)(msg);
-}
-
-void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
-    clone->_sn = msg->_sn;
-    if ((msg->_payload != NULL) && (clone->_payload != NULL)) {
-        _z_zbuf_copy(clone->_payload, msg->_payload);
-    }
-}
-
 /*------------------ Transport Message ------------------*/
-void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg) {
-    clone->_header = msg->_header;
-
-    uint8_t mid = _Z_MID(msg->_header);
-    switch (mid) {
-        case _Z_MID_T_JOIN: {
-            _z_t_msg_copy_join(&clone->_body._join, &msg->_body._join);
-        } break;
-
-        case _Z_MID_T_INIT: {
-            _z_t_msg_copy_init(&clone->_body._init, &msg->_body._init);
-        } break;
-
-        case _Z_MID_T_OPEN: {
-            _z_t_msg_copy_open(&clone->_body._open, &msg->_body._open);
-        } break;
-
-        case _Z_MID_T_CLOSE: {
-            _z_t_msg_copy_close(&clone->_body._close, &msg->_body._close);
-        } break;
-
-        case _Z_MID_T_KEEP_ALIVE: {
-            _z_t_msg_copy_keep_alive(&clone->_body._keep_alive, &msg->_body._keep_alive);
-        } break;
-
-        case _Z_MID_T_FRAME: {
-            _z_t_msg_copy_frame(&clone->_body._frame, &msg->_body._frame);
-        } break;
-
-        case _Z_MID_T_FRAGMENT: {
-            _z_t_msg_copy_fragment(&clone->_body._fragment, &msg->_body._fragment);
-        } break;
-
-        default: {
-            _Z_INFO("WARNING: Trying to copy transport message with unknown ID(%d)", mid);
-        } break;
-    }
-}
 
 void _z_s_msg_clear(_z_scouting_message_t *msg) {
     uint8_t mid = _Z_MID(msg->_header);

@@ -42,7 +42,9 @@ typedef struct _z_reply_err_view_t {
     _z_reply_err_owned_t _inner;
 } _z_reply_err_view_t;
 
-const _z_reply_err_owned_t *_z_reply_err_view_deref(const _z_reply_err_view_t *view) { return &view->_inner; }
+static inline const _z_reply_err_owned_t *_z_reply_err_view_deref(const _z_reply_err_view_t *view) {
+    return &view->_inner;
+}
 
 #define _ZP_VARIANT_TEMPLATE_NAME _z_reply_err
 #define _ZP_VARIANT_TEMPLATE_1_TYPE _z_reply_err_owned_t

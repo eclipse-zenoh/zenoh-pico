@@ -141,7 +141,6 @@ z_result_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *para
         default:
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    _z_t_msg_clear(&jsm);
 
     if (ret == _Z_RES_OK) {
         param->_seq_num_res = jsm._body._join._seq_num_res;
@@ -166,7 +165,6 @@ z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
     ret = ztm->_send_f(&ztm->_common, &cm);
-    _z_t_msg_clear(&cm);
     return ret;
 }
 

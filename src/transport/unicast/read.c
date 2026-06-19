@@ -124,8 +124,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     if (single_read) {
         _z_transport_message_t t_msg;
         _Z_RETURN_IF_ERR(_z_unicast_recv_t_msg(ztu, &t_msg));
-        _Z_CLEAN_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer), _z_t_msg_clear(&t_msg));
-        _z_t_msg_clear(&t_msg);
+        _Z_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer));
         // Update buffer
         _Z_RETURN_IF_ERR(_z_unicast_update_rx_buffer(ztu));
     } else {

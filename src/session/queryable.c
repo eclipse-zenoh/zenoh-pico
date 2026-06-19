@@ -196,11 +196,12 @@ _z_session_queryable_rc_t _z_register_session_queryable(_z_session_t *zn, _z_ses
 static z_result_t __unsafe_z_session_register_new_received_query(_z_session_t *zn, const _z_query_id_t *query_id) {
     z_result_t ret = _Z_RES_OK;
     if (_z_rid_to_count_hmap_get(&zn->_received_queries_id_to_count, query_id) != NULL) {
-        _Z_WARN("Received query with rid %u, for peer %zu, which already exists in session %p ", query_id->_rid,
-                query_id->_peer_id, (void *)zn);
+        _Z_WARN("Received query with rid %u, for peer %zu, which already exists in session %p ", query_id->rid,
+                query_id->peer_id, (void *)zn);
         return _Z_ERR_INVALID;
     }
-    if (_z_rid_to_count_hmap_insert(&zn->_received_queries_id_to_count, query_id, &(uint8_t){1}) ==
+    _z_query_id_t qid = *query_id;
+    if (_z_rid_to_count_hmap_insert(&zn->_received_queries_id_to_count, &qid, &(uint32_t){1}) ==
         _z_rid_to_count_hmap_end(&zn->_received_queries_id_to_count)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -216,18 +217,18 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, const _z_msg_
     _z_keyexpr_view_t ke_view;
     _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, q_key, peer));
     const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
-    _z_session_queryable_rc_svec_t qles;
+    _z_session_queryable_rc_svec_t qles = _z_session_queryable_rc_svec_make(_Z_QLEINFOS_VEC_SIZE);
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
-    _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_rc_by_key(zn, keyexpr, query_id.peer_id != 0, &qles),
+    _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_by_key(zn, keyexpr, query_id.peer_id != 0, &qles),
                            _z_session_mutex_unlock(zn));
     _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_session_register_new_received_query(zn, &query_id), _z_session_mutex_unlock(zn);
-                           _z_session_queryable_rc_svec_rc_drop(&qles));
+                           _z_session_queryable_rc_svec_clear(&qles));
     _z_session_mutex_unlock(zn);
 
     // Check if there are queryables
     size_t qle_nb = _z_session_queryable_rc_svec_len(&qles);
-    _Z_DEBUG("Triggering %ju queryables for key %.*s", (uintmax_t)qle_nb, (int)_z_string_len(&keyexpr),
-             _z_string_data(&keyexpr));
+    _Z_DEBUG("Triggering %ju queryables for key %.*s", (uintmax_t)qle_nb, (int)_z_string_len(&keyexpr->_keyexpr),
+             _z_string_data(&keyexpr->_keyexpr));
 
     _z_query_t query;
     _z_query_create_view_from_data(&query, keyexpr, _z_value_view_deref(&msgq->_ext_value),
@@ -236,12 +237,13 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, const _z_msg_
                                    &msgq->_ext_info);
 
     for (size_t i = 0; i < qle_nb; i++) {
-        _z_session_queryable_t *qle_info = _z_session_queryable_rc_svec_get(&qles, i);
+        _z_session_queryable_t *qle_info = _Z_RC_IN_VAL(_z_session_queryable_rc_svec_get(&qles, i));
         qle_info->_callback(&query, qle_info->_arg);
     }
     _z_session_queryable_rc_svec_clear(&qles);
-    _z_received_query_count_decrease(zn, &query);  // should not fail, unless session is closed, which is fine, since in
-                                                   // this case response final will be inferred by remote peers.
+    _z_received_query_count_decrease(
+        zn, _z_query_get_ref(&query));  // should not fail, unless session is closed, which is fine, since in
+                                        // this case response final will be inferred by remote peers.
     return _Z_RES_OK;
 }
 

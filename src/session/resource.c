@@ -108,13 +108,13 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_view_t *ret, _z_
         // Even if wire expression does not contain a suffix, we can not alias
         // its corresponding resource, since the latter might be undeclared at any moment.
         size_t prefix_len = _z_string_len(&res->_key._keyexpr);
-        size_t suffix_len = _z_string_len(&expr->_suffix);
+        size_t suffix_len = _z_string_len(_z_string_view_deref(&expr->_suffix));
         if (prefix_len + suffix_len > buf_len) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         memcpy(buf, _z_string_data(&res->_key._keyexpr), prefix_len);
         if (suffix_len > 0) {
-            memcpy(buf + prefix_len, _z_string_data(&expr->_suffix), suffix_len);
+            memcpy(buf + prefix_len, _z_string_data(_z_string_view_deref(&expr->_suffix)), suffix_len);
         }
         _z_string_view_t sv = _z_string_view_make(buf, prefix_len + suffix_len);
         *ret = _z_keyexpr_view_from_string_view(&sv);
@@ -145,9 +145,8 @@ z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, con
         _z_resource_slist_t *decls =
             (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
         _z_keyexpr_view_t kv;
-        ret = z_get_keyexpr_from_wireexpr_inner(&kv, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH);
-        if (_z_get_keyexpr_from_wireexpr_inner(&kv, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH) ==
-            _Z_RES_OK) {
+        ret = _z_get_keyexpr_from_wireexpr_inner(&kv, decls, expr, zn->_z_keyexpr_buffer, Z_MAX_KEYEXPR_LENGTH);
+        if (ret == _Z_RES_OK) {
             ret = _z_keyexpr_copy(out, _z_keyexpr_view_deref(&kv));
         } else {
             *out = _z_keyexpr_null();

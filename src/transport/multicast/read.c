@@ -69,9 +69,7 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
     if (single_read) {
         _z_transport_message_t t_msg;
         _Z_RETURN_IF_ERR(_z_multicast_recv_t_msg(ztm, &t_msg));
-        _Z_CLEAN_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr),
-                               _z_t_msg_clear(&t_msg));
-        _z_t_msg_clear(&t_msg);
+        _Z_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr));
         return _z_multicast_update_rx_buffer(ztm);
     } else {
         return _zp_multicast_process_messages(ztm);

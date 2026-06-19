@@ -113,7 +113,6 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
             peer->common._state_reliable = _Z_DBUF_STATE_NULL;
 #endif
             _Z_INFO("Reliable message dropped because it is out of order");
-            _z_t_msg_frame_clear(msg);
             return _Z_RES_OK;
         }
     } else {
@@ -126,15 +125,15 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
             peer->common._state_best_effort = _Z_DBUF_STATE_NULL;
 #endif
             _Z_INFO("Best effort message dropped because it is out of order");
-            _z_t_msg_frame_clear(msg);
             return _Z_RES_OK;
         }
     }
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
     _z_network_message_t curr_nmsg = {0};
-    while (_z_zbuf_len(msg->_payload) > 0) {
-        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload));
+    _z_zbuf_t buf = _z_slice_as_zbuf(_z_slice_view_deref(&msg->_payload));
+    while (_z_zbuf_len(&buf) > 0) {
+        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztu->_common, &curr_nmsg, &peer->common));
     }
@@ -214,11 +213,12 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
     // Process fragment data
     if (*dbuf_state == _Z_DBUF_STATE_INIT) {
         // Check overflow
-        if ((_z_wbuf_len(dbuf) + msg->_payload.len) > Z_FRAG_MAX_SIZE) {
+        const _z_slice_t *payload_slice = _z_slice_view_deref(&msg->_payload);
+        if ((_z_wbuf_len(dbuf) + payload_slice->len) > Z_FRAG_MAX_SIZE) {
             *dbuf_state = _Z_DBUF_STATE_OVERFLOW;
         } else {
             // Fill buffer
-            _z_wbuf_write_bytes(dbuf, msg->_payload.start, 0, msg->_payload.len);
+            _z_wbuf_write_bytes(dbuf, payload_slice->start, 0, payload_slice->len);
         }
     }
     // Process final fragment
@@ -267,7 +267,6 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
 static z_result_t _z_unicast_handle_fragment(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_fragment_t *msg,
                                              _z_transport_peer_unicast_t *peer) {
     z_result_t ret = _z_unicast_handle_fragment_inner(ztu, header, msg, peer);
-    _z_t_msg_fragment_clear(msg);
     return ret;
 }
 
@@ -288,7 +287,6 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
         case _Z_MID_T_KEEP_ALIVE: {
             _Z_DEBUG("Received Z_KEEP_ALIVE message");
-            _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
             break;
         }
 
@@ -307,13 +305,11 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             // Peer will be dropped thanks to the error
             _Z_ERROR_LOG(_Z_ERR_CONNECTION_CLOSED);
             ret = _Z_ERR_CONNECTION_CLOSED;
-            _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
 
         default: {
             _Z_INFO("WARNING: Unknown transport message ID");
-            _z_t_msg_clear(t_msg);
             break;
         }
     }

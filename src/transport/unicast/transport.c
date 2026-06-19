@@ -105,15 +105,17 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // Encode and send the message
     _Z_DEBUG("Sending Z_INIT(Syn)");
     z_result_t ret = _z_link_send_t_msg(zl, &ism, socket);
-    _z_t_msg_clear(&ism);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
+    // Create and prepare the buffer
+    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
+    _z_zbuf_reset(&zbf);
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, recv_deadline));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, &zbf, recv_deadline));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
-        _z_t_msg_clear(&iam);
+        _z_zbuf_clear(&zbf);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     param->_remote_whatami = iam._body._init._whatami;
@@ -149,7 +151,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     }
 #endif
     if (ret != _Z_RES_OK) {
-        _z_t_msg_clear(&iam);
+        _z_zbuf_clear(&zbf);
         return ret;
     }
     param->_key_id_res = 0x08 << param->_key_id_res;
@@ -168,24 +170,20 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // Create the OpenSyn message
     _z_zint_t lease = Z_TRANSPORT_LEASE;
     _z_zint_t initial_sn = param->_initial_sn_tx;
-    _z_slice_t cookie = _z_slice_null();
-    if (!_z_slice_is_empty(&iam._body._init._cookie)) {
-        _z_slice_copy(&cookie, &iam._body._init._cookie);
-    }
-    _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
-    _z_t_msg_clear(&iam);
+    _z_transport_message_t osm =
+        _z_t_msg_make_open_syn(lease, initial_sn, _z_slice_view_deref(&iam._body._init._cookie));
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Syn)");
     ret = _z_link_send_t_msg(zl, &osm, socket);
-    _z_t_msg_clear(&osm);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
+    _z_zbuf_reset(&zbf);
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, recv_deadline));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, &zbf, recv_deadline));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
-        _z_t_msg_clear(&oam);
+        _z_zbuf_clear(&zbf);
         _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
     }
@@ -195,7 +193,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // The initial SN at RX side. Initialize the session as we had already received
     // a message with a SN equal to initial_sn - 1.
     param->_initial_sn_rx = oam._body._open._initial_sn;
-    _z_t_msg_clear(&oam);
+    _z_zbuf_clear(&zbf);
     return _Z_RES_OK;
 }
 
@@ -204,15 +202,19 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     z_clock_t recv_deadline = z_clock_now();
     z_clock_advance_ms(&recv_deadline, Z_TRANSPORT_ACCEPT_TIMEOUT);
     assert(mode == Z_WHATAMI_PEER);
+    // Create and prepare the buffer
+    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
+    _z_zbuf_reset(&zbf);
     // Read t message from link
     _z_transport_message_t tmsg = {0};
-    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket, recv_deadline);
+    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket, &zbf, recv_deadline);
     if (ret != _Z_RES_OK) {
+        _z_zbuf_clear(&zbf);
         return ret;
     }
     // Receive InitSyn
     if (_Z_MID(tmsg._header) != _Z_MID_T_INIT || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
-        _z_t_msg_clear(&tmsg);
+        _z_zbuf_clear(&zbf);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
@@ -247,29 +249,30 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     param->_remote_whatami = tmsg._body._init._whatami;
     param->_key_id_res = 0x08 << param->_key_id_res;
     param->_req_id_res = 0x08 << param->_req_id_res;
-    _z_t_msg_clear(&tmsg);
     // Send InitAck
     _Z_DEBUG("Sending Z_INIT(Ack)");
     ret = _z_link_send_t_msg(zl, &iam, socket);
-    _z_t_msg_clear(&iam);
     if (ret != _Z_RES_OK) {
+        _z_zbuf_clear(&zbf);
         return ret;
     }
     // Read t message from link
-    ret = _z_link_recv_t_msg(&tmsg, zl, socket, recv_deadline);
+    _z_zbuf_reset(&zbf);
+    ret = _z_link_recv_t_msg(&tmsg, zl, socket, &zbf, recv_deadline);
     if (ret != _Z_RES_OK) {
+        _z_zbuf_clear(&zbf);
         return ret;
     }
     // Receive OpenSyn
     if (_Z_MID(tmsg._header) != _Z_MID_T_OPEN || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
-        _z_t_msg_clear(&tmsg);
+        _z_zbuf_clear(&zbf);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_OPEN(Syn)");
     // Process message
     param->_lease = (tmsg._body._open._lease < Z_TRANSPORT_LEASE) ? tmsg._body._open._lease : Z_TRANSPORT_LEASE;
     param->_initial_sn_rx = tmsg._body._open._initial_sn;
-    _z_t_msg_clear(&tmsg);
+    _z_zbuf_clear(&zbf);
 
     // Encode OpenAck
     _z_zint_t lease = Z_TRANSPORT_LEASE;
@@ -279,7 +282,6 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Ack)");
     ret = _z_link_send_t_msg(zl, &oam, socket);
-    _z_t_msg_clear(&oam);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -316,7 +318,6 @@ z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bo
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
     ret = _z_transport_tx_send_t_msg(&ztu->_common, &cm, NULL);
-    _z_t_msg_clear(&cm);
     return ret;
 }
 

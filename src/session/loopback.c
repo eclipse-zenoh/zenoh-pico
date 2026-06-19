@@ -79,12 +79,12 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_wireexpr_t
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT: {
-            _z_n_msg_make_push_put(&msg, &wireexpr, payload, encoding, qos, timestamp, attachment, reliability,
+            _z_n_msg_make_push_put(&msg, wireexpr, payload, encoding, qos, timestamp, attachment, reliability,
                                    source_info);
             break;
         }
         case Z_SAMPLE_KIND_DELETE: {
-            _z_n_msg_make_push_del(&msg, &wireexpr, qos, timestamp, reliability, source_info);
+            _z_n_msg_make_push_del(&msg, wireexpr, qos, timestamp, reliability, source_info);
             break;
         }
         default:
@@ -167,7 +167,7 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
 
     _z_network_message_t msg;
-    const _z_query_owned_t* query_ref = _z_query_get_ref(query);
+    const _z_query_owned_t *query_ref = _z_query_get_ref(query);
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
             _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query_ref->_id.rid, &wireexpr,
@@ -195,8 +195,8 @@ z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _
     }
 
     _z_network_message_t msg;
-    _z_n_msg_make_reply_err(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, _z_query_get_ref(query)->_id.rid, Z_RELIABILITY_DEFAULT, qos,
-                            payload, encoding, NULL);
+    _z_n_msg_make_reply_err(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, _z_query_get_ref(query)->_id.rid,
+                            Z_RELIABILITY_DEFAULT, qos, payload, encoding, NULL);
 
     return _z_handle_network_message(transport, &msg, NULL);
 }

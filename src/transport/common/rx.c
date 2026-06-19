@@ -71,19 +71,15 @@ z_result_t _z_link_recv_t_msg_cap_flow_datagram(const _z_link_t *zl, _z_zbuf_t *
 }
 
 z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket,
-                              z_clock_t recv_deadline) {
-    // Create and prepare the buffer
-    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
-    _z_zbuf_reset(&zbf);
-
+                              _z_zbuf_t *zbf, z_clock_t recv_deadline) {
     z_result_t ret = Z_ETIMEDOUT;
     while (ret == Z_ETIMEDOUT) {
         switch (zl->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
-                ret = _z_link_recv_t_msg_cap_flow_stream(zl, &zbf, socket);
+                ret = _z_link_recv_t_msg_cap_flow_stream(zl, zbf, socket);
                 break;
             case Z_LINK_CAP_FLOW_DATAGRAM:
-                ret = _z_link_recv_t_msg_cap_flow_datagram(zl, &zbf, socket);
+                ret = _z_link_recv_t_msg_cap_flow_datagram(zl, zbf, socket);
                 break;
             default:
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -99,16 +95,10 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
     }
 
     if (ret == _Z_RES_OK) {
-        _z_transport_message_t l_t_msg;
-        ret = _z_transport_message_decode(&l_t_msg, &zbf);
-        if (ret == _Z_RES_OK) {
-            _z_t_msg_copy(t_msg, &l_t_msg);
-        }
+        ret = _z_transport_message_decode(t_msg, zbf);
     } else {
         _Z_ERROR_LOG(ret);
     }
-    // TODO !!!: do not clean zbbuf here
-    _z_zbuf_clear(&zbf);
 
     return ret;
 }

@@ -181,7 +181,6 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     // Check peer
     if (entry == NULL) {
         _Z_INFO("Dropping _Z_FRAME from unknown peer");
-        _z_t_msg_frame_clear(msg);
         return _Z_RES_OK;
     }
     // Note that we receive data from peer
@@ -201,7 +200,6 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
             _z_wbuf_clear(&entry->common._dbuf_reliable);
 #endif
             _Z_INFO("Reliable message dropped because it is out of order");
-            _z_t_msg_frame_clear(msg);
             return _Z_RES_OK;
         }
     } else {
@@ -214,15 +212,15 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
             _z_wbuf_clear(&entry->common._dbuf_best_effort);
 #endif
             _Z_INFO("Best effort message dropped because it is out of order");
-            _z_t_msg_frame_clear(msg);
             return _Z_RES_OK;
         }
     }
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
     _z_network_message_t curr_nmsg = {0};
-    while (_z_zbuf_len(msg->_payload) > 0) {
-        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload));
+    _z_zbuf_t buf = _z_slice_as_zbuf(_z_slice_view_deref(&msg->_payload));
+    while (_z_zbuf_len(&buf) > 0) {
+        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &entry->common));
     }
@@ -308,12 +306,13 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
     }
     // Process fragment data
     if (*dbuf_state == _Z_DBUF_STATE_INIT) {
+        const _z_slice_t *payload = _z_slice_view_deref(&msg->_payload);
         // Check overflow
-        if ((_z_wbuf_len(dbuf) + msg->_payload.len) > Z_FRAG_MAX_SIZE) {
+        if ((_z_wbuf_len(dbuf) + payload->len) > Z_FRAG_MAX_SIZE) {
             *dbuf_state = _Z_DBUF_STATE_OVERFLOW;
         } else {
             // Fill buffer
-            _z_wbuf_write_bytes(dbuf, msg->_payload.start, 0, msg->_payload.len);
+            _z_wbuf_write_bytes(dbuf, payload->start, 0, payload->len);
         }
     }
     // Process final fragment
@@ -362,7 +361,6 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
 static z_result_t _z_multicast_handle_fragment(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_fragment_t *msg,
                                                _z_transport_peer_multicast_t *entry) {
     z_result_t ret = _z_multicast_handle_fragment_inner(ztm, header, msg, entry);
-    _z_t_msg_fragment_clear(msg);
     return ret;
 }
 
@@ -459,7 +457,6 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
 static z_result_t _z_multicast_handle_join(_z_transport_multicast_t *ztm, _z_slice_t *addr, _z_t_msg_join_t *msg,
                                            _z_transport_peer_multicast_t *entry) {
     z_result_t ret = _z_multicast_handle_join_inner(ztm, addr, msg, entry);
-    _z_t_msg_join_clear(msg);
     return ret;
 }
 
@@ -486,7 +483,6 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             if (entry != NULL) {
                 entry->common._received = true;
             }
-            _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
             break;
         }
 
@@ -527,13 +523,11 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 _z_transport_peer_mutex_lock(&ztm->_common);
 #endif
             }
-            _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
 
         default: {
             _Z_ERROR("Unknown session message ID");
-            _z_t_msg_clear(t_msg);
             break;
         }
     }

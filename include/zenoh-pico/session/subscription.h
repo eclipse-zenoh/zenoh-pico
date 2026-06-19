@@ -64,10 +64,10 @@ _Z_LRU_CACHE_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_subscripti
 _z_subscription_rc_t _z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id);
 _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *sub);
 z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_wireexpr_t *wireexpr,
-                                         const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                                         const _z_zint_t sample_kind, const _z_timestamp_t *timestamp, _z_n_qos_t qos,
-                                         const _z_bytes_t *attachment, z_reliability_t reliability,
-                                         const _z_source_info_t *source_info, _z_transport_peer_common_t *peer);
+                                         const _z_bytes_t *opt_payload, const _z_encoding_t *opt_encoding,
+                                         const _z_zint_t sample_kind, const _z_timestamp_t *opt_timestamp,
+                                         _z_n_qos_t qos, const _z_bytes_t *opt_attachment, z_reliability_t reliability,
+                                         const _z_source_info_t *opt_source_info, _z_transport_peer_common_t *peer);
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
 
@@ -85,11 +85,8 @@ static inline z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, const _z
                                                       const _z_bytes_t *attachment, z_reliability_t reliability,
                                                       const _z_source_info_t *source_info,
                                                       _z_transport_peer_common_t *peer) {
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_bytes_t payload = _z_bytes_null();
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, wireexpr, &payload, &encoding,
-                                         Z_SAMPLE_KIND_DELETE, timestamp, qos, attachment, reliability, source_info,
-                                         peer);
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, wireexpr, NULL, NULL, Z_SAMPLE_KIND_DELETE,
+                                         timestamp, qos, attachment, reliability, source_info, peer);
 }
 #else   // Z_FEATURE_SUBSCRIPTION == 0
 static inline z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, const _z_wireexpr_t *wireexpr,

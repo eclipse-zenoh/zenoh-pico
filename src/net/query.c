@@ -14,9 +14,9 @@
 #include "zenoh-pico/net/query.h"
 
 #include "zenoh-pico/net/session.h"
-#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/session/loopback.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"

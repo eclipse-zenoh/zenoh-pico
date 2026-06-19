@@ -319,7 +319,6 @@ typedef struct {
     enum { _Z_OAM_BODY_UNIT, _Z_OAM_BODY_ZINT, _Z_OAM_BODY_ZBUF } _enc;
     _z_msg_ext_body_t _body;
 } _z_n_msg_oam_t;
-void _z_n_msg_oam_clear(_z_n_msg_oam_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
 typedef union {
@@ -337,7 +336,6 @@ typedef struct {
     z_reliability_t _reliability;
 } _z_network_message_t;
 typedef _z_network_message_t _z_zenoh_message_t;
-void _z_n_msg_clear(_z_network_message_t *m);
 
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id);

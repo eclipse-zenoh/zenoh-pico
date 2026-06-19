@@ -149,7 +149,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         switch (pen_qry->_consolidation) {
             case Z_CONSOLIDATION_MODE_LATEST: {
                 if (pen_rep != NULL) {
-                    if (_z_timestamp_compare(&msg->_commons._timestamp, &pen_rep->_tstamp) <= 0) {
+                    if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                         _z_session_mutex_unlock(zn);
                         return _Z_RES_OK;  // do not deliver the reply as it is older or equal to the previous one
                     }
@@ -173,7 +173,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 // In monotonic mode, we only keep and deliver the reply if it has a greater timestamp than the previous
                 // one
                 if (pen_rep != NULL) {
-                    if (_z_timestamp_compare(&msg->_commons._timestamp, &pen_rep->_tstamp) <= 0) {
+                    if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                         _z_session_mutex_unlock(zn);
                         return _Z_RES_OK;  // do not deliver the reply as it is older or equal to the previous one
                     } else {
@@ -196,6 +196,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     _Z_DEBUG("immediate callback for id=%jd", (intmax_t)id);
     pen_qry->_callback(&reply, pen_qry->_arg);
     _z_session_mutex_unlock(zn);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_wireexpr_t *wireexpr,
@@ -204,7 +205,8 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
     _z_keyexpr_view_t keyexpr;
     z_result_t ret = _z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, wireexpr, peer);
 
-    _Z_SET_IF_OK(ret, _z_trigger_query_reply_partial_inner(zn, id, _z_keyexpr_view_deref(&keyexpr), msg, kind, replier_id));
+    _Z_SET_IF_OK(ret,
+                 _z_trigger_query_reply_partial_inner(zn, id, _z_keyexpr_view_deref(&keyexpr), msg, kind, replier_id));
     return ret;
 }
 

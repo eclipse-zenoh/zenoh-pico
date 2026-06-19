@@ -35,7 +35,6 @@ z_result_t _z_liveliness_send_declare_token(_z_session_t *zn, uint32_t id, const
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     z_result_t ret = _z_send_declare(zn, &n_msg);
-    _z_n_msg_clear(&n_msg);
     return ret;
 }
 
@@ -45,7 +44,6 @@ z_result_t _z_liveliness_send_undeclare_token(_z_session_t *zn, uint32_t id, con
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     z_result_t ret = _z_send_undeclare(zn, &n_msg);
-    _z_n_msg_clear(&n_msg);
     return ret;
 }
 
@@ -206,7 +204,6 @@ z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_sess
     _z_network_message_t n_msg;
     _z_n_msg_make_interest(&n_msg, interest);
     z_result_t res = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
-    _z_n_msg_clear(&n_msg);
     if (res != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s);
         res = _Z_ERR_TRANSPORT_TX_FAILED;
@@ -245,7 +242,6 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
     if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
-    _z_n_msg_clear(&n_msg);
 
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &s);
     return _z_sync_group_check(&sub->_callback_drop_sync_group) ? _z_sync_group_wait(&sub->_callback_drop_sync_group)
@@ -357,7 +353,6 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-        _z_n_msg_clear(&n_msg);
     }
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_liveliness_unregister_pending_query(zn, query_id));
 

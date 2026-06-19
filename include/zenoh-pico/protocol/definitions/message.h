@@ -143,7 +143,6 @@ typedef struct {
     z_consolidation_mode_t _consolidation;
     _z_reply_body_t _body;
 } _z_msg_reply_t;
-void _z_msg_reply_clear(_z_msg_reply_t *msg);
 #define _Z_FLAG_Z_R_C 0x20
 
 #ifdef __cplusplus
