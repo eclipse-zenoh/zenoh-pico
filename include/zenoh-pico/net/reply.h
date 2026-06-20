@@ -69,6 +69,7 @@ static inline const _z_reply_err_owned_t *_z_reply_err_get_ref(const _z_reply_er
         (view, return _z_reply_err_view_deref(_)),
         (none, return NULL)
     );
+    return NULL;  // Unreachable, but avoids compiler warning.
 }
 
 static inline _z_reply_err_t _z_reply_err_null(void) { return _z_reply_err_none(); }

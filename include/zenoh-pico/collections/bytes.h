@@ -78,6 +78,7 @@ static inline size_t _z_bytes_num_slices(const _z_bytes_t *bs) {
         (vec, return _z_slice_vec_size(_)),
         (none, return 0)
     );
+    return 0;  // Unreachable, but avoids compiler warning.
 }
 
 static inline const _z_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
@@ -86,6 +87,7 @@ static inline const _z_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t 
         (vec, return _z_slice_vec_const_get(_, i)),
         (none, return NULL)
     );
+    return NULL;  // Unreachable, but avoids compiler warning.
 }
 static inline void _z_bytes_clear(_z_bytes_t *bytes) { _z_slice_single_or_vec_destroy(&bytes->_inner); }
 

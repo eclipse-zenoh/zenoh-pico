@@ -226,7 +226,8 @@ _z_slice_view_t gen_slice(size_t len) {
     }
     _z_slice_t slice = _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_default());
     _z_slice_view_t view = _z_slice_view_from_slice(&slice);
-    _z_hslice_vec_push_back(&SLICES_STORAGE, &slice);  // Store the slice in SLICES_STORAGE so it can be aliased and freed later.
+    _z_hslice_vec_push_back(&SLICES_STORAGE,
+                            &slice);  // Store the slice in SLICES_STORAGE so it can be aliased and freed later.
     return view;
 }
 
@@ -1373,7 +1374,8 @@ _z_msg_query_t gen_query_anyke(const char *params, bool _anyke) {
     return (_z_msg_query_t){
         ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
-        ._parameters = params == NULL ? _z_slice_view_null() : _z_slice_view_make((const uint8_t*)params, strlen(params)),
+        ._parameters =
+            params == NULL ? _z_slice_view_null() : _z_slice_view_make((const uint8_t *)params, strlen(params)),
         ._implicit_anyke = _anyke,
         ._ext_value = gen_bool() ? gen_value() : _z_value_view_null(),
         ._ext_attachment = gen_bool() ? gen_bytes(1 + gen_uint8()) : _z_bytes_view_null(),
@@ -1734,7 +1736,8 @@ void assert_eq_oam(const _z_n_msg_oam_t *left, const _z_n_msg_oam_t *right) {
             assert(left->_body._zint._val == right->_body._zint._val);
             break;
         case _Z_OAM_BODY_ZBUF:
-            assert_eq_slice(_z_slice_view_deref(&left->_body._zbuf._val), _z_slice_view_deref(&right->_body._zbuf._val));
+            assert_eq_slice(_z_slice_view_deref(&left->_body._zbuf._val),
+                            _z_slice_view_deref(&right->_body._zbuf._val));
             break;
         default:
             assert(false);
@@ -1806,7 +1809,8 @@ _z_transport_message_t gen_init(void) {
         return _z_t_msg_make_init_syn(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid());
     } else {
         _z_slice_view_t cookie = gen_slice(16);
-        return _z_t_msg_make_init_ack(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(), _z_slice_view_deref(&cookie));
+        return _z_t_msg_make_init_ack(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(),
+                                      _z_slice_view_deref(&cookie));
     }
 }
 void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
@@ -1998,7 +2002,8 @@ void frame_message(void) {
 
 _z_transport_message_t gen_fragment(void) {
     _z_slice_view_t payload = gen_slice(gen_uint8());
-    return _z_t_msg_make_fragment(gen_uint32(), _z_slice_view_deref(&payload), gen_bool(), gen_bool(), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), _z_slice_view_deref(&payload), gen_bool(), gen_bool(), gen_bool(),
+                                  gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);

@@ -15,7 +15,6 @@
 #ifndef INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 #define INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 
-#include "zenoh-pico/collections/lru_cache.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -28,22 +27,6 @@ extern "C" {
 typedef struct _z_session_t _z_session_t;
 
 _Z_SVEC_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
-_Z_REFCOUNT_DEFINE(_z_subscription_rc_svec, _z_subscription_rc_svec)
-
-typedef struct {
-    _z_keyexpr_t ke;
-    _z_subscription_rc_svec_rc_t infos;
-    bool is_remote;
-} _z_subscription_cache_data_t;
-
-static inline _z_subscription_cache_data_t _z_subscription_cache_data_null(void) {
-    _z_subscription_cache_data_t ret = {0};
-    return ret;
-}
-
-void _z_unsafe_subscription_cache_invalidate(_z_session_t *zn);
-int _z_subscription_cache_data_compare(const void *first, const void *second);
-void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val);
 
 /*------------------ Subscription ------------------*/
 z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
@@ -54,12 +37,6 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
                                                          const _z_timestamp_t *timestamp);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-
-#if Z_FEATURE_RX_CACHE == 1
-_Z_ELEM_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_noop_size, _z_subscription_cache_data_clear,
-               _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_LRU_CACHE_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_subscription_cache_data_compare)
-#endif
 
 _z_subscription_rc_t _z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id);
 _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *sub);

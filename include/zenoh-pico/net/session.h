@@ -169,9 +169,6 @@ typedef struct _z_session_t {
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_rc_slist_t *_subscriptions;
     _z_subscription_rc_slist_t *_liveliness_subscriptions;
-#if Z_FEATURE_RX_CACHE == 1
-    _z_subscription_lru_cache_t _subscription_cache;
-#endif
 #endif
 
 #if Z_FEATURE_LIVELINESS == 1
@@ -187,9 +184,6 @@ typedef struct _z_session_t {
 #if Z_FEATURE_QUERYABLE == 1
     _z_session_queryable_rc_slist_t *_local_queryable;
     _z_rid_to_count_hmap_t _received_queries_id_to_count;
-#if Z_FEATURE_RX_CACHE == 1
-    _z_queryable_lru_cache_t _queryable_cache;
-#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_slist_t *_pending_queries;

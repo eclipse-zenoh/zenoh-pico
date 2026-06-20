@@ -84,6 +84,7 @@ static inline const _z_query_owned_t *_z_query_get_ref(const _z_query_t *s) {
         (view, return _z_query_view_deref(_)),
         (none, return NULL)
     );
+    return NULL;  // Unreachable, but avoids compiler warning.
 }
 
 static inline _z_query_t _z_query_null(void) { return _z_query_none(); }

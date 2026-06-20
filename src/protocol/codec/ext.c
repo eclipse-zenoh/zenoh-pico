@@ -185,16 +185,16 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
-            _z_slice_t buf = extension->_body._zbuf._val;
-            char *hex = (char *)z_malloc(buf.len * 2 + 1);
+            const _z_slice_t *buf = _z_slice_view_deref(&extension->_body._zbuf._val);
+            char *hex = (char *)z_malloc(buf->len * 2 + 1);
             if (hex == NULL) {
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
-            for (size_t i = 0; i < buf.len; ++i) {
-                snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
+            for (size_t i = 0; i < buf->len; ++i) {
+                snprintf(hex + 2 * i, 3, "%02x", buf->start[i]);
             }
             _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)", ext_id,
-                     trace_id, (int)buf.len * 2, hex);
+                     trace_id, (int)buf->len * 2, hex);
             z_free(hex);
             break;
         }

@@ -88,6 +88,7 @@ static inline const _z_sample_owned_t *_z_sample_get_ref(const _z_sample_t *s) {
         (view, return _z_sample_view_deref(_)),
         (none, return NULL)
     );
+    return NULL;  // Unreachable, but avoids compiler warning.
 }
 
 static inline _z_sample_t _z_sample_null(void) { return _z_sample_none(); }

@@ -18,25 +18,12 @@
 #include <stdbool.h>
 #include <zenoh-pico/session/session.h>
 
-#include "zenoh-pico/collections/lru_cache.h"
-
 // Forward declaration to avoid cyclical include
 typedef struct _z_session_t _z_session_t;
 typedef struct _z_session_rc_t _z_session_rc_t;
 
 // Queryable infos
 _Z_SVEC_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
-_Z_REFCOUNT_DEFINE(_z_session_queryable_rc_svec, _z_session_queryable_rc_svec)
-
-typedef struct {
-    _z_keyexpr_t ke;
-    _z_session_queryable_rc_svec_rc_t infos;
-    bool is_remote;
-} _z_queryable_cache_data_t;
-
-void _z_unsafe_queryable_cache_invalidate(_z_session_t *zn);
-int _z_queryable_cache_data_compare(const void *first, const void *second);
-void _z_queryable_cache_data_clear(_z_queryable_cache_data_t *val);
 
 #if Z_FEATURE_QUERYABLE == 1
 #define _Z_QUERYABLE_COMPLETE_DEFAULT false

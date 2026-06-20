@@ -96,16 +96,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_subscriptions = NULL;
     zn->_liveliness_subscriptions = NULL;
-#if Z_FEATURE_RX_CACHE == 1
-    zn->_subscription_cache = _z_subscription_lru_cache_init(Z_RX_CACHE_SIZE);
-#endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     _z_rid_to_count_hmap_init(&zn->_received_queries_id_to_count);
     zn->_local_queryable = NULL;
-#if Z_FEATURE_RX_CACHE == 1
-    zn->_queryable_cache = _z_queryable_lru_cache_init(Z_RX_CACHE_SIZE);
-#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;

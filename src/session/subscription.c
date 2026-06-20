@@ -35,30 +35,6 @@
 
 #define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
 
-void _z_unsafe_subscription_cache_invalidate(_z_session_t *zn) {
-#if Z_FEATURE_RX_CACHE == 1
-    _z_subscription_lru_cache_clear(&zn->_subscription_cache);
-#else
-    _ZP_UNUSED(zn);
-#endif
-}
-
-#if Z_FEATURE_RX_CACHE == 1
-int _z_subscription_cache_data_compare(const void *first, const void *second) {
-    const _z_subscription_cache_data_t *first_data = (const _z_subscription_cache_data_t *)first;
-    const _z_subscription_cache_data_t *second_data = (const _z_subscription_cache_data_t *)second;
-    if (first_data->is_remote != second_data->is_remote) {
-        return (int)first_data->is_remote - (int)second_data->is_remote;
-    }
-    return _z_keyexpr_compare(&first_data->ke, &second_data->ke);
-}
-#endif  // Z_FEATURE_RX_CACHE == 1
-
-void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val) {
-    _z_subscription_rc_svec_rc_drop(&val->infos);
-    _z_keyexpr_clear(&val->ke);
-}
-
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
     return this_->_id == other->_id;
 }
@@ -127,23 +103,6 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
                                    _z_subscription_rc_svec_clear(sub_infos));
         }
         xs = _z_subscription_rc_slist_next(xs);
-    }
-    return _Z_RES_OK;
-}
-
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - zn->_mutex_inner
- */
-static z_result_t __unsafe_z_get_subscriptions_rc_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
-                                                         const _z_keyexpr_t *key, bool is_remote,
-                                                         _z_subscription_rc_svec_rc_t *sub_infos) {
-    *sub_infos = _z_subscription_rc_svec_rc_new_undefined();
-    z_result_t ret = !_Z_RC_IS_NULL(sub_infos) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_by_key(zn, kind, key, is_remote, _Z_RC_IN_VAL(sub_infos)));
-    if (ret != _Z_RES_OK) {
-        _z_subscription_rc_svec_rc_drop(sub_infos);
     }
     return _Z_RES_OK;
 }
@@ -257,7 +216,6 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
     }
 #endif
     _z_session_mutex_lock(zn);
-    _z_unsafe_subscription_cache_invalidate(zn);
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         zn->_subscriptions = _z_subscription_rc_slist_drop_first_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
     } else {
@@ -271,7 +229,6 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
 void _z_flush_subscriptions(_z_session_t *zn) {
     _z_subscription_rc_slist_t *subscriptions, *liveliness_subscriptions;
     _z_session_mutex_lock(zn);
-    _z_unsafe_subscription_cache_invalidate(zn);
     subscriptions = zn->_subscriptions;
     liveliness_subscriptions = zn->_liveliness_subscriptions;
     zn->_subscriptions = _z_subscription_rc_slist_new();
@@ -280,7 +237,7 @@ void _z_flush_subscriptions(_z_session_t *zn) {
     _z_subscription_rc_slist_free(&subscriptions);
     _z_subscription_rc_slist_free(&liveliness_subscriptions);
 }
-#else  // Z_FEATURE_SUBSCRIPTION == 0
+#else   // Z_FEATURE_SUBSCRIPTION == 0
 z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer) {
@@ -298,7 +255,4 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
     _ZP_UNUSED(timestamp);
     return _Z_RES_OK;
 }
-
-void _z_unsafe_subscription_cache_invalidate(_z_session_t *zn) { _ZP_UNUSED(zn); }
-
 #endif  // Z_FEATURE_SUBSCRIPTION == 1
