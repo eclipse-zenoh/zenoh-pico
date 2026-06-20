@@ -197,8 +197,13 @@ typedef struct {
     _z_encoding_t encoding;
 } _z_value_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_value_t _z_value_null(void) { return (_z_value_t){0}; }
+static inline _z_value_t _z_value_null(void) {
+    _z_value_t v;
+    v.payload = _z_bytes_null();
+    v.encoding = _z_encoding_null();
+    return v;
+}
+
 static inline bool _z_value_check(const _z_value_t *value) {
     return _z_bytes_check(&value->payload) || _z_encoding_check(&value->encoding);
 }
@@ -214,7 +219,12 @@ typedef struct _z_value_view_t {
 } _z_value_view_t;
 
 static inline const _z_value_t *_z_value_view_deref(const _z_value_view_t *view) { return &view->_inner; }
-static inline _z_value_view_t _z_value_view_null(void) { return (_z_value_view_t){0}; }
+static inline _z_value_view_t _z_value_view_null(void) {
+    _z_value_view_t view;
+    view._inner = _z_value_null();
+    return view;
+}
+
 static inline void _z_value_view_create_from_data(_z_value_view_t *dst, const _z_bytes_t *opt_payload,
                                                   const _z_encoding_t *opt_encoding) {
     dst->_inner.payload = opt_payload == NULL ? _z_bytes_null() : *opt_payload;

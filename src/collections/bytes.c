@@ -119,6 +119,7 @@ z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_slice_t *s) {
         case _z_slice_single_or_vec_tag_none: {
             // Empty bytes: store the slice inline (common single-slice case, no allocation).
             dst->_inner = _z_slice_single_or_vec_from_slice(s);
+            break;
         }
         case _z_slice_single_or_vec_tag_slice: {
             // Promote from a single inline slice to a vector holding both slices.
@@ -133,6 +134,7 @@ z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_slice_t *s) {
             _z_slice_vec_push_back(&vec, &first);
             _z_slice_vec_push_back(&vec, s);
             dst->_inner = _z_slice_single_or_vec_from_vec(&vec);
+            break;
         }
         case _z_slice_single_or_vec_tag_vec: {
             _z_slice_vec_t *vec = _z_slice_single_or_vec_get_vec(&dst->_inner);
@@ -140,6 +142,7 @@ z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_slice_t *s) {
                 _z_slice_clear(s);
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
+            break;
         }
     }
     return _Z_RES_OK;

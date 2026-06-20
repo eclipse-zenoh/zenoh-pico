@@ -64,8 +64,11 @@ typedef struct {
     _z_slice_single_or_vec_t _inner;
 } _z_bytes_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
+static inline _z_bytes_t _z_bytes_null(void) {
+    _z_bytes_t b;
+    b._inner = _z_slice_single_or_vec_none();
+    return b;
+}
 
 static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
     _z_bytes_t b = *src;
@@ -141,7 +144,11 @@ typedef struct _z_bytes_view_t {
     _z_bytes_t _bytes;
 } _z_bytes_view_t;
 
-static inline _z_bytes_view_t _z_bytes_view_null(void) { return (_z_bytes_view_t){0}; }
+static inline _z_bytes_view_t _z_bytes_view_null(void) {
+    _z_bytes_view_t view;
+    view._bytes = _z_bytes_null();
+    return view;
+}
 static inline bool _z_bytes_view_check(const _z_bytes_view_t *bytes) { return _z_bytes_check(&bytes->_bytes); }
 
 static inline _z_bytes_view_t _z_bytes_view_from_slice(const _z_slice_t *slice) {

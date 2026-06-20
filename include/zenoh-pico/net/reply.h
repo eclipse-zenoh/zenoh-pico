@@ -34,7 +34,12 @@ typedef struct _z_reply_err_owned_t {
 
 void _z_reply_err_owned_clear(_z_reply_err_owned_t *reply);
 void _z_reply_err_owned_move(_z_reply_err_owned_t *dst, _z_reply_err_owned_t *src);
-static inline _z_reply_err_owned_t _z_reply_err_owned_null(void) { return (_z_reply_err_owned_t){0}; }
+static inline _z_reply_err_owned_t _z_reply_err_owned_null(void) {
+    _z_reply_err_owned_t r;
+    r.payload = _z_bytes_null();
+    r.encoding = _z_encoding_null();
+    return r;
+}
 z_result_t _z_reply_err_owned_copy(_z_reply_err_owned_t *dst, const _z_reply_err_owned_t *src);
 
 // a non-owning view of fields of reply_err

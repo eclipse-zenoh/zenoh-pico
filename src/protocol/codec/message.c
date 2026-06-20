@@ -124,7 +124,6 @@ z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *zbf, bool has_suffix
     ret |= _z_zint16_decode(&ke->_id, zbf);
     ke->_mapping = (remote_mapping) ? _Z_KEYEXPR_MAPPING_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     if (has_suffix) {
-        _z_string_view_t str = _z_string_view_null();
         ret |= _z_string_decode(&ke->_suffix, zbf);
     } else {
         ke->_suffix = _z_string_view_null();
