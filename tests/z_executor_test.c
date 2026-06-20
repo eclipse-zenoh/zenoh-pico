@@ -456,6 +456,34 @@ static void test_destroy_cleans_up_suspended(void) {
     assert(arg.destroyed == true);
 }
 
+// When the task pool is at capacity, spawn fails: the null handle is returned and
+// the future's destroy_fn is still invoked so no resources leak.
+static void test_spawn_fail_destroys_future(void) {
+    printf("Test: spawn failure properly destroys the future\n");
+    _z_executor_t ex = _z_executor_new();
+
+    // Fill every slot in the hashmap without spinning so all remain occupied.
+    // Keys 1..Z_RUNTIME_MAX_TASKS hash to distinct buckets (identity hash, no collisions).
+    test_arg_t fill_args[Z_RUNTIME_MAX_TASKS];
+    for (size_t i = 0; i < Z_RUNTIME_MAX_TASKS; i++) {
+        fill_args[i] = (test_arg_t){0};
+        _z_fut_t fut = _z_fut_new(&fill_args[i], fn_finish, NULL);
+        _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
+        assert(!_z_fut_handle_is_null(h));
+    }
+
+    // One more spawn must fail: the hashmap is at capacity.
+    test_arg_t overflow_arg = {0};
+    _z_fut_t overflow_fut = _z_fut_new(&overflow_arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h = _z_executor_spawn(&ex, &overflow_fut);
+
+    assert(_z_fut_handle_is_null(h));        // spawn must signal failure via null handle
+    assert(overflow_arg.destroyed == true);  // destroy_fn must be called — no leak
+    assert(overflow_arg.call_count == 0);    // future body must never have run
+
+    _z_executor_destroy(&ex);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -473,6 +501,7 @@ int main(void) {
     test_cancel_suspended();
     test_other_tasks_run_while_suspended();
     test_destroy_cleans_up_suspended();
+    test_spawn_fail_destroys_future();
     printf("All executor tests passed.\n");
     return 0;
 }

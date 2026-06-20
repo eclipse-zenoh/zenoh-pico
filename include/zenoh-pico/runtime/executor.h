@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
 #ifdef __cplusplus
@@ -158,25 +159,19 @@ static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
 
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
-#ifndef _ZP_EXECUTOR_MAX_NUM_FUTURES
-#define _ZP_EXECUTOR_MAX_NUM_FUTURES 64
-#endif
-
-#define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT (_ZP_EXECUTOR_MAX_NUM_FUTURES * 3 / 2)  // 0.66 load factor
-
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE size_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_fut_data_hmap
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME _z_size_fut_data_hmap_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT
-#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT Z_RUNTIME_MAX_TASKS
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_RUNTIME_MAX_TASKS
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME _z_fut_data_destroy
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME _z_fut_data_move
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 #define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
 #define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
-#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_deque_template.h"
 
 // Compare two sleeping-task indices by their wake-up time stored in the hashmap.
@@ -196,7 +191,7 @@ static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_index_t *a, con
 #define _ZP_STATIC_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
 #define _ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
 #define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_idx_cmp
-#define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_pqueue_template.h"
 
 typedef struct _z_executor_t {
