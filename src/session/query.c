@@ -130,7 +130,6 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     // Process monotonic & latest consolidation mode
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST ||
         pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
-        bool drop = false;
         _z_pending_reply_slist_t *curr_node = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
 
