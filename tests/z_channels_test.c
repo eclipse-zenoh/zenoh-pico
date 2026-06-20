@@ -23,7 +23,6 @@
 
 #define SEND(closure, v)                                                                                               \
     do {                                                                                                               \
-        _z_bytes_t payload;                                                                                            \
         _z_slice_view_t slice = _z_slice_view_make((const uint8_t *)v, strlen(v));                                     \
         _z_bytes_view_t bytes = _z_bytes_view_from_slice(_z_slice_view_deref(&slice));                                 \
         _z_string_view_t sv = _z_string_view_make("key", 3);                                                           \
