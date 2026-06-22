@@ -152,6 +152,7 @@ typedef struct _z_session_t {
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_t *_declaration_cache;
+    _z_string_t _last_connect_locator;
 #endif
 
     // Session subscriptions

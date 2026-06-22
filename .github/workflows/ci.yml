@@ -526,8 +526,11 @@ jobs:
 
   connection_restore_test:
     needs: zenoh_build
-    name: Connection restore test
+    name: Connection restore test (multi-thread=${{ matrix.multi_thread }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        multi_thread: [1, 0]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -544,8 +547,14 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
-          RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
+          if [ "$Z_FEATURE_MULTI_THREAD" = "0" ]; then
+            RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd --single-thread
+          else
+            RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
+          fi
         timeout-minutes: 20
+        env:
+          Z_FEATURE_MULTI_THREAD: ${{ matrix.multi_thread }}
 
   routed_peer_client_test:
     needs: zenoh_build

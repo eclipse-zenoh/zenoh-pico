@@ -273,8 +273,12 @@ z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_trans
     // If sending to a peer list, make sure the peer mutex is locked
     _z_transport_tx_mutex_lock(ztc, true);
 
-    ret = _z_transport_tx_send_t_msg_inner(ztc, t_msg, peers);
+    if (ztc->_state != _Z_TRANSPORT_STATE_OPEN) {
+        _z_transport_tx_mutex_unlock(ztc);
+        return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    }
 
+    ret = _z_transport_tx_send_t_msg_inner(ztc, t_msg, peers);
     _z_transport_tx_mutex_unlock(ztc);
     return ret;
 }
@@ -298,6 +302,13 @@ static z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _
         return ret;
     }
     // Process message
+    if (ztc->_state != _Z_TRANSPORT_STATE_OPEN) {
+        if (!_z_transport_batch_hold_tx_mutex()) {
+            _z_transport_tx_mutex_unlock(ztc);
+        }
+        return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    }
+
     ret = _z_transport_tx_send_n_msg_inner(ztc, n_msg, reliability, peers);
     if (!_z_transport_batch_hold_tx_mutex()) {
         _z_transport_tx_mutex_unlock(ztc);
@@ -309,6 +320,9 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
                                                _z_transport_peer_unicast_slist_t *peers) {
 #if Z_FEATURE_BATCHING == 1
     z_result_t ret = _Z_RES_OK;
+    if (ztc->_state != _Z_TRANSPORT_STATE_OPEN) {
+        return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    }
     // Check batch size
     if (ztc->_batch_count > 0) {
         // Acquire the lock and drop the message if needed
@@ -320,6 +334,13 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
             return ret;
         }
         // Send batch
+        if (ztc->_state != _Z_TRANSPORT_STATE_OPEN) {
+            if (!_z_transport_batch_hold_tx_mutex()) {
+                _z_transport_tx_mutex_unlock(ztc);
+            }
+            return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+        }
+
         _Z_DEBUG("Send network batch");
         ret = _z_transport_tx_flush_buffer(ztc, peers);
         if (!_z_transport_batch_hold_tx_mutex()) {
@@ -391,6 +412,10 @@ z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg
             ret = _z_transport_tx_send_t_msg(&zt->_transport._multicast._common, t_msg, NULL);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
+            if (zt->_transport._raweth._common._state != _Z_TRANSPORT_STATE_OPEN) {
+                ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+                break;
+            }
             ret = _z_raweth_send_t_msg(&zt->_transport._raweth._common, t_msg);
             break;
         default:
@@ -530,6 +555,10 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                 _z_transport_tx_send_n_msg(&zn->_tp._transport._multicast._common, z_msg, reliability, cong_ctrl, NULL);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
+            if (zn->_tp._transport._raweth._common._state != _Z_TRANSPORT_STATE_OPEN) {
+                ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+                break;
+            }
             ret = _z_raweth_send_n_msg(zn, z_msg, reliability, cong_ctrl);
             break;
         default:

@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/link/transport/socket.h"
 #if Z_FEATURE_LINK_TLS == 1
@@ -64,6 +65,62 @@ static void _z_new_peer_dispatch_connected_event(_z_transport_unicast_t *ztu, co
 }
 #endif
 
+bool _z_transport_in_place_reconnect_supported(const _z_transport_t *zt, z_whatami_t mode) {
+    return (mode == Z_WHATAMI_CLIENT) && (zt->_type == _Z_TRANSPORT_UNICAST_TYPE);
+}
+
+static z_result_t _z_new_transport_client_unicast_from_link(_z_transport_t *zt, _z_link_t *zl,
+                                                            const _z_id_t *local_zid) {
+    _z_transport_unicast_establish_param_t tp_param = {0};
+    z_result_t ret = _z_unicast_open_client(&tp_param, zl, local_zid);
+    if (ret != _Z_RES_OK) {
+        _z_link_free(&zl);
+        return ret;
+    }
+    ret = _z_unicast_transport_create(zt, zl, &tp_param);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    // Fill peer list
+    return _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl), false, NULL);
+}
+
+static z_result_t _z_new_transport_client_unicast(_z_transport_t *zt, const _z_id_t *local_zid,
+                                                  const _z_string_t *locator, const _z_config_t *session_cfg) {
+    _z_link_t *zl = (_z_link_t *)z_malloc(sizeof(_z_link_t));
+    if (zl == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    memset(zl, 0, sizeof(_z_link_t));
+    z_result_t ret = _z_open_link(zl, locator, session_cfg);
+    if (ret != _Z_RES_OK) {
+        z_free(zl);
+        return ret;
+    }
+    if (zl->_cap._transport != Z_LINK_CAP_TRANSPORT_UNICAST) {
+        _z_link_free(&zl);
+        return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    }
+
+    return _z_new_transport_client_unicast_from_link(zt, zl, local_zid);
+}
+
+z_result_t _z_reopen_client_unicast_transport(_z_transport_unicast_t *ztu, const _z_id_t *local_zid,
+                                              const _z_string_t *locator, const _z_config_t *session_cfg) {
+    _z_transport_t next = {0};
+    next._type = _Z_TRANSPORT_NONE;
+
+    z_result_t ret = _z_new_transport_client_unicast(&next, local_zid, locator, session_cfg);
+    if (ret != _Z_RES_OK) {
+        _z_transport_clear(&next);
+        return ret;
+    }
+
+    _z_unicast_transport_replace_connection(ztu, &next._transport._unicast);
+    return _Z_RES_OK;
+}
+
 static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t *locator, const _z_id_t *local_zid,
                                           const _z_config_t *session_cfg) {
     z_result_t ret = _Z_RES_OK;
@@ -83,18 +140,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
     switch (zl->_cap._transport) {
         // Unicast transport
         case Z_LINK_CAP_TRANSPORT_UNICAST: {
-            _z_transport_unicast_establish_param_t tp_param;
-            ret = _z_unicast_open_client(&tp_param, zl, local_zid);
-            if (ret != _Z_RES_OK) {
-                _z_link_free(&zl);
-                return ret;
-            }
-            ret = _z_unicast_transport_create(zt, zl, &tp_param);
-            // Fill peer list
-            if (ret == _Z_RES_OK) {
-                ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl), false,
-                                                    NULL);
-            }
+            ret = _z_new_transport_client_unicast_from_link(zt, zl, local_zid);
             break;
         }
         // Multicast transport
