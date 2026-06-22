@@ -45,7 +45,7 @@ _z_executor_status_t _z_executor_get_status(const _z_executor_t *executor) {
     if (sleeping_idx_ptr != NULL) {
         z_clock_t now = z_clock_now();
         uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
-            _z_fut_data_hmap_at((_z_fut_data_hmap_t *)&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
+            _z_fut_data_hmap_const_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
         z_clock_t wake_up_time = executor->_epoch;
         z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
@@ -67,7 +67,7 @@ _z_executor_status_t _z_executor_get_next_fut(_z_executor_t *executor, _z_fut_da
     if (sleeping_idx_ptr != NULL) {
         z_clock_t now = z_clock_now();
         uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
-            _z_fut_data_hmap_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
+            _z_fut_data_hmap_const_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
         z_clock_t wake_up_time = executor->_epoch;
         z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {

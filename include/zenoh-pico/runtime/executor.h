@@ -171,10 +171,8 @@ static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key
 // The context is a pointer to the task hashmap, which provides the wake-up times.
 static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_iter_t *a, const _z_fut_data_hmap_iter_t *b,
                                           const _z_fut_data_hmap_t *tasks) {
-    uint64_t ta =
-        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_at((_z_fut_data_hmap_t *)tasks, *a)->val._schedule);
-    uint64_t tb =
-        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_at((_z_fut_data_hmap_t *)tasks, *b)->val._schedule);
+    uint64_t ta = _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_const_at(tasks, *a)->val._schedule);
+    uint64_t tb = _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_const_at(tasks, *b)->val._schedule);
     if (ta < tb) return -1;
     if (ta > tb) return 1;
     return 0;
