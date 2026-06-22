@@ -149,7 +149,7 @@ _z_session_queryable_rc_t _z_register_session_queryable(_z_session_t *zn, _z_ses
 
 static z_result_t __unsafe_z_session_register_new_received_query(_z_session_t *zn, const _z_query_id_t *query_id) {
     if (_z_rid_to_count_hmap_get(&zn->_received_queries_id_to_count, query_id) != NULL) {
-        _Z_WARN("Received query with rid %u, for peer %zu, which already exists in session %p ", query_id->rid,
+        _Z_WARN("Received query with rid %zu, for peer %zu, which already exists in session %p ", (size_t)query_id->rid,
                 query_id->peer_id, (void *)zn);
         return _Z_ERR_INVALID;
     }

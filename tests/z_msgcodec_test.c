@@ -1962,7 +1962,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
 
 _z_transport_message_t gen_frame(_z_wbuf_t *wbf, _z_zbuf_t *zbf, const _z_network_message_vec_t *nmsgs) {
     // Generate payload
-    const _z_network_message_t *msg;
+    const _z_network_message_t *msg = NULL;
     _ZP_CONST_FOREACH (_z_network_message_vec, nmsgs, msg) {
         assert(_z_network_message_encode(wbf, msg) == _Z_RES_OK);
     }
@@ -1972,7 +1972,7 @@ _z_transport_message_t gen_frame(_z_wbuf_t *wbf, _z_zbuf_t *zbf, const _z_networ
 
 void assert_eq_frame(const _z_network_message_vec_t *nmsgs, _z_t_msg_frame_t *left, _z_t_msg_frame_t *right) {
     assert(left->_sn == right->_sn);
-    const _z_network_message_t *msg;
+    const _z_network_message_t *msg = NULL;
     _ZP_CONST_FOREACH (_z_network_message_vec, nmsgs, msg) {
         _z_network_message_t received = {0};
         _z_zbuf_t zbf = _z_slice_as_zbuf(_z_slice_view_deref(&right->_payload));
