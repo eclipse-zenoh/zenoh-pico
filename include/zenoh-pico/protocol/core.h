@@ -208,7 +208,6 @@ static inline bool _z_value_check(const _z_value_t *value) {
     return _z_bytes_check(&value->payload) || _z_encoding_check(&value->encoding);
 }
 
-_z_value_t _z_value_steal(_z_value_t *value);
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);

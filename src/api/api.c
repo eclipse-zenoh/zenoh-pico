@@ -603,9 +603,6 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_nu
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_move,
                               _z_string_clear)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_err_t, reply_err, _z_reply_err_check, _z_reply_err_null, _z_reply_err_copy,
-                              _z_reply_err_move_or_copy, _z_reply_err_clear)
-
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_declared_keyexpr_t, keyexpr, _z_declared_keyexpr_check, _z_declared_keyexpr_null,
                               _z_declared_keyexpr_copy, _z_declared_keyexpr_move, _z_declared_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_declared_keyexpr_t, keyexpr, _z_declared_keyexpr_check, _z_declared_keyexpr_null)
@@ -1301,13 +1298,6 @@ z_priority_t z_sample_priority(const z_loaned_sample_t *sample) {
     return _z_n_qos_get_priority(_z_sample_get_ref(sample)->qos);
 }
 
-const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) {
-    return &_z_reply_err_get_ref(reply_err)->payload;
-}
-const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) {
-    return &_z_reply_err_get_ref(reply_err)->encoding;
-}
-
 const char *z_string_data(const z_loaned_string_t *str) { return _z_string_data(str); }
 size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
@@ -1514,13 +1504,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
     }
 #endif
 
-    _z_encoding_t encoding;
-    if (opt.encoding == NULL) {
-        encoding = _z_encoding_alias(
-            &pub->_encoding);  // it is safe to use alias, since it will be unaffected by clear operation
-    } else {
-        encoding = _z_encoding_alias(&opt.encoding->_this._val);
-    }
+    const _z_encoding_t *encoding = opt.encoding == NULL ? &pub->_encoding : &opt.encoding->_this._val;
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1547,7 +1531,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
             // on all `payload` (payload, attachment, encoding) and keyexpression can be inferred by cache from
             // its advanced publisher.
             _z_sample_create_view_from_data(
-                &sample, &pub->_key._inner, payload_bytes, opt.timestamp, &encoding, Z_SAMPLE_KIND_PUT,
+                &sample, &pub->_key._inner, payload_bytes, opt.timestamp, encoding, Z_SAMPLE_KIND_PUT,
                 _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
                 attachment_bytes, source_info, reliability);
             z_result_t res = _ze_advanced_cache_add(cache, &sample);
@@ -1563,7 +1547,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
 #endif
             !_z_write_filter_active(&pub->_filter)) {
             // Write value
-            ret = _z_write(session, &pub->_key, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+            ret = _z_write(session, &pub->_key, payload_bytes, encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info,
                            pub->_allowed_destination);
         }
@@ -1577,7 +1561,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
 #endif
 
     // Clean-up
-    _z_encoding_clear(&encoding);
+    z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
     z_bytes_drop(payload);
     return ret;
@@ -1743,6 +1727,17 @@ z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher
 #endif  // Z_FEATURE_PUBLICATION == 1
 
 #if Z_FEATURE_QUERY == 1
+
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_err_t, reply_err, _z_reply_err_check, _z_reply_err_null, _z_reply_err_copy,
+                              _z_reply_err_move_or_copy, _z_reply_err_clear)
+
+const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) {
+    return &_z_reply_err_get_ref(reply_err)->payload;
+}
+const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) {
+    return &_z_reply_err_get_ref(reply_err)->encoding;
+}
+
 bool _z_reply_check(const _z_reply_t *reply) { return !_z_reply_data_is_none(&reply->_result); }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, _z_reply_copy, _z_reply_move_or_copy,
                               _z_reply_clear)
@@ -1894,13 +1889,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         opt = *options;
     }
 
-    _z_encoding_t encoding;
-    if (opt.encoding == NULL) {
-        encoding = _z_encoding_alias(
-            &querier->_encoding);  // it is safe to use alias, since it is unaffected by clear operation
-    } else {
-        encoding = _z_encoding_alias(&opt.encoding->_this._val);
-    }
+    const _z_encoding_t *encoding = opt.encoding == NULL ? &querier->_encoding : &opt.encoding->_this._val;
 
     _z_session_t *session = NULL;
 
@@ -1927,7 +1916,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         _z_n_qos_t qos = _z_n_qos_make(querier->_is_express, querier->_congestion_control == Z_CONGESTION_CONTROL_BLOCK,
                                        querier->_priority);
         ret = _z_query(&sess_rc, _z_optional_id_make_some(querier->_id), &querier->_key, parameters, parameters_len,
-                       querier->_target, querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
+                       querier->_target, querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), encoding,
                        closure.call, closure.drop, closure.context, querier->_timeout_ms,
                        _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_accept_replies,
                        querier->_allowed_destination, cancellation_token);
@@ -1941,7 +1930,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
     z_cancellation_token_drop(opt.cancellation_token);
 #endif
     z_bytes_drop(opt.payload);
-    _z_encoding_clear(&encoding);
+    z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
     return ret;
 }
