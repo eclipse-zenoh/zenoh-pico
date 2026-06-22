@@ -1060,12 +1060,15 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 
 // Public entry points: pick the arity-specific builder, then plug in the
 // mutable or read-only arm macro.  Both share the same switch skeletons above.
-#define _ZP_VARIANT_VISIT(variant_name, v, ...)                \
-    _ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__)) \
-    (_ZP_VARIANT_INNER_VISIT_CASE, variant_name, v, __VA_ARGS__)
-#define _ZP_VARIANT_CONST_VISIT(variant_name, v, ...)          \
-    _ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__)) \
-    (_ZP_VARIANT_INNER_CONST_VISIT_CASE, variant_name, v, __VA_ARGS__)
+// The outer _ZP_EXPAND forces an extra rescan so the traditional MSVC
+// preprocessor splits the forwarded __VA_ARGS__ into separate arguments instead
+// of passing it as a single token to the selected _ZP_VARIANT_VISIT_IMPL_N.
+#define _ZP_VARIANT_VISIT(variant_name, v, ...)                                                                       \
+    _ZP_EXPAND(_ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__))(_ZP_VARIANT_INNER_VISIT_CASE, variant_name, \
+                                                                          v, __VA_ARGS__))
+#define _ZP_VARIANT_CONST_VISIT(variant_name, v, ...)                                                         \
+    _ZP_EXPAND(_ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__))(_ZP_VARIANT_INNER_CONST_VISIT_CASE, \
+                                                                          variant_name, v, __VA_ARGS__))
 #undef _ZP_VARIANT_TEMPLATE_DEFINE_VISIT_FN_CHECKER_TYPE
 #endif
 
