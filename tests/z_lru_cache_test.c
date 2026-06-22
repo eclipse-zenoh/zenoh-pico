@@ -29,6 +29,11 @@ typedef struct _dummy_t {
     int foo;
 } _dummy_t;
 
+typedef struct _owned_dummy_t {
+    int foo;
+    int *clear_count;
+} _owned_dummy_t;
+
 int _dummy_compare(const void *first, const void *second) {
     _dummy_t *d_first = (_dummy_t *)first;
     _dummy_t *d_second = (_dummy_t *)second;
@@ -44,6 +49,27 @@ int _dummy_compare(const void *first, const void *second) {
 static inline void _dummy_elem_clear(void *e) { _z_noop_clear((_dummy_t *)e); }
 
 _Z_LRU_CACHE_DEFINE(_dummy, _dummy_t, _dummy_compare)
+
+int _owned_dummy_compare(const void *first, const void *second) {
+    const _owned_dummy_t *d_first = (const _owned_dummy_t *)first;
+    const _owned_dummy_t *d_second = (const _owned_dummy_t *)second;
+
+    if (d_first->foo == d_second->foo) {
+        return 0;
+    } else if (d_first->foo > d_second->foo) {
+        return 1;
+    }
+    return -1;
+}
+
+static inline void _owned_dummy_elem_clear(void *e) {
+    _owned_dummy_t *d = (_owned_dummy_t *)e;
+    if (d->clear_count != NULL) {
+        (*d->clear_count)++;
+    }
+}
+
+_Z_LRU_CACHE_DEFINE(_owned_dummy, _owned_dummy_t, _owned_dummy_compare)
 
 void test_lru_init(void) {
     _dummy_lru_cache_t dcache = _dummy_lru_cache_init(CACHE_CAPACITY);
@@ -116,6 +142,34 @@ void test_lru_cache_deletion(void) {
         assert(res->foo == data[i].foo);
     }
     _dummy_lru_cache_delete(&dcache);
+}
+
+void test_lru_cache_deletion_clear(void) {
+    _owned_dummy_lru_cache_t dcache = _owned_dummy_lru_cache_init(2);
+
+    int clear_count = 0;
+    _owned_dummy_t data[3] = {{0, &clear_count}, {1, &clear_count}, {2, &clear_count}};
+    assert(_owned_dummy_lru_cache_insert(&dcache, &data[0]) == 0);
+    assert(_owned_dummy_lru_cache_insert(&dcache, &data[1]) == 0);
+    assert(clear_count == 0);
+
+    assert(_owned_dummy_lru_cache_insert(&dcache, &data[2]) == 0);
+    assert(clear_count == 1);
+    assert(_owned_dummy_lru_cache_get(&dcache, &data[0]) == NULL);
+
+    _owned_dummy_t *res = _owned_dummy_lru_cache_get(&dcache, &data[1]);
+    assert(res != NULL);
+    assert(res->foo == data[1].foo);
+    res = _owned_dummy_lru_cache_get(&dcache, &data[2]);
+    assert(res != NULL);
+    assert(res->foo == data[2].foo);
+
+    _owned_dummy_lru_cache_clear(&dcache);
+    assert(clear_count == 3);
+    assert(dcache.len == 0);
+    assert(dcache.head == NULL);
+    assert(dcache.tail == NULL);
+    _owned_dummy_lru_cache_delete(&dcache);
 }
 
 void test_lru_cache_update(void) {
@@ -259,6 +313,7 @@ int main(void) {
     test_lru_cache_insert();
     test_lru_cache_clear();
     test_lru_cache_deletion();
+    test_lru_cache_deletion_clear();
     test_lru_cache_update();
     test_lru_cache_random_val();
 #if 0

@@ -99,8 +99,8 @@ static _z_fut_fn_result_t fn_suspend_forever(void *arg, _z_executor_t *ex) {
 static int drain(_z_executor_t *ex, int max_spins) {
     int spins = 0;
     while (spins++ < max_spins) {
-        _z_executor_spin_result_t r = _z_executor_spin(ex);
-        if (r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS) break;
+        _z_executor_status_t r = _z_executor_spin(ex);
+        if (r.status == _Z_EXECUTOR_STATE_NO_TASKS) break;
     }
     return spins;
 }
@@ -111,8 +111,8 @@ static int drain(_z_executor_t *ex, int max_spins) {
 static void test_spin_empty(void) {
     printf("Test: spin on empty executor returns NO_TASKS\n");
     _z_executor_t ex = _z_executor_new();
-    _z_executor_spin_result_t r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    _z_executor_status_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     _z_executor_destroy(&ex);
 }
 
@@ -146,31 +146,37 @@ static void test_timed_reschedule(void) {
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
     assert(!_z_fut_handle_is_null(h));
 
-    // First spin: task runs once, reschedules with immediate wake_up_time
-    _z_executor_spin_result_t r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    // Before 1st spin: task is in the ready deque.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
+    // First spin: task runs once, reschedules with 500ms wake_up_time; nothing else is ready.
+    _z_executor_status_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_STATE_SHOULD_WAIT);
     assert(arg.call_count == 1);
     assert(arg.destroyed == false);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_SLEEPING);
 
+    // Before 2nd spin: sleeping task is not yet due.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_SHOULD_WAIT);
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT);
+    assert(r.status == _Z_EXECUTOR_STATE_SHOULD_WAIT);
     z_clock_t now = z_clock_now();
     assert(zp_clock_elapsed_ms_since(&r.next_wake_up_time, &now) > 300);
     z_sleep_ms(100);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT);
+    assert(r.status == _Z_EXECUTOR_STATE_SHOULD_WAIT);
     assert(zp_clock_elapsed_ms_since(&r.next_wake_up_time, &now) > 200);
 
     z_sleep_ms(600);
+    // After sleep: sleeping task is now due, reported as ready to execute.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
 
     assert(arg.call_count == 2);
     assert(arg.destroyed == true);
 
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
 
     _z_executor_destroy(&ex);
 }
@@ -185,22 +191,26 @@ static void test_deque_reschedule(void) {
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
     assert(!_z_fut_handle_is_null(h));
 
-    // First spin: task runs, returns not-ready, pushed back to deque
-    _z_executor_spin_result_t r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    // Before 1st spin: task is in the ready deque.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
+    // First spin: task runs, returns not-ready, pushed back to deque; deque is non-empty.
+    _z_executor_status_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
     assert(arg.call_count == 1);
     assert(arg.destroyed == false);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_RUNNING);
 
-    // Second spin: task runs again and finishes
+    // Before 2nd spin: re-enqueued task is in the ready deque.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
+    // Second spin: task runs again and finishes; nothing left.
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     assert(arg.call_count == 2);
     assert(arg.destroyed == true);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
 
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     _z_executor_destroy(&ex);
 }
 
@@ -282,7 +292,7 @@ static void test_multiple_tasks(void) {
         assert(args[i].call_count == 1);
         assert(args[i].destroyed == true);
     }
-    assert(_z_executor_spin(&ex).status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(_z_executor_spin(&ex).status == _Z_EXECUTOR_STATE_NO_TASKS);
     _z_executor_destroy(&ex);
 }
 
@@ -320,30 +330,35 @@ static void test_suspend_and_resume(void) {
     _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
     assert(!_z_fut_handle_is_null(h));
 
-    // First spin: task runs and suspends — counts as EXECUTED_TASK.
-    _z_executor_spin_result_t r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    // Before 1st spin: task is in the ready deque.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
+    // First spin: task runs and suspends — task is removed from ready/sleeping queues, nothing left.
+    _z_executor_status_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     assert(arg.call_count == 1);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_SUSPENDED);
 
     // Additional spins do nothing — task is still suspended.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_NO_TASKS);
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     assert(arg.call_count == 1);  // body must not have run again
 
     // Resume: task becomes runnable again.
     assert(_z_executor_resume_suspended_fut(&ex, &h));
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
 
-    // Next spin: task runs and finishes.
+    // Before next spin: resumed task is in the ready deque.
+    assert(_z_executor_get_status(&ex).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK);
+    // Next spin: task runs and finishes; nothing left.
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
     assert(arg.call_count == 2);
     assert(arg.destroyed == true);
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
 
     r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
 
     _z_executor_destroy(&ex);
 }
@@ -391,8 +406,8 @@ static void test_cancel_suspended(void) {
     assert(_z_executor_get_fut_status(&ex, &h) == _Z_FUT_STATUS_READY);
 
     // Executor is now empty.
-    _z_executor_spin_result_t r = _z_executor_spin(&ex);
-    assert(r.status == _Z_EXECUTOR_SPIN_RESULT_NO_TASKS);
+    _z_executor_status_t r = _z_executor_spin(&ex);
+    assert(r.status == _Z_EXECUTOR_STATE_NO_TASKS);
 
     _z_executor_destroy(&ex);
 }
@@ -441,6 +456,34 @@ static void test_destroy_cleans_up_suspended(void) {
     assert(arg.destroyed == true);
 }
 
+// When the task pool is at capacity, spawn fails: the null handle is returned and
+// the future's destroy_fn is still invoked so no resources leak.
+static void test_spawn_fail_destroys_future(void) {
+    printf("Test: spawn failure properly destroys the future\n");
+    _z_executor_t ex = _z_executor_new();
+
+    // Fill every slot in the hashmap without spinning so all remain occupied.
+    // Keys 1..Z_RUNTIME_MAX_TASKS hash to distinct buckets (identity hash, no collisions).
+    test_arg_t fill_args[Z_RUNTIME_MAX_TASKS];
+    for (size_t i = 0; i < Z_RUNTIME_MAX_TASKS; i++) {
+        fill_args[i] = (test_arg_t){0};
+        _z_fut_t fut = _z_fut_new(&fill_args[i], fn_finish, NULL);
+        _z_fut_handle_t h = _z_executor_spawn(&ex, &fut);
+        assert(!_z_fut_handle_is_null(h));
+    }
+
+    // One more spawn must fail: the hashmap is at capacity.
+    test_arg_t overflow_arg = {0};
+    _z_fut_t overflow_fut = _z_fut_new(&overflow_arg, fn_finish, destroy_fn);
+    _z_fut_handle_t h = _z_executor_spawn(&ex, &overflow_fut);
+
+    assert(_z_fut_handle_is_null(h));        // spawn must signal failure via null handle
+    assert(overflow_arg.destroyed == true);  // destroy_fn must be called — no leak
+    assert(overflow_arg.call_count == 0);    // future body must never have run
+
+    _z_executor_destroy(&ex);
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -458,6 +501,7 @@ int main(void) {
     test_cancel_suspended();
     test_other_tasks_run_while_suspended();
     test_destroy_cleans_up_suspended();
+    test_spawn_fail_destroys_future();
     printf("All executor tests passed.\n");
     return 0;
 }

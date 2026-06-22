@@ -174,10 +174,11 @@ z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) { _Z_CHECK_SYS_ERR(pthread_mut
 
 /*------------------ Condvar ------------------*/
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
-    pthread_condattr_t attr;
-    pthread_condattr_init(&attr);
-    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
-    _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
+    // ESP-IDF silently ignores pthread_condattr_setclock(CLOCK_MONOTONIC):
+    // the call succeeds but the condvar still uses CLOCK_REALTIME internally.
+    // Passing NULL keeps the behaviour explicit.  The MONOTONIC-to-REALTIME
+    // conversion is handled in _z_condvar_wait_until instead.
+    _Z_CHECK_SYS_ERR(pthread_cond_init(cv, NULL));
 }
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
@@ -189,12 +190,34 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_co
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 
 z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
-    int error = pthread_cond_timedwait(cv, m, abstime);
+    // abstime is CLOCK_MONOTONIC (from z_clock_now()), but ESP-IDF condvars
+    // always use CLOCK_REALTIME.  Convert the remaining monotonic duration to
+    // an equivalent REALTIME deadline before calling pthread_cond_timedwait.
+    struct timespec mono_now;
+    clock_gettime(CLOCK_MONOTONIC, &mono_now);
 
-    if (error == ETIMEDOUT) {
+    int64_t remaining_ns =
+        ((int64_t)abstime->tv_sec - mono_now.tv_sec) * 1000000000LL + ((int64_t)abstime->tv_nsec - mono_now.tv_nsec);
+    if (remaining_ns <= 0) {
         return Z_ETIMEDOUT;
     }
 
+    struct timespec real_now;
+    clock_gettime(CLOCK_REALTIME, &real_now);
+
+    struct timespec deadline = {
+        .tv_sec = real_now.tv_sec + (time_t)(remaining_ns / 1000000000LL),
+        .tv_nsec = real_now.tv_nsec + (long)(remaining_ns % 1000000000LL),
+    };
+    if (deadline.tv_nsec >= 1000000000L) {
+        deadline.tv_sec++;
+        deadline.tv_nsec -= 1000000000L;
+    }
+
+    int error = pthread_cond_timedwait(cv, m, &deadline);
+    if (error == ETIMEDOUT) {
+        return Z_ETIMEDOUT;
+    }
     _Z_CHECK_SYS_ERR(error);
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1

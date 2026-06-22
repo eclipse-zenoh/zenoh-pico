@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/config.h"
 
-#define _ZP_EXECUTOR_MAX_NUM_FUTURES Z_RUNTIME_MAX_TASKS
 #if Z_FEATURE_MULTI_THREAD == 1
 #include "zenoh-pico/runtime/background_executor.h"
 #else
@@ -64,7 +63,10 @@ static inline z_result_t _z_runtime_cancel_fut(_z_runtime_t *runtime, _z_fut_han
     _z_executor_cancel_fut(runtime, handle);
     return _Z_RES_OK;
 }
-static inline void _z_runtime_spin_once(_z_runtime_t *runtime) { _z_executor_spin(runtime); }
+// Returns true if there is more work to do, false if the runtime is idle and can sleep until the next wake-up time.
+static inline bool _z_runtime_spin_once(_z_runtime_t *runtime) {
+    return _z_executor_spin(runtime).status == _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
+}
 
 static inline z_result_t _z_runtime_stop(_z_runtime_t *runtime) {
     _ZP_UNUSED(runtime);

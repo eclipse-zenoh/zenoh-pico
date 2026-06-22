@@ -45,7 +45,8 @@ typedef struct _z_lru_cache_t {
 
 _z_lru_cache_t _z_lru_cache_init(size_t capacity);
 void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare);
-z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare);
+z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare,
+                               z_element_clear_f clear);
 void _z_lru_cache_clear(_z_lru_cache_t *cache, z_element_clear_f clear);
 void _z_lru_cache_delete(_z_lru_cache_t *cache, z_element_clear_f clear);
 
@@ -56,7 +57,7 @@ void _z_lru_cache_delete(_z_lru_cache_t *cache, z_element_clear_f clear);
         return (type *)_z_lru_cache_get(cache, (void *)val, compare_f);                                             \
     }                                                                                                               \
     static inline z_result_t name##_lru_cache_insert(name##_lru_cache_t *cache, type *val) {                        \
-        return _z_lru_cache_insert(cache, (void *)val, sizeof(type), compare_f);                                    \
+        return _z_lru_cache_insert(cache, (void *)val, sizeof(type), compare_f, name##_elem_clear);                 \
     }                                                                                                               \
     static inline void name##_lru_cache_clear(name##_lru_cache_t *cache) {                                          \
         _z_lru_cache_clear(cache, name##_elem_clear);                                                               \

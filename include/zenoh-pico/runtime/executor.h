@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
 #ifdef __cplusplus
@@ -152,22 +153,18 @@ static inline void _z_fut_data_destroy(_z_fut_data_t *data) {
 
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
-#ifndef _ZP_EXECUTOR_MAX_NUM_FUTURES
-#define _ZP_EXECUTOR_MAX_NUM_FUTURES 64
-#endif
-
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE size_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_fut_data_hmap
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN _z_size_fut_data_hmap_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_RUNTIME_MAX_TASKS
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN _z_fut_data_destroy
 // default move for _z_fut_data - i.e. a plain copy without destroying the source
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 #define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_iter_t
 #define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
-#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_DEQUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_deque_template.h"
 
 // Compare two sleeping-task indices by their wake-up time stored in the hashmap.
@@ -187,7 +184,7 @@ static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_iter_t *a, cons
 #define _ZP_STATIC_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
 #define _ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
 #define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN _z_sleeping_fut_idx_cmp
-#define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE _ZP_EXECUTOR_MAX_NUM_FUTURES
+#define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_pqueue_template.h"
 
 typedef struct _z_executor_t {
@@ -229,18 +226,18 @@ static inline void _z_executor_destroy(_z_executor_t *executor) {
 // future is finished or cancelled. The caller can use the future handle to cancel the future or check its status.
 _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut);
 
-typedef enum _z_executor_spin_result_status_t {
-    _Z_EXECUTOR_SPIN_RESULT_NO_TASKS,
-    _Z_EXECUTOR_SPIN_RESULT_EXECUTED_TASK,
-    _Z_EXECUTOR_SPIN_RESULT_SHOULD_WAIT,
-    _Z_EXECUTOR_SPIN_RESULT_FAILED,
-} _z_executor_spin_result_status_t;
-typedef struct _z_executor_spin_result_t {
-    _z_executor_spin_result_status_t status;
+typedef enum _z_executor_state_t {
+    _Z_EXECUTOR_STATE_NO_TASKS,
+    _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK,
+    _Z_EXECUTOR_STATE_SHOULD_WAIT,
+} _z_executor_state_t;
+typedef struct _z_executor_status_t {
+    _z_executor_state_t status;
     z_clock_t next_wake_up_time;
-} _z_executor_spin_result_t;
+} _z_executor_status_t;
 
-_z_executor_spin_result_t _z_executor_spin(_z_executor_t *executor);
+_z_executor_status_t _z_executor_get_status(const _z_executor_t *executor);
+_z_executor_status_t _z_executor_spin(_z_executor_t *executor);
 
 _z_fut_status_t _z_executor_get_fut_status(const _z_executor_t *executor, const _z_fut_handle_t *handle);
 bool _z_executor_cancel_fut(_z_executor_t *executor, const _z_fut_handle_t *handle);

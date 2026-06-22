@@ -12,9 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "udp_multicast_lwip_common.h"
-
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/transport/udp_multicast.h"
 
 #if defined(ZP_PLATFORM_SOCKET_LWIP) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
@@ -22,6 +21,7 @@
 
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
+#include "udp_multicast_lwip_common.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/transport/lwip_socket.h"
 #include "zenoh-pico/utils/logging.h"

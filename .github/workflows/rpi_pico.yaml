@@ -20,6 +20,8 @@ jobs:
   build:
     name: Build on ${{ matrix.os }} for ${{ matrix.pico_board }}
     runs-on: ${{ matrix.os }}
+    env:
+      ZENOH_PICO_BASE: ${{ github.workspace }}
     strategy:
       fail-fast: false
       matrix:
@@ -55,7 +57,7 @@ jobs:
         run: |
           export PICO_SDK_PATH=$HOME/work/pico-sdk
           export FREERTOS_KERNEL_PATH=$HOME/work/FreeRTOS-Kernel/
-          cd $HOME/work/zenoh-pico/zenoh-pico/examples/rpi_pico
+          cd "$ZENOH_PICO_BASE/examples/rpi_pico"
           cmake -Bbuild -DWIFI_SSID=wifi_network_ssid -DWIFI_PASSWORD=wifi_network_password -DPICO_BOARD="$PICO_BOARD"
           cmake --build ./build
         env:

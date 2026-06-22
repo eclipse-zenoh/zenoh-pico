@@ -535,7 +535,11 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
         return _Z_RES_OK;  // Nothing to do on unicast
     }
     // Push a join in case it's a new node
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1
     _Z_RETURN_IF_ERR(_zp_multicast_send_join(&zn->_tp._transport._multicast));
+#elif Z_FEATURE_RAWETH_TRANSPORT == 1
+    _Z_RETURN_IF_ERR(_zp_multicast_send_join(&zn->_tp._transport._raweth));
+#endif
     _z_keyexpr_t restr_key = _z_keyexpr_null();
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
         _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &restr_key, wireexpr, peer, true));

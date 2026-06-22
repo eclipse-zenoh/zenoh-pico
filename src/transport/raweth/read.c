@@ -68,7 +68,11 @@ _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executo
         case _Z_ERR_TRANSPORT_RX_FAILED:
             // Drop message
             _z_slice_clear(&addr);
+#if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
+            return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
+#else
             return _z_fut_fn_result_continue();
+#endif
         default:
             // Drop message & stop task
             _Z_ERROR("Connection closed due to malformed message: %d", ret);
