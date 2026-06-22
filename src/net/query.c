@@ -140,7 +140,9 @@ void _z_query_create_view_from_data(_z_query_t *dst, const _z_keyexpr_t *key, co
     dst->_view._inner._id = *query_id;
     dst->_view._inner._anyke = implicit_anyke || _z_parameters_has_anyke(_z_string_data(&dst->_view._inner._parameters),
                                                                          _z_string_len(&dst->_view._inner._parameters));
-    dst->_view._inner._zn = _z_session_weak_clone(zn);
+    // a view on weak session: currently this references a weak pointer inside session's transport, which is not ideal,
+    // if we ever change rc implementation to make rc = *(session, cnt) - it is safer to acquire it from here,
+    dst->_view._inner._zn = *zn;
     dst->_view._inner._qos = qos;
     dst->_view._inner._source_info = source_info != NULL ? *source_info : _z_source_info_null();
     dst->_tag = _z_query_tag_view;
