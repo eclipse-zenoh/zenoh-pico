@@ -104,6 +104,8 @@ static inline _z_string_t _z_string_from_substr_custom_deleter(char *value, size
 }
 
 static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+    // SAFETY: value is documented to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
     return _z_string_from_substr_custom_deleter((char *)(value), strlen(value), c);
 }
 

@@ -267,6 +267,8 @@ char *gen_str(size_t size) {
 _z_string_view_t gen_string(size_t len) {
     // gen_str stores the string in STRING_STORAGE; only alias it here instead of copying.
     char *str = gen_str(len);
+    // SAFETY: gen_str returns a null-terminated string, so strlen is safe to call.
+    // Flawfinder: ignore [CWE-126]
     return _z_string_view_make(str, strlen(str));
 }
 
@@ -1375,7 +1377,9 @@ _z_msg_query_t gen_query_anyke(const char *params, bool _anyke) {
         ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
         ._parameters =
-            params == NULL ? _z_slice_view_null() : _z_slice_view_make((const uint8_t *)params, strlen(params)),
+            // SAFETY: gen_str returns a null-terminated string, so strlen is safe to call.
+            // Flawfinder: ignore [CWE-126]
+        params == NULL ? _z_slice_view_null() : _z_slice_view_make((const uint8_t *)params, strlen(params)),
         ._implicit_anyke = _anyke,
         ._ext_value = gen_bool() ? gen_value() : _z_value_view_null(),
         ._ext_attachment = gen_bool() ? gen_bytes(1 + gen_uint8()) : _z_bytes_view_null(),

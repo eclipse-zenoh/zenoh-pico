@@ -75,6 +75,8 @@ size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
         const _z_slice_t *s = _z_bytes_get_slice(bytes, i);
         size_t s_len = s->len;
         size_t len_to_copy = remaining >= s_len ? s_len : remaining;
+        // SAFETY: len_to_copy is guaranteed to fit into start buffer by construction.
+        // Flawfinder: ignore [CWE-120]
         memcpy(start, s->start, len_to_copy);
         start += len_to_copy;
         remaining -= len_to_copy;
@@ -107,6 +109,8 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
         // Recopy data
         const _z_slice_t *sl = _z_bytes_get_slice(bytes, i);
         size_t s_len = sl->len;
+        // SAFETY: s_len is guaranteed to fit into start buffer by construction.
+        // Flawfinder: ignore [CWE-120]
         memcpy(start, sl->start, s_len);
         start += s_len;
     }
@@ -276,6 +280,8 @@ size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len)
         const _z_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
         size_t remaining = s->len - reader->in_slice_idx;
         if (len >= remaining) {
+            // SAFETY: remaining is guaranteed to fit into buf_start buffer by construction.
+            // Flawfinder: ignore [CWE-120]
             memcpy(buf_start, s->start + reader->in_slice_idx, remaining);
             reader->slice_idx += 1;
             reader->in_slice_idx = 0;
@@ -283,6 +289,8 @@ size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len)
             len -= remaining;
             buf_start += remaining;
         } else {
+            // SAFETY: len is guaranteed to fit into buf_start buffer by construction.
+            // Flawfinder: ignore [CWE-120]
             memcpy(buf_start, s->start + reader->in_slice_idx, len);
             reader->in_slice_idx += len;
             reader->byte_idx += len;

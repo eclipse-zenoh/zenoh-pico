@@ -112,8 +112,12 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_view_t *ret, _z_
         if (prefix_len + suffix_len > buf_len) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
+        // SAFETY: buf is guaranteed to be large enough by the caller.
+        // Flawfinder: ignore [CWE-120]
         memcpy(buf, _z_string_data(&res->_key._keyexpr), prefix_len);
         if (suffix_len > 0) {
+            // SAFETY: buf is guaranteed to be large enough by the caller.
+            // Flawfinder: ignore [CWE-120]
             memcpy(buf + prefix_len, _z_string_data(_z_string_view_deref(&expr->_suffix)), suffix_len);
         }
         _z_string_view_t sv = _z_string_view_make(buf, prefix_len + suffix_len);
