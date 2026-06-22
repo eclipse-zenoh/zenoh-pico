@@ -27,8 +27,8 @@ z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reli
     if (push->_body._is_put) {
         const _z_msg_put_t *put = &push->_body._body._put;
         return _z_trigger_subscriptions_put(zn, &push->_key, _z_bytes_view_deref(&put->_payload),
-                                            _z_encoding_view_deref(&put->_encoding), &push->_timestamp, push->_qos,
-                                            _z_bytes_view_deref(&put->_attachment), reliability,
+                                            _z_encoding_view_deref(&put->_encoding), &put->_commons._timestamp,
+                                            push->_qos, _z_bytes_view_deref(&put->_attachment), reliability,
                                             &put->_commons._source_info, peer);
     } else {
         const _z_msg_del_t *del = &push->_body._body._del;

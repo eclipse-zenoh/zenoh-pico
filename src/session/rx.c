@@ -110,10 +110,10 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
         case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
             const _z_msg_put_t *put = &req->_body._put;
-            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, _z_bytes_view_deref(&put->_payload),
-                                                          _z_encoding_view_deref(&put->_encoding), &req->_ext_timestamp,
-                                                          req->_ext_qos, _z_bytes_view_deref(&put->_attachment),
-                                                          reliability, &put->_commons._source_info, peer));
+            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(
+                zn, &req->_key, _z_bytes_view_deref(&put->_payload), _z_encoding_view_deref(&put->_encoding),
+                &put->_commons._timestamp, req->_ext_qos, _z_bytes_view_deref(&put->_attachment), reliability,
+                &put->_commons._source_info, peer));
 #endif
             _z_network_message_t final;
             _z_n_msg_make_response_final(&final, req->_rid);
