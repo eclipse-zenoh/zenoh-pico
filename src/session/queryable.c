@@ -170,7 +170,7 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, const _z_msg_
     _z_keyexpr_view_t ke_view;
     _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, q_key, peer));
     const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
-    _z_session_queryable_rc_svec_t qles = _z_session_queryable_rc_svec_make(_Z_QLEINFOS_VEC_SIZE);
+    _z_session_queryable_rc_svec_t qles = _z_session_queryable_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_by_key(zn, keyexpr, query_id.peer_id != 0, &qles),
                            _z_session_mutex_unlock(zn));

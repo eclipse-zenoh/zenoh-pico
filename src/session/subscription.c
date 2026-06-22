@@ -185,7 +185,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
     _z_keyexpr_view_t ke_view;
     _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
     const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
-    _z_subscription_rc_svec_t subs = _z_subscription_rc_svec_make(_Z_SUBINFOS_VEC_SIZE);
+    _z_subscription_rc_svec_t subs = _z_subscription_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _Z_RETURN_IF_ERR(__unsafe_z_get_subscriptions_by_key(zn, sub_kind, keyexpr, peer != NULL, &subs));
     // TODO: reintroduce lru cache
