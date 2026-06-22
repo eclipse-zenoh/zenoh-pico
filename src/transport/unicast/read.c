@@ -71,11 +71,6 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
     } else {
         _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) + to_read);
     }
-
-    if (_z_unicast_update_rx_buffer(ztu) != _Z_RES_OK) {
-        _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
     return _Z_RES_OK;
 }
 
@@ -125,8 +120,6 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
         _z_transport_message_t t_msg;
         _Z_RETURN_IF_ERR(_z_unicast_recv_t_msg(ztu, &t_msg));
         _Z_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer));
-        // Update buffer
-        _Z_RETURN_IF_ERR(_z_unicast_update_rx_buffer(ztu));
     } else {
         // Prepare buffer
         _z_zbuf_reset(&ztu->_common._zbuf);

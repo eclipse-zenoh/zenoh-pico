@@ -38,7 +38,6 @@ z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm, bool single_read) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
     }
     _z_slice_clear(&addr);
-    ret = _z_raweth_update_rx_buff(ztm);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Failed to allocate rx buffer");
     }
@@ -86,10 +85,6 @@ _z_fut_fn_result_t _zp_raweth_read_task_fn(void *ztm_arg, _z_executor_t *executo
         return _z_fut_fn_result_ready();
     }
     _z_slice_clear(&addr);
-    if (_z_raweth_update_rx_buff(ztm) != _Z_RES_OK) {
-        _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-        return _z_fut_fn_result_ready();
-    }
     return _z_fut_fn_result_continue();
 }
 #endif

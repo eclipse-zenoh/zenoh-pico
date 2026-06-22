@@ -19,7 +19,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -104,9 +103,6 @@ z_result_t _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
 bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_free(_z_slice_t **bs);
 bool _z_slice_is_alloced(const _z_slice_t *s);
-
-// Atomically reference-counted slice, used internally by the zbuf to share a backing buffer.
-_Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
 
 /*-------- View Slice --------*/
 /**

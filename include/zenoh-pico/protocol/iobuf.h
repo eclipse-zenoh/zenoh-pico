@@ -99,7 +99,6 @@ _z_iosli_t _z_iosli_steal(_z_iosli_t *ios);
 _z_slice_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
-void _z_iosli_free(_z_iosli_t **ios);
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
@@ -110,10 +109,8 @@ _Z_SVEC_DEFINE(_z_iosli, _z_iosli_t)
 /*------------------ ZBuf ------------------*/
 typedef struct {
     _z_iosli_t _ios;
-    _z_slice_simple_rc_t _slice;
 } _z_zbuf_t;
 
-static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_count(&zbf->_slice); }
 static inline _z_zbuf_t _z_zbuf_null(void) { return (_z_zbuf_t){0}; }
 static inline void _z_zbuf_reset(_z_zbuf_t *zbf) { _z_iosli_reset(&zbf->_ios); }
 
@@ -126,7 +123,6 @@ static inline size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_
 static inline size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 static inline bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_iosli_can_read(&zbf->_ios); }
 static inline uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
-static inline uint8_t *_z_zbuf_read_as_ref(_z_zbuf_t *zbf) { return _z_iosli_read_as_ref(&zbf->_ios); }
 static inline uint8_t _z_zbuf_get(const _z_zbuf_t *zbf, size_t pos) { return _z_iosli_get(&zbf->_ios, pos); }
 
 static inline size_t _z_zbuf_get_rpos(const _z_zbuf_t *zbf) { return zbf->_ios._r_pos; }
@@ -148,11 +144,9 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 _z_zbuf_t _z_slice_as_zbuf(const _z_slice_t *slice);
 
 void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src);
-void _z_zbuf_copy(_z_zbuf_t *dst, const _z_zbuf_t *src);
 void _z_zbuf_read_bytes(_z_zbuf_t *zbf, uint8_t *dest, size_t offset, size_t length);
 void _z_zbuf_compact(_z_zbuf_t *zbf);
 void _z_zbuf_clear(_z_zbuf_t *zbf);
-void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
 typedef struct {

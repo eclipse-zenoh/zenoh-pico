@@ -57,10 +57,6 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
     }
     // Move the read position of the read buffer
     _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) + to_read);
-    if (_z_multicast_update_rx_buffer(ztm) != _Z_RES_OK) {
-        _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
     return ret;
 }
 
@@ -69,8 +65,7 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
     if (single_read) {
         _z_transport_message_t t_msg;
         _Z_RETURN_IF_ERR(_z_multicast_recv_t_msg(ztm, &t_msg));
-        _Z_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr));
-        return _z_multicast_update_rx_buffer(ztm);
+        return _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
     } else {
         return _zp_multicast_process_messages(ztm);
     }
