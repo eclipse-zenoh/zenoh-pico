@@ -196,7 +196,7 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
 }
 
 // Initializes an empty vector with specified capacity.
-static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
     _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(v);
     return _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(v, capacity);
 }

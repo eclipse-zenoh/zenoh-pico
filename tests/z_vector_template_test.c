@@ -113,10 +113,10 @@ static void test_new_is_empty(void) {
     intvec_destroy(&v);
 }
 
-static void test_new_with_capacity(void) {
-    printf("  new_with_capacity pre-allocates without adding elements\n");
+static void test_init_with_capacity(void) {
+    printf("  init_with_capacity pre-allocates without adding elements\n");
     intvec_t v;
-    assert(intvec_new_with_capacity(&v, 16));
+    assert(intvec_init_with_capacity(&v, 16));
     assert(intvec_is_empty(&v));
     assert(intvec_size(&v) == 0);
     assert(intvec_capacity(&v) == 16);
@@ -125,10 +125,10 @@ static void test_new_with_capacity(void) {
     assert(v._buffer == NULL);
 }
 
-static void test_new_with_capacity_zero(void) {
-    printf("  new_with_capacity(0) creates empty vector with NULL buffer\n");
+static void test_init_with_capacity_zero(void) {
+    printf("  init_with_capacity(0) creates empty vector with NULL buffer\n");
     intvec_t v;
-    assert(intvec_new_with_capacity(&v, 0));
+    assert(intvec_init_with_capacity(&v, 0));
     assert(intvec_is_empty(&v));
     assert(intvec_capacity(&v) == 0);
     assert(v._buffer == NULL);
@@ -581,8 +581,8 @@ static void test_heap_citfind(void) {
 int main(void) {
     printf("=== int vector (trivially destructible + moveable) ===\n");
     test_new_is_empty();
-    test_new_with_capacity();
-    test_new_with_capacity_zero();
+    test_init_with_capacity();
+    test_init_with_capacity_zero();
     test_push_back_and_get();
     test_auto_grow();
     test_append();
