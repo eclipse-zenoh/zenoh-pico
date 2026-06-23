@@ -25,13 +25,10 @@
 
 // ── Instantiate uint32_t -> uint32_t, default index type, small initial cap ──
 
-static inline size_t u32_hash(const uint32_t *k) {
-    uint32_t x = *k;
-    x ^= x >> 16;
-    x *= 0x45d9f3bU;
-    x ^= x >> 16;
-    return (size_t)x;
-}
+// Identity hash: bucket = key % capacity. Using the identity makes collisions
+// fully predictable, so the collision-chain tests below can deliberately place
+// several keys into the same bucket.
+static inline size_t u32_hash(const uint32_t *k) { return (size_t)(*k); }
 static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *b; }
 
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE uint32_t

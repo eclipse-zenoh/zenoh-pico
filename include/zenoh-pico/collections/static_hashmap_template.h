@@ -383,12 +383,12 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 // ── remove_at ────────────────────────────────────────────────────────────────
 // Remove the node at the given iterator (obtained from insert or a prior
 // lookup).  Behaviour is undefined if iterator is invalid or has already been
-// freed.  If out_val != NULL the value is moved out; otherwise it is destroyed.
+// freed.  If out_node != NULL the node is moved out; otherwise it is destroyed.
 // If next_idx != NULL it is set to the iterator of the next node.
 
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                            remove_at)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map, _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx,
-                                      _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *out_val,
+                                      _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *out_node,
                                       _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE *next_idx) {
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
     // Re-derive the bucket from the node's own key so the caller does not need
@@ -406,9 +406,9 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
     } else {
         map->_slots[prev]._next = map->_slots[idx]._next;
     }
-    if (out_val != NULL) {
-        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(&out_val->key, &n->key);
-        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&out_val->val, &n->val);
+    if (out_node != NULL) {
+        _ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(&out_node->key, &n->key);
+        _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&out_node->val, &n->val);
     } else {
         _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
         _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);

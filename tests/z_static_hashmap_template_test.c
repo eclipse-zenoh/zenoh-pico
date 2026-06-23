@@ -23,15 +23,12 @@
 
 #include "zenoh-pico/collections/algorithms_template.h"
 
-// ── Instantiate uint32_t -> uint32_t, 8 buckets, capacity 12 ─────────────────
+// ── Instantiate uint32_t -> uint32_t, 12 buckets, capacity 12 ────────────────
 
-static inline size_t u32_hash(const uint32_t *k) {
-    uint32_t x = *k;
-    x ^= x >> 16;
-    x *= 0x45d9f3bU;
-    x ^= x >> 16;
-    return (size_t)x;
-}
+// Identity hash: bucket = key % capacity. Using the identity makes collisions
+// fully predictable, so the collision-chain tests below can deliberately place
+// several keys into the same bucket.
+static inline size_t u32_hash(const uint32_t *k) { return (size_t)(*k); }
 static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *b; }
 
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
@@ -156,28 +153,30 @@ static void test_remove_missing_returns_false(void) {
 static void test_remove_head_of_chain(void) {
     printf("Test: remove head of a collision chain; remaining entry still accessible\n");
     u32map_t m = u32map_new();
+    // bucket_count == 12, so 0 and 12 hash to the same bucket.
     uint32_t k0 = 0, v0 = 100;
-    uint32_t k8 = 8, v8 = 800;
+    uint32_t k12 = 12, v12 = 800;
     assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
-    assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
+    assert(u32map_insert(&m, &k12, &v12) != u32map_end(&m));
     assert(u32map_size(&m) == 2);
-    assert(u32map_remove(&m, &(uint32_t){8}, NULL));
+    assert(u32map_remove(&m, &(uint32_t){12}, NULL));
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){0}) == 100);
-    assert(u32map_get(&m, &(uint32_t){8}) == NULL);
+    assert(u32map_get(&m, &(uint32_t){12}) == NULL);
     u32map_destroy(&m);
 }
 
 static void test_remove_tail_of_chain(void) {
     printf("Test: remove tail of a collision chain; head still accessible\n");
     u32map_t m = u32map_new();
+    // bucket_count == 12, so 0 and 12 hash to the same bucket.
     uint32_t k0 = 0, v0 = 100;
-    uint32_t k8 = 8, v8 = 800;
+    uint32_t k12 = 12, v12 = 800;
     assert(u32map_insert(&m, &k0, &v0) != u32map_end(&m));
-    assert(u32map_insert(&m, &k8, &v8) != u32map_end(&m));
+    assert(u32map_insert(&m, &k12, &v12) != u32map_end(&m));
     assert(u32map_remove(&m, &(uint32_t){0}, NULL));
     assert(u32map_size(&m) == 1);
-    assert(*u32map_get(&m, &(uint32_t){8}) == 800);
+    assert(*u32map_get(&m, &(uint32_t){12}) == 800);
     assert(u32map_get(&m, &(uint32_t){0}) == NULL);
     u32map_destroy(&m);
 }
@@ -315,13 +314,15 @@ static void test_iteration_visits_all(void) {
 static void test_iteration_visits_all_with_collisions(void) {
     printf("Test: iteration visits all entries including collision chains\n");
     u32map_t m = u32map_new();
-    uint32_t keys[] = {0, 8, 16, 1, 2, 3};
+    // bucket_count == 12: {0,12}, {1,13} and {2,14} each share a bucket,
+    // forming three collision chains of length two.
+    uint32_t keys[] = {0, 12, 1, 13, 2, 14};
     const uint32_t N = 6;
     for (uint32_t i = 0; i < N; i++) {
         uint32_t k = keys[i], v = keys[i] + 100;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
     }
-    bool seen[17] = {false};
+    bool seen[15] = {false};
     size_t count = 0;
     for (u32map_iter_t it = u32map_begin(&m); it != u32map_end(&m); it = u32map_iter_next(&m, it)) {
         u32map_elem_t *n = u32map_at(&m, it);
@@ -409,7 +410,8 @@ static void test_remove_at_moves_value_out(void) {
 static void test_multiple_collisions(void) {
     printf("Test: many keys colliding into the same bucket\n");
     u32map_t m = u32map_new();
-    uint32_t keys[] = {0, 8, 16, 24, 32, 40};
+    // bucket_count == 12: every multiple of 12 hashes to bucket 0.
+    uint32_t keys[] = {0, 12, 24, 36, 48, 60};
     for (size_t i = 0; i < 6; i++) {
         uint32_t k = keys[i], v = keys[i] * 10;
         assert(u32map_insert(&m, &k, &v) != u32map_end(&m));
@@ -419,15 +421,15 @@ static void test_multiple_collisions(void) {
         uint32_t *got = u32map_get(&m, &keys[i]);
         assert(got != NULL && *got == keys[i] * 10);
     }
-    assert(u32map_remove(&m, &(uint32_t){16}, NULL));
-    assert(u32map_remove(&m, &(uint32_t){32}, NULL));
+    assert(u32map_remove(&m, &(uint32_t){24}, NULL));
+    assert(u32map_remove(&m, &(uint32_t){48}, NULL));
     assert(u32map_size(&m) == 4);
-    assert(u32map_get(&m, &(uint32_t){16}) == NULL);
-    assert(u32map_get(&m, &(uint32_t){32}) == NULL);
+    assert(u32map_get(&m, &(uint32_t){24}) == NULL);
+    assert(u32map_get(&m, &(uint32_t){48}) == NULL);
     assert(*u32map_get(&m, &(uint32_t){0}) == 0);
-    assert(*u32map_get(&m, &(uint32_t){8}) == 80);
-    assert(*u32map_get(&m, &(uint32_t){24}) == 240);
-    assert(*u32map_get(&m, &(uint32_t){40}) == 400);
+    assert(*u32map_get(&m, &(uint32_t){12}) == 120);
+    assert(*u32map_get(&m, &(uint32_t){36}) == 360);
+    assert(*u32map_get(&m, &(uint32_t){60}) == 600);
     u32map_destroy(&m);
 }
 
