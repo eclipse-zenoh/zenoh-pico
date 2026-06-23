@@ -88,23 +88,6 @@ static inline _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new)(vo
     return vec;
 }
 
-// Initializes an empty vector with specified capacity.
-static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
-    v->_size = 0;
-    v->_capacity = capacity;
-    if (capacity == 0) {
-        v->_buffer = NULL;
-    } else {
-        v->_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(
-            capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
-        if (v->_buffer == NULL) {
-            v->_capacity = 0;
-            return false;
-        }
-    }
-    return true;
-}
-
 // Returns the number of elements currently stored in the vector.
 static inline size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, size)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) { return vec->_size; }
 
@@ -210,6 +193,12 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     vec->_capacity = new_capacity;
     return true;
 #endif
+}
+
+// Initializes an empty vector with specified capacity.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(v);
+    return _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(v, capacity);
 }
 
 // Appends an element to the back of the vector by moving it from @p elem.
