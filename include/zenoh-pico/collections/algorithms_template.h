@@ -84,20 +84,6 @@
         }                                                                                \
     }
 
-// Find first const element matching predicate.  var_name is a pointer to the element type which should be declared by
-// user before the loop.  It is set to NULL if no matching element is found
-#define _ZP_CONST_FIND(collection_name, collection_ptr, var_name, predicate)                    \
-    var_name = NULL;                                                                            \
-    for (collection_name##_iter_t __iter = collection_name##_begin(collection_ptr);             \
-         __iter != collection_name##_end(collection_ptr);                                       \
-         __iter = collection_name##_iter_next(collection_ptr, __iter)) {                        \
-        const collection_name##_elem_t *_ = collection_name##_const_at(collection_ptr, __iter); \
-        if (predicate) {                                                                        \
-            var_name = _;                                                                       \
-            break;                                                                              \
-        }                                                                                       \
-    }
-
 // Find first value matching predicate.  var_name is a pointer to the element type which should be declared by
 // user before the loop.  It is set to NULL if no matching element is found
 #define _ZP_CONST_FIND_VAL(collection_name, collection_ptr, var_name, predicate)                     \

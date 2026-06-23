@@ -129,6 +129,38 @@ static void test_insert_updates_existing(void) {
     u32map_destroy(&m);
 }
 
+static void test_insert_null_value(void) {
+    printf("Test: insert with NULL value leaves entry uninitialized for manual init\n");
+    strmap_t m = strmap_new();
+
+    // New key with NULL value: the entry is created but its value is left
+    // uninitialized. Initialize it manually through the returned iterator.
+    int k = 1;
+    strmap_iter_t it = strmap_insert(&m, &k, NULL);
+    assert(it != strmap_end(&m));
+    assert(strmap_size(&m) == 1);
+    strmap_elem_t *n = strmap_at(&m, it);
+    n->val.str = (char *)malloc(16);
+    snprintf(n->val.str, 16, "init");
+    assert(strcmp(strmap_get(&m, &(int){1})->str, "init") == 0);
+
+    // Update an existing key with NULL: the old value is destroyed (freed) and
+    // the slot is left uninitialized (regression: this used to dereference the
+    // NULL value pointer). Reinitialize via _at before teardown.
+    int k_dup = 1;
+    it = strmap_insert(&m, &k_dup, NULL);
+    assert(it != strmap_end(&m));
+    assert(strmap_size(&m) == 1);
+    n = strmap_at(&m, it);
+    n->val.str = (char *)malloc(16);
+    snprintf(n->val.str, 16, "again");
+    assert(strcmp(strmap_get(&m, &(int){1})->str, "again") == 0);
+
+    // destroy frees the reinitialized value (run under valgrind to confirm).
+    strmap_destroy(&m);
+    assert(strmap_is_empty(&m));
+}
+
 static void test_remove_existing(void) {
     printf("Test: remove existing key moves value out\n");
     u32map_t m = u32map_new();
@@ -813,6 +845,7 @@ int main(void) {
     test_insert_and_get();
     test_get_missing_returns_null();
     test_insert_updates_existing();
+    test_insert_null_value();
     test_remove_existing();
     test_remove_missing_returns_false();
     test_contains();

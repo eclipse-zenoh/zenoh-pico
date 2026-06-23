@@ -307,7 +307,7 @@ static inline const _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_STATIC_HA
 // Returns the iterator to the inserted/updated node.
 // Returns an invalid iterator only when the pool is exhausted and the key is not already
 // present.
-// *val can be NULL, in this case the entry will be created with an initialized value,
+// *val can be NULL, in this case the entry will be created with an uninitialized value,
 // and can be initialized manually by calling _at at the returned iterator.
 
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
@@ -323,7 +323,9 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
             // Update: destroy incoming key, replace value in-place
             _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key);
             _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
-            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
+            if (val != NULL) {
+                _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
+            }
             return idx;
         }
         idx = map->_slots[idx]._next;

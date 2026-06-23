@@ -15,6 +15,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #undef NDEBUG
 #include <assert.h>
@@ -38,6 +40,26 @@ static inline bool u32_eq(const uint32_t *a, const uint32_t *b) { return *a == *
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 12
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
+#include "zenoh-pico/collections/static_hashmap_template.h"
+
+// ── Instantiate int -> owned_str_t to exercise the value destroy callback ────
+
+static inline size_t int_hash(const int *k) { return (size_t)(*k); }
+static inline bool int_eq(const int *a, const int *b) { return *a == *b; }
+
+// Wrap the owned pointer in a struct so the value type is not itself a bare
+// pointer (keeps const-correctness clean for const_get/const_at accessors).
+typedef struct {
+    char *str;
+} owned_str_t;
+
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE int
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE owned_str_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME strmap
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 8
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN int_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN int_eq
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(p) free((p)->str)
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -77,6 +99,38 @@ static void test_insert_updates_existing(void) {
     assert(u32map_size(&m) == 1);
     assert(*u32map_get(&m, &(uint32_t){5}) == 99);
     u32map_destroy(&m);
+}
+
+static void test_insert_null_value(void) {
+    printf("Test: insert with NULL value leaves entry uninitialized for manual init\n");
+    strmap_t m = strmap_new();
+
+    // New key with NULL value: the entry is created but its value is left
+    // uninitialized. Initialize it manually through the returned iterator.
+    int k = 1;
+    strmap_iter_t it = strmap_insert(&m, &k, NULL);
+    assert(it != strmap_end(&m));
+    assert(strmap_size(&m) == 1);
+    strmap_elem_t *n = strmap_at(&m, it);
+    n->val.str = (char *)malloc(16);
+    snprintf(n->val.str, 16, "init");
+    assert(strcmp(strmap_get(&m, &(int){1})->str, "init") == 0);
+
+    // Update an existing key with NULL: the old value is destroyed (freed) and
+    // the slot is left uninitialized (regression: this used to dereference the
+    // NULL value pointer). Reinitialize via _at before teardown.
+    int k_dup = 1;
+    it = strmap_insert(&m, &k_dup, NULL);
+    assert(it != strmap_end(&m));
+    assert(strmap_size(&m) == 1);
+    n = strmap_at(&m, it);
+    n->val.str = (char *)malloc(16);
+    snprintf(n->val.str, 16, "again");
+    assert(strcmp(strmap_get(&m, &(int){1})->str, "again") == 0);
+
+    // destroy frees the reinitialized value (run under valgrind to confirm).
+    strmap_destroy(&m);
+    assert(strmap_is_empty(&m));
 }
 
 static void test_remove_existing(void) {
@@ -668,6 +722,7 @@ int main(void) {
     test_insert_and_get();
     test_get_missing_returns_null();
     test_insert_updates_existing();
+    test_insert_null_value();
     test_remove_existing();
     test_remove_missing_returns_false();
     test_remove_head_of_chain();

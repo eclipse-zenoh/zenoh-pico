@@ -49,6 +49,7 @@ static hstring_t hstring_make(const char *s) {
     // Flawfinder: ignore [CWE-126]
     size_t l = strlen(s);
     h.ptr = (char *)malloc(l + 1);
+    assert(h.ptr != NULL);
     // SAFETY: s guaranteed to be null-terminated in tests.
     // Flawfinder: ignore [CWE-120]
     strncpy(h.ptr, s, l + 1);
@@ -714,8 +715,8 @@ static void test_visit_4type(void) {
 }
 
 static void test_visit_generic(void) {
-    my_tri_t v[3] = {my_tri_from_f64(&(double){3.5}), my_tri_from_i32(&(int){42}),
-                     my_tri_from_str(&(hstring_t){.ptr = "1234"})};
+    hstring_t s = hstring_make("1234");
+    my_tri_t v[3] = {my_tri_from_f64(&(double){3.5}), my_tri_from_i32(&(int){42}), my_tri_from_str(&s)};
 
     int out[3] = {3, 42, 1234};
 
@@ -732,14 +733,15 @@ static void test_visit_generic(void) {
             (none, )
         );
         assert(r == out[i]);
+        my_tri_destroy(&v[i]);  // destroy after visiting
     }
 
     printf("  test_visit_generic             OK\n");
 }
 
 static void test_const_visit_generic(void) {
-    my_tri_t v[3] = {my_tri_from_f64(&(double){3.5}), my_tri_from_i32(&(int){42}),
-                     my_tri_from_str(&(hstring_t){.ptr = "1234"})};
+    hstring_t s = hstring_make("1234");
+    my_tri_t v[3] = {my_tri_from_f64(&(double){3.5}), my_tri_from_i32(&(int){42}), my_tri_from_str(&s)};
 
     int out[3] = {3, 42, 1234};
 
@@ -757,6 +759,7 @@ static void test_const_visit_generic(void) {
             (none, )
         );
         assert(r == out[i]);
+        my_tri_destroy(&v[i]);  // destroy after visiting
     }
 
     printf("  test_const_visit_generic       OK\n");
