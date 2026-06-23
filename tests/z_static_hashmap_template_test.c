@@ -110,6 +110,7 @@ static void test_insert_null_value(void) {
     assert(strmap_size(&m) == 1);
     strmap_elem_t *n = strmap_at(&m, it);
     n->val.str = (char *)malloc(16);
+    assert(n->val.str != NULL);
     snprintf(n->val.str, 16, "init");
     assert(strcmp(strmap_get(&m, &(int){1})->str, "init") == 0);
 
@@ -122,6 +123,7 @@ static void test_insert_null_value(void) {
     assert(strmap_size(&m) == 1);
     n = strmap_at(&m, it);
     n->val.str = (char *)malloc(16);
+    assert(n->val.str != NULL);
     snprintf(n->val.str, 16, "again");
     assert(strcmp(strmap_get(&m, &(int){1})->str, "again") == 0);
 

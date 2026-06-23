@@ -208,6 +208,8 @@ typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
     bool _present;
 } _ZP_HASHMAP_TEMPLATE_SLOT_TYPE;
 
+#define _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE (SIZE_MAX / sizeof(_ZP_HASHMAP_TEMPLATE_SLOT_TYPE))
+
 // ── Map type ──────────────────────────────────────────────────────────────────
 //
 // _slots       : heap-allocated node pool (_capacity entries). Slot i also
@@ -264,11 +266,8 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     if (new_capacity <= map->_capacity) {
         return true;
     }
-    if (new_capacity > _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY) {
-        new_capacity = _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY;
-        if (new_capacity <= map->_capacity) {
-            return false;  // already at maximum addressable capacity
-        }
+    if (new_capacity > _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY || new_capacity > _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;
     }
 
     _ZP_HASHMAP_TEMPLATE_SLOT_TYPE *new_slots;
@@ -501,7 +500,14 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
 
     // New entry — grow the pool if it is full.
     if (map->_size == map->_capacity) {
-        size_t new_capacity = map->_capacity * 2;
+        size_t max_capacity = _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE;
+        max_capacity =
+            _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY < max_capacity ? _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY : max_capacity;
+        if (map->_capacity == max_capacity) {
+            return _ZP_HASHMAP_TEMPLATE_INDEX_NONE;  // capacity exhausted
+        }
+        size_t new_capacity = map->_capacity > max_capacity / 2 ? max_capacity : map->_capacity * 2;
+
         if (!_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(map, new_capacity)) {
             return _ZP_HASHMAP_TEMPLATE_INDEX_NONE;  // allocation failed or capacity exhausted
         }
@@ -700,4 +706,5 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 #undef _ZP_HASHMAP_TEMPLATE_ITER_TYPE
 #undef _ZP_HASHMAP_TEMPLATE_INDEX_NONE
 #undef _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY
+#undef _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE
 #undef _ZP_HASHMAP_TEMPLATE_ITER_TYPEDEF

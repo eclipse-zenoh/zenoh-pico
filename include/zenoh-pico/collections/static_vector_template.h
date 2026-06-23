@@ -150,6 +150,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, push_back)(_ZP_STATI
 static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, append)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
                                                                     _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *elems,
                                                                     size_t len) {
+    if (len == 0) {
+        return true;
+    }
     if (len > _ZP_STATIC_VECTOR_TEMPLATE_SIZE - vec->_size) {
         return false;
     }

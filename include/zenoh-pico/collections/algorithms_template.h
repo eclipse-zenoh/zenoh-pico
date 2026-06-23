@@ -132,15 +132,15 @@
 
 // Remove all elements matching predicate.  Behaviour is undefined if predicate has side effects that modify the
 // collection.
-#define _ZP_REMOVE(collection_name, collection_ptr, predicate)                               \
-    for (collection_name##_iter_t _a_t_iter = collection_name##_begin(collection_ptr);       \
-         _a_t_iter != collection_name##_end(collection_ptr);) {                              \
-        const collection_name##_elem_t *_ = collection_name##_at(collection_ptr, _a_t_iter); \
-        (void)_;                                                                             \
-        if (predicate) {                                                                     \
-            collection_name##_remove_at(collection_ptr, _a_t_iter, NULL, &_a_t_iter);        \
-        } else {                                                                             \
-            _a_t_iter = collection_name##_iter_next(collection_ptr, _a_t_iter);              \
-        }                                                                                    \
+#define _ZP_REMOVE(collection_name, collection_ptr, predicate)                         \
+    for (collection_name##_iter_t _a_t_iter = collection_name##_begin(collection_ptr); \
+         _a_t_iter != collection_name##_end(collection_ptr);) {                        \
+        collection_name##_elem_t *_ = collection_name##_at(collection_ptr, _a_t_iter); \
+        (void)_;                                                                       \
+        if (predicate) {                                                               \
+            collection_name##_remove_at(collection_ptr, _a_t_iter, NULL, &_a_t_iter);  \
+        } else {                                                                       \
+            _a_t_iter = collection_name##_iter_next(collection_ptr, _a_t_iter);        \
+        }                                                                              \
     }
 #endif

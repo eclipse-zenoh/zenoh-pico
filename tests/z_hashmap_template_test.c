@@ -138,6 +138,7 @@ static void test_insert_null_value(void) {
     assert(strmap_size(&m) == 1);
     strmap_elem_t *n = strmap_at(&m, it);
     n->val.str = (char *)malloc(16);
+    assert(n->val.str != NULL);
     snprintf(n->val.str, 16, "init");
     assert(strcmp(strmap_get(&m, &(int){1})->str, "init") == 0);
 
@@ -150,6 +151,7 @@ static void test_insert_null_value(void) {
     assert(strmap_size(&m) == 1);
     n = strmap_at(&m, it);
     n->val.str = (char *)malloc(16);
+    assert(n->val.str != NULL);
     snprintf(n->val.str, 16, "again");
     assert(strcmp(strmap_get(&m, &(int){1})->str, "again") == 0);
 
@@ -375,6 +377,7 @@ static void test_value_destroy_called(void) {
     for (int i = 0; i < 20; i++) {
         owned_str_t s;
         s.str = (char *)malloc(16);
+        assert(s.str != NULL);
         snprintf(s.str, 16, "val-%d", i);
         assert(strmap_insert(&m, &i, &s) != strmap_end(&m));
     }
@@ -383,6 +386,7 @@ static void test_value_destroy_called(void) {
     // Overwrite an existing key — old value must be freed by the template.
     owned_str_t replacement;
     replacement.str = (char *)malloc(16);
+    assert(replacement.str != NULL);
     snprintf(replacement.str, 16, "new");
     int key = 0;
     assert(strmap_insert(&m, &key, &replacement) != strmap_end(&m));
@@ -505,6 +509,7 @@ static void test_partial_fill_grow_preserves_free_list(void) {
         for (int i = 0; i < 16; i++) {
             owned_str_t s;
             s.str = (char *)malloc(16);
+            assert(s.str != NULL);
             snprintf(s.str, 16, "v-%d", i);
             assert(strmap_insert(&m, &i, &s) != strmap_end(&m));
         }
@@ -518,6 +523,7 @@ static void test_partial_fill_grow_preserves_free_list(void) {
         for (int i = 16; strmap_size(&m) < cap; i++) {
             owned_str_t s;
             s.str = (char *)malloc(16);
+            assert(s.str != NULL);
             snprintf(s.str, 16, "v-%d", i);
             assert(strmap_insert(&m, &i, &s) != strmap_end(&m));
         }

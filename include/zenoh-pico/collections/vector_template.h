@@ -16,8 +16,6 @@
 // - _ZP_VECTOR_TEMPLATE_ELEM_TYPE: the type of the elements in the vector (required)
 // - _ZP_VECTOR_TEMPLATE_NAME: the name of the vector type to generate, without the _t suffix
 //   (optional, default is derived from the element type)
-// - _ZP_VECTOR_TEMPLATE_INITIAL_CAPACITY: the initial heap allocation capacity
-//   (optional, default is 16)
 // - _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
 //   an element (optional, default is a no-op)
 // - _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
@@ -29,6 +27,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,6 +59,8 @@
 #ifndef _ZP_VECTOR_TEMPLATE_FREE_FN
 #define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) free(ptr)
 #endif
+
+#define _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE (SIZE_MAX / sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE))
 
 #define _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, t)
 typedef struct _ZP_VECTOR_TEMPLATE_TYPE {
@@ -175,6 +176,9 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
     if (new_capacity <= vec->_capacity) {
         return true;
     }
+    if (new_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
     _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer;
 #if defined(_ZP_VECTOR_TEMPLATE_REALLOC_FN) && defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
     new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_REALLOC_FN(
@@ -213,8 +217,17 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLAT
 // Returns true on success, or false if a reallocation was required but failed.
 static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, push_back)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
                                                                 _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elem) {
+    if (vec->_size == _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
     if (vec->_size == vec->_capacity) {
-        size_t new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity * 2;
+        size_t new_capacity;
+        if (vec->_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+        } else {
+            new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity * 2;
+        }
+
         if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
             return false;
         }
@@ -231,15 +244,25 @@ static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, push_back)(_ZP_VECTOR_TEMPL
 // in which case the vector is left unchanged and no elements are moved.
 static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, append)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
                                                              _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elems, size_t len) {
+    if (len == 0) {
+        return true;  // nothing to append; never allocates or dereferences elems/_buffer
+    }
     size_t required = vec->_size + len;
-    if (required > vec->_capacity) {
-        size_t new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity;
-        while (new_capacity < required) {
-            new_capacity *= 2;
+    if (required < vec->_size || required > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {  // overflow check
+        return false;
+    }
+    size_t new_capacity = vec->_capacity;
+    while (new_capacity < required) {
+        if (new_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+            break;
+        } else {
+            new_capacity = new_capacity == 0 ? 1 : new_capacity * 2;
         }
-        if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
-            return false;
-        }
+    }
+
+    if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+        return false;
     }
 #if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
     // SAFETY: vec->_buffer is guaranteed to have enough capacity for elements to append by construction.
@@ -335,4 +358,5 @@ static inline _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t)
 #ifdef _ZP_VECTOR_TEMPLATE_REALLOC_FN
 #undef _ZP_VECTOR_TEMPLATE_REALLOC_FN
 #endif
+#undef _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE
 #undef _ZP_VECTOR_TEMPLATE_FREE_FN
