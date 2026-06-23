@@ -70,6 +70,9 @@ typedef struct _ZP_VECTOR_TEMPLATE_TYPE {
 
 typedef _ZP_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t);
 
+// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
+typedef size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t);
+
 // Initializes a new, empty vector.
 static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
     vec->_size = 0;
@@ -86,17 +89,18 @@ static inline _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new)(vo
 
 // Initializes an empty vector with specified capacity.
 static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
+    v->_size = 0;
+    v->_capacity = capacity;
     if (capacity == 0) {
         v->_buffer = NULL;
     } else {
         v->_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(
             capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
         if (v->_buffer == NULL) {
+            v->_capacity = 0;
             return false;
         }
     }
-    v->_size = 0;
-    v->_capacity = capacity;
     return true;
 }
 
@@ -284,12 +288,6 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, f
     }
     return &vec->_buffer[0];
 }
-
-// elem_t is an alias for the element type, used by algorithms_template.h macros.
-typedef _ZP_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t);
-
-// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
-typedef size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t);
 
 // Returns the pointer to the raw buffer.
 static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, data)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {

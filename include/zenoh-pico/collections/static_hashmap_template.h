@@ -269,8 +269,7 @@ static inline const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, val_t) *
 static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                            contains)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                      const _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, key_t) * key) {
-    return _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)((_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *)(uintptr_t)map,
-                                                               key) != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+    return _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, get_iter)(map, key) != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
 }
 
 // ── size / is_empty ───────────────────────────────────────────────────────────

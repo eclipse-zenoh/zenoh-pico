@@ -57,6 +57,9 @@ typedef struct _ZP_STATIC_VECTOR_TEMPLATE_TYPE {
 
 typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t);
 
+// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
+typedef size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t);
+
 // Initializes a new, empty vector. All fields are zero-initialised.
 static inline void _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, init)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {
     memset(vec, 0, sizeof(_ZP_STATIC_VECTOR_TEMPLATE_TYPE));
@@ -244,12 +247,6 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(_ZP_STATIC_V
     vec->_size--;
     return true;
 }
-
-// elem_t is an alias for the element type, used by algorithms_template.h macros.
-typedef _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, elem_t);
-
-// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
-typedef size_t _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t);
 
 // Returns a pointer to the raw buffer.
 static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
