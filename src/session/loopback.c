@@ -148,9 +148,8 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, _z_session_
     return _Z_RES_OK;
 }
 
-z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn,
-                                                const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                                                _z_n_qos_t qos) {
+z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, _z_session_t *zn, const _z_bytes_t *payload,
+                                                const _z_encoding_t *encoding, _z_n_qos_t qos) {
     _ZP_UNUSED(query);
     _ZP_UNUSED(zn);
     _ZP_UNUSED(payload);
