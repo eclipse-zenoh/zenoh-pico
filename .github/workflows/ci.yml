@@ -15,11 +15,12 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   pull_request:
     branches: ["**"]
   schedule:
     - cron: "0 6 * * 1-5"
+  workflow_dispatch:
 
 jobs:
   run_tests:
