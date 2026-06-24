@@ -180,9 +180,8 @@ z_result_t _z_trigger_queryables(_z_session_t *zn, const _z_keyexpr_t *keyexpr, 
 
     _z_query_t query;
     _z_query_create_view_from_data(
-        &query, keyexpr, _z_value_view_deref(&msgq->_ext_value), _z_slice_view_deref(&msgq->_parameters),
-        &_z_transport_get_common(&zn->_tp)->_session, &query_id, _z_bytes_view_deref(&msgq->_ext_attachment),
-        msgq->_implicit_anyke, qos, &msgq->_ext_info);
+        &query, keyexpr, _z_value_view_deref(&msgq->_ext_value), _z_slice_view_deref(&msgq->_parameters), &zn->_weak,
+        &query_id, _z_bytes_view_deref(&msgq->_ext_attachment), msgq->_implicit_anyke, qos, &msgq->_ext_info);
 
     for (size_t i = 0; i < qle_nb; i++) {
         _z_session_queryable_t *qle_info = _Z_RC_IN_VAL(_z_session_queryable_rc_svec_get(&qles, i));

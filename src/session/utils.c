@@ -162,6 +162,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
     zn->_local_zid = *zid;
     _z_atomic_bool_store(&zn->_is_closed, false, _z_memory_order_release);
+    zn->_weak = _z_session_weak_null();
     return ret;
 }
 
@@ -241,4 +242,5 @@ void _z_session_clear(_z_session_t *zn) {
     _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_sync_group_drop(&zn->_callback_drop_sync_group);
+    _z_session_weak_drop(&zn->_weak);
 }

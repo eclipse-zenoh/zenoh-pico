@@ -217,6 +217,7 @@ typedef struct _z_session_t {
     _z_sync_group_t _callback_drop_sync_group;
     _z_atomic_bool_t _is_closed;
     _z_runtime_t _runtime;
+    _z_session_weak_t _weak;  // for queries
 } _z_session_t;
 
 /**

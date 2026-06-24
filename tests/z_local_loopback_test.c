@@ -53,15 +53,7 @@ static atomic_uint g_query_attachment_ok_count = 0;
 static _z_session_t g_session;
 static _z_session_rc_t g_session_rc = {0};
 static _z_transport_common_t g_fake_transport = {0};
-static bool g_transport_ready = false;
 static _z_link_t g_dummy_link = {0};
-
-static _z_transport_common_t *loopback_override(_z_session_t *zn) {
-    if (g_transport_ready && zn == &g_session) {
-        return &g_fake_transport;
-    }
-    return NULL;
-}
 
 static z_result_t z_send_override(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                                   z_congestion_control_t cong_ctrl, void *peer, bool *handled) {
@@ -172,23 +164,17 @@ static void setup_session(void) {
     g_fake_transport = (_z_transport_common_t){0};
     g_fake_transport._session = _z_session_rc_clone_as_weak(&g_session_rc);
     g_fake_transport._link = &g_dummy_link;
-    g_transport_ready = true;
-    _z_session_set_transport_common_override(loopback_override);
     _z_transport_set_send_n_msg_override(z_send_override);
 
     g_session._tp._type = _Z_TRANSPORT_UNICAST_TYPE;
 }
 
 static void cleanup_session(void) {
-    if (g_transport_ready) {
-        g_transport_ready = false;
-    }
     _z_transport_peer_unicast_slist_free(&g_session._tp._transport._unicast._peers);
     g_session._tp._transport._unicast._peers = NULL;
     g_session._tp._transport._unicast._common._link = NULL;
     g_session._tp._type = _Z_TRANSPORT_NONE;
     _z_session_clear(&g_session);
-    _z_session_set_transport_common_override(NULL);
     _z_transport_set_send_n_msg_override(NULL);
 }
 

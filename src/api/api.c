@@ -939,7 +939,7 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         z_config_drop(config);
         return ret;
     }
-
+    _Z_RC_IN_VAL(&zs->_rc)->_weak = _z_session_rc_clone_as_weak(&zs->_rc);
     ret = _z_open(&zs->_rc, cfg, &zid);
 
     // Move config ownership into the session before starting any background tasks,

@@ -28,44 +28,6 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/locality.h"
 
-#if defined(Z_TEST_HOOKS)
-static _z_session_transport_override_fn _z_transport_common_override = NULL;
-
-void _z_session_set_transport_common_override(_z_session_transport_override_fn fn) {
-    _z_transport_common_override = fn;
-}
-#endif
-
-#if Z_FEATURE_SUBSCRIPTION == 1 || Z_FEATURE_QUERYABLE == 1
-static _z_transport_common_t *_z_session_get_transport_common(_z_session_t *zn) {
-#if defined(Z_TEST_HOOKS)
-    if (_z_transport_common_override != NULL) {
-        _z_transport_common_t *override = _z_transport_common_override(zn);
-        if (override != NULL) {
-            return override;
-        }
-    }
-#endif
-    switch (zn->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            return &zn->_tp._transport._unicast._common;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            return &zn->_tp._transport._multicast._common;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            return &zn->_tp._transport._raweth._common;
-        default:
-            break;
-    }
-    return NULL;
-}
-
-#else
-static _z_transport_common_t *_z_session_get_transport_common(_z_session_t *zn) {
-    _ZP_UNUSED(zn);
-    return NULL;
-}
-#endif  // Z_FEATURE_SUBSCRIPTION == 1 || Z_FEATURE_QUERYABLE == 1
-
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_LOCAL_SUBSCRIBER == 1
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                                            const _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
@@ -102,7 +64,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     (void)timeout_ms;
     _z_msg_query_t msg;
     _z_msg_query_fill(&msg, parameters, consolidation, payload, encoding, source_info, attachment, implicit_anyke);
-    return _z_trigger_queryables(zn, keyexpr, &msg, qid, qos, NULL);
+    return _z_trigger_queryables(zn, keyexpr, &msg, (uint32_t)qid, qos, NULL);
 }
 #else
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
