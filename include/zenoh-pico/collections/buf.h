@@ -34,7 +34,7 @@ typedef struct _z_write_buf_t {
 } _z_write_buf_t;
 
 static inline z_result_t _z_write_buf_init(_z_write_buf_t *buf, size_t initial_capacity) {
-    return _z_uint8_vec_new_with_capacity(&buf->_buffer, initial_capacity) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return _z_uint8_vec_init_with_capacity(&buf->_buffer, initial_capacity) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
 
 static inline z_result_t _z_write_buf_ensure_space(_z_write_buf_t *buf, size_t space) {
