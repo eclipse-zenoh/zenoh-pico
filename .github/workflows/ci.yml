@@ -73,6 +73,9 @@ jobs:
       #  run: |
       #    mkdir -p fuzz/corpus/scouting_message_decode fuzz/corpus/transport_message_decode \
       #      fuzz/corpus/endpoint_str
+      #    cp -r fuzz/seeds/scouting_message/. fuzz/corpus/scouting_message_decode/
+      #    cp -r fuzz/seeds/transport_message/. fuzz/corpus/transport_message_decode/
+      #    cp -r fuzz/seeds/endpoint_from_str/. fuzz/corpus/endpoint_str/
       #    ./build-fuzz/fuzz/z_fuzz_scouting_message_decode \
       #      -timeout=5 \
       #      -runs=10000 \

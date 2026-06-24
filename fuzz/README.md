@@ -47,14 +47,28 @@ build-fuzz/fuzz/z_fuzz_transport_message_decode
 build-fuzz/fuzz/z_fuzz_endpoint_str
 ```
 
-## Run continuous fuzzing
+## Seed policy
 
-You can let `libFuzzer` keep mutating inputs:
+Committed inputs under `fuzz/seeds/` are a small, curated seed corpus.
+Those seeds come from the Zenoh project.
+They are intended as stable starting points for mutation.
+
+When running the fuzz tests, we should copy them to `fuzz/corpus` for the mutation later.
 
 ```bash
 mkdir -p fuzz/corpus/scouting_message_decode
 mkdir -p fuzz/corpus/transport_message_decode
 mkdir -p fuzz/corpus/endpoint_str
+cp -r fuzz/seeds/scouting_message/. fuzz/corpus/scouting_message_decode/
+cp -r fuzz/seeds/transport_message/. fuzz/corpus/transport_message_decode/
+cp -r fuzz/seeds/endpoint_from_str/. fuzz/corpus/endpoint_str/
+```
+
+## Run continuous fuzzing
+
+You can let `libFuzzer` keep mutating inputs:
+
+```bash
 ./build-fuzz/fuzz/z_fuzz_scouting_message_decode \
   -timeout=5 \
   fuzz/corpus/scouting_message_decode
