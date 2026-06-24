@@ -989,12 +989,7 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
 bool z_session_is_closed(const z_loaned_session_t *zs) { return _z_session_is_closed(_Z_RC_IN_VAL(zs)); }
 
 #ifdef Z_FEATURE_UNSTABLE_API
-z_entity_global_id_t z_session_id(const z_loaned_session_t *zs) {
-    z_entity_global_id_t ret;
-    // eid counter starts from 1, so it is safe to use 0 for session
-    z_entity_global_id_new(&ret, &_Z_RC_IN_VAL(zs)->_local_zid, 0);  // never fails
-    return ret;
-}
+z_entity_global_id_t z_session_id(const z_loaned_session_t *zs) { return _z_session_get_id(_Z_RC_IN_VAL(zs)); }
 #endif
 
 z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {

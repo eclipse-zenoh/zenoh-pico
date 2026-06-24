@@ -21,13 +21,13 @@
 
 z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wireexpr_t *key,
                                     const _z_msg_reply_t *reply, const _z_entity_global_id_t *replier_id,
-                                    _z_transport_peer_common_t *peer) {
+                                    _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
-    ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put,
-                                         (reply->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE), replier_id,
-                                         peer);
+    _z_keyexpr_view_t keyexpr;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer));
+    ret = _z_trigger_query_reply_partial(zn, id, _z_keyexpr_view_deref(&keyexpr), reply, replier_id, qos, peer);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);

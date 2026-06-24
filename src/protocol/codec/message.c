@@ -291,11 +291,21 @@ z_result_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
             _z_zbuf_t zbf = _z_slice_as_zbuf(_z_slice_view_deref(&extension->_body._zbuf._val));
-            ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
+            if (pshb->_is_put) {
+                ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
+            } else {
+                ret = _z_source_info_decode(&pshb->_body._del._commons._source_info, &zbf);
+            }
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Attachment
-            pshb->_body._put._attachment = _z_bytes_view_from_slice(_z_slice_view_deref(&extension->_body._zbuf._val));
+            if (pshb->_is_put) {
+                pshb->_body._put._attachment =
+                    _z_bytes_view_from_slice(_z_slice_view_deref(&extension->_body._zbuf._val));
+            } else {
+                pshb->_body._del._attachment =
+                    _z_bytes_view_from_slice(_z_slice_view_deref(&extension->_body._zbuf._val));
+            }
             break;
         }
         default:
@@ -328,7 +338,7 @@ z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t hea
         case _Z_MID_Z_DEL: {
             pshb->_is_put = false;
             if (_Z_HAS_FLAG(header, _Z_FLAG_Z_D_T)) {
-                _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
+                _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._del._commons._timestamp, zbf));
             }
             if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
                 _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));

@@ -78,8 +78,6 @@ static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 
 typedef struct {
     _z_m_push_commons_t _commons;
-    // Non-owning views: payload and attachment alias the decoding buffer (or the user-provided data on the send
-    // path). Owned data is materialized only when a sample/reply is constructed, in the trigger layer.
     _z_bytes_view_t _payload;
     _z_encoding_view_t _encoding;
     _z_bytes_view_t _attachment;

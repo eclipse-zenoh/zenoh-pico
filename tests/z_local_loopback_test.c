@@ -244,10 +244,9 @@ static void test_put_local_only_single(void) {
     _z_bytes_t payload;
     assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
-    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
 
-    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &wireexpr, &payload, NULL, Z_SAMPLE_KIND_PUT,
-                                                           qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
+    z_result_t delivered = _z_session_deliver_push_locally(
+        &g_session, &keyexpr._inner, &payload, NULL, Z_SAMPLE_KIND_PUT, qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
@@ -440,9 +439,8 @@ static void test_put_local_only_multiple(void) {
     assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
 
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
-    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
-    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &wireexpr, &payload, NULL, Z_SAMPLE_KIND_PUT,
-                                                           qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
+    z_result_t delivered = _z_session_deliver_push_locally(
+        &g_session, &keyexpr._inner, &payload, NULL, Z_SAMPLE_KIND_PUT, qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_put_secondary_count, memory_order_relaxed) == 1);

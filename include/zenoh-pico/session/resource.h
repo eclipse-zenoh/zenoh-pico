@@ -17,7 +17,9 @@
 
 #include <stdint.h>
 
-#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/session/keyexpr.h"
+#include "zenoh-pico/session/weak_session.h"
+#include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
 extern "C" {

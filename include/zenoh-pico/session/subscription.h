@@ -17,6 +17,7 @@
 
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 
 #ifdef __cplusplus
@@ -29,7 +30,7 @@ typedef struct _z_session_t _z_session_t;
 _Z_SVEC_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 /*------------------ Subscription ------------------*/
-z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer);
 
@@ -40,7 +41,7 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
 
 _z_subscription_rc_t _z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id);
 _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *sub);
-z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_wireexpr_t *wireexpr,
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_keyexpr_t *keyexpr,
                                          const _z_bytes_t *opt_payload, const _z_encoding_t *opt_encoding,
                                          const _z_zint_t sample_kind, const _z_timestamp_t *opt_timestamp,
                                          _z_n_qos_t qos, const _z_bytes_t *opt_attachment, z_reliability_t reliability,
@@ -54,16 +55,22 @@ static inline z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, const _z
                                                       const _z_bytes_t *attachment, z_reliability_t reliability,
                                                       const _z_source_info_t *source_info,
                                                       _z_transport_peer_common_t *peer) {
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, wireexpr, payload, encoding,
-                                         Z_SAMPLE_KIND_PUT, timestamp, qos, attachment, reliability, source_info, peer);
+    _z_keyexpr_view_t ke_view;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, _z_keyexpr_view_deref(&ke_view), payload,
+                                         encoding, Z_SAMPLE_KIND_PUT, timestamp, qos, attachment, reliability,
+                                         source_info, peer);
 }
 static inline z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
                                                       const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
                                                       const _z_bytes_t *attachment, z_reliability_t reliability,
                                                       const _z_source_info_t *source_info,
                                                       _z_transport_peer_common_t *peer) {
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, wireexpr, NULL, NULL, Z_SAMPLE_KIND_DELETE,
-                                         timestamp, qos, attachment, reliability, source_info, peer);
+    _z_keyexpr_view_t ke_view;
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, _z_keyexpr_view_deref(&ke_view), NULL, NULL,
+                                         Z_SAMPLE_KIND_DELETE, timestamp, qos, attachment, reliability, source_info,
+                                         peer);
 }
 #else   // Z_FEATURE_SUBSCRIPTION == 0
 static inline z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, const _z_wireexpr_t *wireexpr,

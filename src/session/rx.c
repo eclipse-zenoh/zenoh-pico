@@ -99,8 +99,10 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
     switch (req->_tag) {
         case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
-            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, req->_ext_qos,
-                                         peer);
+            _z_keyexpr_view_t ke_view;
+            _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer));
+            return _z_trigger_queryables(zn, _z_keyexpr_view_deref(&ke_view), &req->_body._query, (uint32_t)req->_rid,
+                                         req->_ext_qos, peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             break;
@@ -153,10 +155,9 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     _z_entity_global_id_t replier_id = {.zid = resp->_ext_responder._zid, .eid = resp->_ext_responder._eid};
     switch (resp->_tag) {
         case _Z_RESPONSE_BODY_REPLY:
-            // Memory cleaning must be done in the feature layer
-            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id, peer);
+            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id,
+                                            resp->_ext_qos, peer);
         case _Z_RESPONSE_BODY_ERR:
-            // Memory cleaning must be done in the feature layer
             return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err, &replier_id);
         default:
             _Z_INFO("Received unknown response tag: %d\n", resp->_tag);

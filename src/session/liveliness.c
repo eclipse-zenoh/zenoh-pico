@@ -58,13 +58,13 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
         } else {
             *ke_on_heap = _z_keyexpr_steal(&ke);
         }
+        _z_session_mutex_unlock(zn);
+        // Note: we are inside rx thread, => ke_on_heap will not be cleared until we return
+        _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, ke_on_heap, timestamp, peer));
     }
 
-    _z_session_mutex_unlock(zn);
-    _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, wireexpr, timestamp, peer));
     if (ret != _Z_RES_OK) {
         _z_session_mutex_lock(zn);
-        // remote tokens kes do not reference any declaration, so it is safe to remove them under session mutex
         _z_keyexpr_intmap_remove(&zn->_remote_tokens, id);
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&ke);
@@ -179,7 +179,8 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
 
         if (ret == _Z_RES_OK) {
             _z_reply_t reply;
-            _z_reply_create_ok_view_from_data(&reply, ke, NULL, timestamp, NULL, Z_SAMPLE_KIND_PUT, NULL, NULL, NULL);
+            _z_reply_create_ok_view_from_data(&reply, ke, NULL, timestamp, NULL, Z_SAMPLE_KIND_PUT, NULL, NULL, NULL,
+                                              _Z_N_QOS_DEFAULT);
             pq->_callback(&reply, pq->_arg);
         }
     }

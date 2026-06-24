@@ -161,15 +161,10 @@ static z_result_t __unsafe_z_session_register_new_received_query(_z_session_t *z
     return _Z_RES_OK;
 }
 
-z_result_t _z_trigger_queryables(_z_transport_common_t *transport, const _z_msg_query_t *msgq,
-                                 const _z_wireexpr_t *q_key, uint32_t qid, _z_n_qos_t qos,
-                                 _z_transport_peer_common_t *peer) {
+z_result_t _z_trigger_queryables(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_msg_query_t *msgq,
+                                 uint32_t qid, _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
     _z_query_id_t query_id = {.rid = qid, .peer_id = (size_t)peer};
-    _z_session_t *zn = _z_transport_common_get_session(transport);
 
-    _z_keyexpr_view_t ke_view;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, q_key, peer));
-    const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
     _z_session_queryable_rc_svec_t qles = _z_session_queryable_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_by_key(zn, keyexpr, query_id.peer_id != 0, &qles),
@@ -184,10 +179,10 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, const _z_msg_
              _z_string_data(&keyexpr->_keyexpr));
 
     _z_query_t query;
-    _z_query_create_view_from_data(&query, keyexpr, _z_value_view_deref(&msgq->_ext_value),
-                                   _z_slice_view_deref(&msgq->_parameters), &transport->_session, &query_id,
-                                   _z_bytes_view_deref(&msgq->_ext_attachment), msgq->_implicit_anyke, qos,
-                                   &msgq->_ext_info);
+    _z_query_create_view_from_data(
+        &query, keyexpr, _z_value_view_deref(&msgq->_ext_value), _z_slice_view_deref(&msgq->_parameters),
+        &_z_transport_get_common(&zn->_tp)->_session, &query_id, _z_bytes_view_deref(&msgq->_ext_attachment),
+        msgq->_implicit_anyke, qos, &msgq->_ext_info);
 
     for (size_t i = 0; i < qle_nb; i++) {
         _z_session_queryable_t *qle_info = _Z_RC_IN_VAL(_z_session_queryable_rc_svec_get(&qles, i));

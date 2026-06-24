@@ -28,7 +28,7 @@ extern "C" {
 
 z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wireexpr_t *wireexpr,
                                     const _z_msg_reply_t *reply, const _z_entity_global_id_t *replier_id,
-                                    _z_transport_peer_common_t *peer);
+                                    _z_n_qos_t qos, _z_transport_peer_common_t *peer);
 
 z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, const _z_msg_err_t *error,
                                 const _z_entity_global_id_t *replier_id);

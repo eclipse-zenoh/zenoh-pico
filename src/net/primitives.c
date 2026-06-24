@@ -176,7 +176,7 @@ z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, cons
 
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     if (ret == _Z_RES_OK && _z_locality_allows_local(allowed_destination)) {
-        ret = _z_session_deliver_push_locally(zn, &wireexpr, payload, encoding, kind, qos, timestamp, attachment,
+        ret = _z_session_deliver_push_locally(zn, &keyexpr->_inner, payload, encoding, kind, qos, timestamp, attachment,
                                               reliability, source_info);
     }
 #endif
@@ -419,11 +419,11 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     _z_n_qos_t qos = _z_n_qos_create(is_express, _z_n_qos_get_congestion_control(query_ref->_qos),
                                      _z_n_qos_get_priority(query_ref->_qos));
     if (query_ref->_id.peer_id == 0) {
-        return _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos, timestamp,
+        return _z_session_deliver_reply_locally(query, zn, &keyexpr->_inner, payload, encoding, kind, qos, timestamp,
                                                 attachment, source_info);
     }
 
-    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zsrc));
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
     _z_zenoh_message_t z_msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
@@ -443,7 +443,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
         _Z_RES_OK) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
-    // Freeing z_msg is unnecessary, as all of its components are aliased
+
     return _Z_RES_OK;
 }
 
@@ -457,7 +457,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
     _z_n_qos_t qos = _z_n_qos_make(false, true, Z_PRIORITY_DEFAULT);
     _z_source_info_t source_info = _z_source_info_null();
     if (query_ref->_id.peer_id == 0) {
-        return _z_session_deliver_reply_err_locally(query, zsrc, payload, encoding, qos);
+        return _z_session_deliver_reply_err_locally(query, zn, payload, encoding, qos);
     }
 
     _z_zenoh_message_t msg;

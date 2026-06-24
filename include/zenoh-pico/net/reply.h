@@ -112,11 +112,11 @@ static inline void _z_reply_create_ok_view_from_data(_z_reply_t *dst, const _z_k
                                                      const _z_bytes_t *payload, const _z_timestamp_t *timestamp,
                                                      const _z_encoding_t *encoding, z_sample_kind_t kind,
                                                      const _z_bytes_t *attachment, const _z_source_info_t *source_info,
-                                                     const _z_entity_global_id_t *replier_id) {
+                                                     const _z_entity_global_id_t *replier_id, _z_n_qos_t qos) {
     dst->replier_id = replier_id == NULL ? _z_entity_global_id_null() : *replier_id;
     dst->_result._tag = _z_reply_data_tag_ok;
-    _z_sample_create_view_from_data(&dst->_result._ok, keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
-                                    attachment, source_info, Z_RELIABILITY_DEFAULT);
+    _z_sample_create_view_from_data(&dst->_result._ok, keyexpr, payload, timestamp, encoding, kind, qos, attachment,
+                                    source_info, Z_RELIABILITY_DEFAULT);
 }
 
 static inline void _z_reply_create_err_view_from_data(_z_reply_t *dst, const _z_bytes_t *payload,

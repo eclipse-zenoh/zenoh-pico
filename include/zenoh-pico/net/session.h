@@ -232,6 +232,13 @@ typedef struct _z_session_t {
  */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
 
+static inline _z_entity_global_id_t _z_session_get_id(const _z_session_t *zn) {
+    _z_entity_global_id_t ret;
+    ret.zid = zn->_local_zid;
+    ret.eid = 0;  // eid counter starts from 1, so it is safe to use 0 for session
+    return ret;
+}
+
 #if Z_FEATURE_AUTO_RECONNECT == 1
 void _z_client_reopen_task_drop(void *ztc_arg);
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);

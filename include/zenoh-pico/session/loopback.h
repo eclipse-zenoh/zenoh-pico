@@ -29,11 +29,10 @@
 extern "C" {
 #endif
 
-z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
-                                           const _z_bytes_t *opt_payload, const _z_encoding_t *opt_encoding,
-                                           z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *opt_timestamp,
-                                           const _z_bytes_t *opt_attachment, z_reliability_t reliability,
-                                           const _z_source_info_t *opt_source_info);
+z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *opt_payload,
+                                           const _z_encoding_t *opt_encoding, z_sample_kind_t kind, _z_n_qos_t qos,
+                                           const _z_timestamp_t *opt_timestamp, const _z_bytes_t *opt_attachment,
+                                           z_reliability_t reliability, const _z_source_info_t *opt_source_info);
 
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
                                             z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
@@ -41,15 +40,13 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
                                             _z_n_qos_t qos, bool implicit_anyke);
 
-z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *zn,
-                                            const _z_declared_keyexpr_t *keyexpr, const _z_bytes_t *payload,
-                                            const _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
-                                            const _z_timestamp_t *timestamp, const _z_bytes_t *attachment,
-                                            const _z_source_info_t *source_info);
+z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, _z_session_t *zn, const _z_keyexpr_t *keyexpr,
+                                            const _z_bytes_t *payload, const _z_encoding_t *encoding,
+                                            z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                                            const _z_bytes_t *attachment, const _z_source_info_t *source_info);
 
-z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn,
-                                                const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                                                _z_n_qos_t qos);
+z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, _z_session_t *zn, const _z_bytes_t *payload,
+                                                const _z_encoding_t *encoding, _z_n_qos_t qos);
 
 z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t rid);
 

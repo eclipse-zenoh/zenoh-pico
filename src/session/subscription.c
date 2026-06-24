@@ -161,30 +161,26 @@ _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_ki
     return out;
 }
 
-z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer) {
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, wireexpr, NULL, NULL,
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, keyexpr, NULL, NULL,
                                          Z_SAMPLE_KIND_PUT, timestamp, _Z_N_QOS_DEFAULT, NULL, Z_RELIABILITY_RELIABLE,
                                          NULL, peer);
 }
 
 z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                          const _z_timestamp_t *timestamp) {
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr);
-    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &wireexpr, NULL, NULL,
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, keyexpr, NULL, NULL,
                                          Z_SAMPLE_KIND_DELETE, timestamp, _Z_N_QOS_DEFAULT, NULL,
                                          Z_RELIABILITY_RELIABLE, NULL, NULL);
 }
 
-z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_wireexpr_t *wireexpr,
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, const _z_keyexpr_t *keyexpr,
                                          const _z_bytes_t *payload, const _z_encoding_t *encoding,
                                          const _z_zint_t sample_kind, const _z_timestamp_t *timestamp, _z_n_qos_t qos,
                                          const _z_bytes_t *attachment, z_reliability_t reliability,
                                          const _z_source_info_t *source_info, _z_transport_peer_common_t *peer) {
-    _z_keyexpr_view_t ke_view;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
-    const _z_keyexpr_t *keyexpr = _z_keyexpr_view_deref(&ke_view);
     _z_subscription_rc_svec_t subs = _z_subscription_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _Z_RETURN_IF_ERR(__unsafe_z_get_subscriptions_by_key(zn, sub_kind, keyexpr, peer != NULL, &subs));
@@ -194,8 +190,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
     size_t sub_nb = _z_subscription_rc_svec_len(&subs);
     _Z_DEBUG("Triggering %ju subs for key %.*s", (uintmax_t)sub_nb, (int)_z_string_len(&keyexpr->_keyexpr),
              _z_string_data(&keyexpr->_keyexpr));
-    // Create sample
-    z_result_t ret = _Z_RES_OK;
+
     _z_sample_t sample;
     _z_sample_create_view_from_data(&sample, keyexpr, payload, timestamp, encoding, sample_kind, qos, attachment,
                                     source_info, reliability);
@@ -205,7 +200,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
         sub_info->_callback(&sample, sub_info->_arg);
     }
     _z_subscription_rc_svec_clear(&subs);
-    return ret;
+    return _Z_RES_OK;
 }
 
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub) {
@@ -238,11 +233,11 @@ void _z_flush_subscriptions(_z_session_t *zn) {
     _z_subscription_rc_slist_free(&liveliness_subscriptions);
 }
 #else   // Z_FEATURE_SUBSCRIPTION == 0
-z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_wireexpr_t *wireexpr,
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer) {
     _ZP_UNUSED(zn);
-    _ZP_UNUSED(wireexpr);
+    _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(timestamp);
     _ZP_UNUSED(peer);
     return _Z_RES_OK;

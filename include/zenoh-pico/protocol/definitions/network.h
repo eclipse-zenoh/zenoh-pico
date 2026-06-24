@@ -337,6 +337,16 @@ typedef struct {
 } _z_network_message_t;
 typedef _z_network_message_t _z_zenoh_message_t;
 
+void _z_msg_query_fill(_z_msg_query_t *msg, const _z_slice_t *parameters, z_consolidation_mode_t consolidation,
+                       const _z_bytes_t *payload, const _z_encoding_t *encoding, const _z_source_info_t *source_info,
+                       const _z_bytes_t *attachment, bool implicit_anyke);
+void _z_msg_put_fill(_z_msg_put_t *msg, const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
+                     const _z_bytes_t *payload, const _z_encoding_t *encoding, const _z_bytes_t *attachment);
+void _z_msg_del_fill(_z_msg_del_t *msg, const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
+                     const _z_bytes_t *attachment);
+void _z_reply_err_fill(_z_msg_err_t *dst, const _z_bytes_t *payload, const _z_encoding_t *encoding,
+                       const _z_source_info_t *source_info);
+
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id);
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,

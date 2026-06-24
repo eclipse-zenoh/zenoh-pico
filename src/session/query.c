@@ -103,9 +103,10 @@ _z_pending_query_t *_z_unsafe_register_pending_query(_z_session_t *zn) {
     return pq;
 }
 
-static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id,
-                                                       const _z_keyexpr_t *keyexpr, const _z_msg_put_t *msg,
-                                                       z_sample_kind_t kind, const _z_entity_global_id_t *replier_id) {
+z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t *keyexpr,
+                                          const _z_msg_reply_t *msg, const _z_entity_global_id_t *replier_id,
+                                          _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
+    (void)peer;
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
 
     // Get query infos
@@ -122,10 +123,22 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         return _Z_RES_OK;
     }
 
+    const _z_timestamp_t *tstamp = NULL;
     _z_reply_t reply;
-    _z_reply_create_ok_view_from_data(&reply, keyexpr, _z_bytes_view_deref(&msg->_payload), &msg->_commons._timestamp,
-                                      _z_encoding_view_deref(&msg->_encoding), kind,
-                                      _z_bytes_view_deref(&msg->_attachment), &msg->_commons._source_info, replier_id);
+    if (msg->_body._is_put) {
+        tstamp = &msg->_body._body._put._commons._timestamp;
+        const _z_msg_put_t *put_msg = &msg->_body._body._put;
+        _z_reply_create_ok_view_from_data(&reply, keyexpr, _z_bytes_view_deref(&put_msg->_payload), tstamp,
+                                          _z_encoding_view_deref(&put_msg->_encoding), Z_SAMPLE_KIND_PUT,
+                                          _z_bytes_view_deref(&put_msg->_attachment), &put_msg->_commons._source_info,
+                                          replier_id, qos);
+    } else {
+        tstamp = &msg->_body._body._del._commons._timestamp;
+        const _z_msg_del_t *del_msg = &msg->_body._body._del;
+        _z_reply_create_ok_view_from_data(&reply, keyexpr, NULL, tstamp, NULL, Z_SAMPLE_KIND_DELETE,
+                                          _z_bytes_view_deref(&del_msg->_attachment), &del_msg->_commons._source_info,
+                                          replier_id, qos);
+    }
 
     // Process monotonic & latest consolidation mode
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST ||
@@ -148,20 +161,20 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         switch (pen_qry->_consolidation) {
             case Z_CONSOLIDATION_MODE_LATEST: {
                 if (pen_rep != NULL) {
-                    if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
+                    if (tstamp->time <= pen_rep->_tstamp.time) {
                         _z_session_mutex_unlock(zn);
                         return _Z_RES_OK;  // do not deliver the reply as it is older or equal to the previous one
                     }
                     _z_reply_t tmp_reply;
                     _Z_CLEAN_RETURN_IF_ERR(_z_reply_copy(&tmp_reply, &reply), _z_session_mutex_unlock(zn));
                     pen_rep->_reply = tmp_reply;
-                    pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+                    pen_rep->_tstamp = _z_timestamp_duplicate(tstamp);
                 } else {
                     _z_reply_t tmp_reply;
                     _Z_CLEAN_RETURN_IF_ERR(_z_reply_copy(&tmp_reply, &reply), _z_session_mutex_unlock(zn));
                     _z_pending_reply_t new_rep;
                     new_rep._reply = tmp_reply;
-                    new_rep._tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+                    new_rep._tstamp = _z_timestamp_duplicate(tstamp);
                     pen_qry->_pending_replies = _z_pending_reply_slist_push(pen_qry->_pending_replies, &new_rep);
                 }
                 _z_session_mutex_unlock(zn);
@@ -172,17 +185,17 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 // In monotonic mode, we only keep and deliver the reply if it has a greater timestamp than the previous
                 // one
                 if (pen_rep != NULL) {
-                    if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
+                    if (tstamp->time <= pen_rep->_tstamp.time) {
                         _z_session_mutex_unlock(zn);
                         return _Z_RES_OK;  // do not deliver the reply as it is older or equal to the previous one
                     } else {
-                        pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+                        pen_rep->_tstamp = _z_timestamp_duplicate(tstamp);
                     }
                 } else {  // store only key expression
                     _z_pending_reply_t new_rep;
                     _Z_CLEAN_RETURN_IF_ERR(_z_reply_create_ok_owned_with_keyexpr(&new_rep._reply, keyexpr),
                                            _z_session_mutex_unlock(zn));
-                    new_rep._tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+                    new_rep._tstamp = _z_timestamp_duplicate(tstamp);
                     pen_qry->_pending_replies = _z_pending_reply_slist_push(pen_qry->_pending_replies, &new_rep);
                 }
                 break;
@@ -196,17 +209,6 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     pen_qry->_callback(&reply, pen_qry->_arg);
     _z_session_mutex_unlock(zn);
     return _Z_RES_OK;
-}
-
-z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_wireexpr_t *wireexpr,
-                                          const _z_msg_put_t *msg, z_sample_kind_t kind,
-                                          const _z_entity_global_id_t *replier_id, _z_transport_peer_common_t *peer) {
-    _z_keyexpr_view_t keyexpr;
-    z_result_t ret = _z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, wireexpr, peer);
-
-    _Z_SET_IF_OK(ret,
-                 _z_trigger_query_reply_partial_inner(zn, id, _z_keyexpr_view_deref(&keyexpr), msg, kind, replier_id));
-    return ret;
 }
 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, const _z_msg_err_t *msg,
