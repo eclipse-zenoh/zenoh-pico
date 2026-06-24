@@ -16,6 +16,10 @@ name: integration
 on:
   workflow_call:
 
+env:
+  ZENOH_LINUX_URL: https://github.com/eclipse-zenoh/zenoh/releases/download/1.9.0/zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
+  ZENOH_MACOS_URL: https://github.com/eclipse-zenoh/zenoh/releases/download/1.9.0/zenoh-1.9.0-aarch64-apple-darwin-standalone.zip
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -58,6 +62,18 @@ jobs:
           # Needed to *run* binaries/tests that link against libmbedtls.dylib
           echo "LD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
+      - name: Download and extract Zenoh
+        if: runner.os == 'Linux'
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
+          unzip zenoh.zip -d tests
+
+      - name: Download and extract Zenoh
+        if: runner.os == 'macOS'
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_MACOS_URL }}
+          unzip zenoh.zip -d tests
 
       - name: Compile debug
         run: make all
@@ -105,6 +121,11 @@ jobs:
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
         run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
+
+      - name: Download and extract Zenoh
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
+          unzip zenoh.zip -d tests
 
       - name: Compile debug
         run: make all
