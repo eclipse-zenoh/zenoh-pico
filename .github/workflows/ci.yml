@@ -37,7 +37,7 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
+          Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_RX_CACHE=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
       - name: Check in-tree generated files are in sync with version.txt
         run: |
