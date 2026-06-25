@@ -22,7 +22,7 @@
 //   (e.g. alternative 4 without alternative 3), as long as at least one is.
 // • Storage is an anonymous union; the active member is tracked by a tag field.
 // • Move semantics: constructors take ownership of the pointed-to value via
-//   user-supplied (or default copy+zero) move callbacks.
+//   user-supplied (defaults to shallow copy without altering source) move callbacks.
 // • No heap allocation.
 //
 // User must define the following macros before including this file:
