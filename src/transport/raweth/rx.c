@@ -74,7 +74,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
 }
 
 /*------------------ Reception helper ------------------*/
-z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
 
@@ -104,10 +104,6 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
         ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
     return ret;
-}
-
-z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
-    return _z_raweth_recv_t_msg_na(ztm, t_msg, addr);
 }
 
 #else

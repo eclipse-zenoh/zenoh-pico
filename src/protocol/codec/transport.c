@@ -467,33 +467,6 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     return ret;
 }
 
-/*------------------ Transport Extensions Message ------------------*/
-z_result_t _z_extensions_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ext_vec_t *v_ext) {
-    (void)(header);
-    z_result_t ret = _Z_RES_OK;
-
-    _Z_DEBUG("Encoding _Z_TRANSPORT_EXTENSIONS");
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        ret |= _z_msg_ext_vec_encode(wbf, v_ext);
-    }
-
-    return ret;
-}
-
-z_result_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-    z_result_t ret = _Z_RES_OK;
-
-    _Z_DEBUG("Decoding _Z_TRANSPORT_EXTENSIONS");
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        ret |= _z_msg_ext_vec_decode(v_ext, zbf);
-    } else {
-        _z_msg_ext_vec_reset(v_ext);
-    }
-
-    return ret;
-}
-
 #if defined Z_TEST_HOOKS
 static _z_transport_message_encode_override_fn _z_transport_message_encode_override = NULL;
 

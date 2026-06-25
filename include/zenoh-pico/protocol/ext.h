@@ -95,10 +95,6 @@ _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id);
 _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid);
 _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, const _z_slice_t *zbuf);
 
-_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move, _z_noop_eq,
-               _z_noop_cmp, _z_noop_hash)
-_Z_VEC_DEFINE(_z_msg_ext, _z_msg_ext_t)
-
 #ifdef __cplusplus
 }
 #endif

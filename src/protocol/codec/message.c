@@ -145,7 +145,7 @@ z_result_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     return ret;
 }
 
-z_result_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
+z_result_t _z_locators_decode(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _LOCATORS");
     z_result_t ret = _Z_RES_OK;
 
@@ -171,8 +171,6 @@ z_result_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
 
     return ret;
 }
-
-z_result_t _z_locators_decode(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) { return _z_locators_decode_na(a_loc, zbf); }
 
 /*=============================*/
 /*        Zenoh Messages       */
@@ -644,7 +642,7 @@ z_result_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_
     return ret;
 }
 
-z_result_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_hello_decode(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_HELLO");
     z_result_t ret = _Z_RES_OK;
     *msg = (_z_s_msg_hello_t){0};
@@ -673,10 +671,6 @@ z_result_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t hea
     return ret;
 }
 
-z_result_t _z_hello_decode(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_hello_decode_na(msg, zbf, header);
-}
-
 z_result_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *msg) {
     z_result_t ret = _Z_RES_OK;
 
@@ -700,7 +694,7 @@ z_result_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_
 
     return ret;
 }
-z_result_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf) {
+z_result_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *zbf) {
     z_result_t ret = _Z_RES_OK;
     *msg = (_z_scouting_message_t){0};
 
@@ -737,8 +731,4 @@ z_result_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *
     }
 
     return ret;
-}
-
-z_result_t _z_scouting_message_decode(_z_scouting_message_t *s_msg, _z_zbuf_t *zbf) {
-    return _z_scouting_message_decode_na(s_msg, zbf);
 }
