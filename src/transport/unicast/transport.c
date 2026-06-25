@@ -104,10 +104,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_INIT(Syn)");
-    z_result_t ret = _z_link_send_t_msg(zl, &ism, socket);
-    if (ret != _Z_RES_OK) {
-        return ret;
-    }
+    _Z_RETURN_IF_ERR(_z_link_send_t_msg(zl, &ism, socket));
     // Try to receive response
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
@@ -123,6 +120,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
     // otherwise the InitAck message is considered invalid and it should be treated as a
     // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+    z_result_t ret = _Z_RES_OK;
     if (iam._body._init._seq_num_res <= param->_seq_num_res) {
         param->_seq_num_res = iam._body._init._seq_num_res;
     } else {
@@ -174,10 +172,8 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         _z_t_msg_make_open_syn(lease, initial_sn, _z_slice_view_deref(&iam._body._init._cookie));
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Syn)");
-    ret = _z_link_send_t_msg(zl, &osm, socket);
-    if (ret != _Z_RES_OK) {
-        return ret;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_link_send_t_msg(zl, &osm, socket), _z_zbuf_clear(&zbf));
+
     // Try to receive response
     _z_zbuf_reset(&zbf);
     _z_transport_message_t oam = {0};
@@ -185,7 +181,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_zbuf_clear(&zbf);
         _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
-        ret = _Z_ERR_MESSAGE_UNEXPECTED;
+        return _Z_ERR_MESSAGE_UNEXPECTED;
     }
     // THIS LOG STRING USED IN TEST, change with caution
     _Z_DEBUG("Received Z_OPEN(Ack)");

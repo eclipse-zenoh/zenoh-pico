@@ -110,7 +110,7 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_view_t *ret, _z_
         size_t prefix_len = _z_string_len(&res->_key._keyexpr);
         size_t suffix_len = _z_string_len(_z_string_view_deref(&expr->_suffix));
         if (prefix_len + suffix_len > buf_len) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            return _Z_ERR_INVALID;
         }
         // SAFETY: buf is guaranteed to be large enough by the caller.
         // Flawfinder: ignore [CWE-120]
