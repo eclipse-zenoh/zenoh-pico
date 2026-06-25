@@ -154,14 +154,19 @@ z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, const _z_str
         return _Z_RES_OK;
     }
 
-    const char *p_end = (char *)memchr(_z_string_data(str), ENDPOINT_CONFIG_SEPARATOR, _z_string_len(str));
+    size_t curr_len = _z_string_len(str) - start_offset;
+    const char *p_end = memchr(p_start, ENDPOINT_CONFIG_SEPARATOR, curr_len);
     if (p_end == NULL) {
-        p_end = _z_cptr_char_offset(_z_string_data(str), (ptrdiff_t)_z_string_len(str) + 1);
+        p_end = _z_cptr_char_offset(p_start, (ptrdiff_t)curr_len);
     }
 
     if (p_start != p_end) {
         size_t p_len = _z_ptr_char_diff(p_end, p_start);
-        return _z_str_intmap_from_strn(strint, p_start, 0, NULL, p_len);
+        z_result_t ret = _z_str_intmap_from_strn(strint, p_start, 0, NULL, p_len);
+        if (ret == _Z_ERR_CONFIG_INVALID_VALUE) {
+            return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        }
+        return ret;
     }
     return _Z_RES_OK;
 }
