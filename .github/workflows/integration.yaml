@@ -63,9 +63,32 @@ jobs:
           echo "LD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
+      - name: Install ccache (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Install ccache (macOS)
+        if: runner.os == 'macOS'
+        run: brew list ccache >/dev/null 2>&1 || brew install ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-integration-
+
       - name: Compile debug
         run: make all
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           BUILD_TYPE: Debug
           BUILD_TESTING: OFF
           BUILD_INTEGRATION: ON
@@ -117,6 +140,20 @@ jobs:
         with:
           mbedtls-version: mbedtls-3.6.5
 
+      - name: Install ccache (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-integration-asan-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-integration-asan-
+            ${{ runner.os }}-ccache-integration-
+
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
         run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
@@ -124,6 +161,11 @@ jobs:
       - name: Compile debug
         run: make all
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           BUILD_TYPE: Debug
           BUILD_TESTING: OFF
           BUILD_INTEGRATION: ON
