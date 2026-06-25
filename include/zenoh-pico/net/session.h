@@ -120,7 +120,7 @@ _Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t
 
 typedef struct _z_query_id {
     uint32_t rid;
-    size_t peer_id;
+    void *peer_id;
 } _z_query_id_t;
 
 #define _ZP_HASHMAP_TEMPLATE_NAME _z_rid_to_count_hmap

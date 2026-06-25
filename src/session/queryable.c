@@ -149,7 +149,7 @@ _z_session_queryable_rc_t _z_register_session_queryable(_z_session_t *zn, _z_ses
 
 static z_result_t __unsafe_z_session_register_new_received_query(_z_session_t *zn, const _z_query_id_t *query_id) {
     if (_z_rid_to_count_hmap_get(&zn->_received_queries_id_to_count, query_id) != NULL) {
-        _Z_WARN("Received query with rid %zu, for peer %zu, which already exists in session %p ", (size_t)query_id->rid,
+        _Z_WARN("Received query with rid %zu, for peer %p, which already exists in session %p ", (size_t)query_id->rid,
                 query_id->peer_id, (void *)zn);
         return _Z_ERR_INVALID;
     }
@@ -163,11 +163,11 @@ static z_result_t __unsafe_z_session_register_new_received_query(_z_session_t *z
 
 z_result_t _z_trigger_queryables(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_msg_query_t *msgq,
                                  uint32_t qid, _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
-    _z_query_id_t query_id = {.rid = qid, .peer_id = (size_t)peer};
+    _z_query_id_t query_id = {.rid = qid, .peer_id = (void *)peer};
 
     _z_session_queryable_rc_svec_t qles = _z_session_queryable_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
-    _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_by_key(zn, keyexpr, query_id.peer_id != 0, &qles),
+    _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_session_queryables_by_key(zn, keyexpr, query_id.peer_id != NULL, &qles),
                            _z_session_mutex_unlock(zn));
     _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_session_register_new_received_query(zn, &query_id), _z_session_mutex_unlock(zn);
                            _z_session_queryable_rc_svec_clear(&qles));

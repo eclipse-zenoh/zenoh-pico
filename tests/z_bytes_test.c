@@ -70,9 +70,9 @@ void test_append(void) {
 
     _z_bytes_t b = _z_bytes_null();
 
-    _z_bytes_append_slice(&b, &s1);
-    _z_bytes_append_slice(&b, &s2);
-    _z_bytes_append_slice(&b, &s3);
+    assert(_z_bytes_append_slice(&b, &s1) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s2) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s3) == _Z_RES_OK);
 
     assert(_z_bytes_len(&b) == 10);
     assert(!_z_bytes_is_empty(&b));
@@ -104,9 +104,9 @@ void test_reader_read(void) {
 
     _z_bytes_t b = _z_bytes_null();
 
-    _z_bytes_append_slice(&b, &s1);
-    _z_bytes_append_slice(&b, &s2);
-    _z_bytes_append_slice(&b, &s3);
+    assert(_z_bytes_append_slice(&b, &s1) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s2) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s3) == _Z_RES_OK);
 
     _z_bytes_reader_t reader = _z_bytes_get_reader(&b);
 
@@ -138,9 +138,9 @@ void test_reader_seek(void) {
 
     _z_bytes_t b = _z_bytes_null();
 
-    _z_bytes_append_slice(&b, &s1);
-    _z_bytes_append_slice(&b, &s2);
-    _z_bytes_append_slice(&b, &s3);
+    assert(_z_bytes_append_slice(&b, &s1) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s2) == _Z_RES_OK);
+    assert(_z_bytes_append_slice(&b, &s3) == _Z_RES_OK);
 
     _z_bytes_reader_t reader = _z_bytes_get_reader(&b);
 
@@ -207,13 +207,13 @@ void test_variant_representation(void) {
     // Single slice: stored inline (still reported as a single slice).
     _z_bytes_t b = _z_bytes_null();
     _z_slice_t s0 = _z_slice_copy_from_buf(data, 4);
-    _z_bytes_append_slice(&b, &s0);
+    assert(_z_bytes_append_slice(&b, &s0) == _Z_RES_OK);
     assert(_z_bytes_num_slices(&b) == 1);
     assert(_z_bytes_len(&b) == 4);
 
     // Appending a second slice promotes to a vector of two slices.
     _z_slice_t s1 = _z_slice_copy_from_buf(data + 4, 4);
-    _z_bytes_append_slice(&b, &s1);
+    assert(_z_bytes_append_slice(&b, &s1) == _Z_RES_OK);
     assert(_z_bytes_num_slices(&b) == 2);
     assert(_z_bytes_len(&b) == 8);
 

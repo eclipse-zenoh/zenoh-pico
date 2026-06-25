@@ -418,7 +418,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_create(is_express, _z_n_qos_get_congestion_control(query_ref->_qos),
                                      _z_n_qos_get_priority(query_ref->_qos));
-    if (query_ref->_id.peer_id == 0) {
+    if (query_ref->_id.peer_id == NULL) {
         return _z_session_deliver_reply_locally(query, zn, &keyexpr->_inner, payload, encoding, kind, qos, timestamp,
                                                 attachment, source_info);
     }
@@ -439,7 +439,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Send message on network
-    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, (void *)query_ref->_id.peer_id) !=
+    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, query_ref->_id.peer_id) !=
         _Z_RES_OK) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
@@ -456,7 +456,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_make(false, true, Z_PRIORITY_DEFAULT);
     _z_source_info_t source_info = _z_source_info_null();
-    if (query_ref->_id.peer_id == 0) {
+    if (query_ref->_id.peer_id == NULL) {
         return _z_session_deliver_reply_err_locally(query, zn, payload, encoding, qos);
     }
 
@@ -464,7 +464,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
     _z_n_msg_make_reply_err(&msg, &zn->_local_zid, query_ref->_id.rid, Z_RELIABILITY_DEFAULT, qos, payload, encoding,
                             &source_info);
     // Send message on network
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, (void *)query_ref->_id.peer_id) !=
+    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, query_ref->_id.peer_id) !=
         _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
