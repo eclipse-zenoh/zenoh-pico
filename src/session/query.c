@@ -167,6 +167,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
                     }
                     _z_reply_t tmp_reply;
                     _Z_CLEAN_RETURN_IF_ERR(_z_reply_copy(&tmp_reply, &reply), _z_session_mutex_unlock(zn));
+                    _z_reply_clear(&pen_rep->_reply);
                     pen_rep->_reply = tmp_reply;
                     pen_rep->_tstamp = _z_timestamp_duplicate(tstamp);
                 } else {

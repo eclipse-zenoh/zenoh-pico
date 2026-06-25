@@ -402,7 +402,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x04));
     }
     msg->_payload = _z_slice_view_make((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_zbuf_reset(zbf);  // the remainer will be consumed by network message decoder
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainer will be consumed by network message decoder
     return _Z_RES_OK;
 }
 
