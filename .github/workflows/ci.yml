@@ -66,16 +66,25 @@ jobs:
 
       - name: Build fuzz targets
         run: |
-          cmake --build build-fuzz --target z_fuzz_scouting_message_decode z_fuzz_endpoint_str
+          cmake --build build-fuzz --target z_fuzz_scouting_message_decode z_fuzz_transport_message_decode \
+            z_fuzz_endpoint_str
 
       # TODO: Need to wait for the bugfix merged before enabling the smoke test
       #- name: Run fuzz target smoke tests
       #  run: |
-      #    mkdir -p fuzz/corpus/scouting_message_decode fuzz/corpus/endpoint_str
+      #    mkdir -p fuzz/corpus/scouting_message_decode fuzz/corpus/transport_message_decode \
+      #      fuzz/corpus/endpoint_str
+      #    cp -r fuzz/seeds/scouting_message/. fuzz/corpus/scouting_message_decode/
+      #    cp -r fuzz/seeds/transport_message/. fuzz/corpus/transport_message_decode/
+      #    cp -r fuzz/seeds/endpoint_from_str/. fuzz/corpus/endpoint_str/
       #    ./build-fuzz/fuzz/z_fuzz_scouting_message_decode \
       #      -timeout=5 \
       #      -runs=10000 \
       #      fuzz/corpus/scouting_message_decode
+      #    ./build-fuzz/fuzz/z_fuzz_transport_message_decode \
+      #      -timeout=5 \
+      #      -runs=10000 \
+      #      fuzz/corpus/transport_message_decode
       #    ./build-fuzz/fuzz/z_fuzz_endpoint_str \
       #      -timeout=5 \
       #      -runs=10000 \
