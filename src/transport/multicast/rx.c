@@ -297,8 +297,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
     }
     // Allocate buffer if needed
     if (*dbuf_state == _Z_DBUF_STATE_NULL) {
-        *dbuf = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
-        if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
+        if (_z_wbuf_init(dbuf, Z_FRAG_MAX_SIZE, false) != _Z_RES_OK) {
             _Z_ERROR("Not enough memory to allocate peer defragmentation buffer");
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }

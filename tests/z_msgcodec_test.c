@@ -210,8 +210,8 @@ _z_wbuf_t gen_wbuf(size_t len) {
         len = 1 + (gen_zint() % len);
     }
 
-    _z_wbuf_t wbuf = _z_wbuf_make(len, is_expandable);
-    assert(_z_wbuf_capacity(&wbuf) == len);
+    _z_wbuf_t wbuf;
+    assert(_z_wbuf_init(&wbuf, len, is_expandable) == _Z_RES_OK);
     return wbuf;
 }
 

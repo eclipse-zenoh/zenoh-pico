@@ -175,8 +175,8 @@ z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_mes
 
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
-    _z_wbuf_t wbf = _z_wbuf_make(mtu, false);
-    if (_z_wbuf_capacity(&wbf) != mtu) {
+    _z_wbuf_t wbf;
+    if (_z_wbuf_init(&wbf, mtu, false) != _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -276,8 +276,8 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
     } else {  // The message does not fit in the current batch, let's fragment it
 #if Z_FEATURE_FRAGMENTATION == 1
         // Create an expandable wbuf for fragmentation
-        _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
-        if (_z_wbuf_capacity(&fbf) != _Z_FRAG_BUFF_BASE_SIZE) {
+        _z_wbuf_t fbf;
+        if (_z_wbuf_init(&fbf, _Z_FRAG_BUFF_BASE_SIZE, true) != _Z_RES_OK) {
             _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             _z_transport_tx_mutex_unlock(&ztm->_common);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;

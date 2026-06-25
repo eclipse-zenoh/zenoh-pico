@@ -48,11 +48,9 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     size_t wbuf_size = mtu;
     size_t zbuf_size = param->_batch_size;
     // Initialize tx rx buffers
-    ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
-    ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
-
-    // Check if a buffer failed to allocate
-    if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
+    ztu->_common._zbuf = _z_zbuf_null();
+    if (_z_wbuf_init(&ztu->_common._wbuf, wbuf_size, false) != _Z_RES_OK ||
+        _z_zbuf_init(&ztu->_common._zbuf, zbuf_size) != _Z_RES_OK) {
         _Z_ERROR("Not enough memory to allocate transport buffers!");
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
@@ -107,8 +105,9 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _Z_RETURN_IF_ERR(_z_link_send_t_msg(zl, &ism, socket));
     // Try to receive response
     // Create and prepare the buffer
-    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
-    _z_zbuf_reset(&zbf);
+    _z_zbuf_t zbf;
+    _Z_RETURN_IF_ERR(_z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE));
+
     _z_transport_message_t iam = {0};
     _Z_CLEAN_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, &zbf, recv_deadline), _z_zbuf_clear(&zbf));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
@@ -199,8 +198,8 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     z_clock_advance_ms(&recv_deadline, Z_TRANSPORT_ACCEPT_TIMEOUT);
     assert(mode == Z_WHATAMI_PEER);
     // Create and prepare the buffer
-    _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
-    _z_zbuf_reset(&zbf);
+    _z_zbuf_t zbf;
+    _Z_RETURN_IF_ERR(_z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE));
     // Read t message from link
     _z_transport_message_t tmsg = {0};
     z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket, &zbf, recv_deadline);

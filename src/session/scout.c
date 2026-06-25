@@ -54,11 +54,10 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
         err = _z_open_link(&zl, locator, NULL);
         if (err == _Z_RES_OK) {
             // Send the scout message
+            _z_zbuf_t zbf = _z_zbuf_null();
             err = _z_link_send_wbuf(&zl, wbf, NULL);
+            _Z_SET_IF_OK(err, _z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE));
             if (err == _Z_RES_OK) {
-                // The receiving buffer
-                _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
-
                 z_clock_t start = z_clock_now();
                 while (z_clock_elapsed_ms(&start) < period) {
                     // Eventually read hello messages
@@ -122,14 +121,12 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                         break;
                     }
                 }
-
-                _z_link_clear(&zl);
-                _z_zbuf_clear(&zbf);
             } else {
-                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
+                _Z_ERROR_LOG(err);
                 err = _Z_ERR_TRANSPORT_TX_FAILED;
-                _z_link_clear(&zl);
             }
+            _z_zbuf_clear(&zbf);
+            _z_link_clear(&zl);
         } else {
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             err = _Z_ERR_TRANSPORT_OPEN_FAILED;
@@ -144,7 +141,10 @@ _z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t zid, _z_string_t *
     _z_hello_slist_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on
-    _z_wbuf_t wbf = _z_wbuf_make(SCOUT_BUFFER_SIZE, false);
+    _z_wbuf_t wbf;
+    if (_z_wbuf_init(&wbf, SCOUT_BUFFER_SIZE, false) != _Z_RES_OK) {
+        return NULL;
+    }
 
     // Create and encode the scout message
     _z_scouting_message_t scout = _z_s_msg_make_scout(what, zid);

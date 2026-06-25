@@ -186,8 +186,7 @@ static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, 
     if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
         peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
         peer->flow_curr_size = (uint16_t)*to_read;
-        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
-        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+        if (_z_zbuf_init(&peer->flow_buff, peer->flow_curr_size) != _Z_RES_OK) {
             _Z_ERROR("Not enough memory to allocate flow state buffer");
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
@@ -229,8 +228,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
                     if (read_size < *to_read) {
                         peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
                         peer->flow_curr_size = (uint16_t)*to_read;
-                        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
-                        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+                        if (_z_zbuf_init(&peer->flow_buff, peer->flow_curr_size) != _Z_RES_OK) {
                             _Z_ERROR("Not enough memory to allocate flow state buffer");
                             return _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR;
                         }
@@ -250,8 +248,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
                     *to_read = peer->flow_curr_size;
                     if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
                         peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
-                        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
-                        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+                        if (_z_zbuf_init(&peer->flow_buff, peer->flow_curr_size) != _Z_RES_OK) {
                             _Z_ERROR("Not enough memory to allocate flow state buffer");
                             return _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR;
                         }

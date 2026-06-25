@@ -71,12 +71,10 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_MULTICAST_SIZE) ? zl->_mtu : Z_BATCH_MULTICAST_SIZE;
-        ztm->_common._wbuf = _z_wbuf_make(mtu, false);
-        ztm->_common._zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
 
-        // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztm->_common._wbuf) != mtu) ||
-            (_z_zbuf_capacity(&ztm->_common._zbuf) != Z_BATCH_MULTICAST_SIZE)) {
+        ztm->_common._zbuf = _z_zbuf_null();
+        if ((_z_wbuf_init(&ztm->_common._wbuf, mtu, false) != _Z_RES_OK) ||
+            (_z_zbuf_init(&ztm->_common._zbuf, Z_BATCH_MULTICAST_SIZE) != _Z_RES_OK)) {
             _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");

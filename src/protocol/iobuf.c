@@ -106,10 +106,13 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 }
 
 /*------------------ ZBuf ------------------*/
-_z_zbuf_t _z_zbuf_make(size_t capacity) {
-    _z_zbuf_t zbf = _z_zbuf_null();
-    zbf._ios = _z_iosli_make(capacity);
-    return zbf;
+z_result_t _z_zbuf_init(_z_zbuf_t *zbf, size_t capacity) {
+    *zbf = _z_zbuf_null();
+    zbf->_ios = _z_iosli_make(capacity);
+    if (zbf->_ios._capacity != capacity) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
 }
 
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
@@ -155,23 +158,35 @@ static z_result_t _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios) {
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_svec_len(&wbf->_ioss); }
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
-    _z_wbuf_t wbf;
+z_result_t _z_wbuf_init(_z_wbuf_t *wbf, size_t capacity, bool is_expandable) {
+    *wbf = _z_wbuf_null();
     if (is_expandable) {
-        wbf._ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, attachment, misc, payload, misc
-        wbf._expansion_step = capacity;
+        wbf->_ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, attachment, misc, payload, misc
+        if (wbf->_ioss._val == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        wbf->_expansion_step = capacity;
     } else {
-        wbf._ioss = _z_iosli_svec_make(1);
-        wbf._expansion_step = 0;
+        wbf->_ioss = _z_iosli_svec_make(1);
+        if (wbf->_ioss._val == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        wbf->_expansion_step = 0;
     }
     _z_iosli_t ios = _z_iosli_make(capacity);
-    z_result_t res = _z_iosli_svec_append(&wbf._ioss, &ios, false);
-    if (res != _Z_RES_OK) {
-        _z_iosli_clear(&ios);
+    if (ios._buf == NULL) {
+        _z_iosli_svec_clear(&wbf->_ioss);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    wbf._w_idx = 0;
-    wbf._r_idx = 0;
-    return wbf;
+    z_result_t res = _z_iosli_svec_append(&wbf->_ioss, &ios, false);
+    if (res != _Z_RES_OK) {
+        _z_iosli_svec_clear(&wbf->_ioss);
+        _z_iosli_clear(&ios);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    wbf->_w_idx = 0;
+    wbf->_r_idx = 0;
+    return _Z_RES_OK;
 }
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf) {
@@ -406,7 +421,10 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos) {
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     size_t len = _z_wbuf_len(wbf);
-    _z_zbuf_t zbf = _z_zbuf_make(len);
+    _z_zbuf_t zbf;
+    if (_z_zbuf_init(&zbf, len) != _Z_RES_OK) {
+        return _z_zbuf_null();
+    }
     for (size_t i = wbf->_r_idx; i <= wbf->_w_idx; i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         _z_iosli_write_bytes(&zbf._ios, ios->_buf, ios->_r_pos, _z_iosli_readable(ios));

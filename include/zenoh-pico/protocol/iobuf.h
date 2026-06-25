@@ -139,7 +139,7 @@ static inline uint8_t *_z_zbuf_get_rptr(const _z_zbuf_t *zbf) { return zbf->_ios
 static inline uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf) { return zbf->_ios._buf + zbf->_ios._w_pos; }
 
 // Constructs a _borrowing_ reader on `slice`
-_z_zbuf_t _z_zbuf_make(size_t capacity);
+z_result_t _z_zbuf_init(_z_zbuf_t *zbf, size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 _z_zbuf_t _z_slice_as_zbuf(const _z_slice_t *slice);
 
@@ -160,7 +160,7 @@ static inline _z_wbuf_t _z_wbuf_null(void) { return (_z_wbuf_t){0}; }
 static inline _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) {
     return _z_iosli_svec_get(&wbf->_ioss, idx);
 }
-_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
+z_result_t _z_wbuf_init(_z_wbuf_t *wbf, size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
 size_t _z_wbuf_len(const _z_wbuf_t *wbf);
