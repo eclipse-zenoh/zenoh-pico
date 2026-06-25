@@ -27,7 +27,7 @@ void test_null_bytes(void) {
     assert(_z_bytes_is_empty(&b));
     assert(!_z_bytes_check(&b));
     assert(_z_bytes_num_slices(&b) == 0);
-    _z_bytes_clear(&b);  // no crush
+    _z_bytes_clear(&b);  // no crash
 }
 
 void test_slice(void) {

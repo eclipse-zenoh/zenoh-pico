@@ -113,7 +113,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
     _z_zbuf_reset(&zbf);
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, &zbf, recv_deadline));
+    _Z_CLEAN_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, &zbf, recv_deadline), _z_zbuf_clear(&zbf));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_zbuf_clear(&zbf);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
@@ -181,7 +181,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // Try to receive response
     _z_zbuf_reset(&zbf);
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, &zbf, recv_deadline));
+    _Z_CLEAN_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, &zbf, recv_deadline), _z_zbuf_clear(&zbf));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_zbuf_clear(&zbf);
         _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
