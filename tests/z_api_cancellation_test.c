@@ -27,7 +27,16 @@
 #undef NDEBUG
 #include <assert.h>
 
+static const char* g_locator = NULL;
+
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined(Z_FEATURE_UNSTABLE_API)
+
+static void config_as_client_to_locator(z_owned_config_t* c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
 
 void on_reply(z_loaned_reply_t* reply, void* arg) {
     uint32_t* t = (uint32_t*)arg;
@@ -50,6 +59,8 @@ void test_cancel_get(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, query_expr);
 
@@ -140,6 +151,8 @@ void test_cancel_querier_get(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, query_expr);
 
@@ -235,6 +248,8 @@ void test_cancel_does_not_prevent_session_close_on_drop(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, query_expr);
 
@@ -296,6 +311,8 @@ void test_liveliness_get(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, query_expr);
 
@@ -342,7 +359,10 @@ void test_liveliness_get(void) {
 
 #endif
 
-int main(void) {
+int main(int argc, char** argv) {
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined(Z_FEATURE_UNSTABLE_API)
     test_cancel_get();
     test_cancel_querier_get();

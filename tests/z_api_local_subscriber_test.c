@@ -19,6 +19,15 @@
 #if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_LOCAL_SUBSCRIBER == 1 && \
     Z_FEATURE_MULTI_THREAD == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
+
 static const char *PUB_EXPR = "zenoh-pico/locality/pub-sub";
 static const char *PAYLOAD = "payload";
 
@@ -29,6 +38,8 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, PUB_EXPR);
 
@@ -116,8 +127,9 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     z_locality_t localities[] = {Z_LOCALITY_ANY, Z_LOCALITY_REMOTE, Z_LOCALITY_SESSION_LOCAL};
     for (size_t i = 0; i < 3; i++) {
         for (size_t j = 0; j < 3; j++) {

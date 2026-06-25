@@ -42,7 +42,8 @@ fi
 
 chmod +x zenohd
 
-LOCATORS="tcp/127.0.0.1:7447"
+PORT=${ZENOH_PORT:-7447}
+LOCATORS="tcp/127.0.0.1:$PORT"
 for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 

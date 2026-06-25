@@ -27,6 +27,15 @@
 #if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_QUERY == 1 && Z_FEATURE_QUERYABLE == 1 && \
     defined(Z_FEATURE_UNSTABLE_API)
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
+
 #undef NDEBUG
 #include <assert.h>
 
@@ -104,6 +113,7 @@ static void assert_source_info_equal(const z_entity_global_id_t *expected, uint3
 void test_source_info(bool put, bool publisher, bool local_subscriber) {
     z_owned_config_t c1;
     z_config_default(&c1);
+    config_as_client_to_locator(&c1);
 
     z_owned_session_t s1;
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
@@ -113,6 +123,7 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
     if (!local_subscriber) {
         z_owned_config_t c2;
         z_config_default(&c2);
+        config_as_client_to_locator(&c2);
 
         assert_ok(z_open(&s2, z_config_move(&c2), NULL));
 
@@ -253,6 +264,7 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
 
     z_owned_config_t c1;
     z_config_default(&c1);
+    config_as_client_to_locator(&c1);
 
     z_owned_session_t s1;
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
@@ -261,6 +273,7 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
     if (!local_queryable) {
         z_owned_config_t c2;
         z_config_default(&c2);
+        config_as_client_to_locator(&c2);
 
         assert_ok(z_open(&s2, z_config_move(&c2), NULL));
     }
@@ -341,8 +354,9 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_source_info_put(false, false);
     test_source_info_delete(false, false);
     test_source_info_put(true, false);

@@ -37,8 +37,9 @@ fi
 
 chmod +x zenohd
 
-rm -f ca.pem ca-key.pem ca.srl server.pem server-key.pem server.csr
-cat > server.cnf <<EOF
+PORT=${ZENOH_PORT:-7447}
+rm -f ca_${PORT}.pem ca_${PORT}-key.pem ca_${PORT}.srl server_${PORT}.pem server_${PORT}-key.pem
+cat > server_${PORT}.cnf <<EOF
 [ req ]
 prompt = no
 distinguished_name = dn
@@ -51,13 +52,13 @@ CN = localhost
 subjectAltName = DNS:localhost
 EOF
 
-openssl req -x509 -newkey rsa:2048 -keyout ca-key.pem -out ca.pem -days 30 -nodes -subj "/CN=Test CA"
-openssl req -newkey rsa:2048 -keyout server-key.pem -out server.csr -nodes -config server.cnf
-openssl x509 -req -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server.pem -days 30 \
-    -extfile server.cnf -extensions san
-rm -f server.csr server.cnf
+openssl req -x509 -newkey rsa:2048 -keyout ca_${PORT}-key.pem -out ca_${PORT}.pem -days 30 -nodes -subj "/CN=Test CA"
+openssl req -newkey rsa:2048 -keyout server_${PORT}-key.pem -out server_${PORT}.csr -nodes -config server_${PORT}.cnf
+openssl x509 -req -in server_${PORT}.csr -CA ca_${PORT}.pem -CAkey ca_${PORT}-key.pem -CAcreateserial -out server_${PORT}.pem -days 30 \
+    -extfile server_${PORT}.cnf -extensions san
+rm -f server_${PORT}.csr server_${PORT}.cnf
 
-cat > client.cnf <<EOF
+cat > client_${PORT}.cnf <<EOF
 [ req ]
 prompt = no
 distinguished_name = dn
@@ -72,31 +73,31 @@ keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = clientAuth
 EOF
 
-openssl req -newkey rsa:2048 -keyout client-key.pem -out client.csr -nodes -config client.cnf
-openssl x509 -req -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client.pem -days 30 \
-    -extfile client.cnf -extensions v3_req
-rm -f client.csr client.cnf
+openssl req -newkey rsa:2048 -keyout client_${PORT}-key.pem -out client_${PORT}.csr -nodes -config client_${PORT}.cnf
+openssl x509 -req -in client_${PORT}.csr -CA ca_${PORT}.pem -CAkey ca_${PORT}-key.pem -CAcreateserial -out client_${PORT}.pem -days 30 \
+    -extfile client_${PORT}.cnf -extensions v3_req
+rm -f client_${PORT}.csr client_${PORT}.cnf
 
-cat > zenohd_tls.json <<EOF
+cat > zenohd_tls_${PORT}.json <<EOF
 {
   "transport": {
     "link": {
       "tls": {
-        "root_ca_certificate": "$TESTDIR/ca.pem",
-        "listen_private_key": "$TESTDIR/server-key.pem",
-        "listen_certificate": "$TESTDIR/server.pem"
+        "root_ca_certificate": "$TESTDIR/ca_${PORT}.pem",
+        "listen_private_key": "$TESTDIR/server_${PORT}-key.pem",
+        "listen_certificate": "$TESTDIR/server_${PORT}.pem"
       }
     }
   }
 }
 EOF
 
-LOC_BASE="tls/127.0.0.1:7447"
+LOC_BASE="tls/127.0.0.1:$PORT"
 
 run_test() {
     locator="$1"
     expect_success="$2"
-    config_file="${3:-zenohd_tls.json}"
+    config_file="${3:-zenohd_tls_${PORT}.json}"
 
     echo "> Running ./zenohd -c $config_file -l ${LOC_BASE} ..."
     RUST_LOG=warn ./zenohd -c "$config_file" --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" \
@@ -128,17 +129,17 @@ run_test() {
     fi
 }
 
-run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem" 0
-run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;verify_name_on_connect=0" 1
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca_${PORT}.pem" 0
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca_${PORT}.pem;verify_name_on_connect=0" 1
 
-cat > zenohd_tls_mtls.json <<EOF
+cat > zenohd_tls_mtls_${PORT}.json <<EOF
 {
   "transport": {
     "link": {
       "tls": {
-        "root_ca_certificate": "$TESTDIR/ca.pem",
-        "listen_private_key": "$TESTDIR/server-key.pem",
-        "listen_certificate": "$TESTDIR/server.pem",
+        "root_ca_certificate": "$TESTDIR/ca_${PORT}.pem",
+        "listen_private_key": "$TESTDIR/server_${PORT}-key.pem",
+        "listen_certificate": "$TESTDIR/server_${PORT}.pem",
         "enable_mtls": true
       }
     }
@@ -146,9 +147,9 @@ cat > zenohd_tls_mtls.json <<EOF
 }
 EOF
 
-run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;enable_mtls=1" 0 zenohd_tls_mtls.json
-run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;enable_mtls=1;connect_private_key=$TESTDIR/client-key.pem;connect_certificate=$TESTDIR/client.pem;verify_name_on_connect=0" 1 zenohd_tls_mtls.json
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca_${PORT}.pem;enable_mtls=1" 0 zenohd_tls_mtls_${PORT}.json
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca_${PORT}.pem;enable_mtls=1;connect_private_key=$TESTDIR/client_${PORT}-key.pem;connect_certificate=$TESTDIR/client_${PORT}.pem;verify_name_on_connect=0" 1 zenohd_tls_mtls_${PORT}.json
 
-rm -f client.z_tls_verify.log zenohd.z_tls_verify.log zenohd_tls_mtls.json
-rm -f client.pem client-key.pem server.pem server-key.pem ca.pem ca-key.pem ca.srl
+rm -f client.z_tls_verify.log zenohd.z_tls_verify.log zenohd_tls_mtls_${PORT}.json
+rm -f client_${PORT}.pem client_${PORT}-key.pem server_${PORT}.pem server_${PORT}-key.pem ca_${PORT}.pem ca_${PORT}-key.pem ca_${PORT}.srl
 exit 0

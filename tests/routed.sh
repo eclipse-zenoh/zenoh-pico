@@ -61,15 +61,16 @@ if [ ! -x zenohd ]; then
     exit 1
 fi
 
-LOCATORS="tcp/127.0.0.1:7447 tcp/[::1]:7447 udp/127.0.0.1:7447 udp/[::1]:7447"
+PORT=${ZENOH_PORT:-7447}
+LOCATORS="tcp/127.0.0.1:$PORT tcp/[::1]:$PORT udp/127.0.0.1:$PORT udp/[::1]:$PORT"
 ENABLE_TLS=0
 if [ "$2" = "--enable-tls" ]; then
     ENABLE_TLS=1
-    LOCATORS="$LOCATORS tls/127.0.0.1:7447#root_ca_certificate=$TESTDIR/ca.pem tls/[::1]:7447#root_ca_certificate=$TESTDIR/ca.pem"
+    LOCATORS="$LOCATORS tls/127.0.0.1:$PORT#root_ca_certificate=$TESTDIR/ca_${PORT}.pem tls/[::1]:$PORT#root_ca_certificate=$TESTDIR/ca_${PORT}.pem"
 
-    rm -f ca.pem ca-key.pem ca.srl server.pem server-key.pem server.csr
+    rm -f ca_${PORT}.pem ca_${PORT}-key.pem ca_${PORT}.srl server_${PORT}.pem server_${PORT}-key.pem
 
-    cat > server.cnf <<EOF
+    cat > server_${PORT}.cnf <<EOF
 [req]
 prompt = no
 distinguished_name = dn
@@ -82,31 +83,31 @@ CN = localhost
 subjectAltName = DNS:localhost,IP:127.0.0.1,IP:::1
 EOF
 
-    openssl req -x509 -newkey rsa:2048 -keyout ca-key.pem -out ca.pem -days 365 -nodes -subj "/CN=Test CA"
-    openssl req -newkey rsa:2048 -keyout server-key.pem -out server.csr -nodes -config server.cnf
-    openssl x509 -req -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server.pem -days 365 \
-        -extfile server.cnf -extensions san
-    rm server.csr server.cnf
+    openssl req -x509 -newkey rsa:2048 -keyout ca_${PORT}-key.pem -out ca_${PORT}.pem -days 365 -nodes -subj "/CN=Test CA"
+    openssl req -newkey rsa:2048 -keyout server_${PORT}-key.pem -out server_${PORT}.csr -nodes -config server_${PORT}.cnf
+    openssl x509 -req -in server_${PORT}.csr -CA ca_${PORT}.pem -CAkey ca_${PORT}-key.pem -CAcreateserial -out server_${PORT}.pem -days 365 \
+        -extfile server_${PORT}.cnf -extensions san
+    rm server_${PORT}.csr server_${PORT}.cnf
 fi
 for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 1
 
     echo "> Running zenohd ... $LOCATOR"
     if [ "$ENABLE_TLS" = "1" ]; then
-        cat > zenohd_tls.json <<EOF
+        cat > zenohd_tls_${PORT}.json <<EOF
 {
   "transport": {
     "link": {
       "tls": {
-        "root_ca_certificate": "$TESTDIR/ca.pem",
-        "listen_private_key": "$TESTDIR/server-key.pem",
-        "listen_certificate": "$TESTDIR/server.pem"
+        "root_ca_certificate": "$TESTDIR/ca_${PORT}.pem",
+        "listen_private_key": "$TESTDIR/server_${PORT}-key.pem",
+        "listen_certificate": "$TESTDIR/server_${PORT}.pem"
       }
     }
   }
 }
 EOF
-        RUST_LOG=debug ./zenohd -c zenohd_tls.json --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" -l "$LOCATOR" > zenohd."$1".log 2>&1 &
+        RUST_LOG=debug ./zenohd -c zenohd_tls_${PORT}.json --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" -l "$LOCATOR" > zenohd."$1".log 2>&1 &
     else
         RUST_LOG=debug ./zenohd --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" -l "$LOCATOR" > zenohd."$1".log 2>&1 &
     fi

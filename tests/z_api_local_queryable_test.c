@@ -18,6 +18,15 @@
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_QUERYABLE == 1 && Z_FEATURE_LOCAL_QUERYABLE == 1 && Z_FEATURE_MULTI_THREAD == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
+
 static const char *QUERYABLE_EXPR = "zenoh-pico/locality/query";
 
 void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowed_origin,
@@ -28,6 +37,8 @@ void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowe
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, QUERYABLE_EXPR);
 
@@ -235,8 +246,9 @@ void test_queryable_peer_mode(z_locality_t get_allowed_destination, z_locality_t
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     z_locality_t localities[] = {Z_LOCALITY_ANY, Z_LOCALITY_REMOTE, Z_LOCALITY_SESSION_LOCAL};
     for (size_t i = 0; i < 3; i++) {
         for (size_t j = 0; j < 3; j++) {

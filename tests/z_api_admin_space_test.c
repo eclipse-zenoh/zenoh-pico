@@ -22,6 +22,8 @@
 
 #if Z_FEATURE_ADMIN_SPACE == 1
 
+static const char *g_locator = NULL;
+
 typedef struct admin_space_query_reply_t {
     z_owned_keyexpr_t ke;
     z_owned_string_t payload;
@@ -128,6 +130,13 @@ static void admin_space_test_sessions_open(admin_space_test_sessions_t *ss) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c1), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c1), Z_CONFIG_CONNECT_KEY, g_locator));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c2), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c2), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
 
     ASSERT_OK(z_open(&ss->s1, z_move(c1), NULL));
     ASSERT_OK(zp_start_admin_space(z_loan_mut(ss->s1)));
@@ -705,6 +714,13 @@ void test_admin_space_query_fails_when_not_running(void) {
     z_config_default(&c1);
     z_config_default(&c2);
 
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c1), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c1), Z_CONFIG_CONNECT_KEY, g_locator));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c2), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_config_loan_mut(&c2), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
+
     ASSERT_OK(z_open(&s1, z_move(c1), NULL));
     ASSERT_OK(z_open(&s2, z_move(c2), NULL));
 
@@ -1220,8 +1236,9 @@ void test_admin_space_rfc_connectivity_query_and_events(void) {
 #endif
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_start_stop_admin_space();
     test_auto_start_admin_space();
     test_admin_space_query_fails_when_not_running();

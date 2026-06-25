@@ -122,9 +122,9 @@ install: $(BUILD_DIR)/Makefile
 
 test: make
 	if [ "$(shell uname -s)" = "Darwin" ]; then \
-		sudo ctest --verbose --test-dir build; \
+		sudo ctest --verbose --test-dir build -j 8; \
 	else \
-		ctest --verbose --test-dir build; \
+		ctest --verbose --test-dir build -j 8; \
 	fi
 
 crossbuilds: $(CROSSBUILD_TARGETS)

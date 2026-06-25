@@ -26,6 +26,15 @@
 
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1 && Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
+}
+
 // ---- Common test timing constants ----
 #define TEST_SLEEP_MS 4000
 
@@ -100,6 +109,9 @@ static void test_advanced_history(bool p2p) {
 
         zp_config_insert(z_loan_mut(c2), Z_CONFIG_MODE_KEY, "peer");
         zp_config_insert(z_loan_mut(c2), Z_CONFIG_LISTEN_KEY, "udp/224.0.0.224:7447#iface=lo");
+    } else {
+        config_as_client_to_locator(&c1);
+        config_as_client_to_locator(&c2);
     }
 
     ASSERT_OK(z_open(&s1, z_config_move(&c1), NULL));
@@ -678,6 +690,7 @@ static void test_advanced_local_pubsub(void) {
     z_owned_session_t s;
     z_owned_config_t c;
     z_config_default(&c);
+    config_as_client_to_locator(&c);
     z_view_keyexpr_t k;
     ASSERT_OK(z_view_keyexpr_from_str(&k, expr));
 
@@ -720,8 +733,9 @@ static void test_advanced_local_pubsub(void) {
 #endif
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_advanced_history(false);
 #if defined(ZENOH_LINUX)
     test_advanced_history(true);

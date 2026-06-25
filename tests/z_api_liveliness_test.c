@@ -26,6 +26,15 @@
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_QUERY == 1
 
+static const char* g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t* c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
+
 #undef NDEBUG
 #include <assert.h>
 typedef struct context_t {
@@ -89,6 +98,9 @@ void test_liveliness_sub(bool multicast, bool history) {
 
         zp_config_insert(z_loan_mut(c2), Z_CONFIG_MODE_KEY, "client");
         zp_config_insert(z_loan_mut(c2), Z_CONFIG_LISTEN_KEY, "udp/224.0.0.224:7447#iface=lo");
+    } else {
+        config_as_client_to_locator(&c1);
+        config_as_client_to_locator(&c2);
     }
 
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
@@ -148,6 +160,8 @@ void test_liveliness_get(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k, k1;
     z_view_keyexpr_from_str(&k, expr);
     z_view_keyexpr_from_str(&k1, token1_expr);
@@ -194,8 +208,9 @@ void test_liveliness_get(void) {
 }
 
 int main(int argc, char** argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
 #if defined(ZENOH_LINUX)
     test_liveliness_sub(true, false);
     test_liveliness_sub(true, true);

@@ -22,6 +22,15 @@
 
 #if Z_FEATURE_MATCHING == 1 && Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client") == Z_OK);
+        assert(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator) == Z_OK);
+    }
+}
+
 #undef NDEBUG
 #include <assert.h>
 
@@ -184,6 +193,8 @@ void test_matching_listener_publisher(bool background, bool history) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_sub, k_pub;
     z_view_keyexpr_from_str(&k_sub, SUB_EXPR);
     z_view_keyexpr_from_str(&k_pub, PUB_EXPR);
@@ -264,6 +275,8 @@ void test_matching_listener_querier(bool complete, bool background) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_queryable, k_querier, k_queryable_wild, k_queryable_wrong;
     z_view_keyexpr_from_str(&k_queryable, QUERYABLE_EXPR);
     z_view_keyexpr_from_str(&k_queryable_wild, QUERYABLE_EXPR_WILD);
@@ -399,6 +412,8 @@ void test_matching_status_publisher(void) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_sub, k_pub, k_sub_wrong;
     z_view_keyexpr_from_str(&k_sub, SUB_EXPR);
     z_view_keyexpr_from_str(&k_pub, PUB_EXPR);
@@ -458,6 +473,8 @@ static void test_matching_status_publisher_locality(z_locality_t locality, bool 
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_pub, k_sub;
     z_view_keyexpr_from_str(&k_pub, PUB_EXPR);
     z_view_keyexpr_from_str(&k_sub, SUB_EXPR);
@@ -537,6 +554,8 @@ void test_matching_status_querier(bool complete) {
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_queryable, k_querier, k_queryable_wrong, k_queryable_wild;
     z_view_keyexpr_from_str(&k_queryable_wild, QUERYABLE_EXPR_WILD);
     z_view_keyexpr_from_str(&k_queryable, QUERYABLE_EXPR);
@@ -621,6 +640,8 @@ static void test_matching_status_querier_locality(z_locality_t locality, bool cr
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
     z_view_keyexpr_t k_queryable, k_querier;
     z_view_keyexpr_from_str(&k_queryable, QUERYABLE_EXPR);
     z_view_keyexpr_from_str(&k_querier, QUERIER_EXPR);
@@ -673,8 +694,9 @@ static void test_matching_status_querier_locality(z_locality_t locality, bool cr
 #endif  // Z_FEATURE_LOCAL_QUERYABLE == 1
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_matching_listener_publisher(true, false);
     test_matching_listener_publisher(false, false);
     test_matching_listener_publisher(true, true);

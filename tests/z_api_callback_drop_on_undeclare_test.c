@@ -36,6 +36,8 @@ typedef struct callback_arg_t {
     volatile bool dropped;
 } callback_arg_t;
 
+static const char* g_locator = NULL;
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef struct thread_arg_t {
     z_owned_session_t* session;
@@ -46,6 +48,10 @@ typedef struct thread_arg_t {
 z_result_t open_session(z_owned_session_t* s) {
     z_owned_config_t config;
     _Z_RETURN_IF_ERR(z_config_default(&config));
+    if (g_locator != NULL) {
+        _Z_RETURN_IF_ERR(zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, "client"));
+        _Z_RETURN_IF_ERR(zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
     return z_open(s, z_config_move(&config), NULL);
 }
 
@@ -379,7 +385,7 @@ void test_advanced_sample_miss_callback_drop_on_undeclare(bool background) {
     printf("Test: Sample Miss Listener callback drop on undeclare: background = %d\n", background);
 
     tcp_proxy_t* tcp_proxy;
-    setup_two_peers_with_proxy(&session1, &session2, &tcp_proxy, 9000);
+    setup_two_peers_with_proxy(&session1, &session2, &tcp_proxy, 9010);
 
     ze_owned_advanced_subscriber_t sub;
     ze_advanced_subscriber_options_t sub_opts;
@@ -1047,7 +1053,10 @@ void test_link_events_callback_drop_on_undeclare(bool background) {
     }
 }
 #endif
-int main(void) {
+int main(int argc, char** argv) {
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
     test_subscriber_callback_drop_on_undeclare(false);
     test_subscriber_callback_drop_on_undeclare(true);

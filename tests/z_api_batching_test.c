@@ -19,12 +19,23 @@
 
 #if Z_FEATURE_BATCHING == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
+}
+
 void test_batching_while_connected(void) {
     printf("test_batching_while_connected\n");
     z_owned_session_t s1, s2;
     z_owned_config_t c1, c2;
     z_config_default(&c1);
     z_config_default(&c2);
+    config_as_client_to_locator(&c1);
+    config_as_client_to_locator(&c2);
 
     ASSERT_OK(z_open(&s1, z_move(c1), NULL));
     ASSERT_OK(z_open(&s2, z_move(c2), NULL));
@@ -46,6 +57,8 @@ void test_batching_after_disconnection(void) {
     z_config_default(&c1);
     z_config_default(&c2);
 
+    // This test validates transport-unavailable behavior after dropping the serving peer,
+    // so it must use its own dedicated local peer/client pair.
     zp_config_insert(z_loan_mut(c1), Z_CONFIG_MODE_KEY, "peer");
     zp_config_insert(z_loan_mut(c1), Z_CONFIG_LISTEN_KEY, "tcp/127.0.0.1:12345");
 
@@ -70,8 +83,9 @@ void test_batching_after_disconnection(void) {
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_batching_while_connected();
     test_batching_after_disconnection();
 

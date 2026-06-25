@@ -24,11 +24,23 @@
 
 #if Z_FEATURE_QUERYABLE
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client");
+        zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator);
+    }
+}
+
 void test_queryable_keyexpr(void) {
     printf("Testing queryable key expressions...\n");
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
+    config_as_client_to_locator(&config);
+    if (g_locator == NULL) {
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
+    }
 
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
@@ -75,7 +87,10 @@ void test_queryable_keyexpr(void) {
 void open_sessions(z_owned_session_t *s, z_owned_session_t *s2, bool local) {
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
+    config_as_client_to_locator(&config);
+    if (g_locator == NULL) {
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
+    }
 
     if (z_open(s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
@@ -87,7 +102,10 @@ void open_sessions(z_owned_session_t *s, z_owned_session_t *s2, bool local) {
     } else {
         z_owned_config_t config2;
         z_config_default(&config2);
-        zp_config_insert(z_loan_mut(config2), Z_CONFIG_MODE_KEY, "client");
+        config_as_client_to_locator(&config2);
+        if (g_locator == NULL) {
+            zp_config_insert(z_loan_mut(config2), Z_CONFIG_MODE_KEY, "client");
+        }
         if (z_open(s2, z_move(config2), NULL) < 0) {
             printf("Unable to open second session for local queryable test!\n");
             z_drop(z_move(*s));
@@ -435,7 +453,10 @@ void test_querier_accept_replies(bool local) {
     }
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
     test_queryable_keyexpr();
     test_get_accept_replies(false);
     test_querier_accept_replies(false);

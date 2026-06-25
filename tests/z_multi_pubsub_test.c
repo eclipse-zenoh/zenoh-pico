@@ -24,6 +24,15 @@
 
 #if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
+}
+
 #define TEST_SLEEP_MS 2000
 #define NUM_MSGS 8
 
@@ -109,6 +118,8 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     z_owned_config_t c_pub, c_sub;
     z_config_default(&c_pub);
     z_config_default(&c_sub);
+    config_as_client_to_locator(&c_pub);
+    config_as_client_to_locator(&c_sub);
 
     z_view_keyexpr_t k;
     ASSERT_OK(z_view_keyexpr_from_str(&k, expr));
@@ -200,8 +211,9 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
 
     test_multi_pub_multi_sub(1, 1);
     test_multi_pub_multi_sub(1, 4);

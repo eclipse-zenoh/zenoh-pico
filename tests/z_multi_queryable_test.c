@@ -25,6 +25,15 @@
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_QUERYABLE == 1
 
+static const char *g_locator = NULL;
+
+static void config_as_client_to_locator(z_owned_config_t *c) {
+    if (g_locator != NULL) {
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_MODE_KEY, "client"));
+        ASSERT_OK(zp_config_insert(z_loan_mut(*c), Z_CONFIG_CONNECT_KEY, g_locator));
+    }
+}
+
 #define TEST_SLEEP_MS 2000
 #define BASE_EXPR "zenoh-pico/multi-queryable"
 
@@ -122,6 +131,8 @@ static void test_multi_queryables(int num_q) {
     z_owned_config_t c_q, c_cli;
     z_config_default(&c_q);
     z_config_default(&c_cli);
+    config_as_client_to_locator(&c_q);
+    config_as_client_to_locator(&c_cli);
 
     ASSERT_OK(z_open(&s_q, z_config_move(&c_q), NULL));
     ASSERT_OK(z_open(&s_cli, z_config_move(&c_cli), NULL));
@@ -205,8 +216,9 @@ static void test_multi_queryables(int num_q) {
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1) {
+        g_locator = argv[1];
+    }
 
     test_multi_queryables(1);
     test_multi_queryables(4);
