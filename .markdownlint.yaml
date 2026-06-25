@@ -1,5 +1,6 @@
 {
   "MD013": false, # Line length limitation
+  "MD024": { "siblings_only": true }, # Allow identical heading text under different parent sections
   "MD033": false, # Enable Inline HTML
   "MD041": false, # Allow first line heading
   "MD045": false, # Allow Images have no alternate text

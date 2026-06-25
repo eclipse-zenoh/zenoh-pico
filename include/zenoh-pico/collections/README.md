@@ -572,7 +572,7 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 
 ### API (`NAME` = configured name, `XN` = alternative name)
 
-**Construction / destruction**
+#### Construction / destruction
 
 | Function | Description |
 | -------- | ----------- |
@@ -581,7 +581,7 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 | `void NAME_destroy(NAME_t *v)` | Destroy the active alternative and reset to `NONE`. |
 | `void NAME_move(NAME_t *dst, NAME_t *src)` | Move `*src` into `*dst` (destroying the previous `*dst`); `*src` becomes `NONE`. Omitted if `..._NO_MOVE_FN` is defined. |
 
-**Inspection**
+#### Inspection
 
 | Function | Description |
 | -------- | ----------- |
@@ -589,7 +589,7 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 | `bool NAME_is_none(const NAME_t *v)` | `true` if empty. |
 | `bool NAME_is_XN(const NAME_t *v)` | `true` if it holds alternative `XN`. |
 
-**Access**
+#### Access
 
 | Function | Description |
 | -------- | ----------- |
@@ -597,7 +597,7 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 | `const <N>_TYPE *NAME_const_get_XN(const NAME_t *v)` | Const variant of `get`. |
 | `bool NAME_take_XN(NAME_t *v, <N>_TYPE *out)` | Move the held value into `*out` and reset to `NONE`. `false` (leaving `*v` untouched) if not alternative `XN`. |
 
-**Visitation (macros, not functions)**
+#### Visitation (macros, not functions)
 
 | Macro | Description |
 | ----- | ----------- |
@@ -733,6 +733,7 @@ calls. Include the header next to the container instantiation:
 | `_ZP_REMOVE(name, ptr, predicate)` | Remove every element matching `predicate` (`_` bound to the element), destroying it in place. Requires the container to provide `NAME_remove_at` (hash maps and both vectors). |
 
 > **Notes**
+>
 > * The `_FOREACH*` macros are loop headers — follow them with a statement or block,
 >   exactly like a `for` loop.
 > * The `_FIND*` and `_REMOVE` macros expand to statements (they internally start by
@@ -802,7 +803,6 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
 ---
 
 ## Quick reference: which container to use
-
 
 * **`vector` (heap)** — ordered list, unbounded, random access (incl. positional
   `insert`/`remove`); needs `malloc`.
