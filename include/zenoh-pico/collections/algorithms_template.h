@@ -70,7 +70,7 @@
         }                                                                                          \
     }
 
-// Find first value matching predicate.  var_name is a pointer to the element type which should be declared by
+// Find first value matching predicate.  var_name is a pointer to the value type which should be declared by
 // user before the loop.  It is set to NULL if no matching element is found
 #define _ZP_FIND_VAL(collection_name, collection_ptr, var_name, predicate)                  \
     var_name = NULL;                                                                        \
@@ -84,7 +84,7 @@
         }                                                                                   \
     }
 
-// Find first value matching predicate.  var_name is a pointer to the element type which should be declared by
+// Find first value matching predicate.  var_name is a pointer to the value type which should be declared by
 // user before the loop.  It is set to NULL if no matching element is found
 #define _ZP_CONST_FIND_VAL(collection_name, collection_ptr, var_name, predicate)                        \
     var_name = NULL;                                                                                    \

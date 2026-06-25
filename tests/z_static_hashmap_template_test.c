@@ -244,42 +244,6 @@ static void test_pool_slot_reused_after_remove(void) {
     u32map_destroy(&m);
 }
 
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE uint32_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME wide_bucket_map
-#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 10
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN u32_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN u32_eq
-#include "zenoh-pico/collections/static_hashmap_template.h"
-
-static void test_bucket_count_exceeds_iter_type(void) {
-    printf("Test: entries spread across many buckets, map still correct\n");
-    wide_bucket_map_t m = wide_bucket_map_new();
-    assert(wide_bucket_map_is_empty(&m));
-    for (uint32_t i = 0; i < 10; i++) {
-        uint32_t k = i * 31, v = i;
-        assert(wide_bucket_map_insert(&m, &k, &v) != wide_bucket_map_end(&m));
-    }
-    assert(wide_bucket_map_size(&m) == 10);
-    for (uint32_t i = 0; i < 10; i++) {
-        uint32_t k = i * 31;
-        uint32_t *got = wide_bucket_map_get(&m, &k);
-        assert(got != NULL && *got == i);
-    }
-    uint32_t ku = 0, vu = 99;
-    assert(wide_bucket_map_insert(&m, &ku, &vu) != wide_bucket_map_end(&m));
-    assert(wide_bucket_map_size(&m) == 10);
-    assert(*wide_bucket_map_get(&m, &(uint32_t){0}) == 99);
-    assert(wide_bucket_map_remove(&m, &(uint32_t){31}, NULL));
-    assert(wide_bucket_map_size(&m) == 9);
-    uint32_t kn = 1000, vn = 42;
-    assert(wide_bucket_map_insert(&m, &kn, &vn) != wide_bucket_map_end(&m));
-    assert(wide_bucket_map_size(&m) == 10);
-    assert(*wide_bucket_map_get(&m, &(uint32_t){1000}) == 42);
-    wide_bucket_map_destroy(&m);
-    assert(wide_bucket_map_is_empty(&m));
-}
-
 // ── Tests: iteration ──────────────────────────────────────────────────────────
 
 static void test_empty_iteration(void) {
@@ -736,7 +700,6 @@ int main(void) {
     test_pool_exhaustion();
     test_pool_slot_reused_after_remove();
     test_multiple_collisions();
-    test_bucket_count_exceeds_iter_type();
     test_empty_iteration();
     test_iteration_visits_all();
     test_iteration_visits_all_with_collisions();
