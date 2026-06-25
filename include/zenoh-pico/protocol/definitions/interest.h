@@ -52,7 +52,6 @@ static const uint8_t _Z_LIVELINESS_SUBSCRIBER_INTEREST_HISTORY =
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_interest_t _z_interest_null(void) { return (_z_interest_t){0}; }
-void _z_interest_clear(_z_interest_t* decl);
 _z_interest_t _z_make_interest(_Z_MOVE(_z_wireexpr_t) key, uint32_t id, uint8_t flags);
 _z_interest_t _z_make_interest_final(uint32_t id);
 
