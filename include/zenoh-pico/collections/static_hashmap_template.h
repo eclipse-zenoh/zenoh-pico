@@ -75,10 +75,7 @@
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY 16
 #endif
-// Bucket count is always equal to the capacity. Any user-provided value is ignored.
-#ifdef _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT
-#undef _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT
-#endif
+// Bucket count is always equal to the capacity.
 #define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY
 #ifndef _ZP_STATIC_HASHMAP_TEMPLATE_NAME
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME \
