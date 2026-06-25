@@ -128,7 +128,8 @@ typedef struct _z_query_id {
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(query_id1, query_id2) \
     (((query_id1)->rid == (query_id2)->rid) && ((query_id1)->peer_id == (query_id2)->peer_id))
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) ((size_t)((query_id)->rid) ^ (size_t)((query_id)->peer_id))
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) \
+    ((size_t)((query_id)->rid) ^ (size_t)(uintptr_t)((query_id)->peer_id))
 #include "zenoh-pico/collections/hashmap_template.h"
 
 typedef struct _z_session_t {
