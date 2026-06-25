@@ -349,6 +349,68 @@ static void test_remove_null_out(void) {
     intvec_destroy(&v);
 }
 
+static void test_swap_remove_middle(void) {
+    printf("Test: swap_remove moves the last element into the removed slot (order not preserved)\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4, 5};
+    for (int i = 0; i < 5; i++) {
+        assert(intvec_push_back(&v, &vals[i]));  // [1, 2, 3, 4, 5]
+    }
+    // Remove index 1 (value 2): last element (5) fills the hole -> [1, 5, 3, 4]
+    int out = -1;
+    assert(intvec_swap_remove(&v, 1, &out));
+    assert(out == 2);
+    assert(intvec_size(&v) == 4);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 5);
+    assert(*intvec_get(&v, 2) == 3);
+    assert(*intvec_get(&v, 3) == 4);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_last(void) {
+    printf("Test: swap_remove of the last element is a plain pop (no self-move)\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3};
+    for (int i = 0; i < 3; i++) {
+        assert(intvec_push_back(&v, &vals[i]));
+    }
+    int out = -1;
+    assert(intvec_swap_remove(&v, 2, &out));  // remove last -> [1, 2]
+    assert(out == 3);
+    assert(intvec_size(&v) == 2);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 2);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_null_out(void) {
+    printf("Test: swap_remove with NULL out destroys the element in place\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4};
+    for (int i = 0; i < 4; i++) {
+        assert(intvec_push_back(&v, &vals[i]));
+    }
+    assert(intvec_swap_remove(&v, 0, NULL));  // destroy 1, move 4 into slot 0 -> [4, 2, 3]
+    assert(intvec_size(&v) == 3);
+    assert(*intvec_get(&v, 0) == 4);
+    assert(*intvec_get(&v, 1) == 2);
+    assert(*intvec_get(&v, 2) == 3);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_out_of_bounds(void) {
+    printf("Test: swap_remove out of bounds returns false\n");
+    intvec_t v = intvec_new();
+    int a = 1;
+    assert(intvec_push_back(&v, &a));
+    int out = -1;
+    assert(!intvec_swap_remove(&v, 1, &out));
+    assert(!intvec_swap_remove(&v, 100, &out));
+    assert(intvec_size(&v) == 1);
+    intvec_destroy(&v);
+}
+
 static void test_pop_back_null_out(void) {
     printf("Test: pop_back with NULL out destroys the element in place\n");
     intvec_t v = intvec_new();
@@ -488,6 +550,42 @@ static void test_box_remove_element_wise_move(void) {
     assert(g_box_destroy_count == 2);
 }
 
+static void test_box_swap_remove_element_wise_move(void) {
+    printf("Test: box swap_remove moves out and relocates the last without double-free\n");
+    boxvec_t v = boxvec_new();
+    for (int i = 0; i < 4; i++) {
+        box_t b = make_box(i + 1);  // [1, 2, 3, 4]
+        assert(boxvec_push_back(&v, &b));
+    }
+    // swap_remove index 1 (value 2): last (4) fills the hole -> [1, 4, 3]
+    box_t out = {NULL};
+    g_box_destroy_count = 0;
+    g_box_move_count = 0;
+    assert(boxvec_swap_remove(&v, 1, &out));
+    assert(g_box_move_count == 2);     // one move out + one relocation of the last element
+    assert(g_box_destroy_count == 0);  // moved out, not destroyed
+    assert(out.ptr != NULL && *out.ptr == 2);
+    box_destroy(&out);
+    assert(g_box_destroy_count == 1);
+
+    assert(boxvec_size(&v) == 3);
+    assert(*boxvec_get(&v, 0)->ptr == 1);
+    assert(*boxvec_get(&v, 1)->ptr == 4);
+    assert(*boxvec_get(&v, 2)->ptr == 3);
+
+    // swap_remove of the last element with NULL out destroys it without relocation.
+    g_box_destroy_count = 0;
+    g_box_move_count = 0;
+    assert(boxvec_swap_remove(&v, boxvec_size(&v) - 1, NULL));  // destroy 3 -> [1, 4]
+    assert(g_box_destroy_count == 1);
+    assert(g_box_move_count == 0);
+    assert(boxvec_size(&v) == 2);
+
+    g_box_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_box_destroy_count == 2);
+}
+
 // ── algorithms_template.h tests ───────────────────────────────────────────────
 
 static void test_foreach(void) {
@@ -620,6 +718,51 @@ static void test_citfind(void) {
     intvec_destroy(&v);
 }
 
+static void test_remove_at(void) {
+    printf("Test: remove_at removes the element and reports the next iterator\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 5; i++) assert(intvec_push_back(&v, &i));  // [0, 1, 2, 3, 4]
+
+    // Remove a middle element: next iterator stays at the same index (tail shifted left).
+    int out = -1;
+    intvec_iter_t next = SIZE_MAX;
+    intvec_remove_at(&v, 1, &out, &next);  // remove value 1 -> [0, 2, 3, 4]
+    assert(out == 1);
+    assert(next == 1);
+    assert(intvec_size(&v) == 4);
+    assert(*intvec_at(&v, 1) == 2);
+
+    // Remove the last element: next iterator equals end().
+    next = SIZE_MAX;
+    intvec_remove_at(&v, intvec_size(&v) - 1, NULL, &next);  // remove value 4 -> [0, 2, 3]
+    assert(next == intvec_end(&v));
+    assert(intvec_size(&v) == 3);
+
+    // next_idx may be NULL.
+    intvec_remove_at(&v, 0, NULL, NULL);  // [2, 3]
+    assert(intvec_size(&v) == 2);
+    assert(*intvec_at(&v, 0) == 2);
+
+    intvec_destroy(&v);
+}
+
+static void test_zp_remove(void) {
+    printf("Test: _ZP_REMOVE erases every element matching the predicate\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 8; i++) assert(intvec_push_back(&v, &i));  // [0..7]
+
+    _ZP_REMOVE(intvec, &v, *_ % 2 != 0);  // drop all odd values
+    assert(intvec_size(&v) == 4);
+    int expected[] = {0, 2, 4, 6};
+    for (size_t i = 0; i < 4; i++) assert(*intvec_at(&v, i) == expected[i]);
+
+    // Removing everything leaves an empty vector.
+    _ZP_REMOVE(intvec, &v, true);
+    assert(intvec_is_empty(&v));
+
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -644,6 +787,10 @@ int main(void) {
     test_remove_back();
     test_remove_out_of_bounds();
     test_remove_null_out();
+    test_swap_remove_middle();
+    test_swap_remove_last();
+    test_swap_remove_null_out();
+    test_swap_remove_out_of_bounds();
     test_pop_back_null_out();
     test_data_pointer();
     test_destroy_non_empty();
@@ -651,11 +798,14 @@ int main(void) {
     test_box_append_element_wise_move();
     test_box_insert_element_wise_move();
     test_box_remove_element_wise_move();
+    test_box_swap_remove_element_wise_move();
     test_foreach();
     test_cforeach();
     test_find();
     test_itfind();
     test_citfind();
+    test_remove_at();
+    test_zp_remove();
     printf("All vector tests passed.\n");
     return 0;
 }

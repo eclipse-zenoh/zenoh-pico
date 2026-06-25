@@ -223,6 +223,200 @@ static void test_pop_back_null_out(void) {
     intvec_destroy(&v);
 }
 
+static void test_insert_at_index(void) {
+    printf("  insert shifts elements and places value at correct index\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3};
+    for (int i = 0; i < 3; i++) assert(intvec_push_back(&v, &vals[i]));
+    // Insert 99 at index 1: [1, 99, 2, 3]
+    int x = 99;
+    assert(intvec_insert(&v, 1, &x));
+    assert(intvec_size(&v) == 4);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 99);
+    assert(*intvec_get(&v, 2) == 2);
+    assert(*intvec_get(&v, 3) == 3);
+    intvec_destroy(&v);
+}
+
+static void test_insert_at_front(void) {
+    printf("  insert at index 0 prepends the element\n");
+    intvec_t v = intvec_new();
+    int a = 10, b = 20, front = 5;
+    assert(intvec_push_back(&v, &a));
+    assert(intvec_push_back(&v, &b));
+    assert(intvec_insert(&v, 0, &front));
+    assert(*intvec_front(&v) == 5);
+    assert(*intvec_get(&v, 1) == 10);
+    assert(*intvec_get(&v, 2) == 20);
+    intvec_destroy(&v);
+}
+
+static void test_insert_at_end(void) {
+    printf("  insert at size is equivalent to push_back\n");
+    intvec_t v = intvec_new();
+    int a = 1, b = 2, c = 99;
+    assert(intvec_push_back(&v, &a));
+    assert(intvec_push_back(&v, &b));
+    assert(intvec_insert(&v, 2, &c));
+    assert(*intvec_back(&v) == 99);
+    assert(intvec_size(&v) == 3);
+    intvec_destroy(&v);
+}
+
+static void test_insert_grows(void) {
+    printf("  insert grows the buffer when at capacity\n");
+    intvec_t v = intvec_new();
+    // Fill the vector exactly to a power-of-two capacity so the next insert must grow.
+    for (int i = 0; i < 4; i++) assert(intvec_push_back(&v, &i));  // [0, 1, 2, 3]
+    size_t cap_before = intvec_capacity(&v);
+    assert(intvec_size(&v) == cap_before);
+    int x = 99;
+    assert(intvec_insert(&v, 2, &x));  // [0, 1, 99, 2, 3]
+    assert(intvec_capacity(&v) > cap_before);
+    assert(intvec_size(&v) == 5);
+    int expected[] = {0, 1, 99, 2, 3};
+    for (size_t i = 0; i < 5; i++) assert(*intvec_get(&v, i) == expected[i]);
+    intvec_destroy(&v);
+}
+
+static void test_insert_out_of_bounds(void) {
+    printf("  insert beyond size returns false\n");
+    intvec_t v = intvec_new();
+    int x = 1;
+    assert(!intvec_insert(&v, 1, &x));  // size is 0, index 1 is out of bounds
+    assert(intvec_is_empty(&v));
+    intvec_destroy(&v);
+}
+
+static void test_remove_at_index(void) {
+    printf("  remove shifts elements and returns the correct value\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4};
+    for (int i = 0; i < 4; i++) assert(intvec_push_back(&v, &vals[i]));
+    // Remove index 1 (value 2): [1, 3, 4]
+    int out = -1;
+    assert(intvec_remove(&v, 1, &out));
+    assert(out == 2);
+    assert(intvec_size(&v) == 3);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 3);
+    assert(*intvec_get(&v, 2) == 4);
+    intvec_destroy(&v);
+}
+
+static void test_remove_front_back(void) {
+    printf("  remove at first and last index removes the right element\n");
+    intvec_t v = intvec_new();
+    int a = 10, b = 20, c = 30;
+    assert(intvec_push_back(&v, &a));
+    assert(intvec_push_back(&v, &b));
+    assert(intvec_push_back(&v, &c));
+    int out = -1;
+    assert(intvec_remove(&v, 0, &out));  // remove front
+    assert(out == 10);
+    assert(*intvec_front(&v) == 20);
+    assert(intvec_remove(&v, intvec_size(&v) - 1, &out));  // remove back
+    assert(out == 30);
+    assert(*intvec_back(&v) == 20);
+    assert(intvec_size(&v) == 1);
+    intvec_destroy(&v);
+}
+
+static void test_remove_out_of_bounds(void) {
+    printf("  remove out of bounds returns false\n");
+    intvec_t v = intvec_new();
+    int a = 1;
+    assert(intvec_push_back(&v, &a));
+    int out = -1;
+    assert(!intvec_remove(&v, 1, &out));
+    assert(!intvec_remove(&v, 100, &out));
+    assert(intvec_size(&v) == 1);
+    intvec_destroy(&v);
+}
+
+static void test_remove_null_out(void) {
+    printf("  remove with NULL out destroys the element in place\n");
+    intvec_t v = intvec_new();
+    int a = 1, b = 2, c = 3;
+    assert(intvec_push_back(&v, &a));
+    assert(intvec_push_back(&v, &b));
+    assert(intvec_push_back(&v, &c));
+    assert(intvec_remove(&v, 1, NULL));
+    assert(intvec_size(&v) == 2);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 3);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_middle(void) {
+    printf("  swap_remove moves the last element into the removed slot (order not preserved)\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4, 5};
+    for (int i = 0; i < 5; i++) assert(intvec_push_back(&v, &vals[i]));  // [1, 2, 3, 4, 5]
+    // Remove index 1 (value 2): last element (5) fills the hole -> [1, 5, 3, 4]
+    int out = -1;
+    assert(intvec_swap_remove(&v, 1, &out));
+    assert(out == 2);
+    assert(intvec_size(&v) == 4);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 5);
+    assert(*intvec_get(&v, 2) == 3);
+    assert(*intvec_get(&v, 3) == 4);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_last(void) {
+    printf("  swap_remove of the last element is a plain pop (no self-move)\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3};
+    for (int i = 0; i < 3; i++) assert(intvec_push_back(&v, &vals[i]));
+    int out = -1;
+    assert(intvec_swap_remove(&v, 2, &out));  // remove last -> [1, 2]
+    assert(out == 3);
+    assert(intvec_size(&v) == 2);
+    assert(*intvec_get(&v, 0) == 1);
+    assert(*intvec_get(&v, 1) == 2);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_single(void) {
+    printf("  swap_remove of the only element empties the vector\n");
+    intvec_t v = intvec_new();
+    int a = 42;
+    assert(intvec_push_back(&v, &a));
+    int out = -1;
+    assert(intvec_swap_remove(&v, 0, &out));
+    assert(out == 42);
+    assert(intvec_is_empty(&v));
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_null_out(void) {
+    printf("  swap_remove with NULL out destroys the element in place\n");
+    intvec_t v = intvec_new();
+    int vals[] = {1, 2, 3, 4};
+    for (int i = 0; i < 4; i++) assert(intvec_push_back(&v, &vals[i]));
+    assert(intvec_swap_remove(&v, 0, NULL));  // destroy 1, move 4 into slot 0 -> [4, 2, 3]
+    assert(intvec_size(&v) == 3);
+    assert(*intvec_get(&v, 0) == 4);
+    assert(*intvec_get(&v, 1) == 2);
+    assert(*intvec_get(&v, 2) == 3);
+    intvec_destroy(&v);
+}
+
+static void test_swap_remove_out_of_bounds(void) {
+    printf("  swap_remove out of bounds returns false\n");
+    intvec_t v = intvec_new();
+    int a = 1;
+    assert(intvec_push_back(&v, &a));
+    int out = -1;
+    assert(!intvec_swap_remove(&v, 1, &out));
+    assert(!intvec_swap_remove(&v, 100, &out));
+    assert(intvec_size(&v) == 1);
+    intvec_destroy(&v);
+}
+
 static void test_front_back(void) {
     printf("  front and back return correct pointers without removing elements\n");
     intvec_t v = intvec_new();
@@ -413,6 +607,111 @@ static void test_box_pop_back_null_destroys(void) {
     boxvec_destroy(&v);
 }
 
+static void test_box_insert_element_wise_move(void) {
+    printf("  box: insert shifts elements via element-wise move, transferring ownership\n");
+    boxvec_t v = boxvec_new();
+    box_t seed[3];
+    for (int i = 0; i < 3; i++) {
+        seed[i] = make_box(i);  // [0, 1, 2]
+        assert(boxvec_push_back(&v, &seed[i]));
+    }
+    box_t mid = make_box(99);
+    assert(boxvec_insert(&v, 1, &mid));  // [0, 99, 1, 2]
+    // Ownership transferred: the source box was nulled out by box_move.
+    assert(mid.ptr == NULL);
+    assert(boxvec_size(&v) == 4);
+    int expected[] = {0, 99, 1, 2};
+    for (int i = 0; i < 4; i++) {
+        assert(*boxvec_get(&v, (size_t)i)->ptr == expected[i]);
+    }
+    g_destroy_count = 0;
+    boxvec_destroy(&v);
+    assert(g_destroy_count == 4);
+}
+
+static void test_box_remove_moves_out(void) {
+    printf("  box: remove moves element into out without double-free\n");
+    boxvec_t v = boxvec_new();
+    box_t seed[3];
+    for (int i = 0; i < 3; i++) {
+        seed[i] = make_box(i + 1);  // [1, 2, 3]
+        assert(boxvec_push_back(&v, &seed[i]));
+    }
+    box_t out = {NULL};
+    g_destroy_count = 0;
+    assert(boxvec_remove(&v, 1, &out));  // remove value 2 -> [1, 3]
+    assert(out.ptr != NULL && *out.ptr == 2);
+    // The element was moved out: destroy should not have been called yet.
+    assert(g_destroy_count == 0);
+    assert(boxvec_size(&v) == 2);
+    assert(*boxvec_get(&v, 0)->ptr == 1);
+    assert(*boxvec_get(&v, 1)->ptr == 3);
+    box_destroy(&out);
+    assert(g_destroy_count == 1);
+    boxvec_destroy(&v);
+}
+
+static void test_box_remove_null_destroys(void) {
+    printf("  box: remove with NULL out calls destroy on element\n");
+    boxvec_t v = boxvec_new();
+    box_t seed[3];
+    for (int i = 0; i < 3; i++) {
+        seed[i] = make_box(i + 1);  // [1, 2, 3]
+        assert(boxvec_push_back(&v, &seed[i]));
+    }
+    g_destroy_count = 0;
+    assert(boxvec_remove(&v, 0, NULL));  // destroy value 1 -> [2, 3]
+    assert(g_destroy_count == 1);
+    assert(boxvec_size(&v) == 2);
+    assert(*boxvec_get(&v, 0)->ptr == 2);
+    boxvec_destroy(&v);
+}
+
+static void test_box_swap_remove_moves_out(void) {
+    printf("  box: swap_remove moves element out and relocates the last via element-wise move\n");
+    boxvec_t v = boxvec_new();
+    box_t seed[4];
+    for (int i = 0; i < 4; i++) {
+        seed[i] = make_box(i + 1);  // [1, 2, 3, 4]
+        assert(boxvec_push_back(&v, &seed[i]));
+    }
+    box_t out = {NULL};
+    g_destroy_count = 0;
+    g_move_count = 0;
+    assert(boxvec_swap_remove(&v, 1, &out));  // out=2, move 4 into slot 1 -> [1, 4, 3]
+    // One move to extract into out, one move to relocate the last element.
+    assert(g_move_count == 2);
+    // The removed element was moved out, not destroyed.
+    assert(g_destroy_count == 0);
+    assert(out.ptr != NULL && *out.ptr == 2);
+    assert(boxvec_size(&v) == 3);
+    assert(*boxvec_get(&v, 0)->ptr == 1);
+    assert(*boxvec_get(&v, 1)->ptr == 4);
+    assert(*boxvec_get(&v, 2)->ptr == 3);
+    box_destroy(&out);
+    assert(g_destroy_count == 1);
+    boxvec_destroy(&v);
+}
+
+static void test_box_swap_remove_last_null_destroys(void) {
+    printf("  box: swap_remove of the last element with NULL out destroys it without relocation\n");
+    boxvec_t v = boxvec_new();
+    box_t seed[3];
+    for (int i = 0; i < 3; i++) {
+        seed[i] = make_box(i + 1);  // [1, 2, 3]
+        assert(boxvec_push_back(&v, &seed[i]));
+    }
+    g_destroy_count = 0;
+    g_move_count = 0;
+    assert(boxvec_swap_remove(&v, 2, NULL));  // destroy last (3), no relocation -> [1, 2]
+    assert(g_destroy_count == 1);
+    assert(g_move_count == 0);
+    assert(boxvec_size(&v) == 2);
+    assert(*boxvec_get(&v, 0)->ptr == 1);
+    assert(*boxvec_get(&v, 1)->ptr == 2);
+    boxvec_destroy(&v);
+}
+
 // ── custom allocator tests ────────────────────────────────────────────────────
 
 static void test_custom_alloc_called(void) {
@@ -576,6 +875,51 @@ static void test_heap_citfind(void) {
     intvec_destroy(&v);
 }
 
+static void test_heap_remove_at(void) {
+    printf("  remove_at removes the element and reports the next iterator\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 5; i++) assert(intvec_push_back(&v, &i));  // [0, 1, 2, 3, 4]
+
+    // Remove a middle element: next iterator stays at the same index (tail shifted left).
+    int out = -1;
+    intvec_iter_t next = SIZE_MAX;
+    intvec_remove_at(&v, 1, &out, &next);  // remove value 1 -> [0, 2, 3, 4]
+    assert(out == 1);
+    assert(next == 1);
+    assert(intvec_size(&v) == 4);
+    assert(*intvec_at(&v, 1) == 2);
+
+    // Remove the last element: next iterator equals end().
+    next = SIZE_MAX;
+    intvec_remove_at(&v, intvec_size(&v) - 1, NULL, &next);  // remove value 4 -> [0, 2, 3]
+    assert(next == intvec_end(&v));
+    assert(intvec_size(&v) == 3);
+
+    // next_idx may be NULL.
+    intvec_remove_at(&v, 0, NULL, NULL);  // [2, 3]
+    assert(intvec_size(&v) == 2);
+    assert(*intvec_at(&v, 0) == 2);
+
+    intvec_destroy(&v);
+}
+
+static void test_heap_zp_remove(void) {
+    printf("  _ZP_REMOVE erases every element matching the predicate\n");
+    intvec_t v = intvec_new();
+    for (int i = 0; i < 10; i++) assert(intvec_push_back(&v, &i));  // [0..9]
+
+    _ZP_REMOVE(intvec, &v, *_ % 2 != 0);  // drop all odd values
+    assert(intvec_size(&v) == 5);
+    int expected[] = {0, 2, 4, 6, 8};
+    for (size_t i = 0; i < 5; i++) assert(*intvec_at(&v, i) == expected[i]);
+
+    // Removing everything leaves an empty vector.
+    _ZP_REMOVE(intvec, &v, true);
+    assert(intvec_is_empty(&v));
+
+    intvec_destroy(&v);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -590,6 +934,20 @@ int main(void) {
     test_pop_back();
     test_pop_empty_returns_false();
     test_pop_back_null_out();
+    test_insert_at_index();
+    test_insert_at_front();
+    test_insert_at_end();
+    test_insert_grows();
+    test_insert_out_of_bounds();
+    test_remove_at_index();
+    test_remove_front_back();
+    test_remove_out_of_bounds();
+    test_remove_null_out();
+    test_swap_remove_middle();
+    test_swap_remove_last();
+    test_swap_remove_single();
+    test_swap_remove_null_out();
+    test_swap_remove_out_of_bounds();
     test_front_back();
     test_get_out_of_bounds();
     test_reserve_grows_capacity();
@@ -604,6 +962,11 @@ int main(void) {
     test_box_append_element_wise_move();
     test_box_pop_back_moves_out();
     test_box_pop_back_null_destroys();
+    test_box_insert_element_wise_move();
+    test_box_remove_moves_out();
+    test_box_remove_null_destroys();
+    test_box_swap_remove_moves_out();
+    test_box_swap_remove_last_null_destroys();
 
     printf("\n=== custom allocator ===\n");
     test_custom_alloc_called();
@@ -614,6 +977,8 @@ int main(void) {
     test_heap_find();
     test_heap_itfind();
     test_heap_citfind();
+    test_heap_remove_at();
+    test_heap_zp_remove();
 
     printf("\nAll vector_template tests passed.\n");
     return 0;

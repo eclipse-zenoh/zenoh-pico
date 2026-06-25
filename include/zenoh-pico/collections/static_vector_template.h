@@ -251,6 +251,51 @@ static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(_ZP_STATIC_V
     return true;
 }
 
+// Removes the element at the given iterator (index), shifting subsequent elements left.
+// Thin wrapper around remove() that mirrors the hashmap remove_at signature so the vector can be
+// used with the _ZP_REMOVE macro from algorithms_template.h.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If @p next_idx is non-NULL it is set to the iterator of the next element to visit: because removal
+// shifts the tail left, this is the same index when another element followed, or the end() iterator
+// when the removed element was the last one.
+// Behaviour is undefined if idx is out of bounds (idx >= size).
+static inline void _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
+                           remove_at)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
+                                      _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t) idx,
+                                      _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *out,
+                                      _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, iter_t) * next_idx) {
+    _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, remove)(vec, idx, out);
+    if (next_idx != NULL) {
+        // After the left shift, idx addresses the element that followed the removed one, or equals
+        // end() (== _size) when the removed element was the last.
+        *next_idx = idx;
+    }
+}
+
+// Removes the element at the given index in O(1) by moving the last element into its place.
+// This does NOT preserve the relative order of the remaining elements.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If the removed element was not the last one, the last element is moved into the vacated slot.
+// Returns true on success, or false if the index is out of bounds (index >= size).
+static inline bool _ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME, swap_remove)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec,
+                                                                         size_t index,
+                                                                         _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (index >= vec->_size) {
+        return false;
+    }
+    if (out != NULL) {
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
+    } else {
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
+    }
+    vec->_size--;
+    // If the removed element was not the last, move the (former) last element into the hole.
+    if (index != vec->_size) {
+        _ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], &vec->_buffer[vec->_size]);
+    }
+    return true;
+}
+
 // Returns a pointer to the raw buffer.
 static inline _ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_STATIC_VECTOR_TEMPLATE_NAME,
                                                             data)(_ZP_STATIC_VECTOR_TEMPLATE_TYPE *vec) {

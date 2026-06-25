@@ -301,6 +301,111 @@ static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, f
     return &vec->_buffer[0];
 }
 
+// Inserts an element at the given index by moving it from @p elem, shifting subsequent elements right.
+// Grows the internal buffer (doubling capacity) if needed.
+// Returns true on success, or false if the index is out of bounds (index > size) or a reallocation
+// was required but failed (in which case the vector is left unchanged).
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, insert)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elem) {
+    if (index > vec->_size) {
+        return false;
+    }
+    if (vec->_size == _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
+    if (vec->_size == vec->_capacity) {
+        size_t new_capacity;
+        if (vec->_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+        } else {
+            new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity * 2;
+        }
+
+        if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+            return false;
+        }
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index + 1], &vec->_buffer[index],
+            (vec->_size - index) * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = vec->_size; i > index; i--) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i], &vec->_buffer[i - 1]);
+    }
+#endif
+    _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], elem);
+    vec->_size++;
+    return true;
+}
+
+// Removes the element at the given index, shifting subsequent elements left.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// Returns true on success, or false if the index is out of bounds.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (index >= vec->_size) {
+        return false;
+    }
+    if (out != NULL) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
+    } else {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index], &vec->_buffer[index + 1],
+            (vec->_size - index - 1) * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = index + 1; i < vec->_size; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i - 1], &vec->_buffer[i]);
+    }
+#endif
+    vec->_size--;
+    return true;
+}
+
+// Removes the element at the given iterator (index), shifting subsequent elements left.
+// Thin wrapper around remove() that mirrors the hashmap remove_at signature so the vector can be
+// used with the _ZP_REMOVE macro from algorithms_template.h.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If @p next_idx is non-NULL it is set to the iterator of the next element to visit: because removal
+// shifts the tail left, this is the same index when another element followed, or the end() iterator
+// when the removed element was the last one.
+// Behaviour is undefined if idx is out of bounds (idx >= size).
+static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove_at)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t) idx,
+                                                                _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out,
+                                                                _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t) * next_idx) {
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove)(vec, idx, out);
+    if (next_idx != NULL) {
+        // After the left shift, idx addresses the element that followed the removed one, or equals
+        // end() (== _size) when the removed element was the last.
+        *next_idx = idx;
+    }
+}
+
+// Removes the element at the given index in O(1) by moving the last element into its place.
+// This does NOT preserve the relative order of the remaining elements.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If the removed element was not the last one, the last element is moved into the vacated slot.
+// Returns true on success, or false if the index is out of bounds (index >= size).
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, swap_remove)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                                  _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (index >= vec->_size) {
+        return false;
+    }
+    if (out != NULL) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
+    } else {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
+    }
+    vec->_size--;
+    // If the removed element was not the last, move the (former) last element into the hole.
+    if (index != vec->_size) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], &vec->_buffer[vec->_size]);
+    }
+    return true;
+}
+
 // Returns the pointer to the raw buffer.
 static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, data)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
     return vec->_buffer;
