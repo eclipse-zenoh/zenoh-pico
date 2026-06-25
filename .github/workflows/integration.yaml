@@ -68,8 +68,7 @@ jobs:
       - name: Install ccache (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get update && sudo apt-get install -y ccache
 
       - name: Install ccache (macOS)
         if: runner.os == 'macOS'
@@ -146,8 +145,7 @@ jobs:
 
       - name: Install ccache (Linux)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get update && sudo apt-get install -y ccache
 
       - name: Cache ccache
         uses: actions/cache@v4

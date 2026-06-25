@@ -41,7 +41,7 @@ jobs:
 
       - name: Build & run tests
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
       - name: Check in-tree generated files are in sync with version.txt
@@ -64,8 +64,7 @@ jobs:
 
       - name: Configure fuzz build
         run: |
-          sudo apt update
-          sudo apt install -y clang ninja-build
+          sudo apt update && sudo apt install -y clang ninja-build
           CC=clang cmake -B build-fuzz -G Ninja \
             -DBUILD_FUZZERS=ON \
             -DBUILD_TESTING=OFF \
@@ -123,16 +122,12 @@ jobs:
 
       - name: Build tests
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
 
-      - name: Install valgrind
+      - name: Install valgrind and run memory leak tests
         run: |
-          sudo apt update
           sudo apt install -y valgrind
-
-      - name: Memory leak unit tests
-        run: |
           cd build/tests
           for test in *_test; do
             if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
@@ -166,7 +161,7 @@ jobs:
 
       - name: Build with C99
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           FORCE_C99=ON CMAKE_GENERATOR=Ninja make
 
   raweth_build:
@@ -180,7 +175,7 @@ jobs:
 
       - name: Build raweth
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_RAWETH_TRANSPORT=1 CMAKE_GENERATOR=Ninja make
 
   tls_build:
@@ -199,8 +194,7 @@ jobs:
 
       - name: Build with TLS
         run: |
-          sudo apt update
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 CMAKE_GENERATOR=Ninja make
 
   modular_build:
@@ -245,7 +239,7 @@ jobs:
 
       - name: Build project
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
         timeout-minutes: 15
@@ -275,7 +269,7 @@ jobs:
 
       - name: Build with unstable
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
 
   no_scouting_build:
@@ -289,7 +283,7 @@ jobs:
 
       - name: Build without scouting
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_SCOUTING=0 CMAKE_GENERATOR=Ninja make
 
   no_interest_build:
@@ -303,7 +297,7 @@ jobs:
 
       - name: Build without interests
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_INTEREST=0 CMAKE_GENERATOR=Ninja make
 
   no_liveliness_build:
@@ -317,7 +311,7 @@ jobs:
 
       - name: Build without interests
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_LIVELINESS=0 CMAKE_GENERATOR=Ninja make
 
   advanced_publisher_build:
@@ -331,7 +325,7 @@ jobs:
 
       - name: Build with advanced publisher
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 CMAKE_GENERATOR=Ninja make
 
   advanced_subscriber_build:
@@ -345,7 +339,7 @@ jobs:
 
       - name: Build with advanced subscriber
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
   rx_cache_build:
@@ -359,7 +353,7 @@ jobs:
 
       - name: Build with RX cache
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_RX_CACHE=1 CMAKE_GENERATOR=Ninja make
 
   gcc10_build:
@@ -373,8 +367,7 @@ jobs:
 
       - name: Build with GCC 10
         run: |
-          sudo apt update
-          sudo apt install -y ninja-build gcc-10
+          sudo apt update && sudo apt install -y ninja-build gcc-10
           CC=gcc-10 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
   gcc9_build:
@@ -435,7 +428,7 @@ jobs:
 
       - name: Build project and run tests
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug
           ninja -C build/ test
           python3 ./build/tests/single_thread.py
@@ -489,7 +482,7 @@ jobs:
 
       - name: Build project and run test
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           cmake -DBATCH_UNICAST_SIZE=4096 -B build/ -G Ninja
           CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/fragment.py
@@ -541,7 +534,7 @@ jobs:
 
       - name: Build project and run test
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/attachment.py
         timeout-minutes: 15
@@ -602,7 +595,7 @@ jobs:
 
       - name: Build project
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
         env:
           CC: ccache cc
@@ -630,7 +623,7 @@ jobs:
 
       - name: Build & test pico
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON make
           python3 ./build/tests/no_router.py
         timeout-minutes: 15
@@ -665,7 +658,7 @@ jobs:
 
       - name: Build project and run test
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
           RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
@@ -726,7 +719,7 @@ jobs:
 
       - name: Build project and run test
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 BATCH_MULTICAST_SIZE=8192 BATCH_UNICAST_SIZE=49152 CMAKE_GENERATOR=Ninja make
           IFACE=${{ steps.select-multicast-iface.outputs.iface }}
           python3 ./build/tests/routed_peer_client.py tcp/127.0.0.1:7447 udp/224.0.0.123:7447#iface=$IFACE
@@ -759,7 +752,7 @@ jobs:
 
       - name: Build & test pico
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
           ./build/tests/z_test_peer_unicast
         env:
@@ -781,7 +774,7 @@ jobs:
 
       - name: Build & test pico
         run: |
-          sudo apt install -y ninja-build
+          sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
           ./build/tests/z_test_peer_multicast
         env:
