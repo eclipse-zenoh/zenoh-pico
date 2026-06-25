@@ -63,18 +63,6 @@ jobs:
           echo "LD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
-      - name: Download and extract Zenoh
-        if: runner.os == 'Linux'
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
-          unzip zenoh.zip -d tests
-
-      - name: Download and extract Zenoh
-        if: runner.os == 'macOS'
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_MACOS_URL }}
-          unzip zenoh.zip -d tests
-
       - name: Compile debug
         run: make all
         env:
@@ -88,6 +76,18 @@ jobs:
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
           Z_FEATURE_ADMIN_SPACE: 1
+
+      - name: Download and extract Zenoh
+        if: runner.os == 'Linux'
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
+          unzip zenoh.zip -d build/tests
+
+      - name: Download and extract Zenoh
+        if: runner.os == 'macOS'
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_MACOS_URL }}
+          unzip zenoh.zip -d build/tests
 
       - name: Test debug
         run: make test
@@ -122,11 +122,6 @@ jobs:
         if: runner.os == 'macOS'
         run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
 
-      - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
-          unzip zenoh.zip -d tests
-
       - name: Compile debug
         run: make all
         env:
@@ -140,6 +135,11 @@ jobs:
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
           ASAN: 1
+
+      - name: Download and extract Zenoh
+        run: |
+          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
+          unzip zenoh.zip -d build/tests
 
       - name: Test debug
         run: make test
