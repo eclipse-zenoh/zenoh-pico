@@ -7,15 +7,15 @@ C preprocessor.
 
 The templates documented here are:
 
-| Header                        | Container                | Storage            |
-| ----------------------------- | ------------------------ | ------------------ |
-| `vector_template.h`           | Dynamic array (vector)   | Heap (growable)    |
-| `static_vector_template.h`    | Dynamic array (vector)   | Inline, fixed cap. |
-| `hashmap_template.h`          | Hash map                 | Heap (growable)    |
-| `static_hashmap_template.h`   | Hash map                 | Inline, fixed cap. |
-| `static_deque_template.h`     | Double-ended queue       | Inline, fixed cap. |
-| `static_pqueue_template.h`    | Binary-heap priority q.  | Inline, fixed cap. |
-| `variant_template.h`          | Tagged union (variant)   | Inline             |
+| Header                      | Container               | Storage            |
+| --------------------------- | ----------------------- | ------------------ |
+| `vector_template.h`         | Dynamic array (vector)  | Heap (growable)    |
+| `static_vector_template.h`  | Dynamic array (vector)  | Inline, fixed cap. |
+| `hashmap_template.h`        | Hash map                | Heap (growable)    |
+| `static_hashmap_template.h` | Hash map                | Inline, fixed cap. |
+| `static_deque_template.h`   | Double-ended queue      | Inline, fixed cap. |
+| `static_pqueue_template.h`  | Binary-heap priority q. | Inline, fixed cap. |
+| `variant_template.h`        | Tagged union (variant)  | Inline             |
 
 In addition, `algorithms_template.h` provides generic iteration / search / removal
 helper macros that work on any of the above containers exposing an iterator interface
@@ -90,15 +90,15 @@ grows automatically (doubling) as elements are added.
 
 ### Configuration macros
 
-| Macro                                    | Required | Default                         | Purpose                                                |
-| ---------------------------------------- | :------: | ------------------------------- | ------------------------------------------------------ |
-| `_ZP_VECTOR_TEMPLATE_ELEM_TYPE`          | ✅       | —                               | Element type.                                          |
-| `_ZP_VECTOR_TEMPLATE_NAME`               | ❌       | derived from element type       | Base name (without `_t`) for generated symbols.        |
-| `_ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x)` | ❌       | no-op                           | Destroy one element.                                   |
-| `_ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(d,s)`  | ❌       | `*d = *s`                       | Move one element.                                      |
-| `_ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes)`    | ❌       | `malloc`                        | Allocate memory.                                       |
-| `_ZP_VECTOR_TEMPLATE_FREE_FN(ptr)`       | ❌       | `free`                          | Free memory.                                           |
-| `_ZP_VECTOR_TEMPLATE_REALLOC_FN(p,size)` | ❌       | (unused)                        | Optional in-place realloc; used only for trivially movable elements as a faster growth path. |
+| Macro                                    | Required | Default                   | Purpose                                                                                      |
+| ---------------------------------------- | :------: | ------------------------- | -------------------------------------------------------------------------------------------- |
+| `_ZP_VECTOR_TEMPLATE_ELEM_TYPE`          |    ✅    | —                         | Element type.                                                                                |
+| `_ZP_VECTOR_TEMPLATE_NAME`               |    ❌    | derived from element type | Base name (without `_t`) for generated symbols.                                              |
+| `_ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x)` |    ❌    | no-op                     | Destroy one element.                                                                         |
+| `_ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                 | Move one element.                                                                            |
+| `_ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes)`    |    ❌    | `malloc`                  | Allocate memory.                                                                             |
+| `_ZP_VECTOR_TEMPLATE_FREE_FN(ptr)`       |    ❌    | `free`                    | Free memory.                                                                                 |
+| `_ZP_VECTOR_TEMPLATE_REALLOC_FN(p,size)` |    ❌    | (unused)                  | Optional in-place realloc; used only for trivially movable elements as a faster growth path. |
 
 ### Generated type
 
@@ -115,34 +115,34 @@ typedef size_t    NAME_iter_t;  // iterator (a plain index)
 
 ### API (`NAME` = configured name)
 
-| Function | Description |
-| -------- | ----------- |
-| `void NAME_init(NAME_t *v)` | Initialise an empty vector in place (no allocation). |
-| `NAME_t NAME_new(void)` | Return a new empty vector (no allocation). |
-| `bool NAME_init_with_capacity(NAME_t *v, size_t cap)` | Initialise empty, pre-reserving `cap` slots. |
-| `size_t NAME_size(const NAME_t *v)` | Number of stored elements. |
-| `size_t NAME_capacity(const NAME_t *v)` | Current allocated capacity. |
-| `bool NAME_is_empty(const NAME_t *v)` | `true` if empty. |
-| `bool NAME_reserve(NAME_t *v, size_t new_cap)` | Grow capacity to at least `new_cap`. `false` on allocation failure. |
-| `bool NAME_push_back(NAME_t *v, ELEM_TYPE *e)` | Move `*e` to the back, growing if needed. `false` on allocation failure. |
-| `bool NAME_append(NAME_t *v, ELEM_TYPE *elems, size_t len)` | Move `len` elements to the back. Atomic: on failure nothing is moved. |
-| `bool NAME_insert(NAME_t *v, size_t i, ELEM_TYPE *e)` | Insert at index `i`, shifting the tail right (growing if needed). `false` if `i > size` or a reallocation failed. |
-| `bool NAME_pop_back(NAME_t *v, ELEM_TYPE *out)` | Remove the last element (move to `out`, or destroy if `out == NULL`). `false` if empty. |
-| `bool NAME_remove(NAME_t *v, size_t i, ELEM_TYPE *out)` | Remove at index `i`, shifting the tail left (move to `out`, or destroy if `NULL`). `false` if `i >= size`. |
+| Function                                                                           | Description                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *v)`                                                        | Initialise an empty vector in place (no allocation).                                                                                                                                                                                                                                            |
+| `NAME_t NAME_new(void)`                                                            | Return a new empty vector (no allocation).                                                                                                                                                                                                                                                      |
+| `bool NAME_init_with_capacity(NAME_t *v, size_t cap)`                              | Initialise empty, pre-reserving `cap` slots.                                                                                                                                                                                                                                                    |
+| `size_t NAME_size(const NAME_t *v)`                                                | Number of stored elements.                                                                                                                                                                                                                                                                      |
+| `size_t NAME_capacity(const NAME_t *v)`                                            | Current allocated capacity.                                                                                                                                                                                                                                                                     |
+| `bool NAME_is_empty(const NAME_t *v)`                                              | `true` if empty.                                                                                                                                                                                                                                                                                |
+| `bool NAME_reserve(NAME_t *v, size_t new_cap)`                                     | Grow capacity to at least `new_cap`. `false` on allocation failure.                                                                                                                                                                                                                             |
+| `bool NAME_push_back(NAME_t *v, ELEM_TYPE *e)`                                     | Move `*e` to the back, growing if needed. `false` on allocation failure.                                                                                                                                                                                                                        |
+| `bool NAME_append(NAME_t *v, ELEM_TYPE *elems, size_t len)`                        | Move `len` elements to the back. Atomic: on failure nothing is moved.                                                                                                                                                                                                                           |
+| `bool NAME_insert(NAME_t *v, size_t i, ELEM_TYPE *e)`                              | Insert at index `i`, shifting the tail right (growing if needed). `false` if `i > size` or a reallocation failed.                                                                                                                                                                               |
+| `bool NAME_pop_back(NAME_t *v, ELEM_TYPE *out)`                                    | Remove the last element (move to `out`, or destroy if `out == NULL`). `false` if empty.                                                                                                                                                                                                         |
+| `bool NAME_remove(NAME_t *v, size_t i, ELEM_TYPE *out)`                            | Remove at index `i`, shifting the tail left (move to `out`, or destroy if `NULL`). `false` if `i >= size`.                                                                                                                                                                                      |
 | `void NAME_remove_at(NAME_t *v, NAME_iter_t i, ELEM_TYPE *out, NAME_iter_t *next)` | `remove`-based wrapper matching the hash-map signature so the vector works with `_ZP_REMOVE`. Removes index `i` (move to `out`, or destroy if `NULL`); if `next != NULL`, sets `*next` to the following iterator — the same index, or `end()` when `i` was the last element. UB if `i >= size`. |
-| `bool NAME_swap_remove(NAME_t *v, size_t i, ELEM_TYPE *out)` | O(1) removal that does **not** preserve order: removes index `i` (move to `out`, or destroy if `NULL`) and moves the last element into the vacated slot (unless `i` was the last). `false` if `i >= size`. |
-| `ELEM_TYPE *NAME_get(NAME_t *v, size_t i)` | Pointer to element `i`, or `NULL` if out of bounds. |
-| `const NAME_elem_t *NAME_const_get(const NAME_t *v, size_t i)` | Const variant of `get`. |
-| `ELEM_TYPE *NAME_at(NAME_t *v, size_t i)` | Pointer to element `i`, **no bounds check**. |
-| `const NAME_elem_t *NAME_const_at(const NAME_t *v, size_t i)` | Const variant of `at`. |
-| `ELEM_TYPE *NAME_front(NAME_t *v)` | Pointer to first element, or `NULL`. |
-| `ELEM_TYPE *NAME_back(NAME_t *v)` | Pointer to last element, or `NULL`. |
-| `ELEM_TYPE *NAME_data(NAME_t *v)` | Pointer to the raw buffer. |
-| `const NAME_elem_t *NAME_const_data(const NAME_t *v)` | Const variant of `data`. |
-| `void NAME_destroy(NAME_t *v)` | Destroy all elements, free the buffer, reset to empty. |
-| `NAME_iter_t NAME_begin(const NAME_t *v)` | First index (always `0`). |
-| `NAME_iter_t NAME_end(const NAME_t *v)` | One-past-last index (equal to size). |
-| `NAME_iter_t NAME_iter_next(const NAME_t *v, NAME_iter_t i)` | Advance the iterator. |
+| `bool NAME_swap_remove(NAME_t *v, size_t i, ELEM_TYPE *out)`                       | O(1) removal that does **not** preserve order: removes index `i` (move to `out`, or destroy if `NULL`) and moves the last element into the vacated slot (unless `i` was the last). `false` if `i >= size`.                                                                                      |
+| `ELEM_TYPE *NAME_get(NAME_t *v, size_t i)`                                         | Pointer to element `i`, or `NULL` if out of bounds.                                                                                                                                                                                                                                             |
+| `const NAME_elem_t *NAME_const_get(const NAME_t *v, size_t i)`                     | Const variant of `get`.                                                                                                                                                                                                                                                                         |
+| `ELEM_TYPE *NAME_at(NAME_t *v, size_t i)`                                          | Pointer to element `i`, **no bounds check**.                                                                                                                                                                                                                                                    |
+| `const NAME_elem_t *NAME_const_at(const NAME_t *v, size_t i)`                      | Const variant of `at`.                                                                                                                                                                                                                                                                          |
+| `ELEM_TYPE *NAME_front(NAME_t *v)`                                                 | Pointer to first element, or `NULL`.                                                                                                                                                                                                                                                            |
+| `ELEM_TYPE *NAME_back(NAME_t *v)`                                                  | Pointer to last element, or `NULL`.                                                                                                                                                                                                                                                             |
+| `ELEM_TYPE *NAME_data(NAME_t *v)`                                                  | Pointer to the raw buffer.                                                                                                                                                                                                                                                                      |
+| `const NAME_elem_t *NAME_const_data(const NAME_t *v)`                              | Const variant of `data`.                                                                                                                                                                                                                                                                        |
+| `void NAME_destroy(NAME_t *v)`                                                     | Destroy all elements, free the buffer, reset to empty.                                                                                                                                                                                                                                          |
+| `NAME_iter_t NAME_begin(const NAME_t *v)`                                          | First index (always `0`).                                                                                                                                                                                                                                                                       |
+| `NAME_iter_t NAME_end(const NAME_t *v)`                                            | One-past-last index (equal to size).                                                                                                                                                                                                                                                            |
+| `NAME_iter_t NAME_iter_next(const NAME_t *v, NAME_iter_t i)`                       | Advance the iterator.                                                                                                                                                                                                                                                                           |
 
 ### Example
 
@@ -188,13 +188,13 @@ constrained / no-malloc environments.
 
 ### Configuration macros
 
-| Macro                                           | Required | Default                       | Purpose                                |
-| ----------------------------------------------- | :------: | ----------------------------- | -------------------------------------- |
-| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE`          | ✅       | —                             | Element type.                          |
-| `_ZP_STATIC_VECTOR_TEMPLATE_SIZE`               | ❌       | `16`                          | Maximum capacity (inline array size).  |
-| `_ZP_STATIC_VECTOR_TEMPLATE_NAME`               | ❌       | derived from type and size    | Base name for generated symbols.       |
-| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x)` | ❌       | no-op                         | Destroy one element.                   |
-| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(d,s)`  | ❌       | `*d = *s`                     | Move one element.                      |
+| Macro                                           | Required | Default                    | Purpose                               |
+| ----------------------------------------------- | :------: | -------------------------- | ------------------------------------- |
+| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_TYPE`          |    ✅    | —                          | Element type.                         |
+| `_ZP_STATIC_VECTOR_TEMPLATE_SIZE`               |    ❌    | `16`                       | Maximum capacity (inline array size). |
+| `_ZP_STATIC_VECTOR_TEMPLATE_NAME`               |    ❌    | derived from type and size | Base name for generated symbols.      |
+| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x)` |    ❌    | no-op                      | Destroy one element.                  |
+| `_ZP_STATIC_VECTOR_TEMPLATE_ELEM_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move one element.                     |
 
 ### Generated type
 
@@ -212,14 +212,14 @@ The static vector shares the same accessors as the heap vector
 `push_back`, `append`, `insert`, `pop_back`, `remove`, `remove_at`, `swap_remove`, `destroy`, and
 `begin`/`end`/`iter_next`), with these differences:
 
-| Function | Description |
-| -------- | ----------- |
-| `void NAME_init(NAME_t *v)` | Zero-initialise an empty vector in place. |
-| `NAME_t NAME_new(void)` | Return a new (zero-initialised) empty vector. |
-| `size_t NAME_capacity(const NAME_t *v)` | Returns the compile-time `SIZE`. |
-| `bool NAME_push_back(NAME_t *v, ELEM_TYPE *e)` | Move `*e` to the back. `false` if **full**. |
-| `bool NAME_append(NAME_t *v, ELEM_TYPE *elems, size_t len)` | `false` if it does not fit. |
-| `bool NAME_insert(NAME_t *v, size_t i, ELEM_TYPE *e)` | Insert at index `i`, shifting the tail right. `false` if **full** or `i > size`. |
+| Function                                                    | Description                                                                      |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *v)`                                 | Zero-initialise an empty vector in place.                                        |
+| `NAME_t NAME_new(void)`                                     | Return a new (zero-initialised) empty vector.                                    |
+| `size_t NAME_capacity(const NAME_t *v)`                     | Returns the compile-time `SIZE`.                                                 |
+| `bool NAME_push_back(NAME_t *v, ELEM_TYPE *e)`              | Move `*e` to the back. `false` if **full**.                                      |
+| `bool NAME_append(NAME_t *v, ELEM_TYPE *elems, size_t len)` | `false` if it does not fit.                                                      |
+| `bool NAME_insert(NAME_t *v, size_t i, ELEM_TYPE *e)`       | Insert at index `i`, shifting the tail right. `false` if **full** or `i > size`. |
 
 There is no `reserve`, `init_with_capacity`, or allocator configuration (capacity is fixed).
 `NAME_remove`, `NAME_remove_at` and `NAME_swap_remove` behave exactly as in the heap vector.
@@ -260,22 +260,22 @@ Key design points:
 
 ### Configuration macros
 
-| Macro                                        | Required | Default                      | Purpose                                       |
-| -------------------------------------------- | :------: | ---------------------------- | --------------------------------------------- |
-| `_ZP_HASHMAP_TEMPLATE_KEY_TYPE`              | ✅       | —                            | Key type.                                     |
-| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`              | ✅       | —                            | Value type.                                   |
-| `_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`        | ✅       | —                            | Hash of `*k` → `size_t`.                       |
-| `_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`        | ❌       | `*a == *b`                   | Key equality.                                 |
-| `_ZP_HASHMAP_TEMPLATE_NAME`                  | ❌       | derived from key/val types   | Base name for generated symbols.              |
-| `_ZP_HASHMAP_TEMPLATE_INDEX_TYPE`            | ❌       | `uint32_t`                   | Unsigned index/iterator type; its max value is reserved as a sentinel, so capacity ≤ `max - 1`. |
-| `_ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY`      | ❌       | `16`                         | Entries/buckets reserved on first insert.     |
-| `_ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)`     | ❌       | no-op                        | Destroy a key.                                |
-| `_ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)`     | ❌       | no-op                        | Destroy a value.                              |
-| `_ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`      | ❌       | `*d = *s`                    | Move a key.                                   |
-| `_ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`      | ❌       | `*d = *s`                    | Move a value.                                 |
-| `_ZP_HASHMAP_TEMPLATE_ALLOC_FN(bytes)`       | ❌       | `malloc`                     | Allocate memory.                              |
-| `_ZP_HASHMAP_TEMPLATE_FREE_FN(ptr)`          | ❌       | `free`                       | Free memory.                                  |
-| `_ZP_HASHMAP_TEMPLATE_REALLOC_FN(p,bytes)`   | ❌       | (unused)                     | In-place pool growth when key+value are trivially movable. |
+| Macro                                      | Required | Default                    | Purpose                                                                                         |
+| ------------------------------------------ | :------: | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `_ZP_HASHMAP_TEMPLATE_KEY_TYPE`            |    ✅    | —                          | Key type.                                                                                       |
+| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`            |    ✅    | —                          | Value type.                                                                                     |
+| `_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`      |    ✅    | —                          | Hash of `*k` → `size_t`.                                                                        |
+| `_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`      |    ❌    | `*a == *b`                 | Key equality.                                                                                   |
+| `_ZP_HASHMAP_TEMPLATE_NAME`                |    ❌    | derived from key/val types | Base name for generated symbols.                                                                |
+| `_ZP_HASHMAP_TEMPLATE_INDEX_TYPE`          |    ❌    | `uint32_t`                 | Unsigned index/iterator type; its max value is reserved as a sentinel, so capacity ≤ `max - 1`. |
+| `_ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY`    |    ❌    | `16`                       | Entries/buckets reserved on first insert.                                                       |
+| `_ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)`   |    ❌    | no-op                      | Destroy a key.                                                                                  |
+| `_ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)`   |    ❌    | no-op                      | Destroy a value.                                                                                |
+| `_ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a key.                                                                                     |
+| `_ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a value.                                                                                   |
+| `_ZP_HASHMAP_TEMPLATE_ALLOC_FN(bytes)`     |    ❌    | `malloc`                   | Allocate memory.                                                                                |
+| `_ZP_HASHMAP_TEMPLATE_FREE_FN(ptr)`        |    ❌    | `free`                     | Free memory.                                                                                    |
+| `_ZP_HASHMAP_TEMPLATE_REALLOC_FN(p,bytes)` |    ❌    | (unused)                   | In-place pool growth when key+value are trivially movable.                                      |
 
 ### Generated types
 
@@ -297,28 +297,28 @@ An invalid iterator is the all-ones value of the index type; compare against
 
 ### API
 
-| Function | Description |
-| -------- | ----------- |
-| `void NAME_init(NAME_t *m)` | Initialise empty (no allocation until first insert). |
-| `NAME_t NAME_new(void)` | Return a new empty map. |
-| `bool NAME_reserve(NAME_t *m, size_t min_cap)` | Ensure capacity for `min_cap` entries. `false` on allocation failure. |
-| `size_t NAME_size(const NAME_t *m)` | Number of live entries. |
-| `size_t NAME_capacity(const NAME_t *m)` | Pool capacity. |
-| `bool NAME_is_empty(const NAME_t *m)` | `true` if empty. |
-| `NAME_iter_t NAME_insert(NAME_t *m, KEY_TYPE *k, VAL_TYPE *v)` | Move `*k`/`*v` in. If the key exists, the old value is destroyed and replaced and the *incoming key* is destroyed. `v` may be `NULL` to create an uninitialised value (fill it via `NAME_at`). Returns the entry iterator, or an invalid iterator on allocation failure / capacity exhaustion. |
-| `VAL_TYPE *NAME_get(NAME_t *m, const NAME_key_t *k)` | Pointer to the value for `k`, or `NULL`. |
-| `const NAME_val_t *NAME_const_get(const NAME_t *m, const NAME_key_t *k)` | Const variant of `get`. |
-| `bool NAME_contains(const NAME_t *m, const NAME_key_t *k)` | `true` if `k` is present. |
-| `NAME_iter_t NAME_get_iter(const NAME_t *m, const NAME_key_t *k)` | Iterator to the entry for `k`, or an invalid iterator. |
-| `NAME_elem_t *NAME_at(NAME_t *m, NAME_iter_t i)` | Node at iterator `i` (UB if `i` is invalid). |
-| `const NAME_elem_t *NAME_const_at(const NAME_t *m, NAME_iter_t i)` | Const variant of `at`. |
-| `bool NAME_remove(NAME_t *m, const NAME_key_t *k, VAL_TYPE *out)` | Remove entry for `k` (move value to `out`, else destroy). `true` if found. |
-| `void NAME_remove_at(NAME_t *m, NAME_iter_t i, NAME_elem_t *out, NAME_iter_t *next)` | Remove the entry at `i` (move node to `out`, else destroy); if `next != NULL`, set `*next` to the following iterator. |
-| `void NAME_clear(NAME_t *m)` | Destroy all entries but keep the backing store. |
-| `void NAME_destroy(NAME_t *m)` | Destroy all entries and free the backing store. |
-| `NAME_iter_t NAME_begin(const NAME_t *m)` | Iterator to the first entry, or `end` if empty. |
-| `NAME_iter_t NAME_end(const NAME_t *m)` | Invalid post-end iterator. |
-| `NAME_iter_t NAME_iter_next(const NAME_t *m, NAME_iter_t i)` | Iterator to the next entry. |
+| Function                                                                             | Description                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *m)`                                                          | Initialise empty (no allocation until first insert).                                                                                                                                                                                                                                           |
+| `NAME_t NAME_new(void)`                                                              | Return a new empty map.                                                                                                                                                                                                                                                                        |
+| `bool NAME_reserve(NAME_t *m, size_t min_cap)`                                       | Ensure capacity for `min_cap` entries. `false` on allocation failure.                                                                                                                                                                                                                          |
+| `size_t NAME_size(const NAME_t *m)`                                                  | Number of live entries.                                                                                                                                                                                                                                                                        |
+| `size_t NAME_capacity(const NAME_t *m)`                                              | Pool capacity.                                                                                                                                                                                                                                                                                 |
+| `bool NAME_is_empty(const NAME_t *m)`                                                | `true` if empty.                                                                                                                                                                                                                                                                               |
+| `NAME_iter_t NAME_insert(NAME_t *m, KEY_TYPE *k, VAL_TYPE *v)`                       | Move `*k`/`*v` in. If the key exists, the old value is destroyed and replaced and the *incoming key* is destroyed. `v` may be `NULL` to create an uninitialised value (fill it via `NAME_at`). Returns the entry iterator, or an invalid iterator on allocation failure / capacity exhaustion. |
+| `VAL_TYPE *NAME_get(NAME_t *m, const NAME_key_t *k)`                                 | Pointer to the value for `k`, or `NULL`.                                                                                                                                                                                                                                                       |
+| `const NAME_val_t *NAME_const_get(const NAME_t *m, const NAME_key_t *k)`             | Const variant of `get`.                                                                                                                                                                                                                                                                        |
+| `bool NAME_contains(const NAME_t *m, const NAME_key_t *k)`                           | `true` if `k` is present.                                                                                                                                                                                                                                                                      |
+| `NAME_iter_t NAME_get_iter(const NAME_t *m, const NAME_key_t *k)`                    | Iterator to the entry for `k`, or an invalid iterator.                                                                                                                                                                                                                                         |
+| `NAME_elem_t *NAME_at(NAME_t *m, NAME_iter_t i)`                                     | Node at iterator `i` (UB if `i` is invalid).                                                                                                                                                                                                                                                   |
+| `const NAME_elem_t *NAME_const_at(const NAME_t *m, NAME_iter_t i)`                   | Const variant of `at`.                                                                                                                                                                                                                                                                         |
+| `bool NAME_remove(NAME_t *m, const NAME_key_t *k, VAL_TYPE *out)`                    | Remove entry for `k` (move value to `out`, else destroy). `true` if found.                                                                                                                                                                                                                     |
+| `void NAME_remove_at(NAME_t *m, NAME_iter_t i, NAME_elem_t *out, NAME_iter_t *next)` | Remove the entry at `i` (move node to `out`, else destroy); if `next != NULL`, set `*next` to the following iterator.                                                                                                                                                                          |
+| `void NAME_clear(NAME_t *m)`                                                         | Destroy all entries but keep the backing store.                                                                                                                                                                                                                                                |
+| `void NAME_destroy(NAME_t *m)`                                                       | Destroy all entries and free the backing store.                                                                                                                                                                                                                                                |
+| `NAME_iter_t NAME_begin(const NAME_t *m)`                                            | Iterator to the first entry, or `end` if empty.                                                                                                                                                                                                                                                |
+| `NAME_iter_t NAME_end(const NAME_t *m)`                                              | Invalid post-end iterator.                                                                                                                                                                                                                                                                     |
+| `NAME_iter_t NAME_iter_next(const NAME_t *m, NAME_iter_t i)`                         | Iterator to the next entry.                                                                                                                                                                                                                                                                    |
 
 ### Iteration
 
@@ -357,18 +357,18 @@ chosen automatically to be the smallest that fits the capacity.
 
 ### Configuration macros
 
-| Macro                                            | Required | Default                    | Purpose                                  |
-| ------------------------------------------------ | :------: | -------------------------- | ---------------------------------------- |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE`           | ✅       | —                          | Key type.                                |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`           | ✅       | —                          | Value type.                              |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`     | ✅       | —                          | Hash of `*k` → `size_t`.                  |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`     | ❌       | `*a == *b`                 | Key equality.                            |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_NAME`               | ❌       | derived from key/val types | Base name for generated symbols.         |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY`           | ❌       | `16`                       | Max entries (also the bucket count).     |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)`  | ❌       | no-op                      | Destroy a key.                           |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)`  | ❌       | no-op                      | Destroy a value.                         |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`   | ❌       | `*d = *s`                  | Move a key.                              |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`   | ❌       | `*d = *s`                  | Move a value.                            |
+| Macro                                           | Required | Default                    | Purpose                              |
+| ----------------------------------------------- | :------: | -------------------------- | ------------------------------------ |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE`          |    ✅    | —                          | Key type.                            |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`          |    ✅    | —                          | Value type.                          |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`    |    ✅    | —                          | Hash of `*k` → `size_t`.             |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`    |    ❌    | `*a == *b`                 | Key equality.                        |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_NAME`              |    ❌    | derived from key/val types | Base name for generated symbols.     |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY`          |    ❌    | `16`                       | Max entries (also the bucket count). |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)` |    ❌    | no-op                      | Destroy a key.                       |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)` |    ❌    | no-op                      | Destroy a value.                     |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a key.                          |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a value.                        |
 
 ### API
 
@@ -414,28 +414,28 @@ maximum size — no heap allocation. Supports O(1) insertion and removal at both
 
 ### Configuration macros
 
-| Macro                                          | Required | Default                    | Purpose                              |
-| ---------------------------------------------- | :------: | -------------------------- | ------------------------------------ |
-| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE`          | ✅       | —                          | Element type.                        |
-| `_ZP_STATIC_DEQUE_TEMPLATE_SIZE`               | ❌       | `16`                       | Maximum capacity (circular buffer).  |
-| `_ZP_STATIC_DEQUE_TEMPLATE_NAME`               | ❌       | derived from type and size | Base name for generated symbols.     |
-| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(x)` | ❌       | no-op                      | Destroy one element.                 |
-| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(d,s)`  | ❌       | `*d = *s`                  | Move one element.                    |
+| Macro                                          | Required | Default                    | Purpose                             |
+| ---------------------------------------------- | :------: | -------------------------- | ----------------------------------- |
+| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE`          |    ✅    | —                          | Element type.                       |
+| `_ZP_STATIC_DEQUE_TEMPLATE_SIZE`               |    ❌    | `16`                       | Maximum capacity (circular buffer). |
+| `_ZP_STATIC_DEQUE_TEMPLATE_NAME`               |    ❌    | derived from type and size | Base name for generated symbols.    |
+| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_DESTROY_FN(x)` |    ❌    | no-op                      | Destroy one element.                |
+| `_ZP_STATIC_DEQUE_TEMPLATE_ELEM_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move one element.                   |
 
 ### API
 
-| Function | Description |
-| -------- | ----------- |
-| `NAME_t NAME_new(void)` | Return a new (zero-initialised) empty deque. |
-| `size_t NAME_size(const NAME_t *d)` | Number of stored elements. |
-| `bool NAME_is_empty(const NAME_t *d)` | `true` if empty. |
-| `bool NAME_push_back(NAME_t *d, ELEM_TYPE *e)` | Move `*e` to the back. `false` if full. |
-| `bool NAME_push_front(NAME_t *d, ELEM_TYPE *e)` | Move `*e` to the front. `false` if full. |
-| `bool NAME_pop_back(NAME_t *d, ELEM_TYPE *out)` | Remove from the back (move to `out`, else destroy). `false` if empty. |
+| Function                                         | Description                                                            |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `NAME_t NAME_new(void)`                          | Return a new (zero-initialised) empty deque.                           |
+| `size_t NAME_size(const NAME_t *d)`              | Number of stored elements.                                             |
+| `bool NAME_is_empty(const NAME_t *d)`            | `true` if empty.                                                       |
+| `bool NAME_push_back(NAME_t *d, ELEM_TYPE *e)`   | Move `*e` to the back. `false` if full.                                |
+| `bool NAME_push_front(NAME_t *d, ELEM_TYPE *e)`  | Move `*e` to the front. `false` if full.                               |
+| `bool NAME_pop_back(NAME_t *d, ELEM_TYPE *out)`  | Remove from the back (move to `out`, else destroy). `false` if empty.  |
 | `bool NAME_pop_front(NAME_t *d, ELEM_TYPE *out)` | Remove from the front (move to `out`, else destroy). `false` if empty. |
-| `ELEM_TYPE *NAME_back(NAME_t *d)` | Pointer to the back element, or `NULL`. |
-| `ELEM_TYPE *NAME_front(NAME_t *d)` | Pointer to the front element, or `NULL`. |
-| `void NAME_destroy(NAME_t *d)` | Destroy all elements and reset to empty. |
+| `ELEM_TYPE *NAME_back(NAME_t *d)`                | Pointer to the back element, or `NULL`.                                |
+| `ELEM_TYPE *NAME_front(NAME_t *d)`               | Pointer to the front element, or `NULL`.                               |
+| `void NAME_destroy(NAME_t *d)`                   | Destroy all elements and reset to empty.                               |
 
 Use it as a **FIFO queue** (`push_back` + `pop_front`) or a **LIFO stack**
 (`push_back` + `pop_back`).
@@ -467,29 +467,29 @@ element, per the comparator, is at the top).
 
 ### Configuration macros
 
-| Macro                                           | Required | Default                    | Purpose                                                          |
-| ----------------------------------------------- | :------: | -------------------------- | ---------------------------------------------------------------- |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE`          | ✅       | —                          | Element type.                                                    |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN(a,b)`   | ✅       | —                          | Compare two elements: `<0` if `a` has higher priority than `b`, `0` if equal, `>0` otherwise. |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_NAME`               | ❌       | derived from type and size | Base name for generated symbols.                                 |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_SIZE`               | ❌       | `16`                       | Maximum capacity.                                                |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_DESTROY_FN(x)` | ❌       | no-op                      | Destroy one element.                                             |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN(d,s)`  | ❌       | `*d = *s`                  | Move one element.                                                |
-| `_ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE`       | ❌       | (none)                     | Optional context type; when defined, the comparator signature becomes `(a, b, ctx_ptr)` and a context pointer is stored in the queue. |
+| Macro                                           | Required | Default                    | Purpose                                                                                                                               |
+| ----------------------------------------------- | :------: | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE`          |    ✅    | —                          | Element type.                                                                                                                         |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN(a,b)`   |    ✅    | —                          | Compare two elements: `<0` if `a` has higher priority than `b`, `0` if equal, `>0` otherwise.                                         |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_NAME`               |    ❌    | derived from type and size | Base name for generated symbols.                                                                                                      |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_SIZE`               |    ❌    | `16`                       | Maximum capacity.                                                                                                                     |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_DESTROY_FN(x)` |    ❌    | no-op                      | Destroy one element.                                                                                                                  |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_ELEM_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move one element.                                                                                                                     |
+| `_ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE`       |    ❌    | (none)                     | Optional context type; when defined, the comparator signature becomes `(a, b, ctx_ptr)` and a context pointer is stored in the queue. |
 
 ### API
 
-| Function | Description |
-| -------- | ----------- |
-| `NAME_t NAME_new(void)` | Return a new (zero-initialised) empty queue. |
-| `NAME_t NAME_new_with_ctx(CTX_TYPE *ctx)` | *(context builds only)* New queue carrying comparator context `ctx`. |
-| `void NAME_set_ctx(NAME_t *q, CTX_TYPE *ctx)` | *(context builds only)* Replace the stored context pointer. |
-| `size_t NAME_size(const NAME_t *q)` | Number of stored elements. |
-| `bool NAME_is_empty(const NAME_t *q)` | `true` if empty. |
-| `ELEM_TYPE *NAME_peek(NAME_t *q)` | Pointer to the top (highest-priority) element, or `NULL`. |
-| `bool NAME_push(NAME_t *q, ELEM_TYPE *e)` | Move `*e` in and sift up. `false` if full. |
-| `bool NAME_pop(NAME_t *q, ELEM_TYPE *out)` | Move the top element into `*out` and re-heapify. `false` if empty. |
-| `void NAME_destroy(NAME_t *q)` | Destroy all elements and reset to empty. |
+| Function                                      | Description                                                          |
+| --------------------------------------------- | -------------------------------------------------------------------- |
+| `NAME_t NAME_new(void)`                       | Return a new (zero-initialised) empty queue.                         |
+| `NAME_t NAME_new_with_ctx(CTX_TYPE *ctx)`     | *(context builds only)* New queue carrying comparator context `ctx`. |
+| `void NAME_set_ctx(NAME_t *q, CTX_TYPE *ctx)` | *(context builds only)* Replace the stored context pointer.          |
+| `size_t NAME_size(const NAME_t *q)`           | Number of stored elements.                                           |
+| `bool NAME_is_empty(const NAME_t *q)`         | `true` if empty.                                                     |
+| `ELEM_TYPE *NAME_peek(NAME_t *q)`             | Pointer to the top (highest-priority) element, or `NULL`.            |
+| `bool NAME_push(NAME_t *q, ELEM_TYPE *e)`     | Move `*e` in and sift up. `false` if full.                           |
+| `bool NAME_pop(NAME_t *q, ELEM_TYPE *out)`    | Move the top element into `*out` and re-heapify. `false` if empty.   |
+| `void NAME_destroy(NAME_t *q)`                | Destroy all elements and reset to empty.                             |
 
 > `NAME_sift_up` / `NAME_sift_down` are generated as internal heap helpers; prefer
 > `push` / `pop`.
@@ -548,14 +548,14 @@ Alternatives are **independent and may be sparse**: you may enable any subset of
 
 ### Configuration macros
 
-| Macro                                 | Required | Default                | Purpose                                                       |
-| ------------------------------------- | :------: | ---------------------- | ------------------------------------------------------------- |
-| `_ZP_VARIANT_TEMPLATE_NAME`           | ✅       | —                      | Base name for all generated symbols.                          |
-| `_ZP_VARIANT_TEMPLATE_<N>_TYPE`       | ⚠️       | —                      | Type of alternative `N` (1..8). At least one is required.     |
-| `_ZP_VARIANT_TEMPLATE_<N>_NAME`       | ❌       | `N` (the digit)        | Identifier suffix used in that alternative's symbols.         |
-| `_ZP_VARIANT_TEMPLATE_<N>_DESTROY_FN(p)` | ❌    | no-op                  | Destroy alternative `N`.                                      |
-| `_ZP_VARIANT_TEMPLATE_<N>_MOVE_FN(d,s)`  | ❌    | `*d = *s`              | Move alternative `N`.                                         |
-| `_ZP_VARIANT_TEMPLATE_NO_MOVE_FN`     | ❌       | (move generated)       | When defined, suppress generation of `NAME_move`.             |
+| Macro                                    | Required | Default          | Purpose                                                   |
+| ---------------------------------------- | :------: | ---------------- | --------------------------------------------------------- |
+| `_ZP_VARIANT_TEMPLATE_NAME`              |    ✅    | —                | Base name for all generated symbols.                      |
+| `_ZP_VARIANT_TEMPLATE_<N>_TYPE`          |    ⚠️    | —                | Type of alternative `N` (1..8). At least one is required. |
+| `_ZP_VARIANT_TEMPLATE_<N>_NAME`          |    ❌    | `N` (the digit)  | Identifier suffix used in that alternative's symbols.     |
+| `_ZP_VARIANT_TEMPLATE_<N>_DESTROY_FN(p)` |    ❌    | no-op            | Destroy alternative `N`.                                  |
+| `_ZP_VARIANT_TEMPLATE_<N>_MOVE_FN(d,s)`  |    ❌    | `*d = *s`        | Move alternative `N`.                                     |
+| `_ZP_VARIANT_TEMPLATE_NO_MOVE_FN`        |    ❌    | (move generated) | When defined, suppress generation of `NAME_move`.         |
 
 Using a custom `<N>_NAME` (e.g. `ok` / `err`) changes the generated suffixes:
 `NAME_from_ok`, `NAME_is_ok`, `NAME_get_ok`, `NAME_take_ok`, and the tag `NAME_tagok`.
@@ -574,35 +574,35 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 
 #### Construction / destruction
 
-| Function | Description |
-| -------- | ----------- |
-| `NAME_t NAME_none(void)` | Construct the empty (`NONE`) variant. |
-| `NAME_t NAME_from_XN(<N>_TYPE *val)` | Construct holding alternative `XN`, moving `*val` in. |
-| `void NAME_destroy(NAME_t *v)` | Destroy the active alternative and reset to `NONE`. |
+| Function                                   | Description                                                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `NAME_t NAME_none(void)`                   | Construct the empty (`NONE`) variant.                                                                                    |
+| `NAME_t NAME_from_XN(<N>_TYPE *val)`       | Construct holding alternative `XN`, moving `*val` in.                                                                    |
+| `void NAME_destroy(NAME_t *v)`             | Destroy the active alternative and reset to `NONE`.                                                                      |
 | `void NAME_move(NAME_t *dst, NAME_t *src)` | Move `*src` into `*dst` (destroying the previous `*dst`); `*src` becomes `NONE`. Omitted if `..._NO_MOVE_FN` is defined. |
 
 #### Inspection
 
-| Function | Description |
-| -------- | ----------- |
-| `NAME_tag_t NAME_tag(const NAME_t *v)` | Current tag. |
-| `bool NAME_is_none(const NAME_t *v)` | `true` if empty. |
-| `bool NAME_is_XN(const NAME_t *v)` | `true` if it holds alternative `XN`. |
+| Function                               | Description                          |
+| -------------------------------------- | ------------------------------------ |
+| `NAME_tag_t NAME_tag(const NAME_t *v)` | Current tag.                         |
+| `bool NAME_is_none(const NAME_t *v)`   | `true` if empty.                     |
+| `bool NAME_is_XN(const NAME_t *v)`     | `true` if it holds alternative `XN`. |
 
 #### Access
 
-| Function | Description |
-| -------- | ----------- |
-| `<N>_TYPE *NAME_get_XN(NAME_t *v)` | Pointer to the held value (UB if not alternative `XN`). |
-| `const <N>_TYPE *NAME_const_get_XN(const NAME_t *v)` | Const variant of `get`. |
-| `bool NAME_take_XN(NAME_t *v, <N>_TYPE *out)` | Move the held value into `*out` and reset to `NONE`. `false` (leaving `*v` untouched) if not alternative `XN`. |
+| Function                                             | Description                                                                                                    |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `<N>_TYPE *NAME_get_XN(NAME_t *v)`                   | Pointer to the held value (UB if not alternative `XN`).                                                        |
+| `const <N>_TYPE *NAME_const_get_XN(const NAME_t *v)` | Const variant of `get`.                                                                                        |
+| `bool NAME_take_XN(NAME_t *v, <N>_TYPE *out)`        | Move the held value into `*out` and reset to `NONE`. `false` (leaving `*v` untouched) if not alternative `XN`. |
 
 #### Visitation (macros, not functions)
 
-| Macro | Description |
-| ----- | ----------- |
-| `_ZP_VARIANT_VISIT(NAME, v, (tag, expr), ...)` | Dispatch on the active alternative of `v`. Provide one `(tag, expr)` arm per alternative — where `tag` is the alternative's name (a custom `<N>_NAME` such as `ok`, or the default digit `1`) — plus a `(none, )` arm for the empty state. Inside `expr`, `_` is a pointer to the active member. Covering every tag (including `none`) keeps the generated `switch` exhaustive. |
-| `_ZP_VARIANT_CONST_VISIT(NAME, v, (tag, expr), ...)` | Read-only counterpart that binds `_` to a `const` pointer (use on a `const NAME_t *`). |
+| Macro                                                | Description                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_ZP_VARIANT_VISIT(NAME, v, (tag, expr), ...)`       | Dispatch on the active alternative of `v`. Provide one `(tag, expr)` arm per alternative — where `tag` is the alternative's name (a custom `<N>_NAME` such as `ok`, or the default digit `1`) — plus a `(none, )` arm for the empty state. Inside `expr`, `_` is a pointer to the active member. Covering every tag (including `none`) keeps the generated `switch` exhaustive. |
+| `_ZP_VARIANT_CONST_VISIT(NAME, v, (tag, expr), ...)` | Read-only counterpart that binds `_` to a `const` pointer (use on a `const NAME_t *`).                                                                                                                                                                                                                                                                                          |
 
 ### Example — default names
 
@@ -718,19 +718,19 @@ calls. Include the header next to the container instantiation:
 
 ### Macros
 
-| Macro | Purpose |
-| ----- | ------- |
-| `_ZP_FOREACH(name, ptr, var)` | Loop over every element; `var` (an `elem_t *`) points to each in turn. Use a block body `{ ... }`. |
-| `_ZP_CONST_FOREACH(name, ptr, var)` | `const` counterpart of `_ZP_FOREACH` (`var` is `const elem_t *`). |
-| `_ZP_FOREACH_VAL(name, ptr, var)` | Loop over hash-map **values**; `var` (a `val_t *`) points to each value. |
-| `_ZP_CONST_FOREACH_VAL(name, ptr, var)` | `const` counterpart of `_ZP_FOREACH_VAL`. |
-| `_ZP_FIND(name, ptr, var, predicate)` | Set `var` to the first element matching `predicate` (with `_` bound to the element), or `NULL` if none. |
-| `_ZP_CONST_FIND(name, ptr, var, predicate)` | `const` counterpart of `_ZP_FIND`. |
-| `_ZP_FIND_VAL(name, ptr, var, predicate)` | Set `var` to the first **value** matching `predicate` (`_` bound to `val_t *`), or `NULL`. |
-| `_ZP_CONST_FIND_VAL(name, ptr, var, predicate)` | `const` counterpart of `_ZP_FIND_VAL`. |
-| `_ZP_IT_FIND(name, ptr, begin, end, predicate)` | Advance the iterator `begin` to the first element in the range `[begin, end)` matching `predicate` (`_` bound to the element); leaves `begin == end` if none. `begin`/`end` are `NAME_iter_t` lvalues. |
-| `_ZP_CONST_IT_FIND(name, ptr, begin, end, predicate)` | `const` counterpart of `_ZP_IT_FIND`. |
-| `_ZP_REMOVE(name, ptr, predicate)` | Remove every element matching `predicate` (`_` bound to the element), destroying it in place. Requires the container to provide `NAME_remove_at` (hash maps and both vectors). |
+| Macro                                                 | Purpose                                                                                                                                                                                                |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `_ZP_FOREACH(name, ptr, var)`                         | Loop over every element; `var` (an `elem_t *`) points to each in turn. Use a block body `{ ... }`.                                                                                                     |
+| `_ZP_CONST_FOREACH(name, ptr, var)`                   | `const` counterpart of `_ZP_FOREACH` (`var` is `const elem_t *`).                                                                                                                                      |
+| `_ZP_FOREACH_VAL(name, ptr, var)`                     | Loop over hash-map **values**; `var` (a `val_t *`) points to each value.                                                                                                                               |
+| `_ZP_CONST_FOREACH_VAL(name, ptr, var)`               | `const` counterpart of `_ZP_FOREACH_VAL`.                                                                                                                                                              |
+| `_ZP_FIND(name, ptr, var, predicate)`                 | Set `var` to the first element matching `predicate` (with `_` bound to the element), or `NULL` if none.                                                                                                |
+| `_ZP_CONST_FIND(name, ptr, var, predicate)`           | `const` counterpart of `_ZP_FIND`.                                                                                                                                                                     |
+| `_ZP_FIND_VAL(name, ptr, var, predicate)`             | Set `var` to the first **value** matching `predicate` (`_` bound to `val_t *`), or `NULL`.                                                                                                             |
+| `_ZP_CONST_FIND_VAL(name, ptr, var, predicate)`       | `const` counterpart of `_ZP_FIND_VAL`.                                                                                                                                                                 |
+| `_ZP_IT_FIND(name, ptr, begin, end, predicate)`       | Advance the iterator `begin` to the first element in the range `[begin, end)` matching `predicate` (`_` bound to the element); leaves `begin == end` if none. `begin`/`end` are `NAME_iter_t` lvalues. |
+| `_ZP_CONST_IT_FIND(name, ptr, begin, end, predicate)` | `const` counterpart of `_ZP_IT_FIND`.                                                                                                                                                                  |
+| `_ZP_REMOVE(name, ptr, predicate)`                    | Remove every element matching `predicate` (`_` bound to the element), destroying it in place. Requires the container to provide `NAME_remove_at` (hash maps and both vectors).                         |
 
 > **Notes**
 >
