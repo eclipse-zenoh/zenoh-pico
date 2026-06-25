@@ -100,7 +100,6 @@ jobs:
           Z_FEATURE_LOCAL_QUERYABLE: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
           Z_FEATURE_UNSTABLE_API: 1
-          ZENOH_BRANCH: main
 
   asan-build:
     name: Build on ubuntu-latest with ASAN
@@ -151,4 +150,3 @@ jobs:
           Z_FEATURE_LINK_TLS: 1
           Z_FEATURE_UNSTABLE_API: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
-          ZENOH_BRANCH: main
