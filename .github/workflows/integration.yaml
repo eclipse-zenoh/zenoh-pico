@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Clone this repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup mbedtls
         if: runner.os == 'Linux'
@@ -133,6 +135,8 @@ jobs:
     steps:
       - name: Clone this repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup mbedtls (Linux)
         if: runner.os == 'Linux'
