@@ -265,9 +265,9 @@ z_result_t z_sleep_s(size_t time) {
 /*------------------ Clock ------------------*/
 
 void __z_clock_gettime(z_clock_t *ts) {
-    uint64_t ms = tx_time_get() * (TX_TIMER_TICKS_PER_SECOND / 1000);
-    ts->tv_sec = ms / (uint64_t)1000;
-    ts->tv_nsec = (ms % (uint64_t)1000) * (uint64_t)1000;
+    uint64_t ticks = tx_time_get();
+    ts->tv_sec = ticks / TX_TIMER_TICKS_PER_SECOND;
+    ts->tv_nsec = (ticks % TX_TIMER_TICKS_PER_SECOND) * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
 z_clock_t z_clock_now(void) {
@@ -349,7 +349,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
     return (tx_time_get() - *time) * 1000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) * TX_TIMER_TICKS_PER_SECOND; }
+unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) / TX_TIMER_TICKS_PER_SECOND; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     ULONG64 time_ns = tx_time_get() * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
