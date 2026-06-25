@@ -323,7 +323,7 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         char *reader = _z_ptr_char_offset(start, (ptrdiff_t)canon_len);
         const char *write_start = reader;
         char *writer = reader;
-        char *next_slash = strchr(reader, '/');
+        char *next_slash = memchr(reader, '/', _z_ptr_char_diff(end, reader));
         char const *chunk_end = (next_slash != NULL) ? next_slash : end;
 
         bool in_big_wild = false;
