@@ -200,6 +200,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
+
       - name: Download and extract Zenoh
         run: |
           curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
@@ -218,6 +232,11 @@ jobs:
           python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
         timeout-minutes: 15
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
           Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
           Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
@@ -351,6 +370,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
+
       - name: Download and extract Zenoh
         run: |
           curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
@@ -370,6 +403,11 @@ jobs:
           python3 ./build/tests/single_thread.py
         timeout-minutes: 15
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           Z_FEATURE_MULTI_THREAD: 0
           Z_FEATURE_UNSTABLE_API: ${{ matrix.unstable_api }}
 
@@ -383,6 +421,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
         run: |
@@ -402,6 +454,12 @@ jobs:
           CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/fragment.py
         timeout-minutes: 15
+        env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
 
       - name: Kill Zenoh router
         if: always()
@@ -413,6 +471,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
         run: |
@@ -431,6 +503,12 @@ jobs:
           Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/attachment.py
         timeout-minutes: 15
+        env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
 
       - name: Kill Zenoh router
         if: always()
@@ -447,6 +525,20 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
         run: |
@@ -468,6 +560,12 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
+        env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
 
       - name: Run test
         run: python3 -u ./build/tests/memory_leak.py
@@ -498,6 +596,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
+
       - name: Download and extract Zenoh
         run: |
           curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
@@ -509,6 +621,12 @@ jobs:
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
           RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
+        env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
 
   routed_peer_client_test:
     name: Test routed peer client communication
@@ -516,6 +634,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-ci-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-ci-${{ github.job }}-
+            ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
         run: |
@@ -549,6 +681,12 @@ jobs:
           IFACE=${{ steps.select-multicast-iface.outputs.iface }}
           python3 ./build/tests/routed_peer_client.py tcp/127.0.0.1:7447 udp/224.0.0.123:7447#iface=$IFACE
         timeout-minutes: 15
+        env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
 
       - name: Kill Zenoh router
         if: always()
