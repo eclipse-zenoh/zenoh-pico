@@ -50,14 +50,17 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
     if (err == _Z_RES_OK) {
         _z_link_t zl;
         memset(&zl, 0, sizeof(_z_link_t));
-
+        _z_zbuf_t zbf = _z_zbuf_null();
         err = _z_open_link(&zl, locator, NULL);
         if (err == _Z_RES_OK) {
             // Send the scout message
-            _z_zbuf_t zbf = _z_zbuf_null();
-            err = _z_link_send_wbuf(&zl, wbf, NULL);
-            _Z_SET_IF_OK(err, _z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE));
-            if (err == _Z_RES_OK) {
+            if (_z_link_send_wbuf(&zl, wbf, NULL) != _Z_RES_OK) {
+                err = _Z_ERR_TRANSPORT_TX_FAILED;
+                _Z_ERROR_LOG(err);
+            } else if (_z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE) != _Z_RES_OK) {
+                err = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                _Z_ERROR_LOG(err);
+            } else {
                 z_clock_t start = z_clock_now();
                 while (z_clock_elapsed_ms(&start) < period) {
                     // Eventually read hello messages
@@ -121,9 +124,6 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                         break;
                     }
                 }
-            } else {
-                _Z_ERROR_LOG(err);
-                err = _Z_ERR_TRANSPORT_TX_FAILED;
             }
             _z_zbuf_clear(&zbf);
             _z_link_clear(&zl);
