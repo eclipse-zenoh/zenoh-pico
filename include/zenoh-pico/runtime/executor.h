@@ -151,46 +151,37 @@ static inline void _z_fut_data_destroy(_z_fut_data_t *data) {
     data->_schedule = _z_fut_schedule_ready();  // Reset status to ready after destroy
 }
 
-static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
-    _z_fut_move(&dst->_fut, &src->_fut);
-    dst->_schedule = src->_schedule;
-    src->_schedule = _z_fut_schedule_ready();
-}
-
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
 #define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE size_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _z_fut_data_t
 #define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_fut_data_hmap
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN_NAME _z_size_fut_data_hmap_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT Z_RUNTIME_MAX_TASKS
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN _z_size_fut_data_hmap_hash
 #define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_RUNTIME_MAX_TASKS
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN_NAME _z_fut_data_destroy
-#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN_NAME _z_fut_data_move
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN _z_fut_data_destroy
+// default move for _z_fut_data - i.e. a plain copy without destroying the source
 #include "zenoh-pico/collections/static_hashmap_template.h"
 
-#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_STATIC_DEQUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_iter_t
 #define _ZP_STATIC_DEQUE_TEMPLATE_NAME _z_fut_data_hmap_index_deque
 #define _ZP_STATIC_DEQUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_deque_template.h"
 
 // Compare two sleeping-task indices by their wake-up time stored in the hashmap.
 // The context is a pointer to the task hashmap, which provides the wake-up times.
-static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_index_t *a, const _z_fut_data_hmap_index_t *b,
+static inline int _z_sleeping_fut_idx_cmp(const _z_fut_data_hmap_iter_t *a, const _z_fut_data_hmap_iter_t *b,
                                           const _z_fut_data_hmap_t *tasks) {
-    uint64_t ta =
-        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_node_at((_z_fut_data_hmap_t *)tasks, *a)->val._schedule);
-    uint64_t tb =
-        _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_node_at((_z_fut_data_hmap_t *)tasks, *b)->val._schedule);
+    uint64_t ta = _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_const_at(tasks, *a)->val._schedule);
+    uint64_t tb = _z_fut_schedule_get_wake_up_time_ms(_z_fut_data_hmap_const_at(tasks, *b)->val._schedule);
     if (ta < tb) return -1;
     if (ta > tb) return 1;
     return 0;
 }
 
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_index_t
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE _z_fut_data_hmap_iter_t
 #define _ZP_STATIC_PQUEUE_TEMPLATE_NAME _z_sleeping_fut_pqueue
 #define _ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE _z_fut_data_hmap_t
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME _z_sleeping_fut_idx_cmp
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN _z_sleeping_fut_idx_cmp
 #define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE Z_RUNTIME_MAX_TASKS
 #include "zenoh-pico/collections/static_pqueue_template.h"
 

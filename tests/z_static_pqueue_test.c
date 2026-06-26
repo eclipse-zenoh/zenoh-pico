@@ -25,7 +25,7 @@ static inline int intpq_cmp(const int *a, const int *b) { return *a - *b; }
 #define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_TYPE int
 #define _ZP_STATIC_PQUEUE_TEMPLATE_NAME intpq
 #define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE 8
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME intpq_cmp
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN intpq_cmp
 #include "zenoh-pico/collections/static_pqueue_template.h"
 
 // ── Instantiate int heap with context-carried comparator ─────────────────────
@@ -42,7 +42,7 @@ static inline int intpq_with_ctx_cmp(const int *a, const int *b, const intpq_cmp
 #define _ZP_STATIC_PQUEUE_TEMPLATE_NAME intpq_with_ctx
 #define _ZP_STATIC_PQUEUE_TEMPLATE_SIZE 8
 #define _ZP_STATIC_PQUEUE_TEMPLATE_CMP_CTX_TYPE intpq_cmp_ctx_t
-#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN_NAME intpq_with_ctx_cmp
+#define _ZP_STATIC_PQUEUE_TEMPLATE_ELEM_CMP_FN intpq_with_ctx_cmp
 #include "zenoh-pico/collections/static_pqueue_template.h"
 
 // ── Tests: context-free min-heap ─────────────────────────────────────────────

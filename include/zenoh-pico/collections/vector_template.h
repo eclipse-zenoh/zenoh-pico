@@ -1,0 +1,456 @@
+//
+// Copyright (c) 2026 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
+
+// User needs to define the following macros before including this file:
+// - _ZP_VECTOR_TEMPLATE_ELEM_TYPE: the type of the elements in the vector (required)
+// - _ZP_VECTOR_TEMPLATE_NAME: the name of the vector type to generate, without the _t suffix
+//   (optional, default is derived from the element type)
+// - _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN: the function-like macro used to destroy
+//   an element (optional, default is a no-op)
+// - _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN: the function-like macro used to move an
+//   element (optional, default performs assignment without destroying the source element)
+// - _ZP_VECTOR_TEMPLATE_ALLOC_FN: the function-like macro used to allocate memory
+//   with signature void*(size_t bytes) (optional, default is malloc)
+// - _ZP_VECTOR_TEMPLATE_FREE_FN: the function-like macro used to free memory
+//   with signature void(void *ptr) (optional, default is free)
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "zenoh-pico/collections/cat.h"
+
+#ifndef _ZP_VECTOR_TEMPLATE_ELEM_TYPE
+#error "_ZP_VECTOR_TEMPLATE_ELEM_TYPE must be defined before including vector_template.h"
+#define _ZP_VECTOR_TEMPLATE_ELEM_TYPE int
+#endif
+#ifndef _ZP_VECTOR_TEMPLATE_NAME
+#define _ZP_VECTOR_TEMPLATE_NAME _ZP_CAT(_ZP_VECTOR_TEMPLATE_ELEM_TYPE, vec)
+#endif
+
+#ifndef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN
+#define _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE
+#define _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(x) (void)(x)
+#endif
+#ifndef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN
+#define _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
+#define _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(dst, src) *(dst) = *(src);
+#endif
+
+#ifndef _ZP_VECTOR_TEMPLATE_ALLOC_FN
+#define _ZP_VECTOR_TEMPLATE_ALLOC_FN(bytes) malloc(bytes)
+#endif
+// By default reallocation is implemented as malloc + free
+// but a custom reallocation function can be provided by user to improve performance
+// #define _ZP_VECTOR_TEMPLATE_REALLOC_FN(ptr, size) realloc(ptr, size)
+#ifndef _ZP_VECTOR_TEMPLATE_FREE_FN
+#define _ZP_VECTOR_TEMPLATE_FREE_FN(ptr) free(ptr)
+#endif
+
+#define _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE (SIZE_MAX / sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE))
+
+#define _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, t)
+typedef struct _ZP_VECTOR_TEMPLATE_TYPE {
+    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_buffer;
+    size_t _size;
+    size_t _capacity;
+} _ZP_VECTOR_TEMPLATE_TYPE;
+
+typedef _ZP_VECTOR_TEMPLATE_ELEM_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t);
+
+// iter_t is the iterator type (a plain index). Used by algorithms_template.h macros.
+typedef size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t);
+
+// Initializes a new, empty vector.
+static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    vec->_size = 0;
+    vec->_capacity = 0;
+    vec->_buffer = NULL;
+}
+
+// Creates a new, empty vector.
+static inline _ZP_VECTOR_TEMPLATE_TYPE _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, new)(void) {
+    _ZP_VECTOR_TEMPLATE_TYPE vec;
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(&vec);
+    return vec;
+}
+
+// Returns the number of elements currently stored in the vector.
+static inline size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, size)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) { return vec->_size; }
+
+// Returns the current heap allocation capacity of the vector.
+static inline size_t _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, capacity)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_capacity;
+}
+
+// Returns true if the vector contains no elements.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, is_empty)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_size == 0;
+}
+
+// Destroys all elements in the vector by calling the configured destroy function on each one,
+// frees the internal buffer, and resets the vector to an empty state.
+// Does not free the vector struct itself.
+static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, destroy)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+#if !defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE)
+    for (size_t i = 0; i < vec->_size; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[i]);
+    }
+#endif
+    _ZP_VECTOR_TEMPLATE_FREE_FN(vec->_buffer);
+    vec->_buffer = NULL;
+    vec->_size = 0;
+    vec->_capacity = 0;
+}
+
+// Returns a pointer to the element at the given index, or NULL if out of bounds.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, get)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                                    size_t index) {
+    if (index >= vec->_size) {
+        return NULL;
+    }
+    return &vec->_buffer[index];
+}
+
+// Returns a const pointer to the element at the given index, or NULL if out of bounds.
+// Note: the `const` is applied to the `elem_t` typedef rather than spelled out as
+// `const _ZP_VECTOR_TEMPLATE_ELEM_TYPE *`. When the element type is itself a pointer
+// (e.g. `char *`), the latter would expand to `const char **`, which qualifies the
+// wrong pointer level and discards qualifiers when returning `&vec->_buffer[index]`.
+// Using the typedef yields `<elem> const *` (e.g. `char * const *`), which is correct.
+static inline const _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, const_get)(const _ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
+    if (index >= vec->_size) {
+        return NULL;
+    }
+    return &vec->_buffer[index];
+}
+
+// Returns a pointer to the element at the given index, without bounds checking.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, at)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                                   size_t index) {
+    return &vec->_buffer[index];
+}
+
+// Returns a const pointer to the element at the given index, without bounds checking.
+static inline const _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, const_at)(const _ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
+    return &vec->_buffer[index];
+}
+
+// Grows the internal buffer to at least @p new_capacity elements.
+// Allocates a fresh buffer, moves each element individually (safe for non-trivially moveable types),
+// then frees the old raw buffer. Returns true on success, or false if the allocation fails
+// (the vector is left unchanged in that case).
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t new_capacity) {
+    if (new_capacity <= vec->_capacity) {
+        return true;
+    }
+    if (new_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
+    _ZP_VECTOR_TEMPLATE_ELEM_TYPE *new_buffer;
+#if defined(_ZP_VECTOR_TEMPLATE_REALLOC_FN) && defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_REALLOC_FN(
+        vec->_buffer, new_capacity * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+    if (new_buffer == NULL) {
+        return false;
+    } else {
+        vec->_buffer = new_buffer;
+        vec->_capacity = new_capacity;
+        return true;
+    }
+#else
+    new_buffer = (_ZP_VECTOR_TEMPLATE_ELEM_TYPE *)_ZP_VECTOR_TEMPLATE_ALLOC_FN(new_capacity *
+                                                                               sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+    if (new_buffer == NULL) {
+        return false;
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    // SAFETY: new_buffer is guaranteed to have enough capacity for all existing elements by construction.
+    // Flawfinder: ignore [CWE-120]
+    memcpy(new_buffer, vec->_buffer, vec->_size * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = 0; i < vec->_size; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&new_buffer[i], &vec->_buffer[i]);
+    }
+#endif
+    _ZP_VECTOR_TEMPLATE_FREE_FN(vec->_buffer);
+    vec->_buffer = new_buffer;
+    vec->_capacity = new_capacity;
+    return true;
+#endif
+}
+
+// Initializes an empty vector with specified capacity.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init_with_capacity)(_ZP_VECTOR_TEMPLATE_TYPE *v, size_t capacity) {
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, init)(v);
+    return _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(v, capacity);
+}
+
+// Appends an element to the back of the vector by moving it from @p elem.
+// Grows the internal buffer (doubling capacity) if needed.
+// Returns true on success, or false if a reallocation was required but failed.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, push_back)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elem) {
+    if (vec->_size == _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
+    if (vec->_size == vec->_capacity) {
+        size_t new_capacity;
+        if (vec->_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+        } else {
+            new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity * 2;
+        }
+
+        if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+            return false;
+        }
+    }
+    _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size], elem);
+    vec->_size++;
+    return true;
+}
+
+// Appends @p len elements to the back of the vector by moving them from the array @p elems.
+// Grows the internal buffer (doubling capacity until the elements fit) if needed.
+// On success every element in [elems, elems + len) is moved into the vector.
+// Returns true on success, or false if a reallocation was required but failed,
+// in which case the vector is left unchanged and no elements are moved.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, append)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elems, size_t len) {
+    if (len == 0) {
+        return true;  // nothing to append; never allocates or dereferences elems/_buffer
+    }
+    size_t required = vec->_size + len;
+    if (required < vec->_size || required > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {  // overflow check
+        return false;
+    }
+    size_t new_capacity = vec->_capacity;
+    while (new_capacity < required) {
+        if (new_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+            break;
+        } else {
+            new_capacity = new_capacity == 0 ? 1 : new_capacity * 2;
+        }
+    }
+
+    if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+        return false;
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    // SAFETY: vec->_buffer is guaranteed to have enough capacity for elements to append by construction.
+    // Flawfinder: ignore [CWE-120]
+    memcpy(&vec->_buffer[vec->_size], elems, len * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = 0; i < len; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[vec->_size + i], &elems[i]);
+    }
+#endif
+    vec->_size += len;
+    return true;
+}
+
+// Removes the element at the back of the vector.
+// If @p out is non-NULL the element is moved into it; otherwise it is destroyed in place.
+// Returns true on success, or false if the vector is empty.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, pop_back)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                               _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, is_empty)(vec)) {
+        return false;
+    }
+    vec->_size--;
+    if (out != NULL) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[vec->_size]);
+    } else {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[vec->_size]);
+    }
+    return true;
+}
+
+// Returns a pointer to the element at the back of the vector without removing it,
+// or NULL if the vector is empty.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, back)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    if (_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, is_empty)(vec)) {
+        return NULL;
+    }
+    return &vec->_buffer[vec->_size - 1];
+}
+
+// Returns a pointer to the element at the front of the vector without removing it,
+// or NULL if the vector is empty.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, front)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    if (_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, is_empty)(vec)) {
+        return NULL;
+    }
+    return &vec->_buffer[0];
+}
+
+// Inserts an element at the given index by moving it from @p elem, shifting subsequent elements right.
+// Grows the internal buffer (doubling capacity) if needed.
+// Returns true on success, or false if the index is out of bounds (index > size) or a reallocation
+// was required but failed (in which case the vector is left unchanged).
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, insert)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *elem) {
+    if (index > vec->_size) {
+        return false;
+    }
+    if (vec->_size == _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE) {
+        return false;  // avoid overflow in malloc
+    }
+    if (vec->_size == vec->_capacity) {
+        size_t new_capacity;
+        if (vec->_capacity > _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE / 2) {
+            new_capacity = _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE;
+        } else {
+            new_capacity = vec->_capacity == 0 ? 1 : vec->_capacity * 2;
+        }
+
+        if (!_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, reserve)(vec, new_capacity)) {
+            return false;
+        }
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index + 1], &vec->_buffer[index],
+            (vec->_size - index) * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = vec->_size; i > index; i--) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i], &vec->_buffer[i - 1]);
+    }
+#endif
+    _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], elem);
+    vec->_size++;
+    return true;
+}
+
+// Removes the element at the given index, shifting subsequent elements left.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// Returns true on success, or false if the index is out of bounds.
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                             _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (index >= vec->_size) {
+        return false;
+    }
+    if (out != NULL) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
+    } else {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
+    }
+#if defined(_ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE)
+    memmove(&vec->_buffer[index], &vec->_buffer[index + 1],
+            (vec->_size - index - 1) * sizeof(_ZP_VECTOR_TEMPLATE_ELEM_TYPE));
+#else
+    for (size_t i = index + 1; i < vec->_size; i++) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[i - 1], &vec->_buffer[i]);
+    }
+#endif
+    vec->_size--;
+    return true;
+}
+
+// Removes the element at the given iterator (index), shifting subsequent elements left.
+// Thin wrapper around remove() that mirrors the hashmap remove_at signature so the vector can be
+// used with the _ZP_REMOVE macro from algorithms_template.h.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If @p next_idx is non-NULL it is set to the iterator of the next element to visit: because removal
+// shifts the tail left, this is the same index when another element followed, or the end() iterator
+// when the removed element was the last one.
+// Behaviour is undefined if idx is out of bounds (idx >= size).
+static inline void _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove_at)(_ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                                _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t) idx,
+                                                                _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out,
+                                                                _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t) * next_idx) {
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, remove)(vec, idx, out);
+    if (next_idx != NULL) {
+        // After the left shift, idx addresses the element that followed the removed one, or equals
+        // end() (== _size) when the removed element was the last.
+        *next_idx = idx;
+    }
+}
+
+// Removes the element at the given index in O(1) by moving the last element into its place.
+// This does NOT preserve the relative order of the remaining elements.
+// If @p out is non-NULL the removed element is moved into it; otherwise it is destroyed in place.
+// If the removed element was not the last one, the last element is moved into the vacated slot.
+// Returns true on success, or false if the index is out of bounds (index >= size).
+static inline bool _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, swap_remove)(_ZP_VECTOR_TEMPLATE_TYPE *vec, size_t index,
+                                                                  _ZP_VECTOR_TEMPLATE_ELEM_TYPE *out) {
+    if (index >= vec->_size) {
+        return false;
+    }
+    if (out != NULL) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(out, &vec->_buffer[index]);
+    } else {
+        _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN(&vec->_buffer[index]);
+    }
+    vec->_size--;
+    // If the removed element was not the last, move the (former) last element into the hole.
+    if (index != vec->_size) {
+        _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN(&vec->_buffer[index], &vec->_buffer[vec->_size]);
+    }
+    return true;
+}
+
+// Returns the pointer to the raw buffer.
+static inline _ZP_VECTOR_TEMPLATE_ELEM_TYPE *_ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, data)(_ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_buffer;
+}
+
+// Returns the const pointer to the raw buffer.
+// See the note on const_get regarding the use of the `elem_t` typedef for the `const` qualifier.
+static inline const _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, elem_t) *
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, const_data)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_buffer;
+}
+
+// Returns the index of the first element (always 0).
+// Use together with end() for index-based iteration: for (size_t i = begin(v); i != end(v); i++).
+// Dereference with at() or const_at(). Indices remain stable across growth.
+static inline _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, begin)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    (void)vec;
+    return 0;
+}
+
+// Returns the one-past-last index (equal to size). Used as the end sentinel for index iteration.
+static inline _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, end)(const _ZP_VECTOR_TEMPLATE_TYPE *vec) {
+    return vec->_size;
+}
+
+// Advances the iterator by one step.
+static inline _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t)
+    _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_next)(const _ZP_VECTOR_TEMPLATE_TYPE *vec,
+                                                 _ZP_CAT(_ZP_VECTOR_TEMPLATE_NAME, iter_t) pos) {
+    (void)vec;
+    return pos + 1;
+}
+
+#undef _ZP_VECTOR_TEMPLATE_TYPE
+#undef _ZP_VECTOR_TEMPLATE_ELEM_TYPE
+#undef _ZP_VECTOR_TEMPLATE_NAME
+#undef _ZP_VECTOR_TEMPLATE_ELEM_DESTROY_FN
+#undef _ZP_VECTOR_TEMPLATE_ELEM_MOVE_FN
+#undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_DESTRUCTIBLE
+#undef _ZP_VECTOR_TEMPLATE_ELEM_TRIVIALLY_MOVEABLE
+#undef _ZP_VECTOR_TEMPLATE_ALLOC_FN
+#ifdef _ZP_VECTOR_TEMPLATE_REALLOC_FN
+#undef _ZP_VECTOR_TEMPLATE_REALLOC_FN
+#endif
+#undef _ZP_VECTOR_TEMPLATE_MAX_ALLOC_SIZE
+#undef _ZP_VECTOR_TEMPLATE_FREE_FN
