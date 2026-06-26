@@ -465,7 +465,9 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare
     }
     // Retrieve key
     _z_keyexpr_view_t key;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &key, decl_key, peer));
+    char buf[Z_MAX_KEYEXPR_LENGTH];
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &key, decl_key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
+
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     msg.key = _z_keyexpr_view_deref(&key);
     // NOTE: it is possible that it is a redeclare of an existing entity - so we might need to update it
@@ -605,9 +607,11 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
     _Z_RETURN_IF_ERR(_zp_multicast_send_join(&zn->_tp._transport._raweth));
 #endif
     _z_keyexpr_view_t restr_key = _z_keyexpr_view_null();
+    char restr_key_buf[Z_MAX_KEYEXPR_LENGTH];
     const _z_keyexpr_t *restr_key_opt = NULL;
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
-        _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &restr_key, wireexpr, peer));
+        _Z_RETURN_IF_ERR(
+            _z_get_keyexpr_view_from_wireexpr(zn, &restr_key, wireexpr, peer, restr_key_buf, Z_MAX_KEYEXPR_LENGTH));
         restr_key_opt = _z_keyexpr_view_deref(&restr_key);
     }
     z_result_t ret = _Z_RES_OK;

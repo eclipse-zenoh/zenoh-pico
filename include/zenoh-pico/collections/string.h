@@ -129,7 +129,7 @@ int _z_substring_compare(const _z_string_t *left, size_t left_start, size_t left
                          size_t right_start, size_t right_len);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);
-_z_string_t _z_string_preallocate(const size_t len);
+z_result_t _z_string_preallocate(_z_string_t *s, const size_t len);
 z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, const char *right, size_t len,
                                    const char *separator, size_t separator_len);
 static inline z_result_t _z_string_concat(_z_string_t *s, const _z_string_t *left, const _z_string_t *right,

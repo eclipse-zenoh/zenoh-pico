@@ -262,8 +262,7 @@ z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s)
     if (len == 0) {
         return _Z_RES_OK;
     }
-    s->_val = _z_string_preallocate(len);
-    if (_z_string_len(&s->_val) != len) _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    _Z_RETURN_IF_ERR(_z_string_preallocate(&s->_val, len));
     _z_bytes_to_buf(bytes, (uint8_t *)_z_string_data(&s->_val), len);
     return _Z_RES_OK;
 }

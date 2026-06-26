@@ -82,11 +82,17 @@ _z_declared_keyexpr_t _z_declared_keyexpr_alias_from_substr(const char *str, siz
     return ke;
 }
 
-z_result_t _z_keyexpr_from_string(_z_keyexpr_t *dst, const _z_string_t *str) {
-    return _z_keyexpr_from_substr(dst, _z_string_data(str), _z_string_len(str));
+z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str) {
+    return _z_keyexpr_copy_from_substr(dst, _z_string_data(str), _z_string_len(str));
 }
 
-z_result_t _z_keyexpr_from_substr(_z_keyexpr_t *dst, const char *str, size_t len) {
+void _z_keyexpr_from_string(_z_keyexpr_t *dst, _z_string_t *str) {
+    *dst = _z_keyexpr_null();
+    dst->_keyexpr = *str;
+    *str = _z_string_null();
+}
+
+z_result_t _z_keyexpr_copy_from_substr(_z_keyexpr_t *dst, const char *str, size_t len) {
     *dst = _z_keyexpr_null();
     dst->_keyexpr = _z_string_copy_from_substr(str, len);
     return _z_string_check(&dst->_keyexpr) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -438,7 +444,7 @@ z_result_t _z_keyexpr_concat(_z_keyexpr_t *key, const _z_keyexpr_t *left, const 
     *key = _z_keyexpr_null();
     size_t left_len = _z_string_len(&left->_keyexpr);
     if (left_len == 0) {
-        return _z_keyexpr_from_substr(key, right, len);
+        return _z_keyexpr_copy_from_substr(key, right, len);
     }
     const char *left_data = _z_string_data(&left->_keyexpr);
 

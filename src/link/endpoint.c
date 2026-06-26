@@ -265,8 +265,8 @@ static void __z_locator_onto_string(_z_string_t *dst, const _z_locator_t *loc) {
  *   The z_stringified :c:type:`_z_locator_t`.
  */
 _z_string_t _z_locator_to_string(const _z_locator_t *loc) {
-    _z_string_t s = _z_string_preallocate(_z_locator_strlen(loc));
-    if (!_z_string_check(&s)) {
+    _z_string_t s;
+    if (_z_string_preallocate(&s, _z_locator_strlen(loc)) != _Z_RES_OK) {
         return s;
     }
     __z_locator_onto_string(&s, loc);
@@ -558,8 +558,7 @@ _z_string_t _z_endpoint_to_string(const _z_endpoint_t *endpoint) {
         curr_len += config_len;
     }
     // Reconstruct the endpoint as a string
-    ret = _z_string_preallocate(curr_len);
-    if (!_z_string_check(&ret)) {
+    if (_z_string_preallocate(&ret, curr_len) != _Z_RES_OK) {
         // cppcheck-suppress misra-c2012-17.3
         _z_string_clear(&locator);
         if (config != NULL) {

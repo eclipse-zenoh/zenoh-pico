@@ -100,7 +100,9 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
         case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
             _z_keyexpr_view_t ke_view;
-            _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer));
+            char buf[Z_MAX_KEYEXPR_LENGTH];
+            _Z_RETURN_IF_ERR(
+                _z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
             return _z_trigger_queryables(zn, _z_keyexpr_view_deref(&ke_view), &req->_body._query, (uint32_t)req->_rid,
                                          req->_ext_qos, peer);
 #else

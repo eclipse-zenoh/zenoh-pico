@@ -154,7 +154,8 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_string_view_len(&wireexpr->_suffix),
              _z_string_view_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
     _z_keyexpr_view_t ke_view;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    char buf[Z_MAX_KEYEXPR_LENGTH];
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer, buf, Z_MAX_KEYEXPR_LENGTH));
     z_result_t ret = _Z_RES_OK;
     const _z_keyexpr_t *ke = _z_keyexpr_view_deref(&ke_view);
 

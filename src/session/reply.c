@@ -26,7 +26,8 @@ z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wir
 
 #if Z_FEATURE_QUERY == 1
     _z_keyexpr_view_t keyexpr;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer));
+    char buf[Z_MAX_KEYEXPR_LENGTH];
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
     ret = _z_trigger_query_reply_partial(zn, id, _z_keyexpr_view_deref(&keyexpr), reply, replier_id, qos, peer);
 #else
     _ZP_UNUSED(zn);

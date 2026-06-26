@@ -56,7 +56,8 @@ static inline z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, const _z
                                                       const _z_source_info_t *source_info,
                                                       _z_transport_peer_common_t *peer) {
     _z_keyexpr_view_t ke_view;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    char buf[Z_MAX_KEYEXPR_LENGTH];
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer, buf, Z_MAX_KEYEXPR_LENGTH));
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, _z_keyexpr_view_deref(&ke_view), payload,
                                          encoding, Z_SAMPLE_KIND_PUT, timestamp, qos, attachment, reliability,
                                          source_info, peer);
@@ -67,7 +68,8 @@ static inline z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, const _z
                                                       const _z_source_info_t *source_info,
                                                       _z_transport_peer_common_t *peer) {
     _z_keyexpr_view_t ke_view;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer));
+    char buf[Z_MAX_KEYEXPR_LENGTH];
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer, buf, Z_MAX_KEYEXPR_LENGTH));
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, _z_keyexpr_view_deref(&ke_view), NULL, NULL,
                                          Z_SAMPLE_KIND_DELETE, timestamp, qos, attachment, reliability, source_info,
                                          peer);

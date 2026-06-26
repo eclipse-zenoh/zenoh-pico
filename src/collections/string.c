@@ -118,14 +118,7 @@ _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs) {
     return s;
 }
 
-_z_string_t _z_string_preallocate(size_t len) {
-    _z_string_t s;
-    // As long as _z_string_t is only a slice, no need to do anything more
-    if (_z_slice_init(&s._slice, len) != _Z_RES_OK) {
-        _Z_ERROR("String allocation failed");
-    }
-    return s;
-}
+z_result_t _z_string_preallocate(_z_string_t *s, size_t len) { return _z_slice_init(&s->_slice, len); }
 
 const char *_z_string_rchr(_z_string_t *str, char filter) {
     const char *curr_res = NULL;
@@ -230,11 +223,7 @@ z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, cons
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     }
-
-    *s = _z_string_preallocate(left_len + len + separator_len);
-    if (!_z_string_check(s)) {
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
+    _Z_RETURN_IF_ERR(_z_string_preallocate(s, left_len + len + separator_len));
 
     uint8_t *curr_ptr = (uint8_t *)_z_string_data(s);
     // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.

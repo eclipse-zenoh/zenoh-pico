@@ -160,8 +160,6 @@ typedef struct _z_session_t {
 
     // Session declarations
     _z_resource_slist_t *_local_resources;
-    // Buffer for expanding wire-expression into keyexpression when rx buffer aliasing is not possible.
-    char _z_keyexpr_buffer[Z_MAX_KEYEXPR_LENGTH];
 
     // Information for session restoring and asynchronous peer connection
     _z_config_t _config;

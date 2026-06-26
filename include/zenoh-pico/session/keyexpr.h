@@ -83,8 +83,11 @@ static inline _z_keyexpr_t _z_keyexpr_alias_from_str(const char *str) {
     return _z_keyexpr_alias_from_substr(str, strlen(str));
 }
 
-z_result_t _z_keyexpr_from_string(_z_keyexpr_t *dst, const _z_string_t *str);
-z_result_t _z_keyexpr_from_substr(_z_keyexpr_t *dst, const char *str, size_t len);
+z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str);
+z_result_t _z_keyexpr_copy_from_substr(_z_keyexpr_t *dst, const char *str, size_t len);
+
+// Construct a key expression from a string. The keyexpr takes ownership of the string.
+void _z_keyexpr_from_string(_z_keyexpr_t *dst, _z_string_t *str);
 
 static inline void _z_keyexpr_clear(_z_keyexpr_t *key) { _z_string_clear(&key->_keyexpr); }
 
@@ -183,12 +186,12 @@ static inline _z_declared_keyexpr_t _z_declared_keyexpr_alias_from_str(const cha
 }
 static inline z_result_t _z_declared_keyexpr_from_string(_z_declared_keyexpr_t *dst, const _z_string_t *str) {
     *dst = _z_declared_keyexpr_null();
-    return _z_keyexpr_from_string(&dst->_inner, str);
+    return _z_keyexpr_copy_from_string(&dst->_inner, str);
 }
 
 static inline z_result_t _z_declared_keyexpr_from_substr(_z_declared_keyexpr_t *dst, const char *str, size_t len) {
     *dst = _z_declared_keyexpr_null();
-    return _z_keyexpr_from_substr(&dst->_inner, str, len);
+    return _z_keyexpr_copy_from_substr(&dst->_inner, str, len);
 }
 
 z_result_t _z_declared_keyexpr_copy(_z_declared_keyexpr_t *dst, const _z_declared_keyexpr_t *src);
