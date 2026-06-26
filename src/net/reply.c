@@ -37,6 +37,7 @@ z_result_t _z_reply_err_owned_copy(_z_reply_err_owned_t *dst, const _z_reply_err
 }
 
 void _z_reply_err_create_view_from_data(_z_reply_err_t *dst, const _z_bytes_t *payload, const _z_encoding_t *encoding) {
+    dst->_view._inner = _z_reply_err_owned_null();
     dst->_view._inner.payload = payload != NULL ? *payload : _z_bytes_null();
     dst->_view._inner.encoding = encoding != NULL ? *encoding : _z_encoding_null();
     dst->_tag = _z_reply_err_tag_view;

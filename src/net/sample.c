@@ -20,6 +20,7 @@ void _z_sample_create_view_from_data(_z_sample_t *dst, const _z_keyexpr_t *keyex
                                      const _z_timestamp_t *timestamp, const _z_encoding_t *encoding,
                                      z_sample_kind_t kind, _z_qos_t qos, const _z_bytes_t *attachment,
                                      const _z_source_info_t *source_info, z_reliability_t reliability) {
+    dst->_view._inner = _z_sample_owned_null();
     dst->_view._inner.keyexpr._declaration = _z_keyexpr_wire_declaration_rc_null();
     dst->_view._inner.keyexpr._inner = *keyexpr;
     dst->_view._inner.payload = payload != NULL ? *payload : _z_bytes_null();

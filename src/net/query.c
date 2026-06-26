@@ -132,6 +132,7 @@ void _z_query_create_view_from_data(_z_query_t *dst, const _z_keyexpr_t *key, co
                                     const _z_slice_t *parameters, const _z_session_weak_t *zn,
                                     const _z_query_id_t *query_id, const _z_bytes_t *attachment, bool implicit_anyke,
                                     _z_n_qos_t qos, const _z_source_info_t *source_info) {
+    dst->_view._inner = _z_query_owned_null();
     dst->_view._inner._key._declaration = _z_keyexpr_wire_declaration_rc_null();
     dst->_view._inner._key._inner = *key;
     dst->_view._inner._value = value != NULL ? *value : _z_value_null();
