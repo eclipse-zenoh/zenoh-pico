@@ -214,24 +214,17 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     return ret;
 }
 z_result_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
-    z_result_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_source_id.zid);
-    ret |= _z_uint8_encode(wbf, (uint8_t)((zidlen - 1) << 4));
-    ret |= _z_data_encode(wbf, info->_source_id.zid.id, zidlen);
-    ret |= _z_zsize_encode(wbf, info->_source_id.eid);
-    ret |= _z_zsize_encode(wbf, info->_source_sn);
-    return ret;
-}
-z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
-    z_result_t ret = 0;
-    uint8_t zidlen = _z_id_len(info->_source_id.zid);
-    size_t ext_size = 1u + zidlen + _z_zint_len(info->_source_id.eid) + _z_zint_len(info->_source_sn);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (uint8_t)((zidlen - 1) << 4)));
     _Z_RETURN_IF_ERR(_z_data_encode(wbf, info->_source_id.zid.id, zidlen));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_id.eid));
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_sn));
-    return ret;
+    return _z_zsize_encode(wbf, info->_source_sn);
+}
+z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
+    uint8_t zidlen = _z_id_len(info->_source_id.zid);
+    size_t ext_size = 1u + zidlen + _z_zint_len(info->_source_id.eid) + _z_zint_len(info->_source_sn);
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
+    return _z_source_info_encode(wbf, info);
 }
 
 /*------------------ Push Body Field ------------------*/
@@ -419,7 +412,7 @@ z_result_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
             extheader |= _Z_FLAG_Z_Z;
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_value_encode(wbf, _z_value_view_deref(&msg->_ext_value)));
+        _Z_RETURN_IF_ERR(_z_value_encode_ext(wbf, _z_value_view_deref(&msg->_ext_value)));
     }
     if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;

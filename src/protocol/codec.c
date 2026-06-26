@@ -340,10 +340,14 @@ z_result_t _z_encoding_decode(_z_encoding_view_t *en, _z_zbuf_t *zbf) {
 }
 
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *value) {
-    size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
     _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &value->encoding));
     return _z_bytes_encode_val(wbf, &value->payload);
+}
+
+z_result_t _z_value_encode_ext(_z_wbuf_t *wbf, const _z_value_t *value) {
+    size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
+    return _z_value_encode(wbf, value);
 }
 
 z_result_t _z_value_decode(_z_value_view_t *value, _z_zbuf_t *zbf) {
