@@ -41,8 +41,7 @@ z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zb
             len |= (size_t)(_z_zbuf_read(zbf) << (i * (uint8_t)8));
         }
 
-        size_t writable = _z_zbuf_space_left(zbf) - _z_zbuf_len(zbf);
-        if (writable >= len) {
+        if (_z_zbuf_space_left(zbf) >= len) {
             // Read enough bytes to decode the message
             if (_z_link_recv_exact_zbuf(zl, zbf, len, NULL, socket) != len) {
                 _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);

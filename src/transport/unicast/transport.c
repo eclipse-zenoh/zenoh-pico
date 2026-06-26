@@ -29,8 +29,11 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
-static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu, _z_link_t *zl,
-                                                    _z_transport_unicast_establish_param_t *param) {
+z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
+                                       _z_transport_unicast_establish_param_t *param) {
+    zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
+    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
+    memset(ztu, 0, sizeof(_z_transport_unicast_t));
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztu->_common._batch_state = _Z_BATCHING_IDLE;
@@ -40,17 +43,20 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
-    _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
+    _Z_CLEAN_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer), _z_mutex_drop(&ztu->_common._mutex_tx));
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
-    size_t wbuf_size = mtu;
-    size_t zbuf_size = param->_batch_size;
     // Initialize tx rx buffers
-    ztu->_common._zbuf = _z_zbuf_null();
-    if (_z_wbuf_init(&ztu->_common._wbuf, wbuf_size, false) != _Z_RES_OK ||
-        _z_zbuf_init(&ztu->_common._zbuf, zbuf_size) != _Z_RES_OK) {
+    if (_z_wbuf_init(&ztu->_common._wbuf, mtu, false) != _Z_RES_OK ||
+        _z_zbuf_init(&ztu->_common._zbuf, param->_batch_size) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        _z_mutex_drop(&ztu->_common._mutex_tx);
+        _z_mutex_rec_drop(&ztu->_common._mutex_peer);
+#endif
+        _z_wbuf_clear(&ztu->_common._wbuf);
+        _z_zbuf_clear(&ztu->_common._zbuf);
         _Z_ERROR("Not enough memory to allocate transport buffers!");
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
@@ -69,25 +75,6 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     ztu->_peers = _z_transport_peer_unicast_slist_new();
     ztu->_pending_peers = _z_pending_peers_null();
     return _Z_RES_OK;
-}
-
-z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
-                                       _z_transport_unicast_establish_param_t *param) {
-    zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
-    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
-    memset(ztu, 0, sizeof(_z_transport_unicast_t));
-
-    z_result_t ret = _z_unicast_transport_create_inner(ztu, zl, param);
-    if (ret != _Z_RES_OK) {
-        // Clear alloc data
-#if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_drop(&ztu->_common._mutex_tx);
-        _z_mutex_rec_drop(&ztu->_common._mutex_peer);
-#endif
-        _z_wbuf_clear(&ztu->_common._wbuf);
-        _z_zbuf_clear(&ztu->_common._zbuf);
-    }
-    return ret;
 }
 
 static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
