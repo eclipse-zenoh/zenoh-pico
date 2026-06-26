@@ -247,6 +247,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
@@ -440,6 +441,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
@@ -498,6 +500,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
@@ -554,6 +557,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
@@ -614,6 +618,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
@@ -693,6 +698,7 @@ jobs:
         run: |
           sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
+          chmod +x ./zenoh-standalone/zenohd
           RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
         env:
@@ -750,6 +756,7 @@ jobs:
       - id: run-zenoh
         name: Run Zenoh router
         run: |
+          chmod +x ./zenoh-standalone/zenohd
           IFACE=${{ steps.select-multicast-iface.outputs.iface }}
           RUST_LOG=debug ./zenoh-standalone/zenohd -l tcp/127.0.0.1:7447 -l udp/224.0.0.123:7447#iface=$IFACE > zenohd.log 2>&1 &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
