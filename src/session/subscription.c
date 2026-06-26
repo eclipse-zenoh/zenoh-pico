@@ -183,7 +183,8 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
                                          const _z_source_info_t *source_info, _z_transport_peer_common_t *peer) {
     _z_subscription_rc_svec_t subs = _z_subscription_rc_svec_null();
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
-    _Z_RETURN_IF_ERR(__unsafe_z_get_subscriptions_by_key(zn, sub_kind, keyexpr, peer != NULL, &subs));
+    _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_get_subscriptions_by_key(zn, sub_kind, keyexpr, peer != NULL, &subs),
+                           _z_session_mutex_unlock(zn));
     // TODO: reintroduce lru cache
     _z_session_mutex_unlock(zn);
 
