@@ -262,6 +262,12 @@ void test_slices(void) {
     assert(z_bytes_get_contiguous_view(z_bytes_loan(&payload), &view) != Z_OK);
 #endif
     z_bytes_drop(z_bytes_move(&payload));
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+    // check that z_bytes_get_contiguous_view returns Z_OK for empty bytes
+    assert(z_bytes_get_contiguous_view(z_bytes_loan(&payload), &view) == Z_OK);
+    assert(z_slice_len(z_view_slice_loan(&view)) == 0);
+#endif
 }
 
 void test_serialize_simple(void) {

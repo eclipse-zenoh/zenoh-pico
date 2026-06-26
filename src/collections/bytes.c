@@ -176,13 +176,6 @@ z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
     return res;
 }
 
-const _z_slice_t *_z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
-    if (_z_bytes_num_slices(bs) == 1) {
-        return _z_bytes_get_slice(bs, 0);
-    }
-    return NULL;
-}
-
 z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
     *dst = *src;
     *src = _z_bytes_null();

@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"

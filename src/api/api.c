@@ -361,12 +361,15 @@ z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *byte
 
 #if defined(Z_FEATURE_UNSTABLE_API)
 z_result_t z_bytes_get_contiguous_view(const z_loaned_bytes_t *bytes, z_view_slice_t *view) {
-    const _z_slice_t *contiguous = _z_bytes_try_get_contiguous(bytes);
-    if (contiguous != NULL) {
+    if (_z_bytes_num_slices(bytes) == 1) {
+        const _z_slice_t *contiguous = _z_bytes_get_slice(bytes, 0);
         z_view_slice_from_buf(view, contiguous->start, contiguous->len);
         return _Z_RES_OK;
+    } else if (_z_bytes_is_empty(bytes)) {
+        z_view_slice_empty(view);
+        return _Z_RES_OK;
     } else {
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+        return _Z_ERR_INVALID;
     }
 }
 #endif

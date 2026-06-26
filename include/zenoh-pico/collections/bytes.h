@@ -106,7 +106,6 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s);
 z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s);
 size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len);
 z_result_t _z_bytes_copy_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len);
-const _z_slice_t *_z_bytes_try_get_contiguous(const _z_bytes_t *bs);
 
 typedef struct {
     size_t slice_idx;
