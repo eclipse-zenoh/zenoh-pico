@@ -40,7 +40,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
 
     // Wrap the main buffer to_read bytes
     _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_common._zbuf, to_read);
-    while (_z_zbuf_len(&zbuf) > 0) {
+    while (_z_zbuf_readable_len(&zbuf) > 0) {
         // Decode one session message
         _z_transport_message_t t_msg;
         ret = _z_transport_message_decode(&t_msg, &zbuf);

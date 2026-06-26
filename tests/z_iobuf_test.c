@@ -217,11 +217,11 @@ void zbuf_writable_readable(void) {
     assert(_z_zbuf_init(&zbf, len) == _Z_RES_OK);
     printf("\n>>> ZBuf => Writable and Readable\n");
 
-    size_t writable = _z_zbuf_space_left(&zbf);
+    size_t writable = _z_zbuf_writable_space_left(&zbf);
     printf("    Writable: %zu\n", writable);
     assert(writable == len);
 
-    size_t readable = _z_zbuf_len(&zbf);
+    size_t readable = _z_zbuf_readable_len(&zbf);
     printf("    Readable: %zu\n", readable);
     assert(readable == 0);
 
@@ -235,11 +235,11 @@ void zbuf_writable_readable(void) {
         }
         read = read + to_read;
 
-        writable = _z_zbuf_space_left(&zbf);
+        writable = _z_zbuf_writable_space_left(&zbf);
         printf("    Writable: %zu\n", writable);
         assert(writable == 0);
 
-        readable = _z_zbuf_len(&zbf);
+        readable = _z_zbuf_readable_len(&zbf);
         printf("    Readable: %zu\n", readable);
         assert(readable == len - read);
     }
@@ -260,11 +260,11 @@ void zbuf_compact(void) {
     uint8_t counter = 0;
 
     while (counter < len) {
-        size_t len01 = _z_zbuf_len(&zbf);
+        size_t len01 = _z_zbuf_readable_len(&zbf);
         _z_zbuf_compact(&zbf);
         assert(_z_zbuf_get_rpos(&zbf) == 0);
         assert(_z_zbuf_get_wpos(&zbf) == len01);
-        assert(_z_zbuf_len(&zbf) == len01);
+        assert(_z_zbuf_readable_len(&zbf) == len01);
         printf("    Len: %zu, Rpos: %zu, Wpos: %zu\n", len01, _z_zbuf_get_rpos(&zbf), _z_zbuf_get_wpos(&zbf));
 
         uint8_t vs = (uint8_t)(1 + gen_uint8() % (len - counter));
@@ -299,8 +299,8 @@ void zbuf_view(void) {
 
         printf("    View of %u bytes: ", vs);
         assert(_z_zbuf_capacity(&rv) == vs);
-        assert(_z_zbuf_len(&rv) == vs);
-        assert(_z_zbuf_space_left(&rv) == 0);
+        assert(_z_zbuf_readable_len(&rv) == vs);
+        assert(_z_zbuf_writable_space_left(&rv) == 0);
 
         printf("[");
         for (uint8_t i = 0; i < vs; i++) {
@@ -364,7 +364,7 @@ void wbuf_write_zbuf_read(void) {
     assert(_z_wbuf_len(&wbf) == len);
 
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    assert(_z_zbuf_len(&zbf) == len);
+    assert(_z_zbuf_readable_len(&zbf) == len);
     printf("    Reading %zu bytes\n", len);
     printf("    [");
     for (uint8_t i = 0; i < len; i++) {
@@ -461,7 +461,7 @@ void wbuf_reusable_write_zbuf_read(void) {
         assert(_z_wbuf_len(&wbf) == len);
 
         _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-        assert(_z_zbuf_len(&zbf) == len);
+        assert(_z_zbuf_readable_len(&zbf) == len);
         printf("    Reading %zu bytes\n", len);
         printf("    [");
         for (uint8_t j = 0; j < len; j++) {

@@ -136,7 +136,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
     msg->_zid = _z_id_empty();
     if (ret == _Z_RES_OK) {
-        if (_z_zbuf_len(zbf) >= zidlen) {
+        if (_z_zbuf_readable_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
@@ -248,7 +248,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if (ret == _Z_RES_OK) {
         msg->_whatami = _z_whatami_from_uint8(cbyte);
         uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
-        if (_z_zbuf_len(zbf) >= zidlen) {
+        if (_z_zbuf_readable_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
@@ -401,8 +401,8 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x04));
     }
-    msg->_payload = _z_slice_view_make((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainer will be consumed by network message decoder
+    msg->_payload = _z_slice_view_make(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainder will be consumed by network message decoder
     return _Z_RES_OK;
 }
 
@@ -461,8 +461,8 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_fragment_decode_ext, msg);
     }
-    msg->_payload = _z_slice_view_make((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    zbf->_ios._r_pos = zbf->_ios._w_pos;
+    msg->_payload = _z_slice_view_make(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainder will be consumed by network message decoder
 
     return ret;
 }

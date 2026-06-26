@@ -195,7 +195,7 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, const _z_zbuf_t *payloa
     if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
-    msg._body._frame._payload = _z_slice_view_make(_z_zbuf_start(payload), _z_zbuf_len(payload));
+    msg._body._frame._payload = _z_slice_view_make(_z_zbuf_get_rptr(payload), _z_zbuf_readable_len(payload));
     return msg;
 }
 

@@ -76,7 +76,7 @@ z_result_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t val) {
 }
 
 z_result_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *zbf) {
-    if (_z_zbuf_len(zbf) < sizeof(uint16_t)) {
+    if (_z_zbuf_readable_len(zbf) < sizeof(uint16_t)) {
         _Z_WARN("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
@@ -285,7 +285,7 @@ z_result_t _z_string_decode(_z_string_view_t *str, _z_zbuf_t *zbf) {
     *str = _z_string_view_null();
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
     // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
+    if (_z_zbuf_readable_len(zbf) < len) {
         _Z_INFO("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
@@ -350,7 +350,7 @@ z_result_t _z_value_decode(_z_value_view_t *value, _z_zbuf_t *zbf) {
     *value = _z_value_view_null();
     _z_encoding_view_t view_encoding;
     _Z_RETURN_IF_ERR(_z_encoding_decode(&view_encoding, zbf));
-    _z_slice_t view_slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
+    _z_slice_t view_slice = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
     _z_bytes_view_t view_payload = _z_bytes_view_from_slice(&view_slice);
     _z_value_view_create_from_data(value, _z_bytes_view_deref(&view_payload), _z_encoding_view_deref(&view_encoding));
     return _Z_RES_OK;

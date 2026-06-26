@@ -69,7 +69,7 @@ static inline z_result_t _z_data_encode(_z_wbuf_t *wbf, const uint8_t *data, siz
 }
 static inline z_result_t _z_slice_data_decode(uint8_t **ptr, size_t len, _z_zbuf_t *zbf) {
     // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
+    if (_z_zbuf_readable_len(zbf) < len) {
         _Z_WARN("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
@@ -81,7 +81,7 @@ static inline z_result_t _z_slice_decode(_z_slice_view_t *bs, _z_zbuf_t *zbf) {
     *bs = _z_slice_view_null();
     size_t len;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
-    if (_z_zbuf_len(zbf) < len) {
+    if (_z_zbuf_readable_len(zbf) < len) {
         _Z_WARN("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }

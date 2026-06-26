@@ -42,9 +42,9 @@ z_result_t _z_multicast_recv_zbuf(_z_transport_multicast_t *ztm, size_t *to_read
         // Read bytes from socket to the main buffer
         switch (ztm->_common._link->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
-                if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                if (_z_zbuf_readable_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, &ztm->_zbuf_addr);
-                    if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    if (_z_zbuf_readable_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztm->_common._zbuf);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         break;
@@ -53,9 +53,9 @@ z_result_t _z_multicast_recv_zbuf(_z_transport_multicast_t *ztm, size_t *to_read
                 // Get stream size
                 *to_read = _z_read_stream_size(&ztm->_common._zbuf);
                 // Read data
-                if (_z_zbuf_len(&ztm->_common._zbuf) < *to_read) {
+                if (_z_zbuf_readable_len(&ztm->_common._zbuf) < *to_read) {
                     _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, NULL);
-                    if (_z_zbuf_len(&ztm->_common._zbuf) < *to_read) {
+                    if (_z_zbuf_readable_len(&ztm->_common._zbuf) < *to_read) {
                         _z_zbuf_set_rpos(&ztm->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                         _z_zbuf_compact(&ztm->_common._zbuf);
@@ -66,14 +66,14 @@ z_result_t _z_multicast_recv_zbuf(_z_transport_multicast_t *ztm, size_t *to_read
                 break;
             // Datagram capable links
             case Z_LINK_CAP_FLOW_DATAGRAM:
-                if (_z_zbuf_len(&ztm->_common._zbuf) == 0) {
+                if (_z_zbuf_readable_len(&ztm->_common._zbuf) == 0) {
                     _z_zbuf_compact(&ztm->_common._zbuf);
                     *to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, &ztm->_zbuf_addr);
                     if (*to_read == SIZE_MAX) {
                         ret = _Z_ERR_TRANSPORT_RX_FAILED;
                     }
                 } else {
-                    *to_read = _z_zbuf_len(&ztm->_common._zbuf);
+                    *to_read = _z_zbuf_readable_len(&ztm->_common._zbuf);
                 }
                 break;
             default:
@@ -91,7 +91,7 @@ z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_m
     z_result_t ret = _z_multicast_recv_zbuf(ztm, &to_read);
 
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_readable_len(&ztm->_common._zbuf));
 
         // Wrap the main buffer to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_common._zbuf, to_read);
@@ -219,7 +219,7 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     // From this point, memory cleaning must be handled by the network message layer
     _z_network_message_t curr_nmsg = {0};
     _z_zbuf_t buf = _z_slice_as_zbuf(_z_slice_view_deref(&msg->_payload));
-    while (_z_zbuf_len(&buf) > 0) {
+    while (_z_zbuf_readable_len(&buf) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &entry->common));

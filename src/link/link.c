@@ -178,7 +178,7 @@ void _z_link_free(_z_link_t **l) {
 }
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
-    size_t rb = link->_read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf), addr);
+    size_t rb = link->_read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_writable_space_left(zbf), addr);
     if (rb != SIZE_MAX) {
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     }
@@ -195,7 +195,7 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
 }
 
 size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket) {
-    size_t rb = link->_read_socket_f(socket, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
+    size_t rb = link->_read_socket_f(socket, _z_zbuf_get_wptr(zbf), _z_zbuf_writable_space_left(zbf));
     if (rb != SIZE_MAX) {
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     }

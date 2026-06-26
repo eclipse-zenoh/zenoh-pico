@@ -38,9 +38,9 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
         switch (ztu->_common._link->_cap._flow) {
             // Stream capable links
             case Z_LINK_CAP_FLOW_STREAM:
-                if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                if (_z_zbuf_readable_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, NULL);
-                    if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    if (_z_zbuf_readable_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztu->_common._zbuf);
                         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
@@ -50,9 +50,9 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
                 // Get stream size
                 to_read = _z_read_stream_size(&ztu->_common._zbuf);
                 // Read data
-                if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
+                if (_z_zbuf_readable_len(&ztu->_common._zbuf) < to_read) {
                     _z_link_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, NULL);
-                    if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
+                    if (_z_zbuf_readable_len(&ztu->_common._zbuf) < to_read) {
                         _z_zbuf_set_rpos(&ztu->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                         _z_zbuf_compact(&ztu->_common._zbuf);
@@ -132,7 +132,7 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
     // From this point, memory cleaning must be handled by the network message layer
     _z_network_message_t curr_nmsg = {0};
     _z_zbuf_t buf = _z_slice_as_zbuf(_z_slice_view_deref(&msg->_payload));
-    while (_z_zbuf_len(&buf) > 0) {
+    while (_z_zbuf_readable_len(&buf) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
         _Z_RETURN_IF_ERR(_z_handle_network_message(&ztu->_common, &curr_nmsg, &peer->common));

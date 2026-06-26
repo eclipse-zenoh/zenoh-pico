@@ -114,13 +114,10 @@ typedef struct {
 static inline _z_zbuf_t _z_zbuf_null(void) { return (_z_zbuf_t){0}; }
 static inline void _z_zbuf_reset(_z_zbuf_t *zbf) { _z_iosli_reset(&zbf->_ios); }
 
-static inline uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
-    return _z_ptr_u8_offset(zbf->_ios._buf, (ptrdiff_t)zbf->_ios._r_pos);
-}
 static inline size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._capacity; }
-static inline size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf->_ios); }
+static inline size_t _z_zbuf_writable_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf->_ios); }
 
-static inline size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
+static inline size_t _z_zbuf_readable_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 static inline bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_iosli_can_read(&zbf->_ios); }
 static inline uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
 static inline uint8_t _z_zbuf_get(const _z_zbuf_t *zbf, size_t pos) { return _z_iosli_get(&zbf->_ios, pos); }

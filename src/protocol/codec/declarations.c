@@ -207,7 +207,7 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 _Z_HAS_FLAG(header, 2) ? _Z_KEYEXPR_MAPPING_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
-                size_t len = _z_zbuf_len(zbf);
+                size_t len = _z_zbuf_readable_len(zbf);
                 // The suffix aliases the decoding buffer instead of copying it. The bytes live in the
                 // extension's zbuf, which itself aliases the network message decoding buffer. That buffer
                 // is only cleared after _z_handle_network_message has consumed the (un)declaration, so the

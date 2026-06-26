@@ -30,7 +30,7 @@
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
-    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr,
+    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_writable_space_left(zbf), addr,
                                   &link->_socket._raweth._whitelist);
     // Check validity
     if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
@@ -100,7 +100,7 @@ z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_mess
     }
     // Decode message
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_readable_len(&ztm->_common._zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
     return ret;
