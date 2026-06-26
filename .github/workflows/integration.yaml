@@ -17,8 +17,8 @@ on:
   workflow_call:
 
 env:
-  ZENOH_LINUX_URL: https://github.com/eclipse-zenoh/zenoh/releases/download/1.9.0/zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
-  ZENOH_MACOS_URL: https://github.com/eclipse-zenoh/zenoh/releases/download/1.9.0/zenoh-1.9.0-aarch64-apple-darwin-standalone.zip
+  ZENOH_LINUX_ASSET: zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
+  ZENOH_MACOS_ASSET: zenoh-1.9.0-aarch64-apple-darwin-standalone.zip
 
 jobs:
   build:
@@ -103,15 +103,23 @@ jobs:
 
       - name: Download and extract Zenoh
         if: runner.os == 'Linux'
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
-          unzip zenoh.zip -d build/tests
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          out-file-path: build/tests
+          extract: true
 
       - name: Download and extract Zenoh
         if: runner.os == 'macOS'
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_MACOS_URL }}
-          unzip zenoh.zip -d build/tests
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_MACOS_ASSET }}
+          out-file-path: build/tests
+          extract: true
 
       - name: Test debug
         run: make test
@@ -180,9 +188,13 @@ jobs:
           ASAN: 1
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_LINUX_URL }}
-          unzip zenoh.zip -d build/tests
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          out-file-path: build/tests
+          extract: true
 
       - name: Test debug
         run: make test

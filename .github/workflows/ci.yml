@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 env:
-  ZENOH_URL: https://github.com/eclipse-zenoh/zenoh/releases/download/1.9.0/zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
+  ZENOH_ASSET: zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
 
 jobs:
   run_tests:
@@ -236,9 +236,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: run-zenoh
         name: Run Zenoh router
@@ -425,9 +429,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: run-zenoh
         name: Run Zenoh router
@@ -479,9 +487,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: run-zenoh
         name: Run Zenoh router
@@ -531,9 +543,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: run-zenoh
         name: Run Zenoh router
@@ -587,9 +603,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: run-zenoh
         name: Run Zenoh router
@@ -661,9 +681,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - name: Build project and run test
         run: |
@@ -702,9 +726,13 @@ jobs:
             ${{ runner.os }}-ccache-ci-
 
       - name: Download and extract Zenoh
-        run: |
-          curl -L -o zenoh.zip ${{ env.ZENOH_URL }}
-          unzip zenoh.zip -d zenoh-standalone
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_ASSET }}
+          out-file-path: zenoh-standalone
+          extract: true
 
       - id: select-multicast-iface
         name: Select multicast-capable interface
