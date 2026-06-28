@@ -181,6 +181,7 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
         (expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL) ? zn->_local_resources : peer->_remote_resources;
 
     _z_keyexpr_t new_key = _z_keyexpr_null();
+    _z_keyexpr_view_t ke_view = _z_keyexpr_view_null();
     if (expr->_id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, expr->_id);
         if (res == NULL) {
@@ -193,20 +194,19 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
                 _Z_ERROR("Failed to allocate memory for new string");
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
+            ke_view = _z_keyexpr_view_from_keyexpr(&new_key);
         } else if (id == Z_RESOURCE_ID_NONE && *resources == parent_resources) {
             // declaration of already declared resource
             res->_refcount++;
             *out_id = res->_id;
             return _Z_RES_OK;
-        } else {  // redeclaration of exisiting resource
-            new_key = _z_keyexpr_alias(&res->_key);
         }
     } else {
-        new_key = _z_keyexpr_alias_from_string(_z_string_view_deref(&expr->_suffix));
+        ke_view = _z_keyexpr_view_from_string_view(&expr->_suffix);
     }
 
     if (id == Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, &new_key);
+        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, _z_keyexpr_view_deref(&ke_view));
         if (res != NULL) {  // declaration of already declared resource
             res->_refcount++;
             _z_keyexpr_clear(&new_key);
@@ -215,7 +215,11 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
         }
     }
     _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_move(&ke, &new_key));
+    if (_z_keyexpr_check(&new_key)) {
+        _z_keyexpr_move(&ke, &new_key);
+    } else {
+        _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke, _z_keyexpr_view_deref(&ke_view)));
+    }
 
     *resources = _z_resource_slist_push_empty(*resources);
     _z_resource_t *res = _z_resource_slist_value(*resources);

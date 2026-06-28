@@ -75,14 +75,6 @@ static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
     return ret;
 }
 
-_z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str);
-_z_keyexpr_t _z_keyexpr_alias_from_substr(const char *str, size_t len);
-static inline _z_keyexpr_t _z_keyexpr_alias_from_str(const char *str) {
-    // SAFETY: By convention in pico code-base passing const char* without len implies that it is null-terminated.
-    // Flawfinder: ignore [CWE-126]
-    return _z_keyexpr_alias_from_substr(str, strlen(str));
-}
-
 z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str);
 z_result_t _z_keyexpr_copy_from_substr(_z_keyexpr_t *dst, const char *str, size_t len);
 
@@ -97,13 +89,12 @@ static inline z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *
     return _z_string_copy(&dst->_keyexpr, &src->_keyexpr);
 }
 
-static inline z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
-    *dst = _z_keyexpr_null();
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_keyexpr, &src->_keyexpr), _z_keyexpr_clear(src));
-    return _Z_RES_OK;
+static inline void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
+    *dst = *src;
+    *src = _z_keyexpr_null();
 }
 
-static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
+static inline _z_keyexpr_t _z_keyexpr_steal(_z_keyexpr_t *src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
     return stolen;
@@ -130,7 +121,7 @@ typedef struct _z_keyexpr_view_t {
 } _z_keyexpr_view_t;
 
 static inline _z_keyexpr_view_t _z_keyexpr_view_null(void) {
-    _z_keyexpr_view_t k;
+    _z_keyexpr_view_t k = {0};
     k._inner = _z_keyexpr_null();
     return k;
 }
@@ -148,12 +139,20 @@ static inline _z_keyexpr_view_t _z_keyexpr_view_from_string_view(const _z_string
 }
 
 static inline _z_keyexpr_view_t _z_keyexpr_view_from_string(const _z_string_t *s) {
-    _z_keyexpr_view_t k;
+    _z_keyexpr_view_t k = _z_keyexpr_view_null();
     k._inner._keyexpr = *s;
     return k;
 }
 
 static inline const _z_keyexpr_t *_z_keyexpr_view_deref(const _z_keyexpr_view_t *kv) { return &kv->_inner; }
+
+_z_keyexpr_view_t _z_keyexpr_view_from_substr(const char *str, size_t len);
+static inline _z_keyexpr_view_t _z_keyexpr_view_from_str(const char *str) {
+    // SAFETY: By convention in pico code-base passing const char* without len implies that it is null-terminated.
+    // Flawfinder: ignore [CWE-126]
+    return _z_keyexpr_view_from_substr(str, strlen(str));
+}
+
 typedef struct {
     _z_keyexpr_wire_declaration_rc_t _declaration;
     _z_keyexpr_t _inner;
@@ -177,13 +176,6 @@ static inline _z_declared_keyexpr_t _z_declared_keyexpr_null(void) {
     return ke;
 }
 
-_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_string(const _z_string_t *str);
-_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_substr(const char *str, size_t len);
-static inline _z_declared_keyexpr_t _z_declared_keyexpr_alias_from_str(const char *str) {
-    // SAFETY: By convention in pico code-base passing const char* without len implies that it is null-terminated.
-    // Flawfinder: ignore [CWE-126]
-    return _z_declared_keyexpr_alias_from_substr(str, strlen(str));
-}
 static inline z_result_t _z_declared_keyexpr_from_string(_z_declared_keyexpr_t *dst, const _z_string_t *str) {
     *dst = _z_declared_keyexpr_null();
     return _z_keyexpr_copy_from_string(&dst->_inner, str);

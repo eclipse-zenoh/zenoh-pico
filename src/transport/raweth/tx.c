@@ -37,8 +37,8 @@ static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_sock
     for (size_t i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
-        _z_keyexpr_t entry_ke = _z_keyexpr_alias_from_string(&entry->_keyexpr);
-        if (!z_keyexpr_intersects(keyexpr, &entry_ke)) {
+        _z_keyexpr_view_t entry_ke = _z_keyexpr_view_from_string(&entry->_keyexpr);
+        if (!z_keyexpr_intersects(keyexpr, _z_keyexpr_view_deref(&entry_ke))) {
             continue;
         }
         return (int)i;
