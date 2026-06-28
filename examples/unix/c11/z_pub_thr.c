@@ -39,11 +39,6 @@ typedef struct {
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, unsigned long *freq, size_t *pkt_size,
                       bool *is_peer, bool *is_udp);
 
-void z_free_with_context(void *ptr, void *context) {
-    (void)context;
-    z_free(ptr);
-}
-
 unsigned long cas_loop(z_stats_t *ctx, unsigned long value) {
     unsigned long prev_val = atomic_load_explicit(&ctx->count, memory_order_relaxed);
     unsigned long curr_val = prev_val;
@@ -159,9 +154,6 @@ int main(int argc, char **argv) {
     uint8_t *value = (uint8_t *)z_malloc(len);
     memset(value, 1, len);
 
-    z_owned_bytes_t payload;
-    z_bytes_from_buf(&payload, value, len, z_free_with_context, NULL);
-
     bool stop_flag = false;
     context->stop_flag = &stop_flag;
     pthread_t task;
@@ -174,11 +166,10 @@ int main(int argc, char **argv) {
 #if Z_FEATURE_BATCHING == 1
     if (batch_size > 0) zp_batch_start(z_loan(s));
 #endif
-    z_owned_bytes_t p;
     while (!stop_flag) {
-        // Clone payload
-        z_bytes_clone(&p, z_loan(payload));
-        z_publisher_put(z_loan(pub), z_move(p), NULL);
+        z_owned_bytes_t payload;
+        z_bytes_from_static_buf(&payload, value, len);
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
         atomic_fetch_add_explicit(&context->count, 1, memory_order_relaxed);
     }
 #if Z_FEATURE_BATCHING == 1
@@ -190,7 +181,7 @@ int main(int argc, char **argv) {
     pthread_join(task2, NULL);
     z_drop(z_move(pub));
     z_drop(z_move(s));
-    z_drop(z_move(payload));
+    z_free(value);
     z_free(context);
     exit(0);
 }
