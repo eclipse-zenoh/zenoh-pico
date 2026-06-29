@@ -52,10 +52,10 @@ void _z_query_owned_clear(_z_query_owned_t *q);
 
 // A non-owning view of fields of query
 typedef struct _z_query_view_t {
-    _z_query_owned_t _inner;
+    _z_query_owned_t _target;
 } _z_query_view_t;
 
-static inline const _z_query_owned_t *_z_query_view_deref(const _z_query_view_t *view) { return &view->_inner; }
+static inline const _z_query_owned_t *_z_query_view_deref(const _z_query_view_t *view) { return &view->_target; }
 
 #define _ZP_VARIANT_TEMPLATE_NAME _z_query
 #define _ZP_VARIANT_TEMPLATE_1_TYPE _z_query_owned_t

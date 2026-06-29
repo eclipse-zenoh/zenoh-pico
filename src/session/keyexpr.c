@@ -58,12 +58,6 @@ void _z_keyexpr_wire_declaration_clear(_z_keyexpr_wire_declaration_t *declaratio
     _z_keyexpr_wire_declaration_undeclare(declaration);
 }
 
-_z_keyexpr_view_t _z_keyexpr_view_from_substr(const char *str, size_t len) {
-    _z_keyexpr_view_t ke = _z_keyexpr_view_null();
-    ke._inner._keyexpr = _z_string_view_make(str, len)._inner;
-    return ke;
-}
-
 z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str) {
     return _z_keyexpr_copy_from_substr(dst, _z_string_data(str), _z_string_len(str));
 }

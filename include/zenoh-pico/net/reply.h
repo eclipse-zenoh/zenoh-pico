@@ -44,11 +44,11 @@ z_result_t _z_reply_err_owned_copy(_z_reply_err_owned_t *dst, const _z_reply_err
 
 // a non-owning view of fields of reply_err
 typedef struct _z_reply_err_view_t {
-    _z_reply_err_owned_t _inner;
+    _z_reply_err_owned_t _target;
 } _z_reply_err_view_t;
 
 static inline const _z_reply_err_owned_t *_z_reply_err_view_deref(const _z_reply_err_view_t *view) {
-    return &view->_inner;
+    return &view->_target;
 }
 
 #define _ZP_VARIANT_TEMPLATE_NAME _z_reply_err

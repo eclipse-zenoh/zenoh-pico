@@ -140,36 +140,36 @@ size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader);
 // A view into bytes that does not own the underlying buffer and slices. It is the caller's responsibility to ensure
 // that the viewed bytes outlive the view.
 typedef struct _z_bytes_view_t {
-    _z_bytes_t _bytes;
+    _z_bytes_t _target;
 } _z_bytes_view_t;
 
 static inline _z_bytes_view_t _z_bytes_view_null(void) {
     _z_bytes_view_t view;
-    view._bytes = _z_bytes_null();
+    view._target = _z_bytes_null();
     return view;
 }
-static inline bool _z_bytes_view_check(const _z_bytes_view_t *bytes) { return _z_bytes_check(&bytes->_bytes); }
+static inline bool _z_bytes_view_check(const _z_bytes_view_t *bytes) { return _z_bytes_check(&bytes->_target); }
 
 static inline _z_bytes_view_t _z_bytes_view_from_slice(const _z_slice_t *slice) {
     _z_bytes_view_t view_bytes;
-    view_bytes._bytes = _z_bytes_null();
+    view_bytes._target = _z_bytes_null();
     _z_slice_t s = *slice;
     // append non-owning slice to the view bytes; the view will alias the slice's buffer without taking ownership of it.
-    _z_bytes_append_slice(&view_bytes._bytes, &s);
+    _z_bytes_append_slice(&view_bytes._target, &s);
     return view_bytes;
 }
 
 static inline _z_bytes_view_t _z_bytes_view_from_bytes(const _z_bytes_t *bytes) {
     _z_bytes_view_t view_bytes;
     if (bytes == NULL) {
-        view_bytes._bytes = _z_bytes_null();
+        view_bytes._target = _z_bytes_null();
     } else {
-        view_bytes._bytes = *bytes;
+        view_bytes._target = *bytes;
     }
     return view_bytes;
 }
 
-static inline const _z_bytes_t *_z_bytes_view_deref(const _z_bytes_view_t *bytes) { return &bytes->_bytes; }
+static inline const _z_bytes_t *_z_bytes_view_deref(const _z_bytes_view_t *bytes) { return &bytes->_target; }
 
 #ifdef __cplusplus
 }

@@ -112,7 +112,7 @@ void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *na
     keyexpr->_val._declaration = _z_keyexpr_wire_declaration_rc_null();
     // SAFETY: Documentation specifies that string should be null-terminated.
     // Flawfinder: ignore [CWE-126]
-    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, strlen(name))._inner;
+    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, strlen(name))._target;
 }
 
 z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
@@ -120,7 +120,7 @@ z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *nam
         return Z_EINVAL;
     }
     keyexpr->_val._declaration = _z_keyexpr_wire_declaration_rc_null();
-    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, len)._inner;
+    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, len)._target;
     return _Z_RES_OK;
 }
 
@@ -132,7 +132,7 @@ z_result_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) 
 z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, char *name, size_t *len) {
     _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, len));
     keyexpr->_val._declaration = _z_keyexpr_wire_declaration_rc_null();
-    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, *len)._inner;
+    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, *len)._target;
     return _Z_RES_OK;
 }
 
@@ -145,7 +145,7 @@ z_result_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char 
 
 void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
     keyexpr->_val._declaration = _z_keyexpr_wire_declaration_rc_null();
-    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, len)._inner;
+    keyexpr->_val._inner = _z_keyexpr_view_from_substr(name, len)._target;
 }
 
 z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {

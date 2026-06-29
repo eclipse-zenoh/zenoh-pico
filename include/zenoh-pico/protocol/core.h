@@ -214,20 +214,20 @@ void _z_value_clear(_z_value_t *src);
 
 // A non-owning view of a zenoh value.
 typedef struct _z_value_view_t {
-    _z_value_t _inner;
+    _z_value_t _target;
 } _z_value_view_t;
 
-static inline const _z_value_t *_z_value_view_deref(const _z_value_view_t *view) { return &view->_inner; }
+static inline const _z_value_t *_z_value_view_deref(const _z_value_view_t *view) { return &view->_target; }
 static inline _z_value_view_t _z_value_view_null(void) {
     _z_value_view_t view;
-    view._inner = _z_value_null();
+    view._target = _z_value_null();
     return view;
 }
 
 static inline void _z_value_view_create_from_data(_z_value_view_t *dst, const _z_bytes_t *opt_payload,
                                                   const _z_encoding_t *opt_encoding) {
-    dst->_inner.payload = opt_payload == NULL ? _z_bytes_null() : *opt_payload;
-    dst->_inner.encoding = opt_encoding == NULL ? _z_encoding_null() : *opt_encoding;
+    dst->_target.payload = opt_payload == NULL ? _z_bytes_null() : *opt_payload;
+    dst->_target.encoding = opt_encoding == NULL ? _z_encoding_null() : *opt_encoding;
 }
 
 /**

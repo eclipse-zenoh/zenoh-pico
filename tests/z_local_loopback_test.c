@@ -179,11 +179,10 @@ static void cleanup_session(void) {
 }
 
 static _z_declared_keyexpr_t create_local_resource(const char *key_str) {
-    _z_declared_keyexpr_t ke;
-    ke._declaration = _z_keyexpr_wire_declaration_rc_null();
-    ke._inner = _z_keyexpr_view_from_str(key_str)._inner;
+    z_view_keyexpr_t ke;
+    assert(z_view_keyexpr_from_str(&ke, key_str) == _Z_RES_OK);
     _z_declared_keyexpr_t keyexpr;
-    assert(_z_declared_keyexpr_declare(&g_session_rc, &keyexpr, &ke) == _Z_RES_OK);
+    assert(_z_declared_keyexpr_declare(&g_session_rc, &keyexpr, &ke._val) == _Z_RES_OK);
     return keyexpr;
 }
 

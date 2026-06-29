@@ -146,13 +146,13 @@ _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
 // Non owning view of _z_string_t
-typedef struct {
-    _z_string_t _inner;
+typedef struct _z_string_view_t {
+    _z_string_t _target;
 } _z_string_view_t;
 
 static inline _z_string_view_t _z_string_view_make(const char *start, size_t len) {
     _z_string_view_t s;
-    s._inner = _z_string_from_substr_custom_deleter((char *)start, len, _z_delete_context_null());
+    s._target = _z_string_from_substr_custom_deleter((char *)start, len, _z_delete_context_null());
     return s;
 }
 
@@ -161,24 +161,24 @@ static inline _z_string_view_t _z_string_view_null(void) {
     return s;
 }
 
-static inline bool _z_string_view_is_empty(const _z_string_view_t *s) { return _z_string_is_empty(&s->_inner); }
+static inline bool _z_string_view_is_empty(const _z_string_view_t *s) { return _z_string_is_empty(&s->_target); }
 
-static inline size_t _z_string_view_len(const _z_string_view_t *s) { return _z_string_len(&s->_inner); }
+static inline size_t _z_string_view_len(const _z_string_view_t *s) { return _z_string_len(&s->_target); }
 
-static inline const char *_z_string_view_data(const _z_string_view_t *s) { return _z_string_data(&s->_inner); }
+static inline const char *_z_string_view_data(const _z_string_view_t *s) { return _z_string_data(&s->_target); }
 
 // Builds a non-owning view over the data of an existing string.
 static inline _z_string_view_t _z_string_view_from_string(const _z_string_t *s) {
     _z_string_view_t sv;
-    sv._inner = *s;
+    sv._target = *s;
     return sv;
 }
 
 // Dereferences a view string to access the underlying string.
-static inline const _z_string_t *_z_string_view_deref(const _z_string_view_t *s) { return &s->_inner; }
+static inline const _z_string_t *_z_string_view_deref(const _z_string_view_t *s) { return &s->_target; }
 
 static inline bool _z_string_view_equals(const _z_string_view_t *left, const _z_string_view_t *right) {
-    return _z_string_equals(&left->_inner, &right->_inner);
+    return _z_string_equals(&left->_target, &right->_target);
 }
 
 #ifdef __cplusplus

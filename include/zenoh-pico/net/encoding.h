@@ -50,22 +50,22 @@ static inline _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
 
 // Non-owning view on the encoding.
 typedef struct _z_encoding_view_t {
-    _z_encoding_t _inner;
+    _z_encoding_t _target;
 } _z_encoding_view_t;
 
 static inline _z_encoding_view_t _z_encoding_view_null(void) { return (_z_encoding_view_t){0}; }
 static inline bool _z_encoding_view_check(const _z_encoding_view_t *encoding) {
-    return _z_encoding_check(&encoding->_inner);
+    return _z_encoding_check(&encoding->_target);
 }
 
 static inline _z_encoding_view_t _z_encoding_view_from_encoding(const _z_encoding_t *encoding) {
     _z_encoding_view_t view_encoding;
-    view_encoding._inner = *encoding;
+    view_encoding._target = *encoding;
     return view_encoding;
 }
 
 static inline const _z_encoding_t *_z_encoding_view_deref(const _z_encoding_view_t *encoding) {
-    return &encoding->_inner;
+    return &encoding->_target;
 }
 
 #ifdef __cplusplus

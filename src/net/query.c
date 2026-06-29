@@ -132,20 +132,21 @@ void _z_query_create_view_from_data(_z_query_t *dst, const _z_keyexpr_t *key, co
                                     const _z_slice_t *parameters, const _z_session_weak_t *zn,
                                     const _z_query_id_t *query_id, const _z_bytes_t *attachment, bool implicit_anyke,
                                     _z_n_qos_t qos, const _z_source_info_t *source_info) {
-    dst->_view._inner = _z_query_owned_null();
-    dst->_view._inner._key._declaration = _z_keyexpr_wire_declaration_rc_null();
-    dst->_view._inner._key._inner = *key;
-    dst->_view._inner._value = value != NULL ? *value : _z_value_null();
-    dst->_view._inner._attachment = attachment != NULL ? *attachment : _z_bytes_null();
-    dst->_view._inner._parameters._slice = parameters != NULL ? *parameters : _z_slice_null();
-    dst->_view._inner._id = *query_id;
-    dst->_view._inner._anyke = implicit_anyke || _z_parameters_has_anyke(_z_string_data(&dst->_view._inner._parameters),
-                                                                         _z_string_len(&dst->_view._inner._parameters));
+    dst->_view._target = _z_query_owned_null();
+    dst->_view._target._key._declaration = _z_keyexpr_wire_declaration_rc_null();
+    dst->_view._target._key._inner = *key;
+    dst->_view._target._value = value != NULL ? *value : _z_value_null();
+    dst->_view._target._attachment = attachment != NULL ? *attachment : _z_bytes_null();
+    dst->_view._target._parameters._slice = parameters != NULL ? *parameters : _z_slice_null();
+    dst->_view._target._id = *query_id;
+    dst->_view._target._anyke =
+        implicit_anyke || _z_parameters_has_anyke(_z_string_data(&dst->_view._target._parameters),
+                                                  _z_string_len(&dst->_view._target._parameters));
     // a view on weak session: currently this references a weak pointer inside session's transport, which is not ideal,
     // if we ever change rc implementation to make rc = *(session, cnt) - it is safer to acquire it from here,
-    dst->_view._inner._zn = *zn;
-    dst->_view._inner._qos = qos;
-    dst->_view._inner._source_info = source_info != NULL ? *source_info : _z_source_info_null();
+    dst->_view._target._zn = *zn;
+    dst->_view._target._qos = qos;
+    dst->_view._target._source_info = source_info != NULL ? *source_info : _z_source_info_null();
     dst->_tag = _z_query_tag_view;
 }
 

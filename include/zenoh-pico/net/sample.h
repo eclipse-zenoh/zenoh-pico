@@ -56,10 +56,10 @@ z_result_t _z_sample_owned_copy(_z_sample_owned_t *dst, const _z_sample_owned_t 
 
 // a non-owning view of fields of sample
 typedef struct _z_sample_view_t {
-    _z_sample_owned_t _inner;
+    _z_sample_owned_t _target;
 } _z_sample_view_t;
 
-static inline const _z_sample_owned_t *_z_sample_view_deref(const _z_sample_view_t *view) { return &view->_inner; }
+static inline const _z_sample_owned_t *_z_sample_view_deref(const _z_sample_view_t *view) { return &view->_target; }
 
 #define _ZP_VARIANT_TEMPLATE_NAME _z_sample
 #define _ZP_VARIANT_TEMPLATE_1_TYPE _z_sample_owned_t
