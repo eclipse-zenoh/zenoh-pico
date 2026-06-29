@@ -113,11 +113,14 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_resource_slist_t *xs, co
         prefix = &res->_key._keyexpr;
         prefix_len = _z_string_len(prefix);
     }
-    *buf_len = prefix_len + suffix_len;
     if (*buf == NULL) {
+        *buf_len = prefix_len + suffix_len;
         _Z_RETURN_ERR_OOM_IF_TRUE((*buf = (char *)z_malloc(*buf_len)) == NULL);
     } else if (prefix_len + suffix_len > *buf_len) {
+        *buf_len = prefix_len + suffix_len;
         return _Z_ERR_INVALID;
+    } else {
+        *buf_len = prefix_len + suffix_len;
     }
     if (prefix_len > 0) {
         // SAFETY: buf is guaranteed to be large enough by the caller.
