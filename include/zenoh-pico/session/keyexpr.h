@@ -69,12 +69,6 @@ zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
 z_result_t _z_keyexpr_concat(_z_keyexpr_t *key, const _z_keyexpr_t *left, const char *right, size_t len);
 z_result_t _z_keyexpr_join(_z_keyexpr_t *key, const _z_keyexpr_t *left, const _z_keyexpr_t *right);
-static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
-    _z_keyexpr_t ret;
-    ret._keyexpr = _z_string_alias(src->_keyexpr);
-    return ret;
-}
-
 z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str);
 z_result_t _z_keyexpr_copy_from_substr(_z_keyexpr_t *dst, const char *str, size_t len);
 
