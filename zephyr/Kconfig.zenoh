@@ -5,6 +5,14 @@ config ZENOH_PICO
 
 if ZENOH_PICO
 
+config ZENOH_PICO_INTEREST
+	bool "Zenoh interest protocol support"
+	help
+	  The zenoh interest protocol facilitates features such as
+	  writer side filtering by allowing peers to show interest
+	  in topics and thereby allowing selective publishing logic
+	  based off the presence of interest within the network.
+
 config ZENOH_PICO_LINK_SERIAL
 	bool "Serial Link"
 	help
@@ -40,6 +48,16 @@ config ZENOH_PICO_RAWETH_TRANSPORT
 	help
 	  Raw Ethernet Support
 
+config ZENOH_PICO_MULTICAST_TRANSPORT
+	bool "Multicast Transort Support"
+	help
+	  Multicast Transport Support
+
+config ZENOH_PICO_UNICAST_TRANSPORT
+	bool "Unicast Transport Support"
+	help
+	  Unicast Transport Support
+
 config ZENOH_PICO_LINK_TCP
 	bool "TCP Link"
 	help
@@ -55,6 +73,11 @@ config ZENOH_PICO_LINK_UDP_MULTICAST
 	help
 	  UDP Multicast
 
+config ZENOH_PICO_LINK_SERIAL
+	bool "Serial Link"
+	help
+	  Serial Link
+
 config ZENOH_PICO_SCOUTING
 	bool "Scouting UDP"
 	help
@@ -65,5 +88,14 @@ config ZENOH_PICO_LINK_WS
 	help
 	  WS Link
 
-endif
+config ZENOH_PICO_UNICAST_PEER_MODE
+	bool "Unicast Peer Mode"
+	help
+	  Unicast Peer Mode
 
+config ZENOH_PICO_AUTO_RECONNECT
+    bool "Autoreconnect"
+	help
+	  Autoreconnect
+
+endif
