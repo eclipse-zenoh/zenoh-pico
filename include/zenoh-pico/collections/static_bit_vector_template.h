@@ -112,7 +112,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, at)(const _ZP_ST
     size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     return (vec->_blocks[block_idx] &
-            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx)) != 0;
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx)) != 0;
 }
 
 // const_at is identical to at: a bit is returned by value, so there is no separate const view.
@@ -121,7 +121,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
     size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     return (vec->_blocks[block_idx] &
-            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx)) != 0;
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx)) != 0;
 }
 
 // Reads the bit at the given index with bounds checking.
@@ -354,7 +354,9 @@ static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_all)(_ZP_STA
         }
         size_t rem = vec->_size - num_blocks * _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
         if (rem > 0) {
-            vec->_blocks[num_blocks] = all_ones >> (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - rem);
+            vec->_blocks[num_blocks] =
+                (((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << rem) -
+                  (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u));
         }
     }
 }
@@ -403,6 +405,41 @@ static inline size_t _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
                              block_bits)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
     (void)vec;
     return _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+}
+
+// Compares two bit vectors for equality. Returns true if they have the same size and all bits are equal.
+static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, eq)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *left,
+                                                                    const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *right) {
+    if (left->_size != right->_size) {
+        return false;
+    }
+    size_t num_blocks =
+        (left->_size + _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - 1) / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    return memcmp(left->_blocks, right->_blocks, num_blocks * sizeof(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)) == 0;
+}
+
+// Flips all bits in the vector (0 becomes 1, 1 becomes 0).
+static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, flip_all)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
+    size_t num_blocks =
+        (vec->_size + _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - 1) / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    for (size_t i = 0; i < num_blocks; i++) {
+        vec->_blocks[i] = ~vec->_blocks[i];
+    }
+    size_t rem = vec->_size % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    if (rem != 0) {
+        vec->_blocks[num_blocks - 1] &=
+            (((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << rem) -
+              (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u));
+    }
+}
+
+// Copies the contents of @p other into @p this.
+static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, copy)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *dst,
+                                                                      const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *src) {
+    if (dst != src) {
+        memcpy(dst->_blocks, src->_blocks, sizeof(dst->_blocks));
+        dst->_size = src->_size;
+    }
 }
 
 // Returns the index of the first bit (always 0).

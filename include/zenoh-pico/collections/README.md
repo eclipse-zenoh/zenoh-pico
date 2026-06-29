@@ -304,6 +304,7 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `void NAME_remove_at(NAME_t *v, size_t i, bool *out, size_t *next)` | Iterator-friendly `remove` (see the vector). UB if `i >= size`.                    |
 | `bool NAME_swap_remove(NAME_t *v, size_t i, bool *out)`             | O(1) remove (does not preserve order). `false` if `i >= size`.                     |
 | `void NAME_set_all(NAME_t *v, bool x)`                              | Set every stored bit to `x`.                                                       |
+| `void NAME_flip_all(NAME_t *v)`                                     | Toggle all bits.                                                                   |
 | `size_t NAME_count(const NAME_t *v)`                                | Number of bits set to 1.                                                           |
 | `NAME_block_t *NAME_blocks(NAME_t *v)`                              | Raw packed storage (LSB-first within each block).                                  |
 | `const NAME_block_t *NAME_const_blocks(const NAME_t *v)`            | Const raw packed storage.                                                          |
@@ -311,6 +312,8 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `size_t NAME_block_bits(const NAME_t *v)`                           | Number of bits per storage block (`sizeof(BLOCK_TYPE) * CHAR_BIT`).                |
 | `NAME_iter_t NAME_begin/end/iter_next(...)`                         | Index-based iteration (dereference with `at`).                                     |
 | `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `at`).                       |
+| `bool NAME_eq(const NAME_t *left, const NAME_t *right)`             | Check if two bit vectors are equal (i.e. have the same size, and same bits).       |
+| `void NAME_copy(NAME_t *dst, const NAME_t *src)`                    | Copies `src` into `dst`.                                                           |
 
 ### Example
 

@@ -521,6 +521,101 @@ static void test_wide_block_across_boundary(void) {
     wordvec_destroy(&v);
 }
 
+static void test_flip_all(void) {
+    printf("Test: flip_all inverts all bits\n");
+    // Use the bytevec instance (8-bit blocks, 20 bits total) to exercise partial block handling.
+    bytevec_t v = bytevec_new();
+    for (size_t i = 0; i < 20; i++) assert(bytevec_push_back(&v, (i % 3) == 0));  // set bits at 0,3,6,9,12,15,18
+    assert(bytevec_count(&v) == 7);
+
+    bytevec_flip_all(&v);
+    assert(bytevec_count(&v) == 13);  // now the other bits are set
+    for (size_t i = 0; i < 20; i++) {
+        bool expected = !((i % 3) == 0);
+        assert(bytevec_at(&v, i) == expected);
+    }
+    bytevec_destroy(&v);
+
+    // Use the wordvec instance (32-bit blocks, 40 bits total) to exercise partial block handling.
+    wordvec_t w = wordvec_new();
+    for (size_t i = 0; i < 40; i++) assert(wordvec_push_back(&w, (i % 5) == 0));  // set bits at 0,5,10,15,20,25,30,35
+    assert(wordvec_count(&w) == 8);
+    wordvec_flip_all(&w);
+    assert(wordvec_count(&w) == 32);
+    for (size_t i = 0; i < 40; i++) {
+        bool expected = !((i % 5) == 0);
+        assert(wordvec_at(&w, i) == expected);
+    }
+    wordvec_destroy(&w);
+}
+
+static void test_copy(void) {
+    printf("Test: copy\n");
+    bytevec_t v1 = bytevec_new();
+    for (size_t i = 0; i < 10; i++) assert(bytevec_push_back(&v1, (i % 2) == 0));
+
+    bytevec_t v2;
+    bytevec_copy(&v2, &v1);
+    assert(bytevec_size(&v2) == 10);
+    for (size_t i = 0; i < 10; i++) assert(bytevec_at(&v2, i) == ((i % 2) == 0));
+
+    bytevec_destroy(&v1);
+    bytevec_destroy(&v2);
+
+    wordvec_t w1 = wordvec_new();
+    for (size_t i = 0; i < 20; i++) assert(wordvec_push_back(&w1, (i % 3) == 0));
+
+    wordvec_t w2;
+    wordvec_copy(&w2, &w1);
+    assert(wordvec_size(&w2) == 20);
+    for (size_t i = 0; i < 20; i++) assert(wordvec_at(&w2, i) == ((i % 3) == 0));
+
+    wordvec_destroy(&w1);
+    wordvec_destroy(&w2);
+}
+
+static void test_eq(void) {
+    printf("Test: eq\n");
+    bytevec_t v1 = bytevec_new();
+    bytevec_t v2 = bytevec_new();
+    for (size_t i = 0; i < 10; i++) assert(bytevec_push_back(&v1, (i % 2) == 0));
+    for (size_t i = 0; i < 10; i++) assert(bytevec_push_back(&v2, (i % 2) == 0));
+    assert(bytevec_eq(&v1, &v2));
+
+    // Different sizes.
+    bytevec_pop_back(&v2, NULL);
+    assert(!bytevec_eq(&v1, &v2));
+
+    // Make them equal again.
+    bytevec_pop_back(&v1, NULL);
+    assert(bytevec_eq(&v1, &v2));
+
+    // Change one bit in v2.
+    bytevec_set_at(&v2, 5, true);
+    assert(!bytevec_eq(&v1, &v2));
+
+    bytevec_destroy(&v1);
+    bytevec_destroy(&v2);
+
+    wordvec_t w1 = wordvec_new();
+    wordvec_t w2 = wordvec_new();
+    for (size_t i = 0; i < 20; i++) assert(wordvec_push_back(&w1, (i % 3) == 0));
+    for (size_t i = 0; i < 20; i++) assert(wordvec_push_back(&w2, (i % 3) == 0));
+    assert(wordvec_eq(&w1, &w2));
+
+    // Different sizes.
+    wordvec_pop_back(&w2, NULL);
+    assert(!wordvec_eq(&w1, &w2));
+
+    // Make them equal again.
+    wordvec_pop_back(&w1, NULL);
+    assert(wordvec_eq(&w1, &w2));
+
+    // Change one bit in w2.
+    wordvec_set_at(&w2, 10, true);
+    assert(!wordvec_eq(&w1, &w2));
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -548,6 +643,9 @@ int main(void) {
     test_set_bit_iteration();
     test_default_named_instance();
     test_wide_block_across_boundary();
+    test_flip_all();
+    test_copy();
+    test_eq();
     printf("All bit vector tests passed.\n");
     return 0;
 }
