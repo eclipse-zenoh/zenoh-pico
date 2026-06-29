@@ -410,7 +410,7 @@ static void test_foreach(void) {
     // _ZP_FOREACH binds `elem` to the value returned by at() (a bool), not a pointer, because a
     // single bit is not addressable. Iterate and check order, total, and set-bit count.
     size_t idx = 0, ones = 0;
-    bool elem;
+    bool elem = false;
     _ZP_FOREACH (bitvec, &v, elem) {
         assert(elem == init[idx]);
         ones += elem ? 1u : 0u;
@@ -439,7 +439,7 @@ static void test_const_foreach(void) {
     for (size_t i = 0; i < 40; i++) assert(wordvec_push_back(&v, (i % 3) == 0));
 
     size_t idx = 0, ones = 0;
-    bool elem;
+    bool elem = false;
     _ZP_CONST_FOREACH (wordvec, &v, elem) {
         assert(elem == ((idx % 3) == 0));
         ones += elem ? 1u : 0u;
