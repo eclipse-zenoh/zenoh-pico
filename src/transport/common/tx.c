@@ -105,7 +105,8 @@ static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, cons
                                                 z_reliability_t reliability, _z_zint_t first_sn,
                                                 _z_transport_peer_unicast_slist_t *peers) {
     // Create an expandable wbuf for fragmentation
-    _z_wbuf_t frag_buff = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
+    _z_wbuf_t frag_buff;
+    _Z_RETURN_IF_ERR(_z_wbuf_init(&frag_buff, _Z_FRAG_BUFF_BASE_SIZE, true));
     // Send message as fragments
     z_result_t ret = _z_transport_tx_send_fragment_inner(ztc, &frag_buff, n_msg, reliability, first_sn, peers);
     // Clear the buffer as it's no longer required
@@ -406,8 +407,8 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
 
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
-    _z_wbuf_t wbf = _z_wbuf_make(mtu, false);
-    if (_z_wbuf_capacity(&wbf) != mtu) {
+    _z_wbuf_t wbf;
+    if (_z_wbuf_init(&wbf, mtu, false) != _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

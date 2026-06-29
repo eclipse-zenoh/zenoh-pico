@@ -41,21 +41,31 @@ _z_encoding_t _z_encoding_wrap(uint16_t id, const char *schema);
 z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len);
 z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
 z_result_t _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
-static inline _z_encoding_t _z_encoding_alias(const _z_encoding_t *src) {
-    _z_encoding_t dst;
-    dst.id = src->id;
-    if (_z_string_check(&src->schema)) {
-        dst.schema = _z_string_alias(src->schema);
-    } else {
-        dst.schema = _z_string_null();
-    }
-    return dst;
-}
+
 static inline _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
     _z_encoding_t ret = *val;
-    val->schema._slice.len = 0;
-    val->schema._slice.start = NULL;
+    *val = _z_encoding_null();
     return ret;
+}
+
+// Non-owning view on the encoding.
+typedef struct _z_encoding_view_t {
+    _z_encoding_t _target;
+} _z_encoding_view_t;
+
+static inline _z_encoding_view_t _z_encoding_view_null(void) { return (_z_encoding_view_t){0}; }
+static inline bool _z_encoding_view_check(const _z_encoding_view_t *encoding) {
+    return _z_encoding_check(&encoding->_target);
+}
+
+static inline _z_encoding_view_t _z_encoding_view_from_encoding(const _z_encoding_t *encoding) {
+    _z_encoding_view_t view_encoding;
+    view_encoding._target = *encoding;
+    return view_encoding;
+}
+
+static inline const _z_encoding_t *_z_encoding_view_deref(const _z_encoding_view_t *encoding) {
+    return &encoding->_target;
 }
 
 #ifdef __cplusplus

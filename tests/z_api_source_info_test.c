@@ -75,12 +75,13 @@ static void sample_capture_callback(_z_sample_t *sample, void *arg) {
     if ((sample == NULL) || (capture == NULL)) {
         return;
     }
-    capture->kind = sample->kind;
-    if (sample->kind == Z_SAMPLE_KIND_PUT) {
-        size_t len = _z_bytes_len(&sample->payload);
+    const _z_sample_owned_t *ref = _z_sample_get_ref(sample);
+    capture->kind = ref->kind;
+    if (ref->kind == Z_SAMPLE_KIND_PUT) {
+        size_t len = _z_bytes_len(&ref->payload);
         if ((len == sizeof(test_payload) - 1) && (len < SAMPLE_BUF_CAP)) {
             char buf[SAMPLE_BUF_CAP];
-            size_t copied = _z_bytes_to_buf(&sample->payload, (uint8_t *)buf, len);
+            size_t copied = _z_bytes_to_buf(&ref->payload, (uint8_t *)buf, len);
             capture->payload_ok = (copied == len) && (memcmp(buf, test_payload, sizeof(test_payload) - 1) == 0);
         } else {
             capture->payload_ok = false;
@@ -89,8 +90,8 @@ static void sample_capture_callback(_z_sample_t *sample, void *arg) {
         capture->payload_ok = true;
     }
 
-    capture->source = sample->source_info._source_id;
-    capture->sn = sample->source_info._source_sn;
+    capture->source = ref->source_info._source_id;
+    capture->sn = ref->source_info._source_sn;
     atomic_store_explicit(&capture->ready, true, memory_order_release);
 }
 

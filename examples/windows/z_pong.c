@@ -19,7 +19,16 @@
 void callback(z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_loan(*(z_owned_publisher_t*)context);
     z_owned_bytes_t payload;
+#if defined(Z_FEATURE_UNSTABLE_API)
+    z_view_slice_t payload_view;
+    if (z_bytes_get_contiguous_view(z_sample_payload(sample), &payload_view) == _Z_RES_OK) {
+        z_bytes_from_static_buf(&payload, z_slice_data(z_loan(payload_view)), z_slice_len(z_loan(payload_view)));
+    } else {
+        z_bytes_clone(&payload, z_sample_payload(sample));
+    }
+#else
     z_bytes_clone(&payload, z_sample_payload(sample));
+#endif
     z_publisher_put(pub, z_move(payload), NULL);
 }
 void drop(void* context) {

@@ -21,21 +21,17 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(closure, v)                                                    \
-    do {                                                                    \
-        _z_bytes_t payload;                                                 \
-        _z_slice_t slice = {.start = (const uint8_t *)v, .len = strlen(v)}; \
-        _z_bytes_from_slice(&payload, &slice);                              \
-        z_loaned_sample_t sample = {                                        \
-            .keyexpr = _z_declared_keyexpr_alias_from_str("key"),           \
-            .payload = payload,                                             \
-            .timestamp = _z_timestamp_null(),                               \
-            .encoding = _z_encoding_null(),                                 \
-            .kind = 0,                                                      \
-            .qos = {0},                                                     \
-            .attachment = _z_bytes_null(),                                  \
-        };                                                                  \
-        z_call(*z_loan(closure), &sample);                                  \
+#define SEND(closure, v)                                                                                             \
+    do {                                                                                                             \
+        _z_slice_view_t slice = _z_slice_view_make((const uint8_t *)v, strlen(v));                                   \
+        _z_bytes_view_t bytes = _z_bytes_view_from_slice(_z_slice_view_deref(&slice));                               \
+        _z_string_view_t sv = _z_string_view_make("key", 3);                                                         \
+        _z_keyexpr_view_t keyexpr = _z_keyexpr_view_from_string(_z_string_view_deref(&sv));                          \
+        _z_sample_t sample;                                                                                          \
+        _z_qos_t qos = _z_n_qos_create(false, Z_CONGESTION_CONTROL_DROP, Z_PRIORITY_DATA);                           \
+        _z_sample_create_view_from_data(&sample, _z_keyexpr_view_deref(&keyexpr), _z_bytes_view_deref(&bytes), NULL, \
+                                        NULL, Z_SAMPLE_KIND_PUT, qos, NULL, NULL, Z_RELIABILITY_DEFAULT);            \
+        z_call(*z_loan(closure), &sample);                                                                           \
     } while (0);
 
 #define _RECV(handler, method, buf)                                             \

@@ -70,22 +70,13 @@ z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_uint8_decode_as_ref(uint8_t **u8, _z_zbuf_t *zbf) {
-    if (!_z_zbuf_can_read(zbf)) {
-        _Z_WARN("Not enough bytes to read");
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
-    }
-    *u8 = _z_zbuf_read_as_ref(zbf);
-    return _Z_RES_OK;
-}
-
 z_result_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t val) {
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, _z_get_u16_lsb(val)));
     return _z_wbuf_write(wbf, _z_get_u16_msb(val));
 }
 
 z_result_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *zbf) {
-    if (_z_zbuf_len(zbf) < sizeof(uint16_t)) {
+    if (_z_zbuf_readable_len(zbf) < sizeof(uint16_t)) {
         _Z_WARN("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
@@ -246,7 +237,7 @@ z_result_t _z_buf_encode(_z_wbuf_t *wbf, const uint8_t *buf, size_t len) {
 
 z_result_t _z_slice_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, bs->len));
-    return _z_slice_val_encode(wbf, bs);
+    return _z_data_encode(wbf, bs->start, bs->len);
 }
 
 z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_slices) {
@@ -256,28 +247,23 @@ z_result_t _z_slices_encode(_z_wbuf_t *wbf, const _z_slice_t *bs, size_t num_sli
     }
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
     for (size_t i = 0; i < num_slices; ++i) {
-        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &bs[i]));
+        _Z_RETURN_IF_ERR(_z_data_encode(wbf, bs[i].start, bs[i].len));
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
-    // Decode slice
-    _z_slice_t s;
+z_result_t _z_bytes_decode(_z_bytes_view_t *bs, _z_zbuf_t *zbf) {
+    _z_slice_view_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    // Calc offset
-    size_t offset = _z_ptr_u8_diff(s.start, _z_slice_simple_rc_value(&zbf->_slice)->start);
-    // Get ownership of subslice
-    *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
-    _z_bytes_alias_arc_slice(bs, arcs);
+    *bs = _z_bytes_view_from_slice(_z_slice_view_deref(&s));
     return _Z_RES_OK;
 }
 
 static inline z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     z_result_t ret = _Z_RES_OK;
     for (size_t i = 0; i < _z_bytes_num_slices(bs); ++i) {
-        const _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, i);
-        _Z_RETURN_IF_ERR(_z_buf_encode(wbf, _z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s)))
+        const _z_slice_t *s = _z_bytes_get_slice(bs, i);
+        _Z_RETURN_IF_ERR(_z_buf_encode(wbf, s->start, s->len))
     }
     return ret;
 }
@@ -287,57 +273,24 @@ z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     return _z_bytes_encode_val(wbf, bs);
 }
 
-/*------------------ string with null terminator ------------------*/
-z_result_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
-    size_t len = strlen(s);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len))
-    // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
-}
-
-z_result_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
-    _z_zint_t len = 0;
-    z_result_t ret = _z_zsize_decode(&len, zbf);
-    if (ret != _Z_RES_OK) {
-        *str = NULL;
-        return ret;
-    }
-    // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
-        _Z_WARN("Not enough bytes to read");
-        *str = NULL;
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
-    }
-    // Allocate space for the null terminated string
-    char *tmp = (char *)z_malloc(len + (size_t)1);
-    if (tmp == NULL) {
-        *str = NULL;
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-    // Read and store string
-    tmp[len] = '\0';
-    _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
-    *str = tmp;
-    return _Z_RES_OK;
-}
-
 z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_string_len(s)))
     // Note that this does not put the string terminator on the wire.
     return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(s), 0, _z_string_len(s));
 }
 
-z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
+z_result_t _z_string_decode(_z_string_view_t *str, _z_zbuf_t *zbf) {
     _z_zint_t len = 0;
     // Decode string length
+    *str = _z_string_view_null();
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
     // Check if we have enough bytes to read
-    if (_z_zbuf_len(zbf) < len) {
+    if (_z_zbuf_readable_len(zbf) < len) {
         _Z_INFO("Not enough bytes to read");
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
     // Alias string
-    *str = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+    *str = _z_string_view_make((const char *)_z_zbuf_get_rptr(zbf), len);
     _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
     return _Z_RES_OK;
 }
@@ -354,7 +307,7 @@ size_t _z_encoding_len(const _z_encoding_t *en) {
 }
 
 z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
-    bool has_schema = _z_string_check(&en->schema);
+    bool has_schema = !_z_string_is_empty(&en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;
@@ -366,29 +319,43 @@ z_result_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
+z_result_t _z_encoding_decode(_z_encoding_view_t *en, _z_zbuf_t *zbf) {
     uint32_t id = 0;
+    *en = _z_encoding_view_null();
     bool has_schema = false;
     _Z_RETURN_IF_ERR(_z_zint32_decode(&id, zbf));
     if ((id & _Z_ENCODING_FLAG_S) != 0) {
         has_schema = true;
     }
-    en->id = (uint16_t)(id >> 1);
+    _z_encoding_t inner = _z_encoding_null();
+    inner.id = (uint16_t)(id >> 1);
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_string_decode(&en->schema, zbf));
+        // Decode the schema as a non-owning view aliasing the buffer.
+        _z_string_view_t schema = {0};
+        _Z_RETURN_IF_ERR(_z_string_decode(&schema, zbf));
+        inner.schema = *_z_string_view_deref(&schema);
     }
+    *en = _z_encoding_view_from_encoding(&inner);
     return _Z_RES_OK;
 }
 
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *value) {
-    size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
     _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &value->encoding));
     return _z_bytes_encode_val(wbf, &value->payload);
 }
 
-z_result_t _z_value_decode(_z_value_t *value, _z_zbuf_t *zbf) {
-    _Z_RETURN_IF_ERR(_z_encoding_decode(&value->encoding, zbf));
-    _Z_RETURN_IF_ERR(_z_bytes_from_buf(&value->payload, (uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf)));
+z_result_t _z_value_encode_ext(_z_wbuf_t *wbf, const _z_value_t *value) {
+    size_t total_len = _z_encoding_len(&value->encoding) + _z_bytes_len(&value->payload);
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, total_len));
+    return _z_value_encode(wbf, value);
+}
+
+z_result_t _z_value_decode(_z_value_view_t *value, _z_zbuf_t *zbf) {
+    *value = _z_value_view_null();
+    _z_encoding_view_t view_encoding;
+    _Z_RETURN_IF_ERR(_z_encoding_decode(&view_encoding, zbf));
+    _z_slice_t view_slice = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
+    _z_bytes_view_t view_payload = _z_bytes_view_from_slice(&view_slice);
+    _z_value_view_create_from_data(value, _z_bytes_view_deref(&view_payload), _z_encoding_view_deref(&view_encoding));
     return _Z_RES_OK;
 }

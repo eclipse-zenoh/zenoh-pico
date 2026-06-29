@@ -97,11 +97,18 @@ static inline _z_string_t _z_string_alias_substr(const char *value, size_t len) 
     s._slice = _z_slice_alias_buf((const uint8_t *)(value), len);
     return s;
 }
-static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+static inline _z_string_t _z_string_from_substr_custom_deleter(char *value, size_t len, _z_delete_context_t c) {
     _z_string_t s;
-    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), len, c);
     return s;
 }
+
+static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+    // SAFETY: value is documented to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
+    return _z_string_from_substr_custom_deleter((char *)(value), strlen(value), c);
+}
+
 static inline void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
 static inline void _z_string_clear(_z_string_t *str) { _z_slice_clear(&str->_slice); }
 
@@ -122,7 +129,7 @@ int _z_substring_compare(const _z_string_t *left, size_t left_start, size_t left
                          size_t right_start, size_t right_len);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);
-_z_string_t _z_string_preallocate(const size_t len);
+z_result_t _z_string_preallocate(_z_string_t *s, const size_t len);
 z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, const char *right, size_t len,
                                    const char *separator, size_t separator_len);
 static inline z_result_t _z_string_concat(_z_string_t *s, const _z_string_t *left, const _z_string_t *right,
@@ -137,6 +144,42 @@ _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
+
+// Non owning view of _z_string_t
+typedef struct _z_string_view_t {
+    _z_string_t _target;
+} _z_string_view_t;
+
+static inline _z_string_view_t _z_string_view_make(const char *start, size_t len) {
+    _z_string_view_t s;
+    s._target = _z_string_from_substr_custom_deleter((char *)start, len, _z_delete_context_null());
+    return s;
+}
+
+static inline _z_string_view_t _z_string_view_null(void) {
+    _z_string_view_t s = {0};
+    return s;
+}
+
+static inline bool _z_string_view_is_empty(const _z_string_view_t *s) { return _z_string_is_empty(&s->_target); }
+
+static inline size_t _z_string_view_len(const _z_string_view_t *s) { return _z_string_len(&s->_target); }
+
+static inline const char *_z_string_view_data(const _z_string_view_t *s) { return _z_string_data(&s->_target); }
+
+// Builds a non-owning view over the data of an existing string.
+static inline _z_string_view_t _z_string_view_from_string(const _z_string_t *s) {
+    _z_string_view_t sv;
+    sv._target = *s;
+    return sv;
+}
+
+// Dereferences a view string to access the underlying string.
+static inline const _z_string_t *_z_string_view_deref(const _z_string_view_t *s) { return &s->_target; }
+
+static inline bool _z_string_view_equals(const _z_string_view_t *left, const _z_string_view_t *right) {
+    return _z_string_equals(&left->_target, &right->_target);
+}
 
 #ifdef __cplusplus
 }

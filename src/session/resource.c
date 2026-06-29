@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
@@ -91,38 +92,87 @@ _z_resource_t *_z_get_resource_by_key_inner(_z_resource_slist_t *rl, const _z_ke
     return ret;
 }
 
-static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_t *ret, _z_resource_slist_t *xs,
-                                                     const _z_wireexpr_t *expr, bool alias_wireexpr_if_possible) {
-    *ret = _z_keyexpr_null();
+static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_resource_slist_t *xs, const _z_wireexpr_t *expr, char **buf,
+                                                     size_t *buf_len) {
     _z_zint_t id = expr->_id;
+    size_t prefix_len = 0;
+    size_t suffix_len = 0;
+    const _z_string_t *suffix = NULL;
+    const _z_string_t *prefix = NULL;
 
-    if (id == Z_RESOURCE_ID_NONE) {  // Check if ke is already expanded
-        if (alias_wireexpr_if_possible) {
-            ret->_keyexpr = _z_string_alias(expr->_suffix);
-            return _Z_RES_OK;
-        } else {
-            return _z_string_copy(&ret->_keyexpr, &expr->_suffix);
-        }
-    } else {
+    if (!_z_string_view_is_empty(&expr->_suffix)) {
+        suffix = _z_string_view_deref(&expr->_suffix);
+        suffix_len = _z_string_len(suffix);
+    }
+
+    if (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = _z_get_resource_by_id_inner(xs, id);
         if (res == NULL) {
             return _Z_ERR_KEYEXPR_UNKNOWN;
         }
-        _z_keyexpr_t ke_prefix = _z_keyexpr_alias(&res->_key);
-        return _z_string_concat(&ret->_keyexpr, &ke_prefix._keyexpr, &expr->_suffix, NULL, 0);
+        prefix = &res->_key._keyexpr;
+        prefix_len = _z_string_len(prefix);
     }
+    if (*buf == NULL) {
+        *buf_len = prefix_len + suffix_len;
+        _Z_RETURN_ERR_OOM_IF_TRUE((*buf = (char *)z_malloc(*buf_len)) == NULL);
+    } else if (prefix_len + suffix_len > *buf_len) {
+        *buf_len = prefix_len + suffix_len;
+        return _Z_ERR_INVALID;
+    } else {
+        *buf_len = prefix_len + suffix_len;
+    }
+    if (prefix_len > 0) {
+        // SAFETY: buf is guaranteed to be large enough by the caller.
+        // Flawfinder: ignore [CWE-120]
+        memcpy(*buf, _z_string_data(prefix), prefix_len);
+    }
+    if (suffix_len > 0) {
+        // SAFETY: buf is guaranteed to be large enough by the caller.
+        // Flawfinder: ignore [CWE-120]
+        memcpy(*buf + prefix_len, _z_string_data(suffix), suffix_len);
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t *out, const _z_wireexpr_t *expr,
+                                             _z_transport_peer_common_t *peer, char *out_buf, size_t out_buf_len) {
+    *out = _z_keyexpr_view_null();
+    z_result_t ret = _Z_ERR_NULL;
+    if (expr != NULL && _z_wireexpr_check(expr)) {
+        if (expr->_id == Z_RESOURCE_ID_NONE) {
+            *out = _z_keyexpr_view_from_string_view(&expr->_suffix);
+            return _Z_RES_OK;
+        }
+        _z_session_mutex_lock(zn);
+        _z_resource_slist_t *decls =
+            (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
+        ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &out_buf, &out_buf_len);
+        _z_session_mutex_unlock(zn);
+        if (ret == _Z_RES_OK) {
+            _z_string_view_t sv = _z_string_view_make(out_buf, out_buf_len);
+            *out = _z_keyexpr_view_from_string_view(&sv);
+        }
+    }
+    return ret;
 }
 
 z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
-                                        _z_transport_peer_common_t *peer, bool alias_wireexpr_if_possible) {
+                                        _z_transport_peer_common_t *peer) {
     *out = _z_keyexpr_null();
     z_result_t ret = _Z_ERR_NULL;
     if (expr != NULL && _z_wireexpr_check(expr)) {
         _z_session_mutex_lock(zn);
         _z_resource_slist_t *decls =
             (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
-        ret = _z_get_keyexpr_from_wireexpr_inner(out, decls, expr, alias_wireexpr_if_possible);
+        char *buf = NULL;
+        size_t buf_len = 0;
+        ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &buf, &buf_len);
         _z_session_mutex_unlock(zn);
+        if (ret == _Z_RES_OK) {
+            _z_string_t s = _z_string_from_substr_custom_deleter(buf, buf_len, _z_delete_context_default());
+            _z_keyexpr_from_string(out, &s);
+        }
     }
     return ret;
 }
@@ -134,31 +184,32 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
         (expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL) ? zn->_local_resources : peer->_remote_resources;
 
     _z_keyexpr_t new_key = _z_keyexpr_null();
+    _z_keyexpr_view_t ke_view = _z_keyexpr_view_null();
     if (expr->_id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, expr->_id);
         if (res == NULL) {
-            _Z_ERROR("Unknown scope: %d, for mapping: %zu", (unsigned int)expr->_id, (size_t)expr->_mapping);
+            _Z_ERROR("Unknown scope: %d, for mapping: %d", (unsigned int)expr->_id, (int)expr->_mapping);
             return _Z_ERR_ENTITY_DECLARATION_FAILED;
         }
         if (_z_wireexpr_has_suffix(expr)) {
-            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, &expr->_suffix, NULL, 0) != _Z_RES_OK) {
+            const _z_string_t *suffix = _z_string_view_deref(&expr->_suffix);
+            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, suffix, NULL, 0) != _Z_RES_OK) {
                 _Z_ERROR("Failed to allocate memory for new string");
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
+            ke_view = _z_keyexpr_view_from_keyexpr(&new_key);
         } else if (id == Z_RESOURCE_ID_NONE && *resources == parent_resources) {
             // declaration of already declared resource
             res->_refcount++;
             *out_id = res->_id;
             return _Z_RES_OK;
-        } else {  // redeclaration of exisiting resource
-            new_key = _z_keyexpr_alias(&res->_key);
         }
     } else {
-        new_key = _z_keyexpr_alias_from_string(&expr->_suffix);
+        ke_view = _z_keyexpr_view_from_string_view(&expr->_suffix);
     }
 
     if (id == Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, &new_key);
+        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, _z_keyexpr_view_deref(&ke_view));
         if (res != NULL) {  // declaration of already declared resource
             res->_refcount++;
             _z_keyexpr_clear(&new_key);
@@ -167,7 +218,11 @@ z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *exp
         }
     }
     _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_move(&ke, &new_key));
+    if (_z_keyexpr_check(&new_key)) {
+        _z_keyexpr_move(&ke, &new_key);
+    } else {
+        _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke, _z_keyexpr_view_deref(&ke_view)));
+    }
 
     *resources = _z_resource_slist_push_empty(*resources);
     _z_resource_t *res = _z_resource_slist_value(*resources);
@@ -188,13 +243,8 @@ z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uin
 }
 
 z_result_t _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer) {
-    bool is_local = true;
-    uintptr_t mapping = _Z_KEYEXPR_MAPPING_LOCAL;
-    if (peer != NULL) {
-        is_local = false;
-        mapping = (uintptr_t)peer;
-    }
-    _Z_DEBUG("unregistering: id %d, mapping: %d", id, (unsigned int)mapping);
+    bool is_local = (peer == NULL);
+    _Z_DEBUG("unregistering: id %d, mapping: %s", id, is_local ? "local" : "remote");
     _z_session_mutex_lock(zn);
     _z_resource_slist_t **resources = is_local ? &zn->_local_resources : &peer->_remote_resources;
     _z_resource_t res = {0};

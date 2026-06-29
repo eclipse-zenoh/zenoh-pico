@@ -20,38 +20,38 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define TEST_TRUE_INTERSECT(a, b)        \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(_z_keyexpr_intersects(&ke_a, &ke_b));
+#define TEST_TRUE_INTERSECT(a, b)       \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(_z_keyexpr_intersects(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
-#define TEST_FALSE_INTERSECT(a, b)       \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(!_z_keyexpr_intersects(&ke_a, &ke_b));
+#define TEST_FALSE_INTERSECT(a, b)      \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(!_z_keyexpr_intersects(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
-#define TEST_TRUE_INCLUDE(a, b)          \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(_z_keyexpr_includes(&ke_a, &ke_b));
+#define TEST_TRUE_INCLUDE(a, b)         \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(_z_keyexpr_includes(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
-#define TEST_FALSE_INCLUDE(a, b)         \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(!_z_keyexpr_includes(&ke_a, &ke_b));
+#define TEST_FALSE_INCLUDE(a, b)        \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(!_z_keyexpr_includes(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
-#define TEST_TRUE_EQUAL(a, b)            \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(_z_keyexpr_equals(&ke_a, &ke_b));
+#define TEST_TRUE_EQUAL(a, b)           \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(_z_keyexpr_equals(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
-#define TEST_FALSE_EQUAL(a, b)           \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(!_z_keyexpr_equals(&ke_a, &ke_b));
+#define TEST_FALSE_EQUAL(a, b)          \
+    ke_a = _z_keyexpr_view_from_str(a); \
+    ke_b = _z_keyexpr_view_from_str(b); \
+    assert(!_z_keyexpr_equals(_z_keyexpr_view_deref(&ke_a), _z_keyexpr_view_deref(&ke_b)));
 
 void test_intersects(void) {
-    _z_keyexpr_t ke_a, ke_b;
+    _z_keyexpr_view_t ke_a, ke_b;
     TEST_TRUE_INTERSECT("a", "a")
     TEST_TRUE_INTERSECT("a/b", "a/b")
     TEST_TRUE_INTERSECT("*", "abc")
@@ -155,7 +155,7 @@ void test_intersects(void) {
 }
 
 void test_includes(void) {
-    _z_keyexpr_t ke_a, ke_b;
+    _z_keyexpr_view_t ke_a, ke_b;
     TEST_TRUE_INCLUDE("a", "a")
     TEST_TRUE_INCLUDE("a/b", "a/b")
     TEST_TRUE_INCLUDE("*", "a")
@@ -347,7 +347,7 @@ void test_canonize(void) {
 }
 
 void test_equals(void) {
-    _z_keyexpr_t ke_a, ke_b;
+    _z_keyexpr_view_t ke_a, ke_b;
     TEST_FALSE_EQUAL("a/**/$*b", "a/cb");
     TEST_FALSE_EQUAL("a/bc", "a/cb");
     TEST_TRUE_EQUAL("greetings/hello/there", "greetings/hello/there");
@@ -444,18 +444,18 @@ void test_relation_to(void) {
 }
 
 void test_non_wild_prefix_len(void) {
-    _z_keyexpr_t ke1, ke2, ke3, ke4, ke5;
-    ke1 = _z_keyexpr_alias_from_str("foo/bar/**");
-    ke2 = _z_keyexpr_alias_from_str("foo/*/baz");
-    ke3 = _z_keyexpr_alias_from_str("bar1/ab$*/baz");
-    ke4 = _z_keyexpr_alias_from_str("foo/bar");
-    ke5 = _z_keyexpr_alias_from_str("**");
+    _z_keyexpr_view_t ke1, ke2, ke3, ke4, ke5;
+    ke1 = _z_keyexpr_view_from_str("foo/bar/**");
+    ke2 = _z_keyexpr_view_from_str("foo/*/baz");
+    ke3 = _z_keyexpr_view_from_str("bar1/ab$*/baz");
+    ke4 = _z_keyexpr_view_from_str("foo/bar");
+    ke5 = _z_keyexpr_view_from_str("**");
 
-    assert(_z_keyexpr_non_wild_prefix_len(&ke1) == 7);
-    assert(_z_keyexpr_non_wild_prefix_len(&ke2) == 3);
-    assert(_z_keyexpr_non_wild_prefix_len(&ke3) == 4);
-    assert(_z_keyexpr_non_wild_prefix_len(&ke4) == 7);
-    assert(_z_keyexpr_non_wild_prefix_len(&ke5) == 0);
+    assert(_z_keyexpr_non_wild_prefix_len(_z_keyexpr_view_deref(&ke1)) == 7);
+    assert(_z_keyexpr_non_wild_prefix_len(_z_keyexpr_view_deref(&ke2)) == 3);
+    assert(_z_keyexpr_non_wild_prefix_len(_z_keyexpr_view_deref(&ke3)) == 4);
+    assert(_z_keyexpr_non_wild_prefix_len(_z_keyexpr_view_deref(&ke4)) == 7);
+    assert(_z_keyexpr_non_wild_prefix_len(_z_keyexpr_view_deref(&ke5)) == 0);
 }
 
 int main(void) {

@@ -58,35 +58,17 @@ void _z_keyexpr_wire_declaration_clear(_z_keyexpr_wire_declaration_t *declaratio
     _z_keyexpr_wire_declaration_undeclare(declaration);
 }
 
-_z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str) {
-    _z_keyexpr_t ke = _z_keyexpr_null();
-    ke._keyexpr = _z_string_alias(*str);
-    return ke;
+z_result_t _z_keyexpr_copy_from_string(_z_keyexpr_t *dst, const _z_string_t *str) {
+    return _z_keyexpr_copy_from_substr(dst, _z_string_data(str), _z_string_len(str));
 }
 
-_z_keyexpr_t _z_keyexpr_alias_from_substr(const char *str, size_t len) {
-    _z_keyexpr_t ke = _z_keyexpr_null();
-    ke._keyexpr = _z_string_alias_substr(str, len);
-    return ke;
+void _z_keyexpr_from_string(_z_keyexpr_t *dst, _z_string_t *str) {
+    *dst = _z_keyexpr_null();
+    dst->_keyexpr = *str;
+    *str = _z_string_null();
 }
 
-_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_string(const _z_string_t *str) {
-    _z_declared_keyexpr_t ke = _z_declared_keyexpr_null();
-    ke._inner = _z_keyexpr_alias_from_string(str);
-    return ke;
-}
-
-_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_substr(const char *str, size_t len) {
-    _z_declared_keyexpr_t ke = _z_declared_keyexpr_null();
-    ke._inner = _z_keyexpr_alias_from_substr(str, len);
-    return ke;
-}
-
-z_result_t _z_keyexpr_from_string(_z_keyexpr_t *dst, const _z_string_t *str) {
-    return _z_keyexpr_from_substr(dst, _z_string_data(str), _z_string_len(str));
-}
-
-z_result_t _z_keyexpr_from_substr(_z_keyexpr_t *dst, const char *str, size_t len) {
+z_result_t _z_keyexpr_copy_from_substr(_z_keyexpr_t *dst, const char *str, size_t len) {
     *dst = _z_keyexpr_null();
     dst->_keyexpr = _z_string_copy_from_substr(str, len);
     return _z_string_check(&dst->_keyexpr) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -103,7 +85,7 @@ z_result_t _z_declared_keyexpr_copy(_z_declared_keyexpr_t *dst, const _z_declare
 
 z_result_t _z_declared_keyexpr_move(_z_declared_keyexpr_t *dst, _z_declared_keyexpr_t *src) {
     *dst = _z_declared_keyexpr_null();
-    _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->_inner, &src->_inner));
+    _z_keyexpr_move(&dst->_inner, &src->_inner);
     dst->_declaration = src->_declaration;
     src->_declaration = _z_keyexpr_wire_declaration_rc_null();
     return _Z_RES_OK;
@@ -438,7 +420,7 @@ z_result_t _z_keyexpr_concat(_z_keyexpr_t *key, const _z_keyexpr_t *left, const 
     *key = _z_keyexpr_null();
     size_t left_len = _z_string_len(&left->_keyexpr);
     if (left_len == 0) {
-        return _z_keyexpr_from_substr(key, right, len);
+        return _z_keyexpr_copy_from_substr(key, right, len);
     }
     const char *left_data = _z_string_data(&left->_keyexpr);
 
@@ -492,14 +474,14 @@ _z_wireexpr_t _z_declared_keyexpr_alias_to_wire(const _z_declared_keyexpr_t *key
         suffix_len -= _Z_RC_IN_VAL(&key->_declaration)->_prefix_len;
     }
     if (suffix_len > 0) {
-        expr._suffix = _z_string_alias_substr(suffix_str, suffix_len);
+        expr._suffix = _z_string_view_make(suffix_str, suffix_len);
     }
     return expr;
 }
 
 _z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key) {
     _z_wireexpr_t expr = _z_wireexpr_null();
-    expr._suffix = _z_string_alias(key->_keyexpr);
+    expr._suffix = _z_string_view_from_string(&key->_keyexpr);
     return expr;
 }
 
@@ -524,9 +506,10 @@ z_result_t _z_keyexpr_declare_prefix(const _z_session_rc_t *zs, _z_declared_keye
         _z_declared_keyexpr_clear(out);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _z_string_t prefix = _z_string_alias_substr(_z_string_data(&out->_inner._keyexpr), prefix_len);
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_wire_declaration_new(_Z_RC_IN_VAL(&out->_declaration), &prefix, zs),
-                           _z_declared_keyexpr_clear(out));
+    _z_string_view_t prefix = _z_string_view_make(_z_string_data(&out->_inner._keyexpr), prefix_len);
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_keyexpr_wire_declaration_new(_Z_RC_IN_VAL(&out->_declaration), _z_string_view_deref(&prefix), zs),
+        _z_declared_keyexpr_clear(out));
     return _Z_RES_OK;
 }
 

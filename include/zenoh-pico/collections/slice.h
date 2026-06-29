@@ -104,6 +104,37 @@ bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_free(_z_slice_t **bs);
 bool _z_slice_is_alloced(const _z_slice_t *s);
 
+/*-------- View Slice --------*/
+/**
+ * A non-owning view of an array of bytes.
+ */
+typedef struct _z_slice_view_t {
+    _z_slice_t _target;
+} _z_slice_view_t;
+
+static inline _z_slice_view_t _z_slice_view_from_slice(const _z_slice_t *slice) {
+    _z_slice_view_t view;
+    if (slice == NULL) {
+        view._target = _z_slice_null();
+    } else {
+        view._target = *slice;
+    }
+    return view;
+}
+
+static inline _z_slice_view_t _z_slice_view_make(const uint8_t *start, size_t len) {
+    _z_slice_view_t slice;
+    slice._target = _z_slice_from_buf_custom_deleter(start, len, _z_delete_context_null());
+    return slice;
+}
+
+static inline _z_slice_view_t _z_slice_view_null(void) {
+    _z_slice_view_t slice = {0};
+    return slice;
+}
+
+static inline const _z_slice_t *_z_slice_view_deref(const _z_slice_view_t *slice) { return &slice->_target; }
+
 #ifdef __cplusplus
 }
 #endif

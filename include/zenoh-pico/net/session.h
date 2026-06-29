@@ -118,6 +118,20 @@ _Z_ELEM_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t, _
 _Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t)
 #endif
 
+typedef struct _z_query_id {
+    uint32_t rid;
+    void *peer_id;
+} _z_query_id_t;
+
+#define _ZP_HASHMAP_TEMPLATE_NAME _z_rid_to_count_hmap
+#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE _z_query_id_t
+#define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
+#define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(query_id1, query_id2) \
+    (((query_id1)->rid == (query_id2)->rid) && ((query_id1)->peer_id == (query_id2)->peer_id))
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) \
+    ((size_t)((query_id)->rid) ^ (size_t)(uintptr_t)((query_id)->peer_id))
+#include "zenoh-pico/collections/hashmap_template.h"
+
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
@@ -150,17 +164,10 @@ typedef struct _z_session_t {
     // Information for session restoring and asynchronous peer connection
     _z_config_t _config;
 
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_network_message_slist_t *_declaration_cache;
-#endif
-
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_rc_slist_t *_subscriptions;
     _z_subscription_rc_slist_t *_liveliness_subscriptions;
-#if Z_FEATURE_RX_CACHE == 1
-    _z_subscription_lru_cache_t _subscription_cache;
-#endif
 #endif
 
 #if Z_FEATURE_LIVELINESS == 1
@@ -175,9 +182,7 @@ typedef struct _z_session_t {
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
     _z_session_queryable_rc_slist_t *_local_queryable;
-#if Z_FEATURE_RX_CACHE == 1
-    _z_queryable_lru_cache_t _queryable_cache;
-#endif
+    _z_rid_to_count_hmap_t _received_queries_id_to_count;
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_slist_t *_pending_queries;
@@ -211,6 +216,7 @@ typedef struct _z_session_t {
     _z_sync_group_t _callback_drop_sync_group;
     _z_atomic_bool_t _is_closed;
     _z_runtime_t _runtime;
+    _z_session_weak_t _weak;  // for queries
 } _z_session_t;
 
 /**
@@ -226,28 +232,17 @@ typedef struct _z_session_t {
  */
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
 
+static inline _z_entity_global_id_t _z_session_get_id(const _z_session_t *zn) {
+    _z_entity_global_id_t ret;
+    ret.zid = zn->_local_zid;
+    ret.eid = 0;  // eid counter starts from 1, so it is safe to use 0 for session
+    return ret;
+}
+
 #if Z_FEATURE_AUTO_RECONNECT == 1
 void _z_client_reopen_task_drop(void *ztc_arg);
 _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *executor);
 #endif
-
-/**
- * Store declaration network message to cache for resend it after session restore
- *
- * Parameters:
- *     zs: A zenoh-net session.
- *     z_msg: Network message with declaration
- */
-void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
-
-/**
- * Remove corresponding declaration from the cache
- *
- * Parameters:
- *     zs: A zenoh-net session.
- *     z_msg: Network message with undeclaration
- */
-void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 
 /**
  * Return true is session and all associated transports were closed.

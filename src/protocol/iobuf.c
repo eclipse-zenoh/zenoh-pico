@@ -82,17 +82,6 @@ void _z_iosli_clear(_z_iosli_t *ios) {
     }
 }
 
-void _z_iosli_free(_z_iosli_t **ios) {
-    _z_iosli_t *ptr = *ios;
-
-    if (ptr != NULL) {
-        _z_iosli_clear(ptr);
-
-        z_free(ptr);
-        *ios = NULL;
-    }
-}
-
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
     dst->_r_pos = src->_r_pos;
     dst->_w_pos = src->_w_pos;
@@ -117,56 +106,37 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 }
 
 /*------------------ ZBuf ------------------*/
-_z_zbuf_t _z_zbuf_make(size_t capacity) {
-    _z_zbuf_t zbf = _z_zbuf_null();
-    zbf._ios = _z_iosli_make(capacity);
-    if (_z_zbuf_capacity(&zbf) == 0) {
-        return zbf;
+z_result_t _z_zbuf_init(_z_zbuf_t *zbf, size_t capacity) {
+    *zbf = _z_zbuf_null();
+    zbf->_ios = _z_iosli_make(capacity);
+    if (zbf->_ios._capacity != capacity) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
-    zbf._slice = _z_slice_simple_rc_new_from_val(&s);
-    if (_z_slice_simple_rc_is_null(&zbf._slice)) {
-        _Z_ERROR("slice rc creation failed");
-        _z_iosli_clear(&zbf._ios);
-    }
-    zbf._ios._is_alloc = false;
-    return zbf;
+    return _Z_RES_OK;
 }
 
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     assert(_z_iosli_readable(&zbf->_ios) >= length);
     _z_zbuf_t v;
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
-    v._slice = zbf->_slice;
     return v;
 }
 
-_z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
-    return (_z_zbuf_t){
-        ._ios = {._buf = (uint8_t *)slice.start,  // Safety: `_z_zbuf_t` is an immutable buffer
-                 ._is_alloc = false,
-                 ._capacity = slice.len,
-                 ._r_pos = 0,
-                 ._w_pos = slice.len},
-        ._slice = _z_slice_simple_rc_null(),
-    };
+_z_zbuf_t _z_slice_as_zbuf(const _z_slice_t *slice) {
+    return (_z_zbuf_t){._ios = {._buf = (uint8_t *)slice->start,  // Safety: `_z_zbuf_t` is an immutable buffer
+                                ._is_alloc = false,
+                                ._capacity = slice->len,
+                                ._r_pos = 0,
+                                ._w_pos = slice->len}};
 }
 
 void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src) { _z_iosli_copy_bytes(&dst->_ios, &src->_ios); }
-
-void _z_zbuf_copy(_z_zbuf_t *dst, const _z_zbuf_t *src) {
-    dst->_slice = _z_slice_simple_rc_clone(&src->_slice);
-    _z_iosli_copy_bytes(&dst->_ios, &src->_ios);
-}
 
 void _z_zbuf_read_bytes(_z_zbuf_t *zbf, uint8_t *dest, size_t offset, size_t length) {
     _z_iosli_read_bytes(&zbf->_ios, dest, offset, length);
 }
 
-void _z_zbuf_clear(_z_zbuf_t *zbf) {
-    _z_iosli_clear(&zbf->_ios);
-    _z_slice_simple_rc_drop(&zbf->_slice);
-}
+void _z_zbuf_clear(_z_zbuf_t *zbf) { _z_iosli_clear(&zbf->_ios); }
 
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
     if ((zbf->_ios._r_pos != 0) || (zbf->_ios._w_pos != 0)) {
@@ -174,17 +144,6 @@ void _z_zbuf_compact(_z_zbuf_t *zbf) {
         (void)memmove(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
         _z_zbuf_set_rpos(zbf, 0);
         _z_zbuf_set_wpos(zbf, len);
-    }
-}
-
-void _z_zbuf_free(_z_zbuf_t **zbf) {
-    _z_zbuf_t *ptr = *zbf;
-
-    if (ptr != NULL) {
-        _z_iosli_clear(&ptr->_ios);
-
-        z_free(ptr);
-        *zbf = NULL;
     }
 }
 
@@ -199,23 +158,35 @@ static z_result_t _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios) {
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_svec_len(&wbf->_ioss); }
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
-    _z_wbuf_t wbf;
+z_result_t _z_wbuf_init(_z_wbuf_t *wbf, size_t capacity, bool is_expandable) {
+    *wbf = _z_wbuf_null();
     if (is_expandable) {
-        wbf._ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, attachment, misc, payload, misc
-        wbf._expansion_step = capacity;
+        wbf->_ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, attachment, misc, payload, misc
+        if (wbf->_ioss._val == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        wbf->_expansion_step = capacity;
     } else {
-        wbf._ioss = _z_iosli_svec_make(1);
-        wbf._expansion_step = 0;
+        wbf->_ioss = _z_iosli_svec_make(1);
+        if (wbf->_ioss._val == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        wbf->_expansion_step = 0;
     }
     _z_iosli_t ios = _z_iosli_make(capacity);
-    z_result_t res = _z_iosli_svec_append(&wbf._ioss, &ios, false);
-    if (res != _Z_RES_OK) {
-        _z_iosli_clear(&ios);
+    if (ios._buf == NULL) {
+        _z_iosli_svec_clear(&wbf->_ioss);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    wbf._w_idx = 0;
-    wbf._r_idx = 0;
-    return wbf;
+    z_result_t res = _z_iosli_svec_append(&wbf->_ioss, &ios, false);
+    if (res != _Z_RES_OK) {
+        _z_iosli_svec_clear(&wbf->_ioss);
+        _z_iosli_clear(&ios);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    wbf->_w_idx = 0;
+    wbf->_r_idx = 0;
+    return _Z_RES_OK;
 }
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf) {
@@ -450,7 +421,10 @@ void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t pos) {
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     size_t len = _z_wbuf_len(wbf);
-    _z_zbuf_t zbf = _z_zbuf_make(len);
+    _z_zbuf_t zbf;
+    if (_z_zbuf_init(&zbf, len) != _Z_RES_OK) {
+        return _z_zbuf_null();
+    }
     for (size_t i = wbf->_r_idx; i <= wbf->_w_idx; i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         _z_iosli_write_bytes(&zbf._ios, ios->_buf, ios->_r_pos, _z_iosli_readable(ios));
@@ -465,12 +439,6 @@ _z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf) {
     _z_zbuf_t zbf = _z_zbuf_null();
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, 0);
     zbf._ios = _z_iosli_steal(ios);
-    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
-    zbf._slice = _z_slice_simple_rc_new_from_val(&s);
-    if (_z_slice_simple_rc_is_null(&zbf._slice)) {
-        _Z_ERROR("slice rc creation failed");
-    }
-    zbf._ios._is_alloc = false;
     _z_wbuf_clear(wbf);
     return zbf;
 }

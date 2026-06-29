@@ -30,7 +30,7 @@
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
-    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr,
+    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_writable_space_left(zbf), addr,
                                   &link->_socket._raweth._whitelist);
     // Check validity
     if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
@@ -74,7 +74,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
 }
 
 /*------------------ Reception helper ------------------*/
-z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
 
@@ -100,34 +100,10 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     }
     // Decode message
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_readable_len(&ztm->_common._zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
     return ret;
-}
-
-z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
-    return _z_raweth_recv_t_msg_na(ztm, t_msg, addr);
-}
-
-z_result_t _z_raweth_update_rx_buff(_z_transport_multicast_t *ztm) {
-    // Check if user or defragment buffer took ownership of buffer
-    if (_z_zbuf_get_ref_count(&ztm->_common._zbuf) != 1) {
-        // Allocate a new buffer
-        _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
-        if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
-            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-        }
-        // Recopy leftover bytes
-        size_t leftovers = _z_zbuf_len(&ztm->_common._zbuf);
-        if (leftovers > 0) {
-            _z_zbuf_copy_bytes(&new_zbuf, &ztm->_common._zbuf);
-        }
-        // Drop buffer & update
-        _z_zbuf_clear(&ztm->_common._zbuf);
-        ztm->_common._zbuf = new_zbuf;
-    }
-    return _Z_RES_OK;
 }
 
 #else

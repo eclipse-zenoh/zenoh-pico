@@ -142,49 +142,40 @@ _Z_ELEM_DEFINE(_z_timestamp, _z_timestamp_t, _z_timestamp_size, _z_timestamp_cle
  *
  * Members:
  *  uint16_t _id: The resource ID of the ke.
- *  uintptr_t _mapping: Address of the peer as id, if ke is remotely declared.
- *  _z_string_t _suffix: The string value of the ke.
+ *  _z_keyexpr_mapping_t _mapping: Whether the ke's _id is declared in the local or in a remote id space.
+ *  _z_string_view_t _suffix: The string value of the ke. It is always a non-owning view: the referenced data
+ *                            is owned elsewhere (the decoding buffer or an existing keyexpr) and must outlive
+ *                            the wireexpr.
  */
-// Note on the _mapping field: there are collisions on _id value between peers/local, this field is used only to
-// distinguish which peer/local id space we are in and should not be dereferenced, just compared. NULL/0 value is used
-// for local declared keyexpr and the address of empty_id as a placeholder.
-#define _Z_KEYEXPR_MAPPING_LOCAL (uintptr_t)0
+// The _mapping field tells in which id space the keyexpr's _id lives. There are collisions on _id values between
+// peers/local, so this field is used only to distinguish which id space we are in. The actual peer is always passed
+// alongside the wireexpr, so the mapping does not need to identify a specific peer, only whether the keyexpr was
+// declared locally or by a remote peer.
+typedef enum {
+    // The keyexpr _id belongs to the local id space.
+    _Z_KEYEXPR_MAPPING_LOCAL = 0,
+    // The keyexpr _id belongs to a remote peer's id space.
+    _Z_KEYEXPR_MAPPING_REMOTE = 1,
+} _z_keyexpr_mapping_t;
 
 typedef struct {
     uint16_t _id;
-    uintptr_t _mapping;
-    _z_string_t _suffix;
+    _z_keyexpr_mapping_t _mapping;
+    _z_string_view_t _suffix;
 } _z_wireexpr_t;
 
-static inline void _z_wireexpr_clear(_z_wireexpr_t *expr) { _z_string_clear(&expr->_suffix); }
-static inline z_result_t _z_wireexpr_copy(_z_wireexpr_t *dst, const _z_wireexpr_t *src) {
-    _Z_RETURN_IF_ERR(_z_string_copy(&dst->_suffix, &src->_suffix));
-    dst->_id = src->_id;
-    dst->_mapping = src->_mapping;
-    return _Z_RES_OK;
-}
-static inline _z_wireexpr_t _z_wireexpr_alias(const _z_wireexpr_t *src) {
-    _z_wireexpr_t dst;
-    dst._suffix = _z_string_alias(src->_suffix);
-    dst._id = src->_id;
-    dst._mapping = src->_mapping;
-    return dst;
-}
 static inline _z_wireexpr_t _z_wireexpr_null(void) {
     _z_wireexpr_t expr = {0};
     return expr;
 }
-static inline _z_wireexpr_t _z_wireexpr_steal(_z_wireexpr_t *expr) {
-    _z_wireexpr_t expr2 = *expr;
-    *expr = _z_wireexpr_null();
-    return expr2;
-}
 static inline bool _z_wireexpr_is_local(const _z_wireexpr_t *expr) {
     return expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL;
 }
-static inline bool _z_wireexpr_has_suffix(const _z_wireexpr_t *expr) { return _z_string_check(&expr->_suffix); }
+static inline bool _z_wireexpr_has_suffix(const _z_wireexpr_t *expr) {
+    return !_z_string_view_is_empty(&expr->_suffix);
+}
 static inline bool _z_wireexpr_check(const _z_wireexpr_t *expr) {
-    return _z_string_check(&expr->_suffix) || expr->_id != Z_RESOURCE_ID_NONE;
+    return !_z_string_view_is_empty(&expr->_suffix) || expr->_id != Z_RESOURCE_ID_NONE;
 }
 
 /**
@@ -206,22 +197,38 @@ typedef struct {
     _z_encoding_t encoding;
 } _z_value_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_value_t _z_value_null(void) { return (_z_value_t){0}; }
+static inline _z_value_t _z_value_null(void) {
+    _z_value_t v;
+    v.payload = _z_bytes_null();
+    v.encoding = _z_encoding_null();
+    return v;
+}
+
 static inline bool _z_value_check(const _z_value_t *value) {
     return _z_bytes_check(&value->payload) || _z_encoding_check(&value->encoding);
 }
-static inline _z_value_t _z_value_alias(_z_value_t *src) {
-    _z_value_t dst;
-    dst.payload = _z_bytes_alias(&src->payload);
-    dst.encoding = _z_encoding_alias(&src->encoding);
-    return dst;
-}
-_z_value_t _z_value_steal(_z_value_t *value);
+
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
-void _z_value_free(_z_value_t **hello);
+
+// A non-owning view of a zenoh value.
+typedef struct _z_value_view_t {
+    _z_value_t _target;
+} _z_value_view_t;
+
+static inline const _z_value_t *_z_value_view_deref(const _z_value_view_t *view) { return &view->_target; }
+static inline _z_value_view_t _z_value_view_null(void) {
+    _z_value_view_t view;
+    view._target = _z_value_null();
+    return view;
+}
+
+static inline void _z_value_view_create_from_data(_z_value_view_t *dst, const _z_bytes_t *opt_payload,
+                                                  const _z_encoding_t *opt_encoding) {
+    dst->_target.payload = opt_payload == NULL ? _z_bytes_null() : *opt_payload;
+    dst->_target.encoding = opt_encoding == NULL ? _z_encoding_null() : *opt_encoding;
+}
 
 /**
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.

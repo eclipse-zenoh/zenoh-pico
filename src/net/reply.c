@@ -18,80 +18,130 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_QUERY == 1
-void _z_reply_data_clear(_z_reply_data_t *reply_data) {
-    if (reply_data->_tag == _Z_REPLY_TAG_DATA) {
-        _z_sample_clear(&reply_data->_result.sample);
-    } else if (reply_data->_tag == _Z_REPLY_TAG_ERROR) {
-        _z_value_clear(&reply_data->_result.error);
-    }
-    reply_data->_tag = _Z_REPLY_TAG_NONE;
-    reply_data->replier_id = _z_entity_global_id_null();
+
+void _z_reply_err_owned_clear(_z_reply_err_owned_t *reply) {
+    _z_bytes_clear(&reply->payload);
+    _z_encoding_clear(&reply->encoding);
 }
 
-void _z_reply_data_free(_z_reply_data_t **reply_data) {
-    _z_reply_data_t *ptr = *reply_data;
-
-    if (ptr != NULL) {
-        _z_reply_data_clear(ptr);
-        z_free(ptr);
-        *reply_data = NULL;
-    }
+void _z_reply_err_owned_move(_z_reply_err_owned_t *dst, _z_reply_err_owned_t *src) {
+    *dst = *src;
+    *src = _z_reply_err_owned_null();
 }
 
-z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
-    if (src->_tag == _Z_REPLY_TAG_DATA) {
-        _Z_RETURN_IF_ERR(_z_sample_copy(&dst->_result.sample, &src->_result.sample));
-    } else if (src->_tag == _Z_REPLY_TAG_ERROR) {
-        _Z_RETURN_IF_ERR(_z_value_copy(&dst->_result.error, &src->_result.error));
+z_result_t _z_reply_err_owned_copy(_z_reply_err_owned_t *dst, const _z_reply_err_owned_t *src) {
+    *dst = _z_reply_err_owned_null();
+    _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload));
+    _Z_CLEAN_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding), _z_bytes_clear(&dst->payload));
+    return _Z_RES_OK;
+}
+
+void _z_reply_err_create_view_from_data(_z_reply_err_t *dst, const _z_bytes_t *payload, const _z_encoding_t *encoding) {
+    dst->_view._target = _z_reply_err_owned_null();
+    dst->_view._target.payload = payload != NULL ? *payload : _z_bytes_null();
+    dst->_view._target.encoding = encoding != NULL ? *encoding : _z_encoding_null();
+    dst->_tag = _z_reply_err_tag_view;
+}
+
+z_result_t _z_reply_err_move_or_copy(_z_reply_err_t *dst, _z_reply_err_t *src) {
+    _ZP_VARIANT_VISIT(_z_reply_err, src,
+        (owned, *dst = _z_reply_err_from_owned(_)),
+        (view, {
+            _z_reply_err_owned_t r = _z_reply_err_owned_null();
+            z_result_t ret = _z_reply_err_owned_copy(&r, _z_reply_err_view_deref(_));
+            if (ret != _Z_RES_OK) {
+                *dst = _z_reply_err_none();
+                return ret;
+            }
+            *dst = _z_reply_err_from_owned(&r);
+        }),
+        (none, *dst = _z_reply_err_none())
+    );
+    return _Z_RES_OK;
+}
+
+z_result_t _z_reply_err_copy(_z_reply_err_t *dst, const _z_reply_err_t *src) {
+    const _z_reply_err_owned_t *ref = _z_reply_err_get_ref(src);
+    if (ref != NULL) {
+        _z_reply_err_owned_t s = _z_reply_err_owned_null();
+        z_result_t ret = _z_reply_err_owned_copy(&s, ref);
+        if (ret != _Z_RES_OK) {
+            *dst = _z_reply_err_none();
+            return ret;
+        }
+        *dst = _z_reply_err_from_owned(&s);
+    } else {
+        *dst = _z_reply_err_none();
     }
-    dst->_tag = src->_tag;
+    return _Z_RES_OK;
+}
+
+z_result_t _z_reply_move_or_copy(_z_reply_t *dst, _z_reply_t *src) {
     dst->replier_id = src->replier_id;
+    _ZP_VARIANT_VISIT(_z_reply_data, &src->_result,
+        (ok, {
+            _z_sample_t s = _z_sample_none();
+            z_result_t ret = _z_sample_move_or_copy(&s, _);
+            if (ret != _Z_RES_OK) {
+                dst->_result = _z_reply_data_none();
+                return ret;
+            }
+            dst->_result = _z_reply_data_from_ok(&s);
+        }),
+        (err, {
+            _z_reply_err_t r = _z_reply_err_none();
+            z_result_t ret = _z_reply_err_move_or_copy(&r, _);
+            if (ret != _Z_RES_OK) {
+                dst->_result = _z_reply_data_none();
+                return ret;
+            }
+            dst->_result = _z_reply_data_from_err(&r);
+        }),
+        (none, dst->_result = _z_reply_data_none())
+    );
     return _Z_RES_OK;
 }
 
-void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_entity_global_id_t replier_id, _z_bytes_t *payload,
-                         const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
-                         _z_bytes_t *attachment, _z_source_info_t *source_info) {
-    dst->data.replier_id = replier_id;
-    dst->data._tag = _Z_REPLY_TAG_DATA;
-    _z_sample_steal_data(&dst->data._result.sample, keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
-                         attachment, Z_RELIABILITY_DEFAULT, source_info);
-}
-void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding,
-                             _z_entity_global_id_t replier_id) {
-    dst->data.replier_id = replier_id;
-    dst->data._tag = _Z_REPLY_TAG_ERROR;
-    dst->data._result.error.payload = _z_bytes_steal(payload);
-    dst->data._result.error.encoding = _z_encoding_steal(encoding);
+void _z_reply_clear(_z_reply_t *reply) {
+    _z_reply_data_destroy(&reply->_result);
+    reply->replier_id = _z_entity_global_id_null();
 }
 
-z_result_t _z_reply_move(_z_reply_t *dst, _z_reply_t *src) {
-    dst->data._tag = src->data._tag;
-    dst->data.replier_id = src->data.replier_id;
-    if (src->data._tag == _Z_REPLY_TAG_DATA) {
-        _Z_RETURN_IF_ERR(_z_sample_move(&dst->data._result.sample, &src->data._result.sample));
-    } else if (src->data._tag == _Z_REPLY_TAG_ERROR) {
-        _Z_RETURN_IF_ERR(_z_value_move(&dst->data._result.error, &src->data._result.error));
-    }
-
-    *src = _z_reply_null();
+z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
+    dst->replier_id = src->replier_id;
+    _ZP_VARIANT_CONST_VISIT(_z_reply_data, &src->_result,
+        (ok, {
+            _z_sample_t s = _z_sample_none();
+            z_result_t ret = _z_sample_copy(&s, _);
+            if (ret != _Z_RES_OK) {
+                *dst = _z_reply_null();
+                return ret;
+            }
+            dst->_result = _z_reply_data_from_ok(&s);
+        }),
+        (err, {
+            _z_reply_err_t r = _z_reply_err_none();
+            z_result_t ret = _z_reply_err_copy(&r, _);
+            if (ret != _Z_RES_OK) {
+                *dst = _z_reply_null();
+                return ret;
+            }
+            dst->_result = _z_reply_data_from_err(&r);
+        }),
+        (none, *dst = _z_reply_null())
+    );
     return _Z_RES_OK;
 }
 
-void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
-
-void _z_reply_free(_z_reply_t **reply) {
-    _z_reply_t *ptr = *reply;
-
-    if (*reply != NULL) {
-        _z_reply_clear(ptr);
-
-        z_free(ptr);
-        *reply = NULL;
-    }
+z_result_t _z_reply_create_ok_owned_with_keyexpr(_z_reply_t *dst, const _z_keyexpr_t *keyexpr) {
+    *dst = _z_reply_null();
+    _z_sample_owned_t s = _z_sample_owned_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&s.keyexpr._inner, keyexpr));
+    dst->_result._ok = _z_sample_from_owned(&s);
+    dst->_result._tag = _z_reply_data_tag_ok;
+    dst->replier_id = _z_entity_global_id_null();
+    return _Z_RES_OK;
 }
-
-z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) { return _z_reply_data_copy(&dst->data, &src->data); }
 
 bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
     return one->_tstamp.time == two->_tstamp.time;

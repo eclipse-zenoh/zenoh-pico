@@ -106,7 +106,7 @@ z_result_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     _z_t_msg_join_t *msg = (_z_t_msg_join_t *)ctx;
     if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_QOS) {
         msg->_next_sn._is_qos = true;
-        _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
+        _z_zbuf_t zbf = _z_slice_as_zbuf(_z_slice_view_deref(&extension->_body._zbuf._val));
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
@@ -136,7 +136,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
     msg->_zid = _z_id_empty();
     if (ret == _Z_RES_OK) {
-        if (_z_zbuf_len(zbf) >= zidlen) {
+        if (_z_zbuf_readable_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
@@ -200,7 +200,7 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&msg->_cookie)))
     }
 
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -248,7 +248,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if (ret == _Z_RES_OK) {
         msg->_whatami = _z_whatami_from_uint8(cbyte);
         uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
-        if (_z_zbuf_len(zbf) >= zidlen) {
+        if (_z_zbuf_readable_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
@@ -272,7 +272,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
     } else {
-        msg->_cookie = _z_slice_null();
+        msg->_cookie = _z_slice_view_null();
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     msg->_patch = _Z_NO_PATCH;
@@ -298,7 +298,7 @@ z_result_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t 
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_initial_sn))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&msg->_cookie)))
     }
 
     return ret;
@@ -319,10 +319,10 @@ z_result_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_slice_null();
+            msg->_cookie = _z_slice_view_null();
         }
     } else {
-        msg->_cookie = _z_slice_null();
+        msg->_cookie = _z_slice_view_null();
     }
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x02);
@@ -388,8 +388,9 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_SERIALIZATION_FAILED);
     }
-    if (msg->_payload != NULL) {
-        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, _z_zbuf_get_rptr(msg->_payload), 0, _z_zbuf_len(msg->_payload)));
+    const _z_slice_t *payload = _z_slice_view_deref(&msg->_payload);
+    if (_z_slice_check(payload)) {
+        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, payload->start, 0, payload->len));
     }
     return _Z_RES_OK;
 }
@@ -400,8 +401,8 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x04));
     }
-    // Note payload
-    msg->_payload = zbf;
+    msg->_payload = _z_slice_view_make(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainder will be consumed by network message decoder
     return _Z_RES_OK;
 }
 
@@ -426,8 +427,9 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
-    if (_z_slice_check(&msg->_payload)) {
-        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_payload.start, 0, msg->_payload.len));
+    const _z_slice_t *payload = _z_slice_view_deref(&msg->_payload);
+    if (_z_slice_check(payload)) {
+        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, payload->start, 0, payload->len));
     }
 
     return ret;
@@ -459,35 +461,8 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_fragment_decode_ext, msg);
     }
-    msg->_payload = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    zbf->_ios._r_pos = zbf->_ios._w_pos;
-
-    return ret;
-}
-
-/*------------------ Transport Extensions Message ------------------*/
-z_result_t _z_extensions_encode(_z_wbuf_t *wbf, uint8_t header, const _z_msg_ext_vec_t *v_ext) {
-    (void)(header);
-    z_result_t ret = _Z_RES_OK;
-
-    _Z_DEBUG("Encoding _Z_TRANSPORT_EXTENSIONS");
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        ret |= _z_msg_ext_vec_encode(wbf, v_ext);
-    }
-
-    return ret;
-}
-
-z_result_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t header) {
-    (void)(header);
-    z_result_t ret = _Z_RES_OK;
-
-    _Z_DEBUG("Decoding _Z_TRANSPORT_EXTENSIONS");
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-        ret |= _z_msg_ext_vec_decode(v_ext, zbf);
-    } else {
-        _z_msg_ext_vec_reset(v_ext);
-    }
+    msg->_payload = _z_slice_view_make(_z_zbuf_get_rptr(zbf), _z_zbuf_readable_len(zbf));
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_wpos(zbf));  // the remainder will be consumed by network message decoder
 
     return ret;
 }

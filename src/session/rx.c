@@ -86,7 +86,6 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
 
 static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, _z_transport_peer_common_t *peer) {
     z_result_t ret = _z_handle_declare_inner(zn, decl, peer);
-    _z_n_msg_declare_clear(decl);
     return ret;
 }
 
@@ -100,52 +99,54 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
     switch (req->_tag) {
         case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
-            // Memory cleaning must be done in the feature layer
-            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, req->_ext_qos,
-                                         peer);
+            _z_keyexpr_view_t ke_view;
+            char buf[Z_MAX_KEYEXPR_LENGTH];
+            _Z_RETURN_IF_ERR(
+                _z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
+            return _z_trigger_queryables(zn, _z_keyexpr_view_deref(&ke_view), &req->_body._query, (uint32_t)req->_rid,
+                                         req->_ext_qos, peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
-            _z_n_msg_request_clear(req);
             break;
 #endif
         }
 
         case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
-            _z_msg_put_t put = req->_body._put;
-            // Memory cleaning must be done in the feature layer
-            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &put._encoding,
-                                                          &put._commons._timestamp, req->_ext_qos, &put._attachment,
-                                                          reliability, &put._commons._source_info, peer));
+            const _z_msg_put_t *put = &req->_body._put;
+            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(
+                zn, &req->_key, _z_bytes_view_deref(&put->_payload), _z_encoding_view_deref(&put->_encoding),
+                &put->_commons._timestamp, req->_ext_qos, _z_bytes_view_deref(&put->_attachment), reliability,
+                &put->_commons._source_info, peer));
 #endif
             _z_network_message_t final;
             _z_n_msg_make_response_final(&final, req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 #if Z_FEATURE_SUBSCRIPTION == 0
-            _z_n_msg_request_clear(req);
+            (void)req;
 #endif
             return ret;
         }
         case _Z_REQUEST_DEL: {
 #if Z_FEATURE_SUBSCRIPTION == 1
-            _z_msg_del_t del = req->_body._del;
+            const _z_msg_del_t *del = &req->_body._del;
             // Memory cleaning must be done in the feature layer
-            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_del(zn, &req->_key, &del._commons._timestamp, req->_ext_qos,
-                                                          &del._attachment, reliability, &del._commons._source_info,
-                                                          peer));
+            _Z_RETURN_IF_ERR(_z_trigger_subscriptions_del(zn, &req->_key, &del->_commons._timestamp, req->_ext_qos,
+                                                          _z_bytes_view_deref(&del->_attachment), reliability,
+                                                          &del->_commons._source_info, peer));
 #endif
             _z_network_message_t final;
             _z_n_msg_make_response_final(&final, req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 #if Z_FEATURE_SUBSCRIPTION == 0
-            _z_n_msg_request_clear(req);
+            (void)req;
 #endif
             return ret;
         }
 
         default:
             _Z_INFO("Received unknown request tag: %d\n", req->_tag);
-            _z_n_msg_request_clear(req);
+            (void)req;
             break;
     }
     return _Z_RES_OK;
@@ -156,18 +157,15 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     _z_entity_global_id_t replier_id = {.zid = resp->_ext_responder._zid, .eid = resp->_ext_responder._eid};
     switch (resp->_tag) {
         case _Z_RESPONSE_BODY_REPLY:
-            // Memory cleaning must be done in the feature layer
-            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id, peer);
+            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id,
+                                            resp->_ext_qos, peer);
         case _Z_RESPONSE_BODY_ERR:
-            // Memory cleaning must be done in the feature layer
             return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err, &replier_id);
         default:
             _Z_INFO("Received unknown response tag: %d\n", resp->_tag);
-            _z_n_msg_response_clear(resp);
             break;
     }
 #else
-    _z_n_msg_response_clear(resp);
     _ZP_UNUSED(zn);
     _ZP_UNUSED(peer);
 #endif
@@ -203,7 +201,6 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
         case _Z_N_RESPONSE_FINAL:
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL");
             ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
-            _z_n_msg_response_final_clear(&msg->_body._response_final);
             break;
 
         case _Z_N_INTEREST: {
@@ -215,17 +212,14 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
             } else {
                 _z_interest_process_interest_final(zn, interest->_interest._id);
             }
-            _z_n_msg_interest_clear(&msg->_body._interest);
         } break;
 
         case _Z_N_OAM: {
             _Z_DEBUG("Ignoring _Z_N_OAM");
-            _z_n_msg_oam_clear(&msg->_body._oam);
         } break;
 
         default:
             _Z_ERROR("Unknown network message ID");
-            _z_n_msg_clear(msg);
             break;
     }
     return ret;

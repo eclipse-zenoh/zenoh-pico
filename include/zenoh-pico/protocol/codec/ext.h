@@ -28,9 +28,6 @@ extern "C" {
 /*------------------ Message Extension ------------------*/
 z_result_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, bool has_next);
 z_result_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next);
-z_result_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next);
-z_result_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions);
-z_result_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
 /**
  * Iterates through the extensions in `zbf`, assuming at least one is present at its beginning
  * (calling this function otherwise is UB). Short-circuits if `callback` returns a non-zero value.
@@ -60,15 +57,12 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id);
 // ------------------ Message Fields ------------------
 z_result_t _z_msg_ext_encode_unit(_z_wbuf_t *wbf, const _z_msg_ext_unit_t *pld);
 z_result_t _z_msg_ext_decode_unit(_z_msg_ext_unit_t *pld, _z_zbuf_t *zbf);
-z_result_t _z_msg_ext_decode_unit_na(_z_msg_ext_unit_t *pld, _z_zbuf_t *zbf);
 
 z_result_t _z_msg_ext_encode_zint(_z_wbuf_t *wbf, const _z_msg_ext_zint_t *pld);
 z_result_t _z_msg_ext_decode_zint(_z_msg_ext_zint_t *pld, _z_zbuf_t *zbf);
-z_result_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *pld, _z_zbuf_t *zbf);
 
 z_result_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *pld);
 z_result_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *pld, _z_zbuf_t *zbf);
-z_result_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *pld, _z_zbuf_t *zbf);
 
 #ifdef __cplusplus
 }

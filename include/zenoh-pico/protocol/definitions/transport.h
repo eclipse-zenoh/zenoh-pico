@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/protocol/iobuf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -249,8 +250,6 @@ typedef struct {
     uint8_t _patch;
 #endif
 } _z_t_msg_join_t;
-void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
-
 /*------------------ Init Message ------------------*/
 // # Init message
 //
@@ -322,7 +321,7 @@ void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
 //
 typedef struct {
     _z_id_t _zid;
-    _z_slice_t _cookie;
+    _z_slice_view_t _cookie;
     uint16_t _batch_size;
     z_whatami_t _whatami;
     uint8_t _req_id_res;
@@ -332,7 +331,6 @@ typedef struct {
     uint8_t _patch;
 #endif
 } _z_t_msg_init_t;
-void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 
 /*------------------ Open Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -368,9 +366,8 @@ void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 typedef struct {
     _z_zint_t _lease;
     _z_zint_t _initial_sn;
-    _z_slice_t _cookie;
+    _z_slice_view_t _cookie;
 } _z_t_msg_open_t;
-void _z_t_msg_open_clear(_z_t_msg_open_t *msg);
 
 /*------------------ Close Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -400,7 +397,6 @@ void _z_t_msg_open_clear(_z_t_msg_open_t *msg);
 typedef struct {
     uint8_t _reason;
 } _z_t_msg_close_t;
-void _z_t_msg_close_clear(_z_t_msg_close_t *msg);
 /*=============================*/
 /*        Close reasons        */
 /*=============================*/
@@ -436,7 +432,6 @@ void _z_t_msg_close_clear(_z_t_msg_close_t *msg);
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } _z_t_msg_keep_alive_t;
-void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg);
 
 /*------------------ Frame Message ------------------*/
 // NOTE: 16 bits (2 bytes) may be prepended to the serialized message indicating the total length
@@ -464,10 +459,9 @@ void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg);
 // - if R==1 then the FRAME is sent on the reliable channel, best-effort otherwise.
 //
 typedef struct {
-    _z_zbuf_t *_payload;
+    _z_slice_view_t _payload;
     _z_zint_t _sn;
 } _z_t_msg_frame_t;
-void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 
 /*------------------ Fragment Message ------------------*/
 // The Fragment message is used to transmit on the wire large Zenoh Message that require fragmentation
@@ -492,12 +486,11 @@ void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 // +---------------+
 //
 typedef struct {
-    _z_slice_t _payload;
+    _z_slice_view_t _payload;
     _z_zint_t _sn;
     bool first;
     bool drop;
 } _z_t_msg_fragment_t;
-void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg);
 
 /*------------------ Transport Message ------------------*/
 typedef union {
@@ -514,7 +507,6 @@ typedef struct {
     _z_transport_body_t _body;
     uint8_t _header;
 } _z_transport_message_t;
-void _z_t_msg_clear(_z_transport_message_t *msg);
 
 z_reliability_t _z_t_msg_get_reliability(_z_transport_message_t *msg);
 
@@ -522,26 +514,17 @@ z_reliability_t _z_t_msg_get_reliability(_z_transport_message_t *msg);
 _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, _z_id_t zid,
                                           _z_conduit_sn_list_t next_sn);
 _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid);
-_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_slice_t cookie);
-_z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_slice_t cookie);
+_z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, const _z_slice_t *cookie);
+_z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, const _z_slice_t *cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_zbuf_t *payload, z_reliability_t reliability);
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, const _z_zbuf_t *payload, z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last,
                                                      bool first, bool drop);
-_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t messages, z_reliability_t reliability,
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, const _z_slice_t *messages, z_reliability_t reliability,
                                               bool is_last, bool first, bool drop);
-
-/*------------------ Copy ------------------*/
-void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
-void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg);
-void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg);
-void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg);
-void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg);
-void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_t *msg);
-void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg);
 
 typedef union {
     _z_s_msg_scout_t _scout;

@@ -22,7 +22,7 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     _z_slice_t slice = _z_slice_alias_buf(data, size);
-    _z_zbuf_t zbf = _z_slice_as_zbuf(slice);
+    _z_zbuf_t zbf = _z_slice_as_zbuf(&slice);
     _z_scouting_message_t msg = {0};
 
     (void)_z_scouting_message_decode(&msg, &zbf);

@@ -2831,8 +2831,6 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 z_result_t _z_query_reply_sample(const z_loaned_query_t *query, z_loaned_sample_t *sample,
                                  const z_query_reply_options_t *options);
 
-z_result_t z_query_take_from_loaned(z_owned_query_t *dst, z_loaned_query_t *src);
-
 /**
  * Builds a :c:type:`z_query_reply_del_options_t` with default values.
  *

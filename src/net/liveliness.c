@@ -35,7 +35,6 @@ z_result_t _z_liveliness_send_declare_token(_z_session_t *zn, uint32_t id, const
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     z_result_t ret = _z_send_declare(zn, &n_msg);
-    _z_n_msg_clear(&n_msg);
     return ret;
 }
 
@@ -45,7 +44,6 @@ z_result_t _z_liveliness_send_undeclare_token(_z_session_t *zn, uint32_t id, con
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     z_result_t ret = _z_send_undeclare(zn, &n_msg);
-    _z_n_msg_clear(&n_msg);
     return ret;
 }
 
@@ -153,11 +151,10 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
 
     _z_keyexpr_slist_t *pos = tokens_list;
     while (pos != NULL) {
-        _z_sample_t s = _z_sample_null();
-        s.kind = Z_SAMPLE_KIND_PUT;
-        s.keyexpr._inner = _z_keyexpr_alias(_z_keyexpr_slist_value(pos));
+        _z_sample_t s;
+        _z_sample_create_view_from_data(&s, _z_keyexpr_slist_value(pos), NULL, NULL, NULL, Z_SAMPLE_KIND_PUT,
+                                        _Z_N_QOS_DEFAULT, NULL, NULL, Z_RELIABILITY_DEFAULT);
         sub->_callback(&s, sub->_arg);
-        _z_sample_clear(&s);
         pos = _z_keyexpr_slist_next(pos);
     }
     _z_keyexpr_slist_free(&tokens_list);
@@ -199,15 +196,14 @@ z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_sess
             _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s));
     }
     // Build the declare message to send on the wire
-    uint8_t mode = history ? (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE) : _Z_INTEREST_FLAG_FUTURE;
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&sp_s)->_key, _Z_RC_IN_VAL(zn));
     _z_interest_t interest = _z_make_interest(
-        &wireexpr, s._id, _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS | _Z_INTEREST_FLAG_RESTRICTED | mode);
+        &wireexpr, s._id,
+        history ? _Z_LIVELINESS_SUBSCRIBER_INTEREST_HISTORY : _Z_LIVELINESS_SUBSCRIBER_INTEREST_NO_HISTORY);
 
     _z_network_message_t n_msg;
     _z_n_msg_make_interest(&n_msg, interest);
     z_result_t res = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
-    _z_n_msg_clear(&n_msg);
     if (res != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s);
         res = _Z_ERR_TRANSPORT_TX_FAILED;
@@ -246,7 +242,6 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
     if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
-    _z_n_msg_clear(&n_msg);
 
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &s);
     return _z_sync_group_check(&sub->_callback_drop_sync_group) ? _z_sync_group_wait(&sub->_callback_drop_sync_group)
@@ -358,7 +353,6 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
-        _z_n_msg_clear(&n_msg);
     }
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_liveliness_unregister_pending_query(zn, query_id));
 

@@ -41,8 +41,8 @@ z_result_t _z_transport_message_encode_override(_z_wbuf_t *wbf, const _z_transpo
 
 static void dump_zbuf_state(const char *prefix, _z_zbuf_t *zbuf) {
     printf("%s rpos=%d wpos=%d capacity=%d len=%d left=%d\n", prefix, (int)_z_zbuf_get_rpos(zbuf),
-           (int)_z_zbuf_get_wpos(zbuf), (int)_z_zbuf_capacity(zbuf), (int)_z_zbuf_len(zbuf),
-           (int)_z_zbuf_space_left(zbuf));
+           (int)_z_zbuf_get_wpos(zbuf), (int)_z_zbuf_capacity(zbuf), (int)_z_zbuf_readable_len(zbuf),
+           (int)_z_zbuf_writable_space_left(zbuf));
 }
 
 /**

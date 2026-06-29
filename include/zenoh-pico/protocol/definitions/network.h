@@ -159,14 +159,10 @@ typedef struct {
     uint8_t n;
 } _z_n_msg_request_exts_t;
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg);
-void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef _z_reply_body_t _z_push_body_t;
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_push_body_t _z_push_body_null(void) { return (_z_push_body_t){0}; }
-
-_z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
-void _z_push_body_clear(_z_push_body_t *msg);
 
 /*------------------ Response Final Message ------------------*/
 // Flags:
@@ -184,7 +180,6 @@ void _z_push_body_clear(_z_push_body_t *msg);
 typedef struct {
     _z_zint_t _request_id;
 } _z_n_msg_response_final_t;
-void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg);
 
 // Flags:
 // - N: Named          if N==1 then the keyexpr has name/suffix
@@ -210,7 +205,6 @@ typedef struct {
     _z_n_qos_t _qos;
     _z_push_body_t _body;
 } _z_n_msg_push_t;
-void _z_n_msg_push_clear(_z_n_msg_push_t *msg);
 
 /*------------------ Response Message ------------------*/
 typedef struct {
@@ -231,7 +225,6 @@ typedef struct {
         _z_msg_err_t _err;
     } _body;
 } _z_n_msg_response_t;
-void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
 
 /*------------------ Declare Message ------------------*/
 typedef struct {
@@ -255,7 +248,6 @@ typedef struct {
     _z_n_qos_t _ext_qos;
     _z_optional_id_t _interest_id;
 } _z_n_msg_declare_t;
-static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
 
 /*------------------ Interest Message ------------------*/
 
@@ -294,7 +286,6 @@ static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declarat
 typedef struct {
     _z_interest_t _interest;
 } _z_n_msg_interest_t;
-static inline void _z_n_msg_interest_clear(_z_n_msg_interest_t *msg) { _z_interest_clear(&msg->_interest); }
 
 /*------------------ OAM Message ------------------*/
 
@@ -328,7 +319,6 @@ typedef struct {
     enum { _Z_OAM_BODY_UNIT, _Z_OAM_BODY_ZINT, _Z_OAM_BODY_ZBUF } _enc;
     _z_msg_ext_body_t _body;
 } _z_n_msg_oam_t;
-void _z_n_msg_oam_clear(_z_n_msg_oam_t *msg);
 
 /*------------------ Zenoh Message ------------------*/
 typedef union {
@@ -346,17 +336,16 @@ typedef struct {
     z_reliability_t _reliability;
 } _z_network_message_t;
 typedef _z_network_message_t _z_zenoh_message_t;
-void _z_n_msg_clear(_z_network_message_t *m);
-void _z_n_msg_free(_z_network_message_t **m);
-inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
-inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
-z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
-_z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);
 
-_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_n_msg_copy, _z_noop_move,
-               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
-_Z_SLIST_DEFINE(_z_network_message, _z_network_message_t, true)
+void _z_msg_query_fill(_z_msg_query_t *msg, const _z_slice_t *parameters, z_consolidation_mode_t consolidation,
+                       const _z_bytes_t *payload, const _z_encoding_t *encoding, const _z_source_info_t *source_info,
+                       const _z_bytes_t *attachment, bool implicit_anyke);
+void _z_msg_put_fill(_z_msg_put_t *msg, const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
+                     const _z_bytes_t *payload, const _z_encoding_t *encoding, const _z_bytes_t *attachment);
+void _z_msg_del_fill(_z_msg_del_t *msg, const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
+                     const _z_bytes_t *attachment);
+void _z_reply_err_fill(_z_msg_err_t *dst, const _z_bytes_t *payload, const _z_encoding_t *encoding,
+                       const _z_source_info_t *source_info);
 
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id);

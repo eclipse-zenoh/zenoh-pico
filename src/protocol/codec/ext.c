@@ -39,10 +39,6 @@ z_result_t _z_msg_ext_decode_unit(_z_msg_ext_unit_t *ext, _z_zbuf_t *zbf) {
     return ret;
 }
 
-z_result_t _z_msg_ext_decode_unit_na(_z_msg_ext_unit_t *ext, _z_zbuf_t *zbf) {
-    return _z_msg_ext_decode_unit(ext, zbf);
-}
-
 z_result_t _z_msg_ext_encode_zint(_z_wbuf_t *wbf, const _z_msg_ext_zint_t *ext) {
     z_result_t ret = _Z_RES_OK;
     _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, ext->_val))
@@ -55,13 +51,9 @@ z_result_t _z_msg_ext_decode_zint(_z_msg_ext_zint_t *ext, _z_zbuf_t *zbf) {
     return ret;
 }
 
-z_result_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *ext, _z_zbuf_t *zbf) {
-    return _z_msg_ext_decode_zint(ext, zbf);
-}
-
 z_result_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *ext) {
     z_result_t ret = _Z_RES_OK;
-    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &ext->_val))
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, _z_slice_view_deref(&ext->_val)));
     return ret;
 }
 
@@ -69,10 +61,6 @@ z_result_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
     z_result_t ret = _Z_RES_OK;
     ret |= _z_slice_decode(&ext->_val, zbf);
     return ret;
-}
-
-z_result_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
-    return _z_msg_ext_decode_zbuf(ext, zbf);
 }
 
 /*------------------ Message Extension ------------------*/
@@ -141,40 +129,6 @@ z_result_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next) 
     return ret;
 }
 
-z_result_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next) {
-    return _z_msg_ext_decode(ext, zbf, has_next);
-}
-
-z_result_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions) {
-    z_result_t ret = _Z_RES_OK;
-    size_t len = _z_msg_ext_vec_len(extensions);
-    if (len > 0) {
-        size_t i;
-        for (i = 0; ret == _Z_RES_OK && i < len - 1; i++) {
-            ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(extensions, i), true);
-        }
-        if (ret == _Z_RES_OK) {
-            ret |= _z_msg_ext_encode(wbf, _z_msg_ext_vec_get(extensions, i), true);
-        }
-    }
-    return ret;
-}
-z_result_t _z_msg_ext_vec_push_callback(_z_msg_ext_t *extension, _z_msg_ext_vec_t *extensions) {
-    _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
-    if (ext == NULL) {
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-    *ext = *extension;
-    *extension = _z_msg_ext_make_unit(0);
-    _z_msg_ext_vec_append(extensions, extension);
-    return 0;
-}
-z_result_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
-    _z_msg_ext_vec_reset(extensions);
-    return _z_msg_ext_decode_iter(zbf, (z_result_t(*)(_z_msg_ext_t *, void *))_z_msg_ext_vec_push_callback,
-                                  (void *)extensions);
-}
-
 z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
 #ifdef ZENOH_LOG_ERROR
     uint8_t ext_id = _Z_EXT_ID(extension->_header);
@@ -189,16 +143,16 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
-            _z_slice_t buf = extension->_body._zbuf._val;
-            char *hex = (char *)z_malloc(buf.len * 2 + 1);
+            const _z_slice_t *buf = _z_slice_view_deref(&extension->_body._zbuf._val);
+            char *hex = (char *)z_malloc(buf->len * 2 + 1);
             if (hex == NULL) {
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
-            for (size_t i = 0; i < buf.len; ++i) {
-                snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
+            for (size_t i = 0; i < buf->len; ++i) {
+                snprintf(hex + 2 * i, 3, "%02x", buf->start[i]);
             }
             _Z_ERROR("Unknown mandatory extension found (extension_id: %02x, trace_id: %02x), ZBUF(%.*s)", ext_id,
-                     trace_id, (int)buf.len * 2, hex);
+                     trace_id, (int)buf->len * 2, hex);
             z_free(hex);
             break;
         }
@@ -231,7 +185,6 @@ z_result_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, z_result_t (*callback)(_z_msg_
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);
         if (ret == _Z_RES_OK) {
             ret |= callback(&ext, context);
-            _z_msg_ext_clear(&ext);
         }
     }
     return ret;

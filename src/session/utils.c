@@ -90,24 +90,16 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     zn->_last_timestamp = 0;
 
     _z_config_init(&zn->_config);
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    zn->_declaration_cache = NULL;
-#endif
 
     // Initialize the data structs
     zn->_local_resources = NULL;
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_subscriptions = NULL;
     zn->_liveliness_subscriptions = NULL;
-#if Z_FEATURE_RX_CACHE == 1
-    zn->_subscription_cache = _z_subscription_lru_cache_init(Z_RX_CACHE_SIZE);
-#endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+    _z_rid_to_count_hmap_init(&zn->_received_queries_id_to_count);
     zn->_local_queryable = NULL;
-#if Z_FEATURE_RX_CACHE == 1
-    zn->_queryable_cache = _z_queryable_lru_cache_init(Z_RX_CACHE_SIZE);
-#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
@@ -170,6 +162,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
     zn->_local_zid = *zid;
     _z_atomic_bool_store(&zn->_is_closed, false, _z_memory_order_release);
+    zn->_weak = _z_session_weak_null();
     return ret;
 }
 
@@ -186,16 +179,12 @@ z_result_t _z_session_close(_z_session_t *zn) {
     // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
     // events
     _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_network_message_slist_free(&zn->_declaration_cache);
-#endif
-    _z_session_mutex_unlock(zn);
     _z_flush_local_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+    _z_flush_received_queries(zn);
     // Admin space querable cleanup will occur as part of queryable cleanup
     _z_flush_session_queryable(zn);
 #endif
@@ -253,4 +242,5 @@ void _z_session_clear(_z_session_t *zn) {
     _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_sync_group_drop(&zn->_callback_drop_sync_group);
+    _z_session_weak_drop(&zn->_weak);
 }

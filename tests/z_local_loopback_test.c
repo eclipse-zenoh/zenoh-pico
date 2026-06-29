@@ -48,19 +48,12 @@ static atomic_uint g_local_put_delivery_count = 0;
 static atomic_uint g_local_query_delivery_count = 0;
 static atomic_uint g_query_drop_callback_count = 0;
 static atomic_uint g_query_reply_callback_count = 0;
+static atomic_uint g_query_attachment_ok_count = 0;
 
 static _z_session_t g_session;
 static _z_session_rc_t g_session_rc = {0};
 static _z_transport_common_t g_fake_transport = {0};
-static bool g_transport_ready = false;
 static _z_link_t g_dummy_link = {0};
-
-static _z_transport_common_t *loopback_override(_z_session_t *zn) {
-    if (g_transport_ready && zn == &g_session) {
-        return &g_fake_transport;
-    }
-    return NULL;
-}
 
 static z_result_t z_send_override(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                                   z_congestion_control_t cong_ctrl, void *peer, bool *handled) {
@@ -85,23 +78,55 @@ static void local_sample_callback(_z_sample_t *sample, void *arg) {
     atomic_fetch_add_explicit((atomic_uint *)arg, 1, memory_order_relaxed);
 }
 
-static void local_query_callback(_z_query_rc_t *query_rc, void *arg) {
+static void local_query_callback(_z_query_t *query, void *arg) {
     atomic_fetch_add_explicit((atomic_uint *)arg, 1, memory_order_relaxed);
 
     const char data[] = "loopback-response";
     _z_bytes_t payload = _z_bytes_null();
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)data, sizeof(data) - 1) == _Z_RES_OK);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t timestamp = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)data, sizeof(data) - 1) == _Z_RES_OK);
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
 
     _z_network_message_t msg;
-    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(query_rc)->_key, &g_session);
-    _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _Z_RC_IN_VAL(query_rc)->_request_id, &wireexpr,
-                               Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info,
-                               &payload, &encoding, NULL);
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_z_query_get_ref(query)->_key, &g_session);
+    _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _z_query_get_ref(query)->_id.rid, &wireexpr,
+                               Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, NULL, NULL, &payload, NULL,
+                               NULL);
     assert(_z_handle_network_message(&g_fake_transport, &msg, NULL) == _Z_RES_OK);
+    // The message only holds a non-owning view into `payload`; free the owning copy now that handling is done.
+    _z_bytes_clear(&payload);
+}
+
+// Verifies that the query's attachment, materialized from a non-owning view in the trigger layer, is correct and
+// owns its own buffer (i.e. survives independently of the original decoding/send buffer).
+static const char g_expected_query_attachment[] = "loopback-query-attachment";
+static void local_query_attachment_callback(_z_query_t *query, void *arg) {
+    atomic_fetch_add_explicit((atomic_uint *)arg, 1, memory_order_relaxed);
+
+    const _z_bytes_t *attachment = &_z_query_get_ref(query)->_attachment;
+    size_t expected_len = sizeof(g_expected_query_attachment) - 1;
+    if (_z_bytes_len(attachment) == expected_len) {
+        uint8_t buf[sizeof(g_expected_query_attachment)] = {0};
+        size_t read = _z_bytes_to_buf(attachment, buf, expected_len);
+        // SAFETY: test only.
+        // Flawfinder: ignore [CWE-126]
+        if (read == expected_len && memcmp(buf, g_expected_query_attachment, expected_len) == 0) {
+            atomic_fetch_add_explicit(&g_query_attachment_ok_count, 1, memory_order_relaxed);
+        }
+    }
+
+    // Send a reply so the query completes and the reply/drop callbacks are triggered (mirrors local_query_callback).
+    const char data[] = "loopback-response";
+    _z_bytes_t payload = _z_bytes_null();
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)data, sizeof(data) - 1) == _Z_RES_OK);
+    _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
+
+    _z_network_message_t msg;
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_z_query_get_ref(query)->_key, &g_session);
+    _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _z_query_get_ref(query)->_id.rid, &wireexpr,
+                               Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, NULL, NULL, &payload, NULL,
+                               NULL);
+    assert(_z_handle_network_message(&g_fake_transport, &msg, NULL) == _Z_RES_OK);
+    _z_bytes_clear(&payload);
 }
 
 static void query_reply_callback(_z_reply_t *reply, void *arg) {
@@ -139,30 +164,25 @@ static void setup_session(void) {
     g_fake_transport = (_z_transport_common_t){0};
     g_fake_transport._session = _z_session_rc_clone_as_weak(&g_session_rc);
     g_fake_transport._link = &g_dummy_link;
-    g_transport_ready = true;
-    _z_session_set_transport_common_override(loopback_override);
     _z_transport_set_send_n_msg_override(z_send_override);
 
     g_session._tp._type = _Z_TRANSPORT_UNICAST_TYPE;
 }
 
 static void cleanup_session(void) {
-    if (g_transport_ready) {
-        g_transport_ready = false;
-    }
     _z_transport_peer_unicast_slist_free(&g_session._tp._transport._unicast._peers);
     g_session._tp._transport._unicast._peers = NULL;
     g_session._tp._transport._unicast._common._link = NULL;
     g_session._tp._type = _Z_TRANSPORT_NONE;
     _z_session_clear(&g_session);
-    _z_session_set_transport_common_override(NULL);
     _z_transport_set_send_n_msg_override(NULL);
 }
 
 static _z_declared_keyexpr_t create_local_resource(const char *key_str) {
-    _z_declared_keyexpr_t ke = _z_declared_keyexpr_alias_from_str(key_str);
+    z_view_keyexpr_t ke;
+    assert(z_view_keyexpr_from_str(&ke, key_str) == _Z_RES_OK);
     _z_declared_keyexpr_t keyexpr;
-    assert(_z_declared_keyexpr_declare(&g_session_rc, &keyexpr, &ke) == _Z_RES_OK);
+    assert(_z_declared_keyexpr_declare(&g_session_rc, &keyexpr, &ke._val) == _Z_RES_OK);
     return keyexpr;
 }
 
@@ -209,18 +229,15 @@ static void test_put_local_only_single(void) {
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t ts = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
-    z_result_t delivered =
-        _z_session_deliver_push_locally(&g_session, &keyexpr._inner, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts,
-                                        NULL, Z_RELIABILITY_RELIABLE, &source_info);
+
+    z_result_t delivered = _z_session_deliver_push_locally(
+        &g_session, &keyexpr._inner, &payload, NULL, Z_SAMPLE_KIND_PUT, qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
-    _z_bytes_drop(&payload);
+    _z_bytes_clear(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &subscription_rc);
     cleanup_local_resource(&keyexpr);
     cleanup_session();
@@ -340,6 +357,55 @@ static void test_query_local_only_single(void) {
     cleanup_session();
 }
 
+static void test_query_local_only_with_attachment(void) {
+    setup_session();
+
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query_attachment");
+
+    // Register a queryable whose callback verifies the materialized attachment.
+    _z_session_queryable_t queryable_entry = {0};
+    _z_declared_keyexpr_copy(&queryable_entry._key, &keyexpr);
+    queryable_entry._callback = local_query_attachment_callback;
+    queryable_entry._dropper = NULL;
+    queryable_entry._arg = &g_local_query_delivery_count;
+    queryable_entry._complete = false;
+    queryable_entry._allowed_origin = Z_LOCALITY_SESSION_LOCAL;
+    _z_session_queryable_rc_t queryable_rc = _z_register_session_queryable(&g_session, &queryable_entry);
+    assert(!_Z_RC_IS_NULL(&queryable_rc));
+
+    atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_local_query_delivery_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_query_drop_callback_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_query_reply_callback_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_query_attachment_ok_count, 0, memory_order_relaxed);
+
+    // Build an owned attachment; the query path will alias it into a view, then materialize an owning copy in the
+    // trigger layer. After _z_query returns, we drop our owned copy: the query's materialized copy must remain valid.
+    _z_bytes_t attachment = _z_bytes_null();
+    assert(_z_bytes_copy_from_buf(&attachment, (const uint8_t *)g_expected_query_attachment,
+                                  sizeof(g_expected_query_attachment) - 1) == _Z_RES_OK);
+
+    _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
+    z_result_t res = _z_query(&g_session_rc, _z_optional_id_make_none(), &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT,
+                              Z_CONSOLIDATION_MODE_LATEST, NULL, NULL, query_reply_callback, query_dropper, NULL, 1000,
+                              &attachment, qos, NULL, Z_REPLY_KEYEXPR_MATCHING_QUERY, Z_LOCALITY_SESSION_LOCAL, NULL);
+    assert(res == _Z_RES_OK);
+    // Drop our owned attachment; the query must still hold its own materialized copy.
+    _z_bytes_clear(&attachment);
+
+    assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_query_attachment_ok_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_query_drop_callback_count, memory_order_relaxed) == 1);
+    assert(g_session._pending_queries == NULL);
+
+    _z_unregister_session_queryable(&g_session, &queryable_rc);
+    cleanup_local_resource(&keyexpr);
+
+    cleanup_session();
+}
+
 static void test_put_local_only_multiple(void) {
     setup_session();
 
@@ -357,21 +423,17 @@ static void test_put_local_only_multiple(void) {
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
 
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t ts = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
-    z_result_t delivered =
-        _z_session_deliver_push_locally(&g_session, &keyexpr._inner, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts,
-                                        NULL, Z_RELIABILITY_RELIABLE, &source_info);
+    z_result_t delivered = _z_session_deliver_push_locally(
+        &g_session, &keyexpr._inner, &payload, NULL, Z_SAMPLE_KIND_PUT, qos, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_put_secondary_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
 
-    _z_bytes_drop(&payload);
+    _z_bytes_clear(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &sub_secondary);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &sub_primary);
     cleanup_local_resource(&keyexpr);
@@ -393,15 +455,12 @@ static void test_put_local_and_remote(void) {
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t ts = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
 
     // Session-local only delivery should not touch transport
     z_result_t res =
-        _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_SESSION_LOCAL);
+        _z_write(&g_session, &keyexpr, &payload, NULL, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
+                 Z_PRIORITY_DEFAULT, false, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL, Z_LOCALITY_SESSION_LOCAL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
@@ -409,13 +468,13 @@ static void test_put_local_and_remote(void) {
     // Allow remote recipients; send to transport in addition to local delivery
     atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
-    res = _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                   Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY);
+    res = _z_write(&g_session, &keyexpr, &payload, NULL, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
+                   Z_PRIORITY_DEFAULT, false, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL, Z_LOCALITY_ANY);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
 
-    _z_bytes_drop(&payload);
+    _z_bytes_clear(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &sub_primary);
     cleanup_local_resource(&keyexpr);
 
@@ -513,21 +572,19 @@ static void test_query_local_and_remote(void) {
 
     const char remote_data[] = "remote-response";
     _z_bytes_t remote_payload = _z_bytes_null();
-    assert(_z_bytes_from_buf(&remote_payload, (const uint8_t *)remote_data, sizeof(remote_data) - 1) == _Z_RES_OK);
+    assert(_z_bytes_copy_from_buf(&remote_payload, (const uint8_t *)remote_data, sizeof(remote_data) - 1) == _Z_RES_OK);
 
     _z_id_t remote_zid = _z_id_empty();
     _z_session_generate_zid(&remote_zid, Z_ZID_LENGTH);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t timestamp = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
     _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &wireexpr, Z_RELIABILITY_RELIABLE,
-                               Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info, &remote_payload, &encoding,
-                               NULL);
+                               Z_CONSOLIDATION_MODE_DEFAULT, qos, NULL, NULL, &remote_payload, NULL, NULL);
     res = _z_handle_network_message(&g_fake_transport, &reply_msg, NULL);
     assert(res == _Z_RES_OK);
+    // The message only holds a non-owning view into `remote_payload`; free the owning copy now that handling is done.
+    _z_bytes_clear(&remote_payload);
 
     // Remote reply buffered (LATEST mode), not delivered yet,
     // will be delivered on RESPONSE_FINAL
@@ -599,21 +656,20 @@ static void test_query_local_and_remote_via_api(void) {
 
     const char remote_data[] = "remote-response";
     _z_bytes_t remote_payload = _z_bytes_null();
-    assert(_z_bytes_from_buf(&remote_payload, (const uint8_t *)remote_data, sizeof(remote_data) - 1) == _Z_RES_OK);
+    assert(_z_bytes_copy_from_buf(&remote_payload, (const uint8_t *)remote_data, sizeof(remote_data) - 1) == _Z_RES_OK);
 
     _z_id_t remote_zid = _z_id_empty();
     _z_session_generate_zid(&remote_zid, Z_ZID_LENGTH);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t timestamp = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
     _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &wireexpr, Z_RELIABILITY_RELIABLE,
-                               Z_CONSOLIDATION_MODE_DEFAULT, _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT),
-                               &timestamp, &source_info, &remote_payload, &encoding, NULL);
+                               Z_CONSOLIDATION_MODE_DEFAULT, _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT), NULL,
+                               NULL, &remote_payload, NULL, NULL);
     res = _z_handle_network_message(&g_fake_transport, &reply_msg, NULL);
     assert(res == _Z_RES_OK);
+    // The message only holds a non-owning view into `remote_payload`; free the owning copy now that handling is done.
+    _z_bytes_clear(&remote_payload);
 
     _z_network_message_t final_msg;
     _z_n_msg_make_response_final(&final_msg, request_id);
@@ -646,19 +702,15 @@ static void test_put_remote_only_destination(void) {
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t ts = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
 
-    z_result_t res =
-        _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_REMOTE);
+    z_result_t res = _z_write(&g_session, &keyexpr, &payload, NULL, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
+                              Z_PRIORITY_DEFAULT, false, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL, Z_LOCALITY_REMOTE);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
 
-    _z_bytes_drop(&payload);
+    _z_bytes_clear(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &sub);
     cleanup_local_resource(&keyexpr);
 
@@ -678,19 +730,15 @@ static void test_subscriber_remote_only_origin(void) {
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
-    assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t ts = _z_timestamp_null();
-    _z_source_info_t source_info = _z_source_info_null();
+    assert(_z_bytes_copy_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
 
-    z_result_t res =
-        _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY);
+    z_result_t res = _z_write(&g_session, &keyexpr, &payload, NULL, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
+                              Z_PRIORITY_DEFAULT, false, NULL, NULL, Z_RELIABILITY_RELIABLE, NULL, Z_LOCALITY_ANY);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
 
-    _z_bytes_drop(&payload);
+    _z_bytes_clear(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &sub);
     cleanup_local_resource(&keyexpr);
 
@@ -774,6 +822,7 @@ int main(void) {
     test_put_local_only_multiple();
     test_put_local_and_remote();
     test_query_local_only_single();
+    test_query_local_only_with_attachment();
     test_query_local_only_multiple();
     test_query_local_and_remote();
     test_query_local_and_remote_via_api();

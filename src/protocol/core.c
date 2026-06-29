@@ -84,11 +84,6 @@ int _z_timestamp_cmp(const _z_timestamp_t *left, const _z_timestamp_t *right) {
     return _z_id_cmp(&left->id, &right->id);
 }
 
-_z_value_t _z_value_steal(_z_value_t *value) {
-    _z_value_t ret = *value;
-    *value = _z_value_null();
-    return ret;
-}
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     *dst = _z_value_null();
     _Z_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding));
