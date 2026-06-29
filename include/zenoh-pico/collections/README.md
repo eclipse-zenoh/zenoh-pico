@@ -579,7 +579,8 @@ typedef <N>_TYPE NAME_XN_t;          // alias per enabled alternative
 | `NAME_t NAME_none(void)`                   | Construct the empty (`NONE`) variant.                                                                                    |
 | `NAME_t NAME_from_XN(<N>_TYPE *val)`       | Construct holding alternative `XN`, moving `*val` in.                                                                    |
 | `void NAME_destroy(NAME_t *v)`             | Destroy the active alternative and reset to `NONE`.                                                                      |
-| `void NAME_move(NAME_t *dst, NAME_t *src)` | Move `*src` into `*dst` (destroying the previous `*dst`); `*src` becomes `NONE`. Omitted if `..._NO_MOVE_FN` is defined. |
+| `void NAME_move(NAME_t *dst, NAME_t *src)` | Move `*src` into `*dst`; `*dst` must be uninitialized or safe to overwrite.                                              |
+|                                            | Previous `*dst` contents are not destroyed; `*src` becomes `NONE`. Omitted if `..._NO_MOVE_FN` is defined.               |
 
 #### Inspection
 

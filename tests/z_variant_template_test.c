@@ -199,9 +199,8 @@ static void test_default_move(void) {
     assert(my_variant_is_2(&dst));
     assert(strcmp(my_variant_get_2(&dst)->ptr, "world") == 0);
 
-    // Move onto a non-empty dst (old A value must be destroyed)
-    int x = 7;
-    my_variant_t dst2 = my_variant_from_1(&x);
+    // Move into another destination with no owned contents to destroy.
+    my_variant_t dst2 = my_variant_none();
     my_variant_move(&dst2, &dst);
 
     assert(my_variant_is_none(&dst));

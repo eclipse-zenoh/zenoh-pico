@@ -107,7 +107,7 @@
 //   void    NAME_destroy(NAME_t *v)
 //
 // Move (variant-to-variant)  — omitted when _ZP_VARIANT_TEMPLATE_NO_MOVE_FN is defined:
-//   void    NAME_move(NAME_t *dst, NAME_t *src)
+//   void    NAME_move(NAME_t *dst, NAME_t *src)  — dst must be uninitialized or safe to overwrite
 //
 // Inspection:
 //   bool       NAME_is_none(const NAME_t *v)
@@ -366,8 +366,6 @@ typedef _ZP_VARIANT_TEMPLATE_8_TYPE _ZP_VARIANT_ALIAS_8;
 #define _ZP_VARIANT_FN_GET_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, get_none)
 #define _ZP_VARIANT_FN_CONST_GET_NONE _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, const_get_none)
 
-#define _ZP_VARIANT_FN_VISIT _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, visit)
-#define _ZP_VARIANT_FN_VISIT_CTX _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, visit_ctx)
 #ifdef _ZP_VARIANT_TEMPLATE_1_TYPE
 #define _ZP_VARIANT_FN_FROM_1 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(from, _ZP_VARIANT_TEMPLATE_1_NAME))
 #define _ZP_VARIANT_FN_IS_1 _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, _ZP_CAT(is, _ZP_VARIANT_TEMPLATE_1_NAME))
@@ -665,7 +663,8 @@ static inline void _ZP_CAT(_ZP_VARIANT_TEMPLATE_NAME, destroy)(_ZP_VARIANT_TEMPL
 }
 
 // ── NAME_move ─────────────────────────────────────────────────────────────────
-// Moves *src into *dst.  Previous contents of *dst are destroyed.
+// Moves *src into *dst.  *dst must be uninitialized or otherwise safe to overwrite;
+// previous contents of *dst are not destroyed.
 // *src is left in NONE state.
 // Generated only when _ZP_VARIANT_TEMPLATE_NO_MOVE_FN is NOT defined.
 
@@ -1069,11 +1068,9 @@ static inline bool _ZP_VARIANT_FN_TAKE_8(_ZP_VARIANT_TEMPLATE_TYPE *v, _ZP_VARIA
 #define _ZP_VARIANT_CONST_VISIT(variant_name, v, ...)                                                         \
     _ZP_EXPAND(_ZP_CAT(_ZP_VARIANT_VISIT_IMPL, _ZP_VA_NARGS(__VA_ARGS__))(_ZP_VARIANT_INNER_CONST_VISIT_CASE, \
                                                                           variant_name, v, __VA_ARGS__))
-#undef _ZP_VARIANT_TEMPLATE_DEFINE_VISIT_FN_CHECKER_TYPE
 #endif
 
 // ── Undef all macros ──────────────────────────────────────────────────────────
-#undef _ZP_VARIANT_TEMPLATE_SENTINEL_TYPE
 #undef _ZP_VARIANT_TEMPLATE_NAME
 #undef _ZP_VARIANT_TEMPLATE_NO_MOVE_FN
 #undef _ZP_VARIANT_TEMPLATE_1_TYPE
