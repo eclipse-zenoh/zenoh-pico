@@ -341,7 +341,8 @@ static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_all)(_ZP_STA
     if (!value) {
         memset(vec->_blocks, 0, sizeof(vec->_blocks));
     } else {
-        _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE all_ones = ~(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)0;
+        _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE all_ones =
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)(~(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)0);
         size_t num_blocks = vec->_size / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
         for (size_t i = 0; i < num_blocks; i++) {
             vec->_blocks[i] = all_ones;
@@ -426,17 +427,14 @@ static inline _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, iter_t)
 // Returns the index of the first bit set to 1, or end() (== size) if no bit is set.
 // Together with end()/iter_next_true() this iterates only over the set bits:
 //   for (iter_t i = begin_true(v); i != end(v); i = iter_next_true(v, i)) { use i }
-// Whole zero blocks are skipped, so the scan is cheap on sparse vectors. The returned index is
-// always < size, so dead bits beyond the logical size (if dirtied via the raw block accessor) are
-// never reported.
+// Whole zero blocks are skipped, so the scan is cheap on sparse vectors.
 static inline _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, iter_t)
     _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, begin_true)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
     size_t num_blocks =
         (vec->_size + _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - 1) / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t i = 0;
-    for (size_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    for (size_t block_idx = 0; block_idx < num_blocks; i = (++block_idx) * _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS) {
         _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE block = vec->_blocks[block_idx];
-        i = block_idx * _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
         while (block != 0) {
             if (block & 1u) {
                 return i;
@@ -459,8 +457,7 @@ static inline _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, iter_t)
     size_t i = pos + 1;
     size_t shift = i % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t block_idx = i / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    for (; block_idx < num_blocks; block_idx++) {
-        i = block_idx * _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS + shift;
+    for (; block_idx < num_blocks; i = (++block_idx) * _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS) {
         _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE block = vec->_blocks[block_idx] >> shift;
         while (block != 0) {
             if (block & 1u) {

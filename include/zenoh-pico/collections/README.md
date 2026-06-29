@@ -7,16 +7,16 @@ C preprocessor.
 
 The templates documented here are:
 
-| Header                      | Container               | Storage            |
-| --------------------------- | ----------------------- | ------------------ |
-| `vector_template.h`         | Dynamic array (vector)  | Heap (growable)    |
-| `static_vector_template.h`  | Dynamic array (vector)  | Inline, fixed cap. |
-| `static_bit_vector_template.h` | Bit vector (0/1 bits) | Inline, fixed cap. |
-| `hashmap_template.h`        | Hash map                | Heap (growable)    |
-| `static_hashmap_template.h` | Hash map                | Inline, fixed cap. |
-| `static_deque_template.h`   | Double-ended queue      | Inline, fixed cap. |
-| `static_pqueue_template.h`  | Binary-heap priority q. | Inline, fixed cap. |
-| `variant_template.h`        | Tagged union (variant)  | Inline             |
+| Header                         | Container               | Storage            |
+| ------------------------------ | ----------------------- | ------------------ |
+| `vector_template.h`            | Dynamic array (vector)  | Heap (growable)    |
+| `static_vector_template.h`     | Dynamic array (vector)  | Inline, fixed cap. |
+| `static_bit_vector_template.h` | Bit vector (0/1 bits)   | Inline, fixed cap. |
+| `hashmap_template.h`           | Hash map                | Heap (growable)    |
+| `static_hashmap_template.h`    | Hash map                | Inline, fixed cap. |
+| `static_deque_template.h`      | Double-ended queue      | Inline, fixed cap. |
+| `static_pqueue_template.h`     | Binary-heap priority q. | Inline, fixed cap. |
+| `variant_template.h`           | Tagged union (variant)  | Inline             |
 
 In addition, `algorithms_template.h` provides generic iteration / search / removal
 helper macros that work on any of the above containers exposing an iterator interface
@@ -279,37 +279,38 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 
 ### API (`NAME` = configured name)
 
-| Function                                                  | Description                                                                        |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `void NAME_init(NAME_t *v)`                               | Zero-initialise an empty bit vector in place.                                      |
-| `NAME_t NAME_new(void)`                                   | Return a new (zero-initialised) empty bit vector.                                  |
-| `size_t NAME_size(const NAME_t *v)`                       | Number of bits stored.                                                             |
-| `size_t NAME_capacity(const NAME_t *v)`                   | Returns the compile-time `SIZE`.                                                   |
-| `bool NAME_is_empty(const NAME_t *v)`                     | `true` if no bits are stored.                                                      |
-| `void NAME_destroy(NAME_t *v)`                            | Reset to empty (clears storage). Provided for parity; frees nothing.               |
-| `bool NAME_at(const NAME_t *v, size_t i)`                 | Bit at `i`, **no** bounds check. UB if `i >= size`.                                |
-| `bool NAME_const_at(const NAME_t *v, size_t i)`           | Same as `at` (a bit is returned by value).                                         |
-| `bool NAME_get(const NAME_t *v, size_t i, bool *out)`     | Bounds-checked read; writes `*out` and returns `true`, else `false`.               |
-| `void NAME_set_at(NAME_t *v, size_t i, bool x)`           | Set bit `i`, **no** bounds check. UB if `i >= size`.                               |
-| `bool NAME_set(NAME_t *v, size_t i, bool x)`              | Bounds-checked set. `false` if `i >= size`.                                        |
-| `void NAME_flip_at(NAME_t *v, size_t i)`                  | Toggle bit `i`, **no** bounds check.                                               |
-| `bool NAME_flip(NAME_t *v, size_t i)`                     | Bounds-checked toggle. `false` if `i >= size`.                                     |
-| `bool NAME_push_back(NAME_t *v, bool x)`                  | Append a bit. `false` if **full**.                                                 |
-| `bool NAME_append(NAME_t *v, const bool *xs, size_t len)` | Append `len` bits. `false` if it does not fit (unchanged).                         |
-| `bool NAME_pop_back(NAME_t *v, bool *out)`                | Remove the last bit (optionally into `*out`). `false` if empty.                    |
-| `bool NAME_front(const NAME_t *v, bool *out)`             | Peek the first bit. `false` if empty.                                              |
-| `bool NAME_back(const NAME_t *v, bool *out)`              | Peek the last bit. `false` if empty.                                               |
-| `bool NAME_insert(NAME_t *v, size_t i, bool x)`           | Insert at `i`, shifting the tail right. `false` if **full** or `i > size`.         |
-| `bool NAME_remove(NAME_t *v, size_t i, bool *out)`        | Remove at `i`, shifting the tail left. `false` if `i >= size`.                     |
-| `void NAME_remove_at(NAME_t *v, size_t i, bool *out, size_t *next)` | Iterator-friendly `remove` (see the vector). UB if `i >= size`.           |
-| `bool NAME_swap_remove(NAME_t *v, size_t i, bool *out)`   | O(1) remove (does not preserve order). `false` if `i >= size`.                     |
-| `void NAME_set_all(NAME_t *v, bool x)`                    | Set every stored bit to `x`.                                                       |
-| `size_t NAME_count(const NAME_t *v)`                      | Number of bits set to 1.                                                           |
-| `NAME_block_t *NAME_blocks(NAME_t *v)`                    | Raw packed storage (LSB-first within each block).                                  |
-| `const NAME_block_t *NAME_const_blocks(const NAME_t *v)`  | Const raw packed storage.                                                          |
-| `size_t NAME_block_count(const NAME_t *v)`                | Number of storage blocks, `ceil(SIZE / block_bits)`.                               |
-| `size_t NAME_block_bits(const NAME_t *v)`                 | Number of bits per storage block (`sizeof(BLOCK_TYPE) * CHAR_BIT`).                |
-| `NAME_iter_t NAME_begin/end/iter_next(...)`               | Index-based iteration (dereference with `at`).                                     |
+| Function                                                            | Description                                                                        |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *v)`                                         | Zero-initialise an empty bit vector in place.                                      |
+| `NAME_t NAME_new(void)`                                             | Return a new (zero-initialised) empty bit vector.                                  |
+| `size_t NAME_size(const NAME_t *v)`                                 | Number of bits stored.                                                             |
+| `size_t NAME_capacity(const NAME_t *v)`                             | Returns the compile-time `SIZE`.                                                   |
+| `bool NAME_is_empty(const NAME_t *v)`                               | `true` if no bits are stored.                                                      |
+| `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing.               |
+| `bool NAME_at(const NAME_t *v, size_t i)`                           | Bit at `i`, **no** bounds check. UB if `i >= size`.                                |
+| `bool NAME_const_at(const NAME_t *v, size_t i)`                     | Same as `at` (a bit is returned by value).                                         |
+| `bool NAME_get(const NAME_t *v, size_t i, bool *out)`               | Bounds-checked read; writes `*out` and returns `true`, else `false`.               |
+| `void NAME_set_at(NAME_t *v, size_t i, bool x)`                     | Set bit `i`, **no** bounds check. UB if `i >= size`.                               |
+| `bool NAME_set(NAME_t *v, size_t i, bool x)`                        | Bounds-checked set. `false` if `i >= size`.                                        |
+| `void NAME_flip_at(NAME_t *v, size_t i)`                            | Toggle bit `i`, **no** bounds check.                                               |
+| `bool NAME_flip(NAME_t *v, size_t i)`                               | Bounds-checked toggle. `false` if `i >= size`.                                     |
+| `bool NAME_push_back(NAME_t *v, bool x)`                            | Append a bit. `false` if **full**.                                                 |
+| `bool NAME_append(NAME_t *v, const bool *xs, size_t len)`           | Append `len` bits. `false` if it does not fit (unchanged).                         |
+| `bool NAME_pop_back(NAME_t *v, bool *out)`                          | Remove the last bit (optionally into `*out`). `false` if empty.                    |
+| `bool NAME_front(const NAME_t *v, bool *out)`                       | Peek the first bit. `false` if empty.                                              |
+| `bool NAME_back(const NAME_t *v, bool *out)`                        | Peek the last bit. `false` if empty.                                               |
+| `bool NAME_insert(NAME_t *v, size_t i, bool x)`                     | Insert at `i`, shifting the tail right. `false` if **full** or `i > size`.         |
+| `bool NAME_remove(NAME_t *v, size_t i, bool *out)`                  | Remove at `i`, shifting the tail left. `false` if `i >= size`.                     |
+| `void NAME_remove_at(NAME_t *v, size_t i, bool *out, size_t *next)` | Iterator-friendly `remove` (see the vector). UB if `i >= size`.                    |
+| `bool NAME_swap_remove(NAME_t *v, size_t i, bool *out)`             | O(1) remove (does not preserve order). `false` if `i >= size`.                     |
+| `void NAME_set_all(NAME_t *v, bool x)`                              | Set every stored bit to `x`.                                                       |
+| `size_t NAME_count(const NAME_t *v)`                                | Number of bits set to 1.                                                           |
+| `NAME_block_t *NAME_blocks(NAME_t *v)`                              | Raw packed storage (LSB-first within each block).                                  |
+| `const NAME_block_t *NAME_const_blocks(const NAME_t *v)`            | Const raw packed storage.                                                          |
+| `size_t NAME_block_count(const NAME_t *v)`                          | Number of storage blocks, `ceil(SIZE / block_bits)`.                               |
+| `size_t NAME_block_bits(const NAME_t *v)`                           | Number of bits per storage block (`sizeof(BLOCK_TYPE) * CHAR_BIT`).                |
+| `NAME_iter_t NAME_begin/end/iter_next(...)`                         | Index-based iteration (dereference with `at`).                                     |
+| `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `at`).                       |
 
 ### Example
 
