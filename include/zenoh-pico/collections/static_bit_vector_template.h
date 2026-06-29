@@ -111,8 +111,8 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, at)(const _ZP_ST
                                                                     size_t index) {
     size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    return vec->_blocks[block_idx] &
-           (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx);
+    return (vec->_blocks[block_idx] &
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx)) != 0;
 }
 
 // const_at is identical to at: a bit is returned by value, so there is no separate const view.
@@ -120,8 +120,8 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
                            const_at)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
     size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    return vec->_blocks[block_idx] &
-           (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx);
+    return (vec->_blocks[block_idx] &
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1 << bit_idx)) != 0;
 }
 
 // Reads the bit at the given index with bounds checking.
@@ -225,9 +225,14 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, pop_back)(_ZP_ST
         return false;
     }
     vec->_size--;
+    size_t block_idx = vec->_size / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    size_t bit_idx = vec->_size % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE mask =
+        (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx);
     if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, at)(vec, vec->_size);
+        *out = (vec->_blocks[block_idx] & mask) != 0;
     }
+    vec->_blocks[block_idx] &= ~mask;  // clear the bit that was popped
     return true;
 }
 
@@ -355,8 +360,6 @@ static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_all)(_ZP_STA
 }
 
 // Returns the number of bits set to 1 among the bits currently in the vector.
-// Sums the population count of each full block plus the masked trailing partial block, so it is
-// correct even if dead bits were dirtied through the raw block accessors.
 static inline size_t _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
                              count)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
     size_t num_blocks =
@@ -375,7 +378,8 @@ static inline size_t _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
 
 // Returns a pointer to the raw packed-bit storage (one bit per logical element, LSB-first
 // within each block). Bit i lives in block i / (bits per block) at bit position
-// i % (bits per block).
+// i % (bits per block). Modifying the returned blocks directly is allowed, but the caller must ensure that the
+// dead high bits beyond the logical size remain zero, to preserve the canonical-zero invariant.
 static inline _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
                                                                  blocks)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
     return vec->_blocks;

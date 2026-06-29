@@ -830,6 +830,9 @@ calls. Include the header next to the container instantiation:
 > * `_ZP_REMOVE` relies on `remove_at`, which is provided by the hash maps and by both
 >   the heap and static vectors. The predicate must not have side effects that modify
 >   the collection.
+> * Because bit vector bits are returned by value, only the iteration helpers
+>   (`_ZP_FOREACH` / `_ZP_CONST_FOREACH`) are directly compatible with bit vector;
+>   search/removal helpers that expect addressable elements are not.
 
 ### Examples
 

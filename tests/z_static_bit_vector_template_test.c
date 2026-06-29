@@ -324,11 +324,6 @@ static void test_set_all_count_block_based(void) {
     assert(bytevec_const_blocks(&full)[0] == 0xFFu && bytevec_const_blocks(&full)[1] == 0xFFu);
     bytevec_destroy(&full);
 
-    // count must ignore dead bits even if they were dirtied through the raw block accessor.
-    bytevec_t dirty = bytevec_new();
-    for (size_t i = 0; i < 12; i++) assert(bytevec_push_back(&dirty, (i % 2) == 0));  // 6 ones
-    bytevec_destroy(&dirty);
-
     // Wide (32-bit) blocks: 40 bits => one full block + an 8-bit partial block.
     wordvec_t w = wordvec_new();
     for (size_t i = 0; i < 40; i++) assert(wordvec_push_back(&w, false));
@@ -490,20 +485,6 @@ static void test_set_bit_iteration(void) {
     }
     assert(expected == 20);
     bytevec_destroy(&ones);
-
-    // Dead bits beyond the logical size must never be reported, even if dirtied via blocks().
-    bytevec_t dirty = bytevec_new();
-    for (size_t i = 0; i < 12; i++) assert(bytevec_push_back(&dirty, false));  // 12 bits => 1.5 bytes
-    bytevec_set_at(&dirty, 5, true);
-    bytevec_blocks(&dirty)[1] |= 0xF0u;  // pollute the high (dead) bits 12..15
-    size_t count = 0;
-    for (bytevec_iter_t it = bytevec_begin_true(&dirty); it != bytevec_end(&dirty);
-         it = bytevec_iter_next_true(&dirty, it)) {
-        assert(it == 5);  // only the single live set bit
-        count++;
-    }
-    assert(count == 1);
-    bytevec_destroy(&dirty);
 }
 
 static void test_default_named_instance(void) {
