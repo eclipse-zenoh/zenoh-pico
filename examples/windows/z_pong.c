@@ -29,7 +29,6 @@ void callback(z_loaned_sample_t* sample, void* context) {
 #else
     z_bytes_clone(&payload, z_sample_payload(sample));
 #endif
-    z_bytes_clone(&payload, z_sample_payload(sample));
     z_publisher_put(pub, z_move(payload), NULL);
 }
 void drop(void* context) {
