@@ -16,6 +16,10 @@ name: integration
 on:
   workflow_call:
 
+env:
+  ZENOH_LINUX_ASSET: zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
+  ZENOH_MACOS_ASSET: zenoh-1.9.0-aarch64-apple-darwin-standalone.zip
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -28,6 +32,8 @@ jobs:
     steps:
       - name: Clone this repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup mbedtls
         if: runner.os == 'Linux'
@@ -59,9 +65,31 @@ jobs:
           echo "LD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
+      - name: Install ccache (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y ccache
+
+      - name: Install ccache (macOS)
+        if: runner.os == 'macOS'
+        run: brew list ccache >/dev/null 2>&1 || brew install ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-integration-
+
       - name: Compile debug
         run: make all
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           BUILD_TYPE: Debug
           BUILD_TESTING: OFF
           BUILD_INTEGRATION: ON
@@ -73,6 +101,26 @@ jobs:
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
           Z_FEATURE_ADMIN_SPACE: 1
 
+      - name: Download and extract Zenoh
+        if: runner.os == 'Linux'
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          out-file-path: build/tests
+          extract: true
+
+      - name: Download and extract Zenoh
+        if: runner.os == 'macOS'
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_MACOS_ASSET }}
+          out-file-path: build/tests
+          extract: true
+
       - name: Test debug
         run: make test
         timeout-minutes: 40
@@ -84,7 +132,6 @@ jobs:
           Z_FEATURE_LOCAL_QUERYABLE: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
           Z_FEATURE_UNSTABLE_API: 1
-          ZENOH_BRANCH: main
 
   asan-build:
     name: Build on ubuntu-latest with ASAN
@@ -95,12 +142,27 @@ jobs:
     steps:
       - name: Clone this repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup mbedtls (Linux)
         if: runner.os == 'Linux'
         uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
+
+      - name: Install ccache (Linux)
+        run: |
+          sudo apt-get update && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-integration-asan-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-integration-asan-
+            ${{ runner.os }}-ccache-integration-
 
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
@@ -109,6 +171,11 @@ jobs:
       - name: Compile debug
         run: make all
         env:
+          CC: ccache cc
+          CXX: ccache c++
+          CCACHE_DIR: ~/.ccache
+          CCACHE_BASEDIR: ${{ github.workspace }}
+          CCACHE_COMPILERCHECK: content
           BUILD_TYPE: Debug
           BUILD_TESTING: OFF
           BUILD_INTEGRATION: ON
@@ -120,6 +187,15 @@ jobs:
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
           ASAN: 1
 
+      - name: Download and extract Zenoh
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: eclipse-zenoh/zenoh
+          latest: true
+          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          out-file-path: build/tests
+          extract: true
+
       - name: Test debug
         run: make test
         timeout-minutes: 40
@@ -130,4 +206,3 @@ jobs:
           Z_FEATURE_LINK_TLS: 1
           Z_FEATURE_UNSTABLE_API: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
-          ZENOH_BRANCH: main
