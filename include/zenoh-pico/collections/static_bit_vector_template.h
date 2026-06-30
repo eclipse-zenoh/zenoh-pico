@@ -107,35 +107,29 @@ static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, destroy)(_ZP_STA
 
 // Returns the bit at the given index, without bounds checking.
 // Behaviour is undefined if index >= size.
-static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, at)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec,
-                                                                    size_t index) {
+static inline const bool *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
+                                  const_at)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
+    static const bool true_val = true;
+    static const bool false_val = false;
     size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
     size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    return (vec->_blocks[block_idx] &
-            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx)) != 0;
-}
-
-// const_at is identical to at: a bit is returned by value, so there is no separate const view.
-static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
-                           const_at)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
-    size_t block_idx = index / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    size_t bit_idx = index % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
-    return (vec->_blocks[block_idx] &
-            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx)) != 0;
+    return ((vec->_blocks[block_idx] &
+             (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << bit_idx)) ==
+            0)
+               ? &false_val
+               : &true_val;
 }
 
 // Reads the bit at the given index with bounds checking.
-// On success returns true and, if @p out is non-NULL, stores the bit value into *out.
-// Returns false (leaving *out untouched) if the index is out of bounds.
-static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, get)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec,
-                                                                     size_t index, bool *out) {
+// On success returns pointer to the value of bit.
+// Returns NULL if the index is out of bounds.
+static inline const bool *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
+                                  const_get)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec, size_t index) {
     if (index >= vec->_size) {
-        return false;
+        return NULL;
     }
-    if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
-    }
-    return true;
+
+    return _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
 }
 
 // Sets the bit at the given index to @p value, without bounds checking.
@@ -237,31 +231,22 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, pop_back)(_ZP_ST
 }
 
 // Reads the bit at the front of the vector without removing it.
-// On success returns true and, if @p out is non-NULL, stores the bit value into *out.
-// Returns false if the vector is empty.
-static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, front)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec,
-                                                                       bool *out) {
-    if (_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, is_empty)(vec)) {
-        return false;
-    }
-    if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, 0);
-    }
-    return true;
+// On success returns pointer to the bit value.
+// Returns NULL if the vector is empty.
+static inline const bool *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
+                                  const_front)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
+    return _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_get)(vec, 0);
 }
 
 // Reads the bit at the back of the vector without removing it.
-// On success returns true and, if @p out is non-NULL, stores the bit value into *out.
-// Returns false if the vector is empty.
-static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, back)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec,
-                                                                      bool *out) {
+// On success returns pointer to the bit value.
+// Returns NULL if the vector is empty.
+static inline const bool *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
+                                  const_back)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
     if (_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, is_empty)(vec)) {
-        return false;
+        return NULL;
     }
-    if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, vec->_size - 1);
-    }
-    return true;
+    return _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, vec->_size - 1);
 }
 
 // Inserts a bit at the given index, shifting subsequent bits one position towards the back.
@@ -272,7 +257,7 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, insert)(_ZP_STAT
         return false;
     }
     for (size_t i = vec->_size; i > index; i--) {
-        bool b = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, at)(vec, i - 1);
+        bool b = *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, i - 1);
         _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_at)(vec, i, b);
     }
     _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_at)(vec, index, value);
@@ -289,10 +274,10 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, remove)(_ZP_STAT
         return false;
     }
     if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
+        *out = *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
     }
     for (size_t i = index; i + 1 < vec->_size; i++) {
-        bool b = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, i + 1);
+        bool b = *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, i + 1);
         _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_at)(vec, i, b);
     }
     vec->_size--;
@@ -327,11 +312,11 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, swap_remove)(_ZP
         return false;
     }
     if (out != NULL) {
-        *out = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
+        *out = *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, index);
     }
     vec->_size--;
     if (index != vec->_size) {
-        bool b = _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, vec->_size);
+        bool b = *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, const_at)(vec, vec->_size);
         _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_at)(vec, index, b);
     }
     _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_at)(vec, vec->_size, false);

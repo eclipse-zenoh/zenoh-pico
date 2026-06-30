@@ -287,9 +287,8 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `size_t NAME_capacity(const NAME_t *v)`                             | Returns the compile-time `SIZE`.                                                   |
 | `bool NAME_is_empty(const NAME_t *v)`                               | `true` if no bits are stored.                                                      |
 | `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing.               |
-| `bool NAME_at(const NAME_t *v, size_t i)`                           | Bit at `i`, **no** bounds check. UB if `i >= size`.                                |
-| `bool NAME_const_at(const NAME_t *v, size_t i)`                     | Same as `at` (a bit is returned by value).                                         |
-| `bool NAME_get(const NAME_t *v, size_t i, bool *out)`               | Bounds-checked read; writes `*out` and returns `true`, else `false`.               |
+| `const bool *NAME_const_at(const NAME_t *v, size_t i)`              | Bit at `i`, **no** bounds check. UB if  `i >= size`.                               |
+| `const bool *NAME_const_get(const NAME_t *v, size_t i)`             | Bounds-checked read; return `NULL` if ` >= size`.                                  |
 | `void NAME_set_at(NAME_t *v, size_t i, bool x)`                     | Set bit `i`, **no** bounds check. UB if `i >= size`.                               |
 | `bool NAME_set(NAME_t *v, size_t i, bool x)`                        | Bounds-checked set. `false` if `i >= size`.                                        |
 | `void NAME_flip_at(NAME_t *v, size_t i)`                            | Toggle bit `i`, **no** bounds check.                                               |
@@ -297,8 +296,8 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `bool NAME_push_back(NAME_t *v, bool x)`                            | Append a bit. `false` if **full**.                                                 |
 | `bool NAME_append(NAME_t *v, const bool *xs, size_t len)`           | Append `len` bits. `false` if it does not fit (unchanged).                         |
 | `bool NAME_pop_back(NAME_t *v, bool *out)`                          | Remove the last bit (optionally into `*out`). `false` if empty.                    |
-| `bool NAME_front(const NAME_t *v, bool *out)`                       | Peek the first bit. `false` if empty.                                              |
-| `bool NAME_back(const NAME_t *v, bool *out)`                        | Peek the last bit. `false` if empty.                                               |
+| `const bool *NAME_const_front(const NAME_t *v)`                     | Peek the first bit. `NULL` if empty.                                               |
+| `const bool *NAME_const_back(const NAME_t *v)`                      | Peek the last bit. `NULL` if empty.                                                |
 | `bool NAME_insert(NAME_t *v, size_t i, bool x)`                     | Insert at `i`, shifting the tail right. `false` if **full** or `i > size`.         |
 | `bool NAME_remove(NAME_t *v, size_t i, bool *out)`                  | Remove at `i`, shifting the tail left. `false` if `i >= size`.                     |
 | `void NAME_remove_at(NAME_t *v, size_t i, bool *out, size_t *next)` | Iterator-friendly `remove` (see the vector). UB if `i >= size`.                    |
@@ -833,9 +832,9 @@ calls. Include the header next to the container instantiation:
 > * `_ZP_REMOVE` relies on `remove_at`, which is provided by the hash maps and by both
 >   the heap and static vectors. The predicate must not have side effects that modify
 >   the collection.
-> * Because bit vector bits are returned by value, only the iteration helpers
->   (`_ZP_FOREACH` / `_ZP_CONST_FOREACH`) are directly compatible with bit vector;
->   search/removal helpers that expect addressable elements are not.
+> * Because bit vector provide only const version of `at`, only the const iteration helpers
+>   (`_ZP_CONST_FOREACH`, `_ZP_CONST_FIND`, `_ZP_CONST_IT_FIND`) are directly compatible
+>   with bit vector.
 
 ### Examples
 

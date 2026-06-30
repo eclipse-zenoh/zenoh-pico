@@ -55,10 +55,9 @@ static void test_new_is_empty(void) {
     assert(bitvec_is_empty(&v));
     assert(bitvec_size(&v) == 0);
     assert(bitvec_capacity(&v) == 20);
-    bool out = true;
-    assert(!bitvec_front(&v, &out));
-    assert(!bitvec_back(&v, &out));
-    assert(!bitvec_get(&v, 0, &out));
+    assert(bitvec_const_front(&v) == NULL);
+    assert(bitvec_const_back(&v) == NULL);
+    assert(bitvec_const_get(&v, 0) == NULL);
     bitvec_destroy(&v);
 }
 
@@ -80,11 +79,9 @@ static void test_push_back_and_at(void) {
     }
     assert(bitvec_size(&v) == 5);
     for (size_t i = 0; i < 5; i++) {
-        assert(bitvec_at(&v, i) == vals[i]);
-        assert(bitvec_const_at(&v, i) == vals[i]);
-        bool out = !vals[i];
-        assert(bitvec_get(&v, i, &out));
-        assert(out == vals[i]);
+        assert(bitvec_const_get(&v, i) != NULL);
+        assert(*bitvec_const_get(&v, i) == vals[i]);
+        assert(*bitvec_const_at(&v, i) == vals[i]);
     }
     bitvec_destroy(&v);
 }
@@ -96,14 +93,14 @@ static void test_set_flip(void) {
         assert(bitvec_push_back(&v, false));
     }
     assert(bitvec_set(&v, 3, true));
-    assert(bitvec_at(&v, 3) == true);
+    assert(*bitvec_const_at(&v, 3) == true);
     bitvec_set_at(&v, 3, false);
-    assert(bitvec_at(&v, 3) == false);
+    assert(*bitvec_const_at(&v, 3) == false);
 
     assert(bitvec_flip(&v, 7));
-    assert(bitvec_at(&v, 7) == true);
+    assert(*bitvec_const_at(&v, 7) == true);
     bitvec_flip_at(&v, 7);
-    assert(bitvec_at(&v, 7) == false);
+    assert(*bitvec_const_at(&v, 7) == false);
 
     // Out of bounds variants return false and do not modify the vector.
     assert(!bitvec_set(&v, 10, true));
@@ -136,9 +133,8 @@ static void test_front_back_peek(void) {
     assert(bitvec_push_back(&v, true));
     assert(bitvec_push_back(&v, false));
     assert(bitvec_push_back(&v, false));
-    bool f = false, b = true;
-    assert(bitvec_front(&v, &f) && f == true);
-    assert(bitvec_back(&v, &b) && b == false);
+    assert(bitvec_const_front(&v) != NULL && *bitvec_const_front(&v) == true);
+    assert(bitvec_const_back(&v) != NULL && *bitvec_const_back(&v) == false);
     assert(bitvec_size(&v) == 3);  // unchanged
     bitvec_destroy(&v);
 }
@@ -153,7 +149,7 @@ static void test_capacity_full(void) {
     assert(!bitvec_push_back(&v, true));
     // Contents preserved.
     for (size_t i = 0; i < 20; i++) {
-        assert(bitvec_at(&v, i) == ((i % 3) == 0));
+        assert(*bitvec_const_at(&v, i) == ((i % 3) == 0));
     }
     bitvec_destroy(&v);
 }
@@ -168,7 +164,7 @@ static void test_append(void) {
     assert(bitvec_size(&v) == 5);
     bool expected[] = {true, true, false, false, true};
     for (size_t i = 0; i < 5; i++) {
-        assert(bitvec_at(&v, i) == expected[i]);
+        assert(*bitvec_const_at(&v, i) == expected[i]);
     }
     bitvec_destroy(&v);
 }
@@ -199,13 +195,13 @@ static void test_insert(void) {
     assert(bitvec_insert(&v, 1, true));  // [1, 1, 0, 1]
     bool e1[] = {true, true, false, true};
     assert(bitvec_size(&v) == 4);
-    for (size_t i = 0; i < 4; i++) assert(bitvec_at(&v, i) == e1[i]);
+    for (size_t i = 0; i < 4; i++) assert(*bitvec_const_at(&v, i) == e1[i]);
 
     assert(bitvec_insert(&v, 0, false));  // front: [0, 1, 1, 0, 1]
-    assert(bitvec_at(&v, 0) == false);
+    assert(*bitvec_const_at(&v, 0) == false);
 
     assert(bitvec_insert(&v, bitvec_size(&v), true));  // back
-    assert(bitvec_at(&v, bitvec_size(&v) - 1) == true);
+    assert(*bitvec_const_at(&v, bitvec_size(&v) - 1) == true);
 
     // Out of bounds index.
     assert(!bitvec_insert(&v, bitvec_size(&v) + 1, true));
@@ -231,7 +227,7 @@ static void test_remove(void) {
     assert(out == false);
     assert(bitvec_size(&v) == 4);
     bool expected[] = {true, true, true, false};
-    for (size_t i = 0; i < 4; i++) assert(bitvec_at(&v, i) == expected[i]);
+    for (size_t i = 0; i < 4; i++) assert(*bitvec_const_at(&v, i) == expected[i]);
 
     // remove with NULL out and out-of-bounds.
     assert(bitvec_remove(&v, 3, NULL));  // remove last
@@ -252,7 +248,7 @@ static void test_swap_remove(void) {
     assert(bitvec_size(&v) == 4);
     // Expected: [1, 1, 0, 0]
     bool expected[] = {true, true, false, false};
-    for (size_t i = 0; i < 4; i++) assert(bitvec_at(&v, i) == expected[i]);
+    for (size_t i = 0; i < 4; i++) assert(*bitvec_const_at(&v, i) == expected[i]);
 
     // Removing the last element does not move anything.
     assert(bitvec_swap_remove(&v, 3, NULL));
@@ -278,7 +274,7 @@ static void test_remove_at(void) {
     // next_idx may be NULL.
     bitvec_remove_at(&v, 1, NULL, NULL);  // [0]
     assert(bitvec_size(&v) == 1);
-    assert(bitvec_at(&v, 0) == false);
+    assert(*bitvec_const_at(&v, 0) == false);
     bitvec_destroy(&v);
 }
 
@@ -304,7 +300,7 @@ static void test_set_all_count_block_based(void) {
     bytevec_set_all(&v, true);
     assert(bytevec_count(&v) == 20);
     // Every live bit reads back as 1...
-    for (size_t i = 0; i < 20; i++) assert(bytevec_at(&v, i) == true);
+    for (size_t i = 0; i < 20; i++) assert(*bytevec_const_at(&v, i) == true);
     // ...and the dead high bits of the trailing partial block stay zero (low 4 bits set => 0x0F).
     const uint8_t *blocks = bytevec_const_blocks(&v);
     assert(blocks[0] == 0xFFu);
@@ -375,8 +371,8 @@ static void test_block_type_layout(void) {
     assert((wb[0] & 0x00000001u) != 0);
     assert((wb[1] & 0x00000008u) != 0);
     // The value round-trips through the bit accessors regardless of block width.
-    assert(wordvec_at(&w, 0) == true);
-    assert(wordvec_at(&w, 35) == true);
+    assert(*wordvec_const_at(&w, 0) == true);
+    assert(*wordvec_const_at(&w, 35) == true);
     assert(wordvec_count(&w) == 2);
     wordvec_destroy(&w);
 }
@@ -388,42 +384,11 @@ static void test_iteration(void) {
     assert(bitvec_append(&v, init, 4));
     size_t ones = 0, visited = 0;
     for (bitvec_iter_t it = bitvec_begin(&v); it != bitvec_end(&v); it = bitvec_iter_next(&v, it)) {
-        if (bitvec_at(&v, it)) ones++;
+        if (*bitvec_const_at(&v, it)) ones++;
         visited++;
     }
     assert(visited == 4);
     assert(ones == 3);
-    bitvec_destroy(&v);
-}
-
-static void test_foreach(void) {
-    printf("Test: _ZP_FOREACH visits every bit by value in order\n");
-    bitvec_t v = bitvec_new();
-    bool init[] = {true, false, true, true, false, true};
-    assert(bitvec_append(&v, init, 6));
-
-    // _ZP_FOREACH binds `elem` to the value returned by at() (a bool), not a pointer, because a
-    // single bit is not addressable. Iterate and check order, total, and set-bit count.
-    size_t idx = 0, ones = 0;
-    bool elem = false;
-    _ZP_FOREACH (bitvec, &v, elem) {
-        assert(elem == init[idx]);
-        ones += elem ? 1u : 0u;
-        idx++;
-    }
-    assert(idx == 6);
-    assert(ones == bitvec_count(&v));
-
-    // Iterating an empty bit vector executes the body zero times.
-    bitvec_t empty = bitvec_new();
-    size_t empty_visits = 0;
-    _ZP_FOREACH (bitvec, &empty, elem) {
-        (void)elem;
-        empty_visits++;
-    }
-    assert(empty_visits == 0);
-
-    bitvec_destroy(&empty);
     bitvec_destroy(&v);
 }
 
@@ -434,14 +399,54 @@ static void test_const_foreach(void) {
     for (size_t i = 0; i < 40; i++) assert(wordvec_push_back(&v, (i % 3) == 0));
 
     size_t idx = 0, ones = 0;
-    bool elem = false;
+    const bool *elem = NULL;
     _ZP_CONST_FOREACH (wordvec, &v, elem) {
-        assert(elem == ((idx % 3) == 0));
-        ones += elem ? 1u : 0u;
+        assert(*elem == ((idx % 3) == 0));
+        ones += *elem ? 1u : 0u;
         idx++;
     }
     assert(idx == 40);
     assert(ones == wordvec_count(&v));
+    wordvec_destroy(&v);
+}
+
+static void test_const_find(void) {
+    printf("Test: _ZP_CONST_FIND finds set bit via const access\n");
+    // Use a wide-block instance so iteration crosses a block boundary (40 bits over 32-bit blocks).
+    wordvec_t v = wordvec_new();
+    assert(wordvec_push_back(&v, false));
+    assert(wordvec_push_back(&v, false));
+
+    const bool *elem = NULL;
+    _ZP_CONST_FIND(wordvec, &v, elem, *_ == true);
+    assert(elem == NULL);  // no set bits yet
+    assert(wordvec_push_back(&v, true));
+
+    _ZP_CONST_FIND(wordvec, &v, elem, *_ == true);
+    assert(elem != NULL);  // now we have a set bit
+
+    wordvec_destroy(&v);
+}
+
+static void test_const_it_find(void) {
+    printf("Test: _ZP_CONST_IT_FIND finds set bits via const access\n");
+    // Use a wide-block instance so iteration crosses a block boundary (40 bits over 32-bit blocks).
+    wordvec_t v = wordvec_new();
+    for (size_t i = 0; i < 40; i++) assert(wordvec_push_back(&v, (i % 3) == 0));
+    size_t begin = wordvec_begin(&v);
+    size_t end = wordvec_end(&v);
+    size_t found = 0;
+    while (begin != end) {
+        _ZP_CONST_IT_FIND(wordvec, &v, begin, end, *_ == true);
+        if (begin != end) {
+            assert(*wordvec_const_at(&v, begin) == true);
+            assert(begin == found * 3);  // the set bits are at indices 0,3,6,...,39
+            found++;
+            begin = wordvec_iter_next(&v, begin);
+        }
+    }
+    assert(found == 14);
+
     wordvec_destroy(&v);
 }
 
@@ -458,7 +463,7 @@ static void test_set_bit_iteration(void) {
     for (wordvec_iter_t it = wordvec_begin_true(&v); it != wordvec_end(&v); it = wordvec_iter_next_true(&v, it)) {
         assert(k < 4);
         assert(it == set_idx[k]);
-        assert(wordvec_at(&v, it) == true);
+        assert(*wordvec_const_at(&v, it) == true);
         k++;
     }
     assert(k == 4);  // visited exactly the set bits, in order
@@ -512,12 +517,12 @@ static void test_wide_block_across_boundary(void) {
     assert(out == true);
     assert(wordvec_size(&v) == 39);
     // Pattern is now inverted relative to its original alignment.
-    for (size_t i = 0; i < 39; i++) assert(wordvec_at(&v, i) == ((i % 2) == 1));
+    for (size_t i = 0; i < 39; i++) assert(*wordvec_const_at(&v, i) == ((i % 2) == 1));
 
     // Re-inserting at the front restores the original pattern and refills capacity.
     assert(wordvec_insert(&v, 0, true));
     assert(wordvec_size(&v) == 40);
-    for (size_t i = 0; i < 40; i++) assert(wordvec_at(&v, i) == ((i % 2) == 0));
+    for (size_t i = 0; i < 40; i++) assert(*wordvec_const_at(&v, i) == ((i % 2) == 0));
     wordvec_destroy(&v);
 }
 
@@ -532,7 +537,7 @@ static void test_flip_all(void) {
     assert(bytevec_count(&v) == 13);  // now the other bits are set
     for (size_t i = 0; i < 20; i++) {
         bool expected = !((i % 3) == 0);
-        assert(bytevec_at(&v, i) == expected);
+        assert(*bytevec_const_at(&v, i) == expected);
     }
     bytevec_destroy(&v);
 
@@ -544,7 +549,7 @@ static void test_flip_all(void) {
     assert(wordvec_count(&w) == 32);
     for (size_t i = 0; i < 40; i++) {
         bool expected = !((i % 5) == 0);
-        assert(wordvec_at(&w, i) == expected);
+        assert(*wordvec_const_at(&w, i) == expected);
     }
     wordvec_destroy(&w);
 }
@@ -557,7 +562,7 @@ static void test_copy(void) {
     bytevec_t v2;
     bytevec_copy(&v2, &v1);
     assert(bytevec_size(&v2) == 10);
-    for (size_t i = 0; i < 10; i++) assert(bytevec_at(&v2, i) == ((i % 2) == 0));
+    for (size_t i = 0; i < 10; i++) assert(*bytevec_const_at(&v2, i) == ((i % 2) == 0));
 
     bytevec_destroy(&v1);
     bytevec_destroy(&v2);
@@ -568,7 +573,7 @@ static void test_copy(void) {
     wordvec_t w2;
     wordvec_copy(&w2, &w1);
     assert(wordvec_size(&w2) == 20);
-    for (size_t i = 0; i < 20; i++) assert(wordvec_at(&w2, i) == ((i % 3) == 0));
+    for (size_t i = 0; i < 20; i++) assert(*wordvec_const_at(&w2, i) == ((i % 3) == 0));
 
     wordvec_destroy(&w1);
     wordvec_destroy(&w2);
@@ -638,8 +643,9 @@ int main(void) {
     test_blocks_layout();
     test_block_type_layout();
     test_iteration();
-    test_foreach();
     test_const_foreach();
+    test_const_find();
+    test_const_it_find();
     test_set_bit_iteration();
     test_default_named_instance();
     test_wide_block_across_boundary();
