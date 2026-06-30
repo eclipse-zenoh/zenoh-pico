@@ -82,8 +82,9 @@ typedef struct _z_link_capabilities_t {
     uint8_t _reserved : 4;
 } _z_link_capabilities_t;
 
-struct _z_link_t;       // Forward declaration to be used in _z_f_link_*
-struct _z_link_peer_t;  // Forward declaration to be used in _z_link_peer_ops_t
+struct _z_link_t;            // Forward declaration to be used in _z_f_link_*
+struct _z_link_peer_t;       // Forward declaration to be used in _z_link_peer_ops_t
+struct _z_link_peer_iter_t;  // Forward declaration to be used in _z_f_link_wait_peers_readable
 
 typedef z_result_t (*_z_f_link_open)(struct _z_link_t *self);
 typedef z_result_t (*_z_f_link_listen)(struct _z_link_t *self);
@@ -94,7 +95,35 @@ typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_
 typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
                                        _z_sys_net_socket_t *socket);
+typedef z_result_t (*_z_f_link_wait_peers_readable)(const struct _z_link_t *self, struct _z_link_peer_iter_t *peers,
+                                                    uint32_t timeout_ms);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
+
+typedef void (*_z_link_peer_iter_reset_f)(struct _z_link_peer_iter_t *iter);
+typedef bool (*_z_link_peer_iter_next_f)(struct _z_link_peer_iter_t *iter);
+typedef const struct _z_link_peer_t *(*_z_link_peer_iter_get_peer_f)(const struct _z_link_peer_iter_t *iter);
+typedef void (*_z_link_peer_iter_set_ready_f)(struct _z_link_peer_iter_t *iter, bool ready);
+
+typedef struct _z_link_peer_iter_t {
+    void *_ctx;
+    void *_current_entry;
+    _z_link_peer_iter_reset_f _reset_f;
+    _z_link_peer_iter_next_f _next_f;
+    _z_link_peer_iter_get_peer_f _get_peer_f;
+    _z_link_peer_iter_set_ready_f _set_ready_f;
+} _z_link_peer_iter_t;
+
+static inline void _z_link_peer_iter_reset(_z_link_peer_iter_t *iter) { iter->_reset_f(iter); }
+
+static inline bool _z_link_peer_iter_next(_z_link_peer_iter_t *iter) { return iter->_next_f(iter); }
+
+static inline const struct _z_link_peer_t *_z_link_peer_iter_get_peer(const _z_link_peer_iter_t *iter) {
+    return iter->_get_peer_f(iter);
+}
+
+static inline void _z_link_peer_iter_set_ready(_z_link_peer_iter_t *iter, bool ready) {
+    iter->_set_ready_f(iter, ready);
+}
 
 typedef struct _z_link_peer_ops_t {
     size_t (*_read_f)(const struct _z_link_t *link, const struct _z_link_peer_t *peer, uint8_t *ptr, size_t len);
@@ -150,6 +179,7 @@ void _z_link_peer_close(_z_link_peer_t *peer);
 void _z_link_peer_clear(_z_link_peer_t *peer);
 size_t _z_link_peer_read(const struct _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len);
 size_t _z_link_peer_write(const struct _z_link_t *link, _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+z_result_t _z_link_wait_peers_readable(const struct _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms);
 
 enum _z_link_type_e {
     _Z_LINK_TYPE_TCP,
@@ -195,6 +225,7 @@ typedef struct _z_link_t {
     _z_f_link_write_all _write_all_f;
     _z_f_link_read _read_f;
     _z_f_link_read_exact _read_exact_f;
+    _z_f_link_wait_peers_readable _wait_peers_readable_f;
     _z_f_link_free _free_f;
 
     uint16_t _mtu;

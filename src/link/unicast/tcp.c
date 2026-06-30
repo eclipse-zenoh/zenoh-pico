@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/common/socket_ops.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/transport/tcp.h"
 
@@ -118,6 +119,7 @@ z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_write_all_f = _z_f_link_write_all_tcp;
     zl->_read_f = _z_f_link_read_tcp;
     zl->_read_exact_f = _z_f_link_read_exact_tcp;
+    zl->_wait_peers_readable_f = _z_link_socket_wait_peers_readable;
 
     return ret;
 }

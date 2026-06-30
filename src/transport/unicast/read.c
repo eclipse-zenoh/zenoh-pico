@@ -20,7 +20,6 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
@@ -136,9 +135,9 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
 }
 
 #if Z_FEATURE_UNICAST_PEER == 1
-static void _z_unicast_wait_iter_reset(_z_socket_wait_iter_t *iter) { iter->_current_entry = NULL; }
+static void _z_unicast_peer_iter_reset(_z_link_peer_iter_t *iter) { iter->_current_entry = NULL; }
 
-static bool _z_unicast_wait_iter_next(_z_socket_wait_iter_t *iter) {
+static bool _z_unicast_peer_iter_next(_z_link_peer_iter_t *iter) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)iter->_ctx;
     if (iter->_current_entry == NULL) {
         iter->_current_entry = ztu->_peers;
@@ -149,28 +148,28 @@ static bool _z_unicast_wait_iter_next(_z_socket_wait_iter_t *iter) {
     return iter->_current_entry != NULL;
 }
 
-static const _z_sys_net_socket_t *_z_unicast_wait_iter_get_socket(const _z_socket_wait_iter_t *iter) {
+static const _z_link_peer_t *_z_unicast_peer_iter_get_peer(const _z_link_peer_iter_t *iter) {
     _z_transport_peer_unicast_t *peer =
         _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
-    return _z_transport_peer_unicast_socket_const(peer);
+    return &peer->_link_peer;
 }
 
-static void _z_unicast_wait_iter_set_ready(_z_socket_wait_iter_t *iter, bool ready) {
+static void _z_unicast_peer_iter_set_ready(_z_link_peer_iter_t *iter, bool ready) {
     _z_transport_peer_unicast_t *peer =
         _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
     peer->_pending = ready;
 }
 
 static z_result_t _z_unicast_wait_peer_event(_z_transport_unicast_t *ztu) {
-    _z_socket_wait_iter_t iter = {
+    _z_link_peer_iter_t peers = {
         ._ctx = ztu,
         ._current_entry = NULL,
-        ._reset = _z_unicast_wait_iter_reset,
-        ._next = _z_unicast_wait_iter_next,
-        ._get_socket = _z_unicast_wait_iter_get_socket,
-        ._set_ready = _z_unicast_wait_iter_set_ready,
+        ._reset_f = _z_unicast_peer_iter_reset,
+        ._next_f = _z_unicast_peer_iter_next,
+        ._get_peer_f = _z_unicast_peer_iter_get_peer,
+        ._set_ready_f = _z_unicast_peer_iter_set_ready,
     };
-    return _z_socket_wait_readable(&iter, Z_CONFIG_SOCKET_TIMEOUT);
+    return _z_link_wait_peers_readable(ztu->_common._link, &peers, Z_CONFIG_SOCKET_TIMEOUT);
 }
 
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,

@@ -199,6 +199,13 @@ size_t _z_link_peer_write(const _z_link_t *link, _z_link_peer_t *peer, const uin
     return peer->_ops->_write_f(link, peer, ptr, len);
 }
 
+z_result_t _z_link_wait_peers_readable(const _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms) {
+    if ((link == NULL) || (peers == NULL) || (link->_wait_peers_readable_f == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    return link->_wait_peers_readable_f(link, peers, timeout_ms);
+}
+
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
     size_t rb = link->_read_f(link, _z_zbuf_get_wptr(zbf), _z_zbuf_writable_space_left(zbf), addr);
     if (rb != SIZE_MAX) {
