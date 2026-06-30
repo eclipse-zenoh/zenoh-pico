@@ -79,6 +79,7 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_read_f = _z_f_link_read_serial;
     zl->_read_exact_f = _z_f_link_read_exact_serial;
     zl->_wait_peers_readable_f = _z_link_socket_wait_peers_readable;
+    zl->_peer_from_link_f = _z_link_socket_peer_from_link;
 
     return ret;
 }

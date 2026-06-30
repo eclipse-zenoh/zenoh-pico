@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/link/common/socket_ops.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/rx.h"

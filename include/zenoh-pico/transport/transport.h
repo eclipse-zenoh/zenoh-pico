@@ -33,6 +33,11 @@
 extern "C" {
 #endif
 
+enum _z_peer_op_e {
+    _Z_PEER_OP_OPEN = 0,
+    _Z_PEER_OP_LISTEN = 1,
+};
+
 enum _z_dbuf_state_e {
     _Z_DBUF_STATE_NULL = 0,
     _Z_DBUF_STATE_INIT = 1,
@@ -134,15 +139,6 @@ _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transp
                _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move,
                _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
-
-static inline _z_sys_net_socket_t *_z_transport_peer_unicast_socket(_z_transport_peer_unicast_t *peer) {
-    return _z_link_peer_get_socket(&peer->_link_peer);
-}
-
-static inline const _z_sys_net_socket_t *_z_transport_peer_unicast_socket_const(
-    const _z_transport_peer_unicast_t *peer) {
-    return _z_link_peer_get_socket_const(&peer->_link_peer);
-}
 
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
@@ -288,8 +284,12 @@ typedef struct {
 } _z_transport_multicast_establish_param_t;
 
 // Consumes link_peer, moving it into the transport on success and clearing it on failure.
-z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
-                                         _z_link_peer_t *link_peer, _z_transport_peer_unicast_t **output_peer);
+z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu,
+                                         const _z_transport_unicast_establish_param_t *param, _z_link_peer_t *link_peer,
+                                         _z_transport_peer_unicast_t **output_peer);
+z_result_t _z_transport_peer_unicast_open(_z_transport_unicast_t *ztu, const _z_id_t *session_id,
+                                          const _z_string_t *locator, const _z_config_t *session_cfg,
+                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 size_t _z_transport_get_peers_count(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);

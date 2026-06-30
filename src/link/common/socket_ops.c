@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/transport/socket.h"
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/link/transport/tls_stream.h"
@@ -84,6 +85,54 @@ static void _z_link_peer_socket_iter_set_ready(_z_socket_wait_iter_t *iter, bool
     _z_link_peer_iter_set_ready((_z_link_peer_iter_t *)iter->_ctx, ready);
 }
 
+z_result_t _z_link_socket_open_peer(const _z_link_t *link, _z_link_peer_t *peer, const _z_string_t *locator,
+                                    const _z_config_t *session_cfg) {
+#if Z_FEATURE_LINK_TLS != 1
+    _ZP_UNUSED(session_cfg);
+#endif
+    _ZP_UNUSED(link);
+
+    _z_endpoint_t ep;
+    z_result_t ret = _z_endpoint_from_string(&ep, locator);
+    if (ret != _Z_RES_OK) {
+        _z_endpoint_clear(&ep);
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    _z_sys_net_socket_t socket = {0};
+    if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
+        ret = _z_new_peer_tcp(&ep, &socket);
+#if Z_FEATURE_LINK_TLS == 1
+    } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+        ret = _z_new_peer_tls(&ep, &socket, session_cfg);
+#endif
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
+        ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
+    }
+    _z_endpoint_clear(&ep);
+
+    if (ret == _Z_RES_OK) {
+        *peer = _z_link_peer_from_socket(socket, true);
+    }
+    return ret;
+}
+
+z_result_t _z_link_socket_peer_from_link(const _z_link_t *link, _z_link_peer_t *peer) {
+    if (peer == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    const _z_sys_net_socket_t *socket = _z_link_get_socket(link);
+    if (socket == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    *peer = _z_link_peer_from_socket(*socket, false);
+    return _Z_RES_OK;
+}
+
 z_result_t _z_link_socket_wait_peers_readable(const _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms) {
     _ZP_UNUSED(link);
     _z_socket_wait_iter_t socket_iter = {
@@ -95,6 +144,21 @@ z_result_t _z_link_socket_wait_peers_readable(const _z_link_t *link, _z_link_pee
         ._set_ready = _z_link_peer_socket_iter_set_ready,
     };
     return _z_socket_wait_readable(&socket_iter, timeout_ms);
+}
+
+static z_result_t _z_link_peer_socket_set_blocking(_z_link_peer_t *peer, bool blocking) {
+    if (peer == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    return _z_socket_set_blocking(&peer->_socket, blocking);
+}
+
+static z_result_t _z_link_peer_socket_get_endpoints(const _z_link_peer_t *peer, char *local, size_t local_len,
+                                                    char *remote, size_t remote_len) {
+    if (peer == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    return _z_socket_get_endpoints(&peer->_socket, local, local_len, remote, remote_len);
 }
 
 static void _z_link_peer_socket_close(_z_link_peer_t *peer) {
@@ -113,6 +177,8 @@ static void _z_link_peer_socket_clear(_z_link_peer_t *peer) { _z_link_peer_socke
 static const _z_link_peer_ops_t _z_socket_peer_ops = {
     ._read_f = _z_link_peer_socket_read,
     ._write_f = _z_link_peer_socket_write,
+    ._set_blocking_f = _z_link_peer_socket_set_blocking,
+    ._get_endpoints_f = _z_link_peer_socket_get_endpoints,
     ._close_f = _z_link_peer_socket_close,
     ._clear_f = _z_link_peer_socket_clear,
 };

@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/link/common/socket_ops.h"
 #include "zenoh-pico/link/transport/socket.h"
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/link/transport/tls_stream.h"

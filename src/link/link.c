@@ -21,27 +21,6 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket) {
-#if Z_FEATURE_LINK_TLS != 1
-    _ZP_UNUSED(session_cfg);
-#endif
-    _z_endpoint_t ep;
-    z_result_t ret = _Z_RES_OK;
-    _Z_RETURN_IF_ERR(_z_endpoint_from_string(&ep, locator));
-    if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
-        ret = _z_new_peer_tcp(&ep, socket);
-#if Z_FEATURE_LINK_TLS == 1
-    } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-        ret = _z_new_peer_tls(&ep, socket, session_cfg);
-#endif
-    } else {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
-        ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
-    }
-    _z_endpoint_clear(&ep);
-    return ret;
-}
-
 z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
 #if Z_FEATURE_LINK_TLS != 1
     _ZP_UNUSED(session_cfg);
@@ -199,11 +178,53 @@ size_t _z_link_peer_write(const _z_link_t *link, _z_link_peer_t *peer, const uin
     return peer->_ops->_write_f(link, peer, ptr, len);
 }
 
+z_result_t _z_link_peer_set_blocking(_z_link_peer_t *peer, bool blocking) {
+    if ((peer == NULL) || (peer->_ops == NULL) || (peer->_ops->_set_blocking_f == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    return peer->_ops->_set_blocking_f(peer, blocking);
+}
+
+z_result_t _z_link_peer_get_endpoints(const _z_link_peer_t *peer, char *local, size_t local_len, char *remote,
+                                      size_t remote_len) {
+    if ((peer == NULL) || (peer->_ops == NULL) || (peer->_ops->_get_endpoints_f == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    return peer->_ops->_get_endpoints_f(peer, local, local_len, remote, remote_len);
+}
+
 z_result_t _z_link_wait_peers_readable(const _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms) {
     if ((link == NULL) || (peers == NULL) || (link->_wait_peers_readable_f == NULL)) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     return link->_wait_peers_readable_f(link, peers, timeout_ms);
+}
+
+z_result_t _z_link_open_peer(const _z_link_t *zl, _z_link_peer_t *peer, const _z_string_t *locator,
+                             const _z_config_t *session_cfg) {
+    if ((zl == NULL) || (peer == NULL) || (zl->_open_peer_f == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    *peer = _z_link_peer_null();
+    z_result_t ret = zl->_open_peer_f(zl, peer, locator, session_cfg);
+    if (ret != _Z_RES_OK) {
+        _z_link_peer_clear(peer);
+    }
+    return ret;
+}
+
+z_result_t _z_link_peer_from_link(const _z_link_t *zl, _z_link_peer_t *peer) {
+    if ((zl == NULL) || (peer == NULL) || (zl->_peer_from_link_f == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    *peer = _z_link_peer_null();
+    z_result_t ret = zl->_peer_from_link_f(zl, peer);
+    if (ret != _Z_RES_OK) {
+        _z_link_peer_clear(peer);
+    }
+    return ret;
 }
 
 size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {

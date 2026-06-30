@@ -18,7 +18,6 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -89,8 +88,11 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
             ret = _z_unicast_transport_create(zt, zl, &tp_param);
             // Fill peer list
             if (ret == _Z_RES_OK) {
-                _z_link_peer_t link_peer = _z_link_peer_from_socket(*_z_link_get_socket(zl), false);
-                ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, NULL);
+                _z_link_peer_t link_peer = _z_link_peer_null();
+                ret = _z_link_peer_from_link(zl, &link_peer);
+                if (ret == _Z_RES_OK) {
+                    ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, NULL);
+                }
             }
             break;
         }
@@ -147,12 +149,16 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                 return ret;
             }
             ret = _z_unicast_transport_create(zt, zl, &tp_param);
-            _Z_SET_IF_OK(ret, _z_socket_set_blocking(_z_link_get_socket(zl), false));
+            _z_link_peer_t link_peer = _z_link_peer_null();
+            if (ret == _Z_RES_OK) {
+                ret = _z_link_peer_from_link(zl, &link_peer);
+                _Z_SET_IF_OK(ret, _z_link_peer_set_blocking(&link_peer, false));
+            }
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
-                    _z_link_peer_t link_peer = _z_link_peer_from_socket(*_z_link_get_socket(zl), false);
                     ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, NULL);
                 } else {
+                    _z_link_peer_clear(&link_peer);
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1
                     _z_fut_t f = _z_fut_null();
                     f._fut_arg = &zt->_transport._unicast;
@@ -166,6 +172,9 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                     ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
 #endif
                 }
+            }
+            if (ret != _Z_RES_OK) {
+                _z_link_peer_clear(&link_peer);
             }
 #else
             _ZP_UNUSED(runtime);
@@ -212,27 +221,8 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
     z_result_t ret = _Z_RES_OK;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
-            _z_sys_net_socket_t socket = {0};
-            ret = _z_open_socket(locator, session_cfg, &socket);
-            if (ret == _Z_ERR_GENERIC) {
-                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
-            }
-            _Z_RETURN_IF_ERR(ret);
-            _z_link_peer_t link_peer = _z_link_peer_from_socket(socket, true);
-            _z_transport_unicast_establish_param_t tp_param = {0};
-            ret = _z_unicast_open_peer(&tp_param, zt->_transport._unicast._common._link, session_id, _Z_PEER_OP_OPEN,
-                                       &link_peer);
-            if (ret != _Z_RES_OK) {
-                _z_link_peer_clear(&link_peer);
-                return ret;
-            }
-            ret = _z_socket_set_blocking(_z_link_peer_get_socket(&link_peer), false);
-            if (ret != _Z_RES_OK) {
-                _z_link_peer_clear(&link_peer);
-                return ret;
-            }
             _z_transport_peer_unicast_t *peer = NULL;
-            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, &link_peer, &peer);
+            ret = _z_transport_peer_unicast_open(&zt->_transport._unicast, session_id, locator, session_cfg, &peer);
             if (ret != _Z_RES_OK) {
                 return ret;
             }

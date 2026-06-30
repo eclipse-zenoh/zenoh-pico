@@ -97,6 +97,9 @@ typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *pt
                                        _z_sys_net_socket_t *socket);
 typedef z_result_t (*_z_f_link_wait_peers_readable)(const struct _z_link_t *self, struct _z_link_peer_iter_t *peers,
                                                     uint32_t timeout_ms);
+typedef z_result_t (*_z_f_link_open_peer)(const struct _z_link_t *self, struct _z_link_peer_t *peer,
+                                          const _z_string_t *locator, const _z_config_t *session_cfg);
+typedef z_result_t (*_z_f_link_peer_from_link)(const struct _z_link_t *self, struct _z_link_peer_t *peer);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
 
 typedef void (*_z_link_peer_iter_reset_f)(struct _z_link_peer_iter_t *iter);
@@ -128,6 +131,9 @@ static inline void _z_link_peer_iter_set_ready(_z_link_peer_iter_t *iter, bool r
 typedef struct _z_link_peer_ops_t {
     size_t (*_read_f)(const struct _z_link_t *link, const struct _z_link_peer_t *peer, uint8_t *ptr, size_t len);
     size_t (*_write_f)(const struct _z_link_t *link, struct _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+    z_result_t (*_set_blocking_f)(struct _z_link_peer_t *peer, bool blocking);
+    z_result_t (*_get_endpoints_f)(const struct _z_link_peer_t *peer, char *local, size_t local_len, char *remote,
+                                   size_t remote_len);
     void (*_close_f)(struct _z_link_peer_t *peer);
     void (*_clear_f)(struct _z_link_peer_t *peer);
 } _z_link_peer_ops_t;
@@ -143,18 +149,8 @@ typedef struct _z_link_peer_t {
     bool _owns_socket;
 } _z_link_peer_t;
 
-const _z_link_peer_ops_t *_z_link_peer_socket_ops(void);
-
 static inline _z_link_peer_t _z_link_peer_null(void) {
     _z_link_peer_t peer = {0};
-    return peer;
-}
-
-static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket, bool owns_socket) {
-    _z_link_peer_t peer = _z_link_peer_null();
-    peer._ops = _z_link_peer_socket_ops();
-    peer._socket = socket;
-    peer._owns_socket = owns_socket;
     return peer;
 }
 
@@ -169,16 +165,13 @@ static inline void _z_link_peer_move(_z_link_peer_t *dst, _z_link_peer_t *src) {
     *src = _z_link_peer_null();
 }
 
-static inline _z_sys_net_socket_t *_z_link_peer_get_socket(_z_link_peer_t *peer) { return &peer->_socket; }
-
-static inline const _z_sys_net_socket_t *_z_link_peer_get_socket_const(const _z_link_peer_t *peer) {
-    return &peer->_socket;
-}
-
 void _z_link_peer_close(_z_link_peer_t *peer);
 void _z_link_peer_clear(_z_link_peer_t *peer);
 size_t _z_link_peer_read(const struct _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len);
 size_t _z_link_peer_write(const struct _z_link_t *link, _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+z_result_t _z_link_peer_set_blocking(_z_link_peer_t *peer, bool blocking);
+z_result_t _z_link_peer_get_endpoints(const _z_link_peer_t *peer, char *local, size_t local_len, char *remote,
+                                      size_t remote_len);
 z_result_t _z_link_wait_peers_readable(const struct _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms);
 
 enum _z_link_type_e {
@@ -226,6 +219,8 @@ typedef struct _z_link_t {
     _z_f_link_read _read_f;
     _z_f_link_read_exact _read_exact_f;
     _z_f_link_wait_peers_readable _wait_peers_readable_f;
+    _z_f_link_open_peer _open_peer_f;
+    _z_f_link_peer_from_link _peer_from_link_f;
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
@@ -234,7 +229,9 @@ typedef struct _z_link_t {
 
 void _z_link_clear(_z_link_t *zl);
 void _z_link_free(_z_link_t **zl);
-z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket);
+z_result_t _z_link_open_peer(const _z_link_t *zl, _z_link_peer_t *peer, const _z_string_t *locator,
+                             const _z_config_t *session_cfg);
+z_result_t _z_link_peer_from_link(const _z_link_t *zl, _z_link_peer_t *peer);
 z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg);
 z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg);
 
