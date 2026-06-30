@@ -313,6 +313,8 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `at`).                       |
 | `bool NAME_eq(const NAME_t *left, const NAME_t *right)`             | Check if two bit vectors are equal (i.e. have the same size, and same bits).       |
 | `void NAME_copy(NAME_t *dst, const NAME_t *src)`                    | Copies `src` into `dst`.                                                           |
+| `bool NAME_all(const NAME_t *v)`                                    | Returns true if all bits of vector are set, false otherwise.                       |
+| `bool NAME_any(const NAME_t *v)`                                    | Returns true if at least one bit of vector is set, false otherwise.                |
 
 ### Example
 

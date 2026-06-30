@@ -329,7 +329,9 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, swap_remove)(_ZP
 static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, set_all)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec,
                                                                          bool value) {
     if (!value) {
-        memset(vec->_blocks, 0, sizeof(vec->_blocks));
+        size_t num_blocks =
+            (vec->_size + _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - 1) / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+        memset(vec->_blocks, 0, num_blocks * sizeof(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE));
     } else {
         _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE all_ones =
             (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)(~(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)0);
@@ -422,6 +424,7 @@ static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, flip_all)(_ZP_ST
 static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, copy)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *dst,
                                                                       const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *src) {
     if (dst != src) {
+        memset(dst->_blocks, 0, sizeof(dst->_blocks));
         memcpy(dst->_blocks, src->_blocks, sizeof(dst->_blocks));
         dst->_size = src->_size;
     }
@@ -495,6 +498,41 @@ static inline _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, iter_t)
         shift = 0;
     }
     return vec->_size;
+}
+
+// Returns true if all bits currently in the vector are set to 1, false otherwise.
+static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, all)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
+    if (vec->_size == 0) {
+        return true;
+    }
+    size_t num_blocks = vec->_size / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    for (size_t i = 0; i < num_blocks; i++) {
+        if (vec->_blocks[i] !=
+            (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)(~(_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)0)) {
+            return false;
+        }
+    }
+    size_t rem = vec->_size % _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    if (rem == 0) {
+        return true;
+    }
+    return (vec->_blocks[num_blocks] ^ (((_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u << rem) -
+                                        (_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE)1u)) == 0;
+}
+
+// Returns true if any bit currently in the vector is set to 1, false otherwise.
+static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, any)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
+    if (vec->_size == 0) {
+        return false;
+    }
+    size_t num_blocks =
+        (vec->_size + _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS - 1) / _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_BITS;
+    for (size_t i = 0; i < num_blocks; i++) {
+        if (vec->_blocks[i] != 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #undef _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE

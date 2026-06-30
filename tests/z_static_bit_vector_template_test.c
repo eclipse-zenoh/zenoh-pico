@@ -621,6 +621,56 @@ static void test_eq(void) {
     assert(!wordvec_eq(&w1, &w2));
 }
 
+static void test_all(void) {
+    printf("Test: all\n");
+    bytevec_t v1 = bytevec_new();
+    assert(bytevec_all(&v1));  // empty vector is vacuously all true
+    for (size_t i = 0; i < 10; i++) assert(bytevec_push_back(&v1, true));
+    assert(bytevec_all(&v1));
+    bytevec_set_at(&v1, 5, false);
+    assert(!bytevec_all(&v1));
+    bytevec_set_at(&v1, 5, true);
+    bytevec_set_at(&v1, 9, false);
+    assert(!bytevec_all(&v1));
+    bytevec_destroy(&v1);
+
+    wordvec_t w1 = wordvec_new();
+    assert(wordvec_all(&w1));  // empty vector is vacuously all true
+    for (size_t i = 0; i < 20; i++) assert(wordvec_push_back(&w1, true));
+    assert(wordvec_all(&w1));
+    wordvec_set_at(&w1, 10, false);
+    assert(!wordvec_all(&w1));
+    wordvec_set_at(&w1, 10, true);
+    wordvec_set_at(&w1, 19, false);
+    assert(!wordvec_all(&w1));
+    wordvec_destroy(&w1);
+}
+
+static void test_any(void) {
+    printf("Test: any\n");
+    bytevec_t v1 = bytevec_new();
+    assert(!bytevec_any(&v1));  // empty vector has no set bits
+    for (size_t i = 0; i < 10; i++) assert(bytevec_push_back(&v1, false));
+    assert(!bytevec_any(&v1));
+    bytevec_set_at(&v1, 5, true);
+    assert(bytevec_any(&v1));
+    bytevec_set_at(&v1, 5, false);
+    bytevec_set_at(&v1, 9, true);
+    assert(bytevec_any(&v1));
+    bytevec_destroy(&v1);
+
+    wordvec_t w1 = wordvec_new();
+    assert(!wordvec_any(&w1));  // empty vector has no set bits
+    for (size_t i = 0; i < 20; i++) assert(wordvec_push_back(&w1, false));
+    assert(!wordvec_any(&w1));
+    wordvec_set_at(&w1, 10, true);
+    assert(wordvec_any(&w1));
+    wordvec_set_at(&w1, 10, false);
+    wordvec_set_at(&w1, 19, true);
+    assert(wordvec_any(&w1));
+    wordvec_destroy(&w1);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 int main(void) {
@@ -652,6 +702,8 @@ int main(void) {
     test_flip_all();
     test_copy();
     test_eq();
+    test_all();
+    test_any();
     printf("All bit vector tests passed.\n");
     return 0;
 }
