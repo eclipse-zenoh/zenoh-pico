@@ -288,7 +288,7 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `bool NAME_is_empty(const NAME_t *v)`                               | `true` if no bits are stored.                                                      |
 | `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing.               |
 | `const bool *NAME_const_at(const NAME_t *v, size_t i)`              | Bit at `i`, **no** bounds check. UB if  `i >= size`.                               |
-| `const bool *NAME_const_get(const NAME_t *v, size_t i)`             | Bounds-checked read; return `NULL` if ` >= size`.                                  |
+| `const bool *NAME_const_get(const NAME_t *v, size_t i)`             | Bounds-checked read; return `NULL` if `i >= size`.                                 |
 | `void NAME_set_at(NAME_t *v, size_t i, bool x)`                     | Set bit `i`, **no** bounds check. UB if `i >= size`.                               |
 | `bool NAME_set(NAME_t *v, size_t i, bool x)`                        | Bounds-checked set. `false` if `i >= size`.                                        |
 | `void NAME_flip_at(NAME_t *v, size_t i)`                            | Toggle bit `i`, **no** bounds check.                                               |
