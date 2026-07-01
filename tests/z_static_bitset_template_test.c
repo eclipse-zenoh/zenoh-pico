@@ -335,24 +335,6 @@ static void test_copy(void) {
     assert(bitset_count(&src) == 10);
 }
 
-// destroy clears all bits but does NOT reset size (there is no _size field).
-static void test_destroy(void) {
-    printf("Test: destroy clears bits; size is still capacity afterwards\n");
-    bitset_t s = bitset_new();
-    bitset_set_all(&s, true);
-    assert(bitset_count(&s) == 20);
-
-    bitset_destroy(&s);
-
-    // All bits cleared.
-    assert(bitset_count(&s) == 0);
-    for (size_t i = 0; i < 20; i++) assert(*bitset_const_at(&s, i) == false);
-
-    // Size is still capacity (the defining property of a bitset).
-    assert(bitset_size(&s) == 20);
-    assert(bitset_size(&s) == bitset_capacity(&s));
-}
-
 // block accessors expose the correct storage layout.
 static void test_blocks_layout(void) {
     printf("Test: block accessors expose LSB-first packed storage\n");
@@ -472,7 +454,6 @@ int main(void) {
     test_eq();
     test_all_and_any();
     test_copy();
-    test_destroy();
     test_blocks_layout();
     test_full_iteration();
     test_set_bit_iteration();

@@ -22,7 +22,7 @@
 // - _ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET: if defined to a non-zero value the generated type
 //   behaves as a bit SET rather than a bit VECTOR: its logical size is always equal to its
 //   capacity and is a compile-time constant.  The push_back / append / pop_back / front / back /
-//   insert / remove / remove_at / swap_remove operations are not generated in this mode.
+//   insert / remove / remove_at / swap_remove and destroy operations are not generated in this mode.
 //   (optional, default 0)
 // - _ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME: the name of the bit vector type to generate, without
 //   the _t suffix (optional, default is derived from the size and is_set flag, e.g. bitvec_16, bitset_32)
@@ -115,15 +115,6 @@ static inline size_t _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
     return _ZP_STATIC_BIT_VECTOR_TEMPLATE_SIZE;
 }
 
-// Resets the vector to an empty state, clearing the underlying storage.
-// Provided for parity with the other containers; bits own no resources so nothing is freed.
-static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, destroy)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
-    memset(vec->_blocks, 0, sizeof(vec->_blocks));
-#if !_ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET
-    vec->_size = 0;
-#endif
-}
-
 // Returns the bit at the given index, without bounds checking.
 // Behaviour is undefined if index >= size.
 static inline const bool *_ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
@@ -200,6 +191,13 @@ static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, flip)(_ZP_STATIC
 }
 
 #if !_ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET
+// Resets the vector to an empty state, clearing the underlying storage.
+// Provided for parity with the other containers; bits own no resources so nothing is freed.
+static inline void _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME, destroy)(_ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {
+    memset(vec->_blocks, 0, sizeof(vec->_blocks));
+    vec->_size = 0;
+}
+
 // Returns true if the vector contains no bits.
 static inline bool _ZP_CAT(_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME,
                            is_empty)(const _ZP_STATIC_BIT_VECTOR_TEMPLATE_TYPE *vec) {

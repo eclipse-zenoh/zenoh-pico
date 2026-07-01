@@ -291,7 +291,7 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `size_t NAME_size(const NAME_t *v)`                                 | Number of bits stored.                                                                      |
 | `size_t NAME_capacity(const NAME_t *v)`                             | Returns the compile-time `SIZE`.                                                            |
 | `bool NAME_is_empty(const NAME_t *v)`                               | `true` if no bits are stored. Bit vector only.                                              |
-| `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing.                        |
+| `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing. (Bit vector only.)     |
 | `const bool *NAME_const_at(const NAME_t *v, size_t i)`              | Bit at `i`, **no** bounds check. UB if  `i >= size`.                                        |
 | `const bool *NAME_const_get(const NAME_t *v, size_t i)`             | Bounds-checked read; return `NULL` if `i >= size`.                                          |
 | `void NAME_set_at(NAME_t *v, size_t i, bool x)`                     | Set bit `i`, **no** bounds check. UB if `i >= size`.                                        |
@@ -314,8 +314,8 @@ typedef size_t     NAME_iter_t;   // iterator (a plain index)
 | `const NAME_block_t *NAME_const_blocks(const NAME_t *v)`            | Const raw packed storage.                                                                   |
 | `size_t NAME_block_count(const NAME_t *v)`                          | Number of storage blocks, `ceil(SIZE / block_bits)`.                                        |
 | `size_t NAME_block_bits(const NAME_t *v)`                           | Number of bits per storage block (`sizeof(BLOCK_TYPE) * CHAR_BIT`).                         |
-| `NAME_iter_t NAME_begin/end/iter_next(...)`                         | Index-based iteration (dereference with `at`).                                              |
-| `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `at`).                                |
+| `NAME_iter_t NAME_begin/end/iter_next(...)`                         | Index-based iteration (dereference with `const_at`).                                        |
+| `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `const_at`).                          |
 | `bool NAME_eq(const NAME_t *left, const NAME_t *right)`             | Check if two bit vectors are equal (i.e. have the same size, and same bits).                |
 | `void NAME_copy(NAME_t *dst, const NAME_t *src)`                    | Copies `src` into `dst`.                                                                    |
 | `bool NAME_all(const NAME_t *v)`                                    | Returns true if all bits of vector are set, false otherwise.                                |
@@ -839,7 +839,7 @@ calls. Include the header next to the container instantiation:
 > * `_ZP_REMOVE` relies on `remove_at`, which is provided by the hash maps and by both
 >   the heap and static vectors. The predicate must not have side effects that modify
 >   the collection.
-> * Because bit vector provide only const version of `at`, only the const iteration helpers
+> * Because bit vector provides only const version of `at`, only the const iteration helpers
 >   (`_ZP_CONST_FOREACH`, `_ZP_CONST_FIND`, `_ZP_CONST_IT_FIND`) are directly compatible
 >   with bit vector.
 
