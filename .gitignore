@@ -76,3 +76,5 @@ crash-*
 leak-*
 oom-*
 timeout-*
+*.profdata
+*.profraw
