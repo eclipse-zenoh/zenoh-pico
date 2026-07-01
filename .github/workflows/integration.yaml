@@ -84,9 +84,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          key: ${{ runner.os }}-asan${{ matrix.asan }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
           restore-keys: |
-            ${{ runner.os }}-ccache-integration-
+            ${{ runner.os }}-asan${{ matrix.asan }}-ccache-integration-
 
       - name: Compile debug
         run: make all
