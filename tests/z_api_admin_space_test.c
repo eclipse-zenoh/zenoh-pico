@@ -222,27 +222,6 @@ static const char *whatami_to_str(z_whatami_t w) {
     }
 }
 
-static const char *link_type_to_str(int t) {
-    switch (t) {
-        case _Z_LINK_TYPE_TCP:
-            return "tcp";
-        case _Z_LINK_TYPE_UDP:
-            return "udp";
-        case _Z_LINK_TYPE_BT:
-            return "bt";
-        case _Z_LINK_TYPE_SERIAL:
-            return "serial";
-        case _Z_LINK_TYPE_WS:
-            return "ws";
-        case _Z_LINK_TYPE_TLS:
-            return "tls";
-        case _Z_LINK_TYPE_RAWETH:
-            return "raweth";
-        default:
-            return NULL;
-    }
-}
-
 static const char *cap_transport_to_str(int t) {
     switch (t) {
         case Z_LINK_CAP_TRANSPORT_UNICAST:
@@ -324,9 +303,10 @@ static void assert_contains_transport_header(const z_loaned_string_t *payload, c
     assert_contains(payload, buf);
 }
 
-static void assert_contains_link_header(const z_loaned_string_t *payload, const char *link_type) {
+static void assert_contains_link_header(const z_loaned_string_t *payload, const z_loaned_string_t *link_type) {
     char buf[128];
-    int n = snprintf(buf, sizeof(buf), "\"link\":{\"type\":\"%s\",\"endpoint\":", link_type);
+    int n = snprintf(buf, sizeof(buf), "\"link\":{\"type\":\"%.*s\",\"endpoint\":", (int)z_string_len(link_type),
+                     z_string_data(link_type));
     ASSERT_TRUE(n > 0 && (size_t)n < sizeof(buf));
     assert_contains(payload, buf);
 }
@@ -498,9 +478,7 @@ static void verify_transport_json(const z_loaned_string_t *payload, int transpor
     ASSERT_NOT_NULL(tt);
     assert_contains_transport_header(payload, tt);
 
-    const char *lt = link_type_to_str(link->_type);
-    ASSERT_NOT_NULL(lt);
-    assert_contains_link_header(payload, lt);
+    assert_contains_link_header(payload, &link->_endpoint._locator._protocol);
 
     assert_contains(payload, "\"endpoint\"");
     assert_contains(payload, "\"locator\"");

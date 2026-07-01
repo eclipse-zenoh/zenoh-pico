@@ -21,25 +21,17 @@
 extern "C" {
 #endif
 
-const _z_link_peer_ops_t *_z_link_peer_socket_ops(void);
+typedef void (*_z_link_socket_close_f)(_z_sys_net_socket_t *socket);
+
+z_result_t _z_link_socket_peer_from_socket(_z_link_peer_t *peer, _z_sys_net_socket_t socket,
+                                           _z_link_socket_close_f close_f, const _z_link_peer_ops_t *ops);
+_z_sys_net_socket_t *_z_link_socket_peer_get_socket(_z_link_peer_t *peer);
+const _z_sys_net_socket_t *_z_link_socket_peer_get_socket_const(const _z_link_peer_t *peer);
+z_result_t _z_link_socket_peer_set_blocking(const _z_link_peer_t *peer, bool blocking);
+z_result_t _z_link_socket_peer_get_endpoints(const _z_link_peer_t *peer, char *local, size_t local_len, char *remote,
+                                             size_t remote_len);
+void _z_link_socket_peer_close(_z_link_peer_t *peer);
 z_result_t _z_link_socket_wait_peers_readable(const _z_link_t *link, _z_link_peer_iter_t *peers, uint32_t timeout_ms);
-z_result_t _z_link_socket_open_peer(const _z_link_t *link, _z_link_peer_t *peer, const _z_string_t *locator,
-                                    const _z_config_t *session_cfg);
-z_result_t _z_link_socket_peer_from_link(const _z_link_t *link, _z_link_peer_t *peer);
-
-static inline _z_link_peer_t _z_link_peer_from_socket(_z_sys_net_socket_t socket, bool owns_socket) {
-    _z_link_peer_t peer = _z_link_peer_null();
-    peer._ops = _z_link_peer_socket_ops();
-    peer._socket = socket;
-    peer._owns_socket = owns_socket;
-    return peer;
-}
-
-static inline _z_sys_net_socket_t *_z_link_peer_get_socket(_z_link_peer_t *peer) { return &peer->_socket; }
-
-static inline const _z_sys_net_socket_t *_z_link_peer_get_socket_const(const _z_link_peer_t *peer) {
-    return &peer->_socket;
-}
 
 #ifdef __cplusplus
 }

@@ -310,31 +310,7 @@ static z_result_t _ze_admin_space_encode_link(_z_json_encoder_t *je, const _z_li
     _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "link"));
     _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));
     _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "type"));
-    switch (link->_type) {
-        case _Z_LINK_TYPE_TCP:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "tcp"));
-            break;
-        case _Z_LINK_TYPE_UDP:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "udp"));
-            break;
-        case _Z_LINK_TYPE_BT:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "bt"));
-            break;
-        case _Z_LINK_TYPE_SERIAL:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "serial"));
-            break;
-        case _Z_LINK_TYPE_WS:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "ws"));
-            break;
-        case _Z_LINK_TYPE_TLS:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "tls"));
-            break;
-        case _Z_LINK_TYPE_RAWETH:
-            _Z_RETURN_IF_ERR(_z_json_encoder_write_string(je, "raweth"));
-            break;
-        default:
-            return _Z_ERR_INVALID;
-    }
+    _Z_RETURN_IF_ERR(_z_json_encoder_write_z_string(je, &link->_endpoint._locator._protocol));
 
     _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "endpoint"));
     _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));

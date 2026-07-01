@@ -20,7 +20,6 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
@@ -39,7 +38,7 @@ z_result_t _z_multicast_recv_zbuf(_z_transport_multicast_t *ztm, size_t *to_read
     z_result_t ret = _Z_RES_OK;
 
     do {
-        // Read bytes from socket to the main buffer
+        // Read bytes from the link to the main buffer
         switch (ztm->_common._link->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_readable_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {

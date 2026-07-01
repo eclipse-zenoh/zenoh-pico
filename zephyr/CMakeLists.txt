@@ -32,7 +32,6 @@ file(GLOB_RECURSE Sources
   "../src/api/*.c"
   "../src/collections/*.c"
   "../src/link/*.c"
-  "../src/link/common/*.c"
   "../src/net/*.c"
   "../src/protocol/*.c"
   "../src/session/*.c"

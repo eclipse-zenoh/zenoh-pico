@@ -13,7 +13,6 @@
 //
 
 #include "zenoh-pico/link/endpoint.h"
-#include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -156,7 +155,7 @@ void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
 void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_transport_peer_unicast_t *src) {
     dst->_sn_rx_reliable = src->_sn_rx_reliable;
     dst->_sn_rx_best_effort = src->_sn_rx_best_effort;
-    dst->_link_peer = _z_link_peer_alias(&src->_link_peer);
+    dst->_link_peer = _z_link_peer_clone(&src->_link_peer);
     dst->_pending = false;
     dst->flow_state = _Z_FLOW_STATE_INACTIVE;
     dst->flow_curr_size = 0;

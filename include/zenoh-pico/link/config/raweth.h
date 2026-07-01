@@ -26,6 +26,9 @@ extern "C" {
 
 #define RAWETH_SCHEMA "reth"
 
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+bool _z_endpoint_raweth_matches(const _z_endpoint_t *endpoint);
+#endif
 z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint);
 z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint);
 size_t _z_raweth_config_strlen(const _z_str_intmap_t *s);

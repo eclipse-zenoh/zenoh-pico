@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
@@ -24,9 +25,25 @@
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
 
-z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
+typedef struct {
+    _z_udp_socket_t _udp;
+} _z_udp_multicast_link_state_t;
+
+static _z_udp_multicast_link_state_t *_z_udp_multicast_link_state(_z_link_t *link) {
+    return (_z_udp_multicast_link_state_t *)_z_link_state(link);
+}
+
+static const _z_udp_multicast_link_state_t *_z_udp_multicast_link_state_const(const _z_link_t *link) {
+    return (const _z_udp_multicast_link_state_t *)_z_link_state_const(link);
+}
+
+bool _z_endpoint_udp_multicast_matches(const _z_endpoint_t *endpoint) {
     _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
-    if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
+    return _z_string_equals(&endpoint->_locator._protocol, &udp_str);
+}
+
+z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
+    if (!_z_endpoint_udp_multicast_matches(endpoint)) {
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
@@ -47,6 +64,11 @@ z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
 }
 
 z_result_t _z_f_link_open_udp_multicast(_z_link_t *self) {
+    _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state(self);
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
@@ -54,51 +76,59 @@ z_result_t _z_f_link_open_udp_multicast(_z_link_t *self) {
     }
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
-    return _z_udp_multicast_open(&self->_socket._udp._sock, self->_socket._udp._rep, &self->_socket._udp._lep, tout,
-                                 iface);
+    return _z_udp_multicast_open(&state->_udp._sock, state->_udp._rep, &state->_udp._lep, tout, iface);
 }
 
 z_result_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
+    _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state(self);
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
     z_result_t ret = _Z_RES_OK;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
     const char *join = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_JOIN_KEY);
-    ret = _z_udp_multicast_listen(&self->_socket._udp._sock, self->_socket._udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface,
-                                  join);
-    ret |= _z_udp_multicast_open(&self->_socket._udp._msock, self->_socket._udp._rep, &self->_socket._udp._lep,
-                                 Z_CONFIG_SOCKET_TIMEOUT, iface);
+    ret = _z_udp_multicast_listen(&state->_udp._sock, state->_udp._rep, Z_CONFIG_SOCKET_TIMEOUT, iface, join);
+    ret |=
+        _z_udp_multicast_open(&state->_udp._msock, state->_udp._rep, &state->_udp._lep, Z_CONFIG_SOCKET_TIMEOUT, iface);
 
     return ret;
 }
 
 void _z_f_link_close_udp_multicast(_z_link_t *self) {
-    _z_udp_multicast_close(&self->_socket._udp._sock, &self->_socket._udp._msock, self->_socket._udp._rep,
-                           self->_socket._udp._lep);
+    _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state(self);
+    if (state != NULL) {
+        _z_udp_multicast_close(&state->_udp._sock, &state->_udp._msock, state->_udp._rep, state->_udp._lep);
+    }
 }
 
 void _z_f_link_free_udp_multicast(_z_link_t *self) {
-    _z_udp_multicast_endpoint_clear(&self->_socket._udp._lep);
-    _z_udp_multicast_endpoint_clear(&self->_socket._udp._rep);
+    _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state(self);
+    if (state != NULL) {
+        _z_udp_multicast_endpoint_clear(&state->_udp._lep);
+        _z_udp_multicast_endpoint_clear(&state->_udp._rep);
+    }
 }
 
-size_t _z_f_link_write_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len,
-                                     _z_sys_net_socket_t *socket) {
-    _ZP_UNUSED(socket);
-    return _z_udp_multicast_write(self->_socket._udp._msock, ptr, len, self->_socket._udp._rep);
+size_t _z_f_link_write_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+    const _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state_const(self);
+    return state == NULL ? SIZE_MAX : _z_udp_multicast_write(state->_udp._msock, ptr, len, state->_udp._rep);
 }
 
 size_t _z_f_link_write_all_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
-    return _z_udp_multicast_write(self->_socket._udp._msock, ptr, len, self->_socket._udp._rep);
+    const _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state_const(self);
+    return state == NULL ? SIZE_MAX : _z_udp_multicast_write(state->_udp._msock, ptr, len, state->_udp._rep);
 }
 
 size_t _z_f_link_read_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    return _z_udp_multicast_read(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
+    const _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state_const(self);
+    return state == NULL ? SIZE_MAX : _z_udp_multicast_read(state->_udp._sock, ptr, len, state->_udp._lep, addr);
 }
 
-size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
-                                          _z_sys_net_socket_t *socket) {
-    _ZP_UNUSED(socket);
-    return _z_udp_multicast_read_exact(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
+size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
+    const _z_udp_multicast_link_state_t *state = _z_udp_multicast_link_state_const(self);
+    return state == NULL ? SIZE_MAX : _z_udp_multicast_read_exact(state->_udp._sock, ptr, len, state->_udp._lep, addr);
 }
 
 uint16_t _z_get_link_mtu_udp_multicast(void) {
@@ -107,7 +137,24 @@ uint16_t _z_get_link_mtu_udp_multicast(void) {
 }
 
 z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
-    zl->_type = _Z_LINK_TYPE_UDP;
+    _Z_RETURN_IF_ERR(_z_endpoint_udp_multicast_valid(&endpoint));
+
+    _z_udp_multicast_link_state_t *state =
+        (_z_udp_multicast_link_state_t *)z_malloc(sizeof(_z_udp_multicast_link_state_t));
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    memset(state, 0, sizeof(_z_udp_multicast_link_state_t));
+
+    z_result_t ret = _z_udp_multicast_endpoint_init_from_address(&state->_udp._rep, &endpoint._locator._address);
+    if (ret != _Z_RES_OK) {
+        z_free(state);
+        return ret;
+    }
+    memset(&state->_udp._lep, 0, sizeof(state->_udp._lep));
+
+    zl->_state = state;
+    zl->_drop_f = z_free;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_MULTICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;
     zl->_cap._is_reliable = false;
@@ -115,8 +162,6 @@ z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_mtu = _z_get_link_mtu_udp_multicast();
 
     zl->_endpoint = endpoint;
-    z_result_t ret = _z_udp_multicast_endpoint_init_from_address(&zl->_socket._udp._rep, &endpoint._locator._address);
-    memset(&zl->_socket._udp._lep, 0, sizeof(zl->_socket._udp._lep));
 
     zl->_open_f = _z_f_link_open_udp_multicast;
     zl->_listen_f = _z_f_link_listen_udp_multicast;

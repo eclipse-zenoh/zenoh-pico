@@ -54,7 +54,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
         err = _z_open_link(&zl, locator, NULL);
         if (err == _Z_RES_OK) {
             // Send the scout message
-            if (_z_link_send_wbuf(&zl, wbf, NULL) != _Z_RES_OK) {
+            if (_z_link_send_wbuf(&zl, wbf) != _Z_RES_OK) {
                 err = _Z_ERR_TRANSPORT_TX_FAILED;
                 _Z_ERROR_LOG(err);
             } else if (_z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE) != _Z_RES_OK) {
