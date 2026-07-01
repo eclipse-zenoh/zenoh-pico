@@ -7,15 +7,16 @@ C preprocessor.
 
 The templates documented here are:
 
-| Header                      | Container               | Storage            |
-| --------------------------- | ----------------------- | ------------------ |
-| `vector_template.h`         | Dynamic array (vector)  | Heap (growable)    |
-| `static_vector_template.h`  | Dynamic array (vector)  | Inline, fixed cap. |
-| `hashmap_template.h`        | Hash map                | Heap (growable)    |
-| `static_hashmap_template.h` | Hash map                | Inline, fixed cap. |
-| `static_deque_template.h`   | Double-ended queue      | Inline, fixed cap. |
-| `static_pqueue_template.h`  | Binary-heap priority q. | Inline, fixed cap. |
-| `variant_template.h`        | Tagged union (variant)  | Inline             |
+| Header                         | Container               | Storage            |
+| ------------------------------ | ----------------------- | ------------------ |
+| `vector_template.h`            | Dynamic array (vector)  | Heap (growable)    |
+| `static_vector_template.h`     | Dynamic array (vector)  | Inline, fixed cap. |
+| `static_bit_vector_template.h` | Bit vector (0/1 bits)   | Inline, fixed cap. |
+| `hashmap_template.h`           | Hash map                | Heap (growable)    |
+| `static_hashmap_template.h`    | Hash map                | Inline, fixed cap. |
+| `static_deque_template.h`      | Double-ended queue      | Inline, fixed cap. |
+| `static_pqueue_template.h`     | Binary-heap priority q. | Inline, fixed cap. |
+| `variant_template.h`           | Tagged union (variant)  | Inline             |
 
 In addition, `algorithms_template.h` provides generic iteration / search / removal
 helper macros that work on any of the above containers exposing an iterator interface
@@ -238,6 +239,103 @@ ivec_push_back(&v, &a);
 ivec_push_back(&v, &c);
 ivec_insert(&v, 1, &b);     // v == [1, 2, 3]
 ivec_destroy(&v);
+```
+
+---
+
+## `static_bit_vector_template.h` — fixed-capacity bit vector
+
+A fixed-capacity sequence of single **bits** (0/1 values) packed into an inline array
+of unsigned-integer **blocks** — **no heap allocation**. It mirrors
+`static_vector_template.h`, but because an individual bit is not addressable, there are no mutable accessors,
+setters such as `set` and `set_at` should be used instead to set individual bits. Pointers returned by const
+accessors can only be dereferenced to acquire corresponding bit values, but can not be used to get the
+individual bit address in the vector.
+
+Alternatively a bitset can be generated - an always full vector with size equal to its capacity.
+
+### Configuration macros
+
+| Macro                                        | Required | Default                               | Purpose                                                                |
+| -------------------------------------------- | :------: | ------------------------------------- | ---------------------------------------------------------------------- |
+| `_ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET`      |    ❌    | `0`                                   | Generate bit vector if `0`, bitset (always full bit vector) otherwise. |
+| `_ZP_STATIC_BIT_VECTOR_TEMPLATE_SIZE`        |    ❌    | `16`                                  | Maximum capacity in bits.                                              |
+| `_ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME`        |    ❌    | derived from the size and is_set flag | Base name for generated symbols.                                       |
+| `_ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE`  |    ❌    | `size_t`                              | Unsigned integer type backing the storage.                             |
+
+There is no element type, destroy, or move configuration: the element type is always
+`bool` and bits own no resources. The block type must be an **unsigned** integer type;
+a smaller type (e.g. `uint8_t`) minimises the round-up overhead of the inline array,
+while a wider type can reduce instruction count for bulk operations.
+
+### Generated type
+
+```c
+// BITS = sizeof(BLOCK_TYPE) * CHAR_BIT
+typedef struct NAME_t {
+    BLOCK_TYPE _blocks[(SIZE + BITS - 1) / BITS];  // packed bits, LSB-first within each block
+    size_t     _size; // only for bit vector case
+} NAME_t;
+
+typedef BLOCK_TYPE NAME_block_t;  // backing storage word
+typedef bool       NAME_elem_t;   // element alias
+typedef size_t     NAME_iter_t;   // iterator (a plain index)
+```
+
+### API (`NAME` = configured name)
+
+| Function                                                            | Description                                                                                 |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *v)`                                         | Zero-initialise an empty bit vector in place.                                               |
+| `NAME_t NAME_new(void)`                                             | Return a new (zero-initialised) empty bit vector.                                           |
+| `size_t NAME_size(const NAME_t *v)`                                 | Number of bits stored.                                                                      |
+| `size_t NAME_capacity(const NAME_t *v)`                             | Returns the compile-time `SIZE`.                                                            |
+| `bool NAME_is_empty(const NAME_t *v)`                               | `true` if no bits are stored. Bit vector only.                                              |
+| `void NAME_destroy(NAME_t *v)`                                      | Reset to empty (clears storage). Provided for parity; frees nothing. (Bit vector only.)     |
+| `const bool *NAME_const_at(const NAME_t *v, size_t i)`              | Bit at `i`, **no** bounds check. UB if  `i >= size`.                                        |
+| `const bool *NAME_const_get(const NAME_t *v, size_t i)`             | Bounds-checked read; return `NULL` if `i >= size`.                                          |
+| `void NAME_set_at(NAME_t *v, size_t i, bool x)`                     | Set bit `i`, **no** bounds check. UB if `i >= size`.                                        |
+| `bool NAME_set(NAME_t *v, size_t i, bool x)`                        | Bounds-checked set. `false` if `i >= size`.                                                 |
+| `void NAME_flip_at(NAME_t *v, size_t i)`                            | Toggle bit `i`, **no** bounds check.                                                        |
+| `bool NAME_flip(NAME_t *v, size_t i)`                               | Bounds-checked toggle. `false` if `i >= size`.                                              |
+| `bool NAME_push_back(NAME_t *v, bool x)`                            | Append a bit. `false` if **full**. Bit vector only.                                         |
+| `bool NAME_append(NAME_t *v, const bool *xs, size_t len)`           | Append `len` bits. `false` if it does not fit (unchanged). Bit vector only.                 |
+| `bool NAME_pop_back(NAME_t *v, bool *out)`                          | Remove the last bit (optionally into `*out`). `false` if empty. Bit vector only.            |
+| `const bool *NAME_const_front(const NAME_t *v)`                     | Peek the first bit. `NULL` if empty. Bit vector only.                                       |
+| `const bool *NAME_const_back(const NAME_t *v)`                      | Peek the last bit. `NULL` if empty. Bit vector only.                                        |
+| `bool NAME_insert(NAME_t *v, size_t i, bool x)`                     | Insert at `i`, shifting the tail right. `false` if **full** or `i > size`. Bit vector only. |
+| `bool NAME_remove(NAME_t *v, size_t i, bool *out)`                  | Remove at `i`, shifting the tail left. `false` if `i >= size`. Bit vector only.             |
+| `void NAME_remove_at(NAME_t *v, size_t i, bool *out, size_t *next)` | Iterator-friendly `remove` (see the vector). UB if `i >= size`. Bit vector only.            |
+| `bool NAME_swap_remove(NAME_t *v, size_t i, bool *out)`             | O(1) remove (does not preserve order). `false` if `i >= size`. Bit vector only.             |
+| `void NAME_set_all(NAME_t *v, bool x)`                              | Set every stored bit to `x`.                                                                |
+| `void NAME_flip_all(NAME_t *v)`                                     | Toggle all bits.                                                                            |
+| `size_t NAME_count(const NAME_t *v)`                                | Number of bits set to 1.                                                                    |
+| `NAME_block_t *NAME_blocks(NAME_t *v)`                              | Raw packed storage (LSB-first within each block).                                           |
+| `const NAME_block_t *NAME_const_blocks(const NAME_t *v)`            | Const raw packed storage.                                                                   |
+| `size_t NAME_block_count(const NAME_t *v)`                          | Number of storage blocks, `ceil(SIZE / block_bits)`.                                        |
+| `size_t NAME_block_bits(const NAME_t *v)`                           | Number of bits per storage block (`sizeof(BLOCK_TYPE) * CHAR_BIT`).                         |
+| `NAME_iter_t NAME_begin/end/iter_next(...)`                         | Index-based iteration (dereference with `const_at`).                                        |
+| `NAME_iter_t NAME_begin_true/end/iter_next_true(...)`               | Index-based iteration over set bits (dereference with `const_at`).                          |
+| `bool NAME_eq(const NAME_t *left, const NAME_t *right)`             | Check if two bit vectors are equal (i.e. have the same size, and same bits).                |
+| `void NAME_copy(NAME_t *dst, const NAME_t *src)`                    | Copies `src` into `dst`.                                                                    |
+| `bool NAME_all(const NAME_t *v)`                                    | Returns true if all bits of vector are set, false otherwise.                                |
+| `bool NAME_any(const NAME_t *v)`                                    | Returns true if at least one bit of vector is set, false otherwise.                         |
+
+### Example
+
+```c
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME       bits
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_SIZE       32
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE uint8_t  // optional; defaults to size_t
+#include "zenoh-pico/collections/static_bit_vector_template.h"
+
+bits_t v = bits_new();
+bits_push_back(&v, true);
+bits_push_back(&v, false);
+bits_insert(&v, 1, true);   // v == [1, 1, 0]
+bits_flip(&v, 2);           // v == [1, 1, 1]
+size_t ones = bits_count(&v);  // 3
+bits_destroy(&v);
 ```
 
 ---
@@ -742,6 +840,9 @@ calls. Include the header next to the container instantiation:
 > * `_ZP_REMOVE` relies on `remove_at`, which is provided by the hash maps and by both
 >   the heap and static vectors. The predicate must not have side effects that modify
 >   the collection.
+> * Because bit vector provides only const version of `at`, only the const iteration helpers
+>   (`_ZP_CONST_FOREACH`, `_ZP_CONST_FIND`, `_ZP_CONST_IT_FIND`) are directly compatible
+>   with bit vector.
 
 ### Examples
 
@@ -809,6 +910,8 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
   `insert`/`remove`); needs `malloc`.
 * **`static_vector`** — ordered list with a known maximum (incl. positional
   `insert`/`remove`); no `malloc`.
+* **`static_bit_vector`** — ordered list of single bits (0/1) with a known maximum;
+  packed storage with a configurable block type, no `malloc`.
 * **`hashmap` (heap)** — key→value lookup, unbounded, stable iterators; needs `malloc`.
 * **`static_hashmap`** — key→value lookup with a known maximum; no `malloc`.
 * **`static_deque`** — bounded FIFO/LIFO with O(1) push/pop at both ends; no `malloc`.
@@ -818,6 +921,7 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
   hash maps.
 
 See the corresponding tests under `tests/` (e.g. `z_vector_template_test.c`,
-`z_hashmap_template_test.c`, `z_static_deque_test.c`, `z_static_pqueue_test.c`,
-`z_variant_template_test.c`) for complete, compilable usage examples. The vector and
-hash-map tests also exercise the `algorithms_template.h` macros.
+`z_static_bit_vector_template_test.c`, `z_hashmap_template_test.c`,
+`z_static_deque_test.c`, `z_static_pqueue_test.c`, `z_variant_template_test.c`) for
+complete, compilable usage examples. The vector and hash-map tests also exercise the
+`algorithms_template.h` macros.
