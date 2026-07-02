@@ -32,9 +32,10 @@ size_t _z_read_stream_size(_z_zbuf_t *zbuf) {
     return _z_host_le_load16(stream_size);
 }
 
-z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zbf, _z_sys_net_socket_t *socket) {
+z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zbf, const _z_link_peer_t *peer) {
     // Read the message length
-    size_t read = _z_link_recv_exact_zbuf(zl, zbf, _Z_MSG_LEN_ENC_SIZE, NULL, socket);
+    size_t read = peer == NULL ? _z_link_recv_exact_zbuf(zl, zbf, _Z_MSG_LEN_ENC_SIZE, NULL)
+                               : _z_link_peer_recv_exact_zbuf(zl, zbf, _Z_MSG_LEN_ENC_SIZE, peer);
     if (read == _Z_MSG_LEN_ENC_SIZE) {
         size_t len = 0;
         for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
@@ -43,7 +44,9 @@ z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zb
 
         if (_z_zbuf_writable_space_left(zbf) >= len) {
             // Read enough bytes to decode the message
-            if (_z_link_recv_exact_zbuf(zl, zbf, len, NULL, socket) != len) {
+            read = peer == NULL ? _z_link_recv_exact_zbuf(zl, zbf, len, NULL)
+                                : _z_link_peer_recv_exact_zbuf(zl, zbf, len, peer);
+            if (read != len) {
                 _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                 return _Z_ERR_TRANSPORT_RX_FAILED;
             }
@@ -60,25 +63,25 @@ z_result_t _z_link_recv_t_msg_cap_flow_stream(const _z_link_t *zl, _z_zbuf_t *zb
     return _Z_RES_OK;
 }
 
-z_result_t _z_link_recv_t_msg_cap_flow_datagram(const _z_link_t *zl, _z_zbuf_t *zbf, _z_sys_net_socket_t *socket) {
-    _ZP_UNUSED(socket);
-    if (_z_link_recv_zbuf(zl, zbf, NULL) == SIZE_MAX) {
+z_result_t _z_link_recv_t_msg_cap_flow_datagram(const _z_link_t *zl, _z_zbuf_t *zbf, const _z_link_peer_t *peer) {
+    size_t read = peer == NULL ? _z_link_recv_zbuf(zl, zbf, NULL) : _z_link_peer_recv_zbuf(zl, zbf, peer);
+    if (read == SIZE_MAX) {
         return Z_ETIMEDOUT;
     } else {
         return _Z_RES_OK;
     }
 }
 
-z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket,
+z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, const _z_link_peer_t *peer,
                               _z_zbuf_t *zbf, z_clock_t recv_deadline) {
     z_result_t ret = Z_ETIMEDOUT;
     while (ret == Z_ETIMEDOUT) {
         switch (zl->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
-                ret = _z_link_recv_t_msg_cap_flow_stream(zl, zbf, socket);
+                ret = _z_link_recv_t_msg_cap_flow_stream(zl, zbf, peer);
                 break;
             case Z_LINK_CAP_FLOW_DATAGRAM:
-                ret = _z_link_recv_t_msg_cap_flow_datagram(zl, zbf, socket);
+                ret = _z_link_recv_t_msg_cap_flow_datagram(zl, zbf, peer);
                 break;
             default:
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);

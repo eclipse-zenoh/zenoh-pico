@@ -28,6 +28,10 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
+typedef struct {
+    _z_raweth_socket_t _raweth;
+} _z_raweth_link_state_t;
+
 #define RAWETH_CFG_TUPLE_SEPARATOR '#'
 #define RAWETH_CFG_LIST_SEPARATOR ","
 
@@ -82,13 +86,29 @@ static z_result_t _z_f_link_open_raweth(_z_link_t *self);
 static z_result_t _z_f_link_listen_raweth(_z_link_t *self);
 static void _z_f_link_close_raweth(_z_link_t *self);
 static void _z_f_link_free_raweth(_z_link_t *self);
-static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len,
-                                     _z_sys_net_socket_t *socket);
+static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len);
 static size_t _z_f_link_write_all_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len);
 static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
-static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
-                                          _z_sys_net_socket_t *socket);
+static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 static uint16_t _z_get_link_mtu_raweth(void);
+
+static _z_raweth_link_state_t *_z_raweth_link_state(_z_link_t *link) {
+    return (_z_raweth_link_state_t *)_z_link_state(link);
+}
+
+static const _z_raweth_link_state_t *_z_raweth_link_state_const(const _z_link_t *link) {
+    return (const _z_raweth_link_state_t *)_z_link_state_const(link);
+}
+
+_z_raweth_socket_t *_z_link_raweth_socket(_z_link_t *link) {
+    _z_raweth_link_state_t *state = _z_raweth_link_state(link);
+    return state == NULL ? NULL : &state->_raweth;
+}
+
+const _z_raweth_socket_t *_z_link_raweth_socket_const(const _z_link_t *link) {
+    const _z_raweth_link_state_t *state = _z_raweth_link_state_const(link);
+    return state == NULL ? NULL : &state->_raweth;
+}
 
 static bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
     const char *iface = _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
@@ -356,78 +376,86 @@ static uint8_t *_z_parse_address_raweth(const char *address) {
 }
 
 static z_result_t _z_f_link_open_raweth(_z_link_t *self) {
+    _z_raweth_socket_t *socket = _z_link_raweth_socket(self);
+    if (socket == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
     // Init arrays
-    self->_socket._raweth._mapping = _zp_raweth_mapping_array_empty();
-    self->_socket._raweth._whitelist = _zp_raweth_whitelist_array_empty();
+    socket->_mapping = _zp_raweth_mapping_array_empty();
+    socket->_whitelist = _zp_raweth_whitelist_array_empty();
     // Init socket smac
     if (_z_valid_address_raweth_inner(&self->_endpoint._locator._address)) {
         uint8_t *addr = _z_parse_address_raweth(_z_string_data(&self->_endpoint._locator._address));
         // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
-        memcpy(self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
+        memcpy(socket->_smac, addr, _ZP_MAC_ADDR_LENGTH);
         z_free(addr);
     } else {
         _Z_DEBUG("Invalid locator source mac addr, using default value.");
         // Flawfinder: ignore [CWE-120] - fixed-size MAC copy, both operands are _ZP_MAC_ADDR_LENGTH bytes.
-        memcpy(self->_socket._raweth._smac, _ZP_RAWETH_DEFAULT_SMAC, _ZP_MAC_ADDR_LENGTH);
+        memcpy(socket->_smac, _ZP_RAWETH_DEFAULT_SMAC, _ZP_MAC_ADDR_LENGTH);
     }
     // Init socket interface
     if (_z_valid_iface_raweth(&self->_endpoint._config)) {
-        self->_socket._raweth._interface = _z_get_iface_raweth(&self->_endpoint._config);
+        socket->_interface = _z_get_iface_raweth(&self->_endpoint._config);
     } else {
         _Z_DEBUG("Invalid locator interface, using default value %s", _ZP_RAWETH_DEFAULT_INTERFACE);
-        self->_socket._raweth._interface = _ZP_RAWETH_DEFAULT_INTERFACE;
+        socket->_interface = _ZP_RAWETH_DEFAULT_INTERFACE;
     }
     // Init socket ethtype
     if (_z_valid_ethtype_raweth(&self->_endpoint._config)) {
-        self->_socket._raweth._ethtype = (uint16_t)_z_get_ethtype_raweth(&self->_endpoint._config);
+        socket->_ethtype = (uint16_t)_z_get_ethtype_raweth(&self->_endpoint._config);
     } else {
         _Z_DEBUG("Invalid locator ethtype, using default value 0x%04x", _ZP_RAWETH_DEFAULT_ETHTYPE);
-        self->_socket._raweth._ethtype = _ZP_RAWETH_DEFAULT_ETHTYPE;
+        socket->_ethtype = _ZP_RAWETH_DEFAULT_ETHTYPE;
     }
     // Init socket mapping
     size_t size = _z_valid_mapping_raweth(&self->_endpoint._config);
     if (size != (size_t)0) {
-        _Z_RETURN_IF_ERR(_z_get_mapping_raweth(&self->_endpoint._config, &self->_socket._raweth._mapping, size));
+        _Z_RETURN_IF_ERR(_z_get_mapping_raweth(&self->_endpoint._config, &socket->_mapping, size));
     } else {
         _Z_DEBUG("Invalid locator mapping, using default value.");
-        self->_socket._raweth._mapping = _zp_raweth_mapping_array_make(1);
-        if (_zp_raweth_mapping_array_len(&self->_socket._raweth._mapping) == 0) {
+        socket->_mapping = _zp_raweth_mapping_array_make(1);
+        if (_zp_raweth_mapping_array_len(&socket->_mapping) == 0) {
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
-        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&self->_socket._raweth._mapping, 0);
+        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&socket->_mapping, 0);
         *entry = _ZP_RAWETH_DEFAULT_MAPPING;
     }
     // Init socket whitelist
     size = _z_valid_whitelist_raweth(&self->_endpoint._config);
     if (size != (size_t)0) {
-        _Z_RETURN_IF_ERR(_z_get_whitelist_raweth(&self->_endpoint._config, &self->_socket._raweth._whitelist, size));
+        _Z_RETURN_IF_ERR(_z_get_whitelist_raweth(&self->_endpoint._config, &socket->_whitelist, size));
     } else {
         _Z_DEBUG("Invalid locator whitelist, filtering deactivated.");
     }
     // Open raweth link
-    return _z_open_raweth(&self->_socket._raweth._sock, self->_socket._raweth._interface);
+    return _z_open_raweth(&socket->_sock, socket->_interface);
 }
 
 static z_result_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }
 
 static void _z_f_link_close_raweth(_z_link_t *self) {
+    _z_raweth_socket_t *socket = _z_link_raweth_socket(self);
+    if (socket == NULL) {
+        return;
+    }
+
     // Close connection
-    _z_close_raweth(&self->_socket._raweth._sock);
+    _z_close_raweth(&socket->_sock);
     // Clear config
-    _zp_raweth_mapping_array_clear(&self->_socket._raweth._mapping);
-    if (_zp_raweth_whitelist_array_len(&self->_socket._raweth._whitelist) != 0) {
-        _zp_raweth_whitelist_array_clear(&self->_socket._raweth._whitelist);
+    _zp_raweth_mapping_array_clear(&socket->_mapping);
+    if (_zp_raweth_whitelist_array_len(&socket->_whitelist) != 0) {
+        _zp_raweth_whitelist_array_clear(&socket->_whitelist);
     }
 }
 
 static void _z_f_link_free_raweth(_z_link_t *self) { _ZP_UNUSED(self); }
 
-static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len,
-                                     _z_sys_net_socket_t *socket) {
+static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     _ZP_UNUSED(self);
     _ZP_UNUSED(ptr);
     _ZP_UNUSED(len);
-    _ZP_UNUSED(socket);
     return SIZE_MAX;
 }
 
@@ -446,24 +474,26 @@ static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t 
     return SIZE_MAX;
 }
 
-static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
-                                          _z_sys_net_socket_t *socket) {
+static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     _ZP_UNUSED(self);
     _ZP_UNUSED(ptr);
     _ZP_UNUSED(len);
     _ZP_UNUSED(addr);
-    _ZP_UNUSED(socket);
     return SIZE_MAX;
 }
 
 static uint16_t _z_get_link_mtu_raweth(void) { return _ZP_MAX_ETH_FRAME_SIZE; }
 
+bool _z_endpoint_raweth_matches(const _z_endpoint_t *endpoint) {
+    _z_string_t str_cmp = _z_string_alias_str(RAWETH_SCHEMA);
+    return _z_string_equals(&endpoint->_locator._protocol, &str_cmp);
+}
+
 z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     z_result_t ret = _Z_RES_OK;
 
     // Check the root
-    _z_string_t str_cmp = _z_string_alias_str(RAWETH_SCHEMA);
-    if (!_z_string_equals(&endpoint->_locator._protocol, &str_cmp)) {
+    if (!_z_endpoint_raweth_matches(endpoint)) {
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
@@ -471,16 +501,21 @@ z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
 }
 
 z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
-    z_result_t ret = _Z_RES_OK;
-    zl->_type = _Z_LINK_TYPE_RAWETH;
+    _Z_RETURN_IF_ERR(_z_endpoint_raweth_valid(&endpoint));
+
+    _z_raweth_link_state_t *state = (_z_raweth_link_state_t *)z_malloc(sizeof(_z_raweth_link_state_t));
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    memset(state, 0, sizeof(_z_raweth_link_state_t));
+
+    zl->_state = state;
+    zl->_drop_f = z_free;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_RAWETH;
     zl->_cap._is_reliable = false;
     zl->_mtu = _z_get_link_mtu_raweth();
 
     zl->_endpoint = endpoint;
-
-    // Init socket
-    memset(&zl->_socket._raweth, 0, sizeof(zl->_socket._raweth));
 
     zl->_open_f = _z_f_link_open_raweth;
     zl->_listen_f = _z_f_link_listen_raweth;
@@ -491,9 +526,9 @@ z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_write_all_f = _z_f_link_write_all_raweth;
     zl->_read_f = _z_f_link_read_raweth;
     zl->_read_exact_f = _z_f_link_read_exact_raweth;
-    zl->_read_socket_f = _z_noop_link_read_socket;
+    zl->_wait_peers_readable_f = NULL;
 
-    return ret;
+    return _Z_RES_OK;
 }
 
 size_t _z_raweth_config_strlen(const _z_str_intmap_t *s) {

@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/transport/common/tx.h"
 
+#include <string.h>
+
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/network.h"
@@ -67,6 +69,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
                                                       _z_zint_t first_sn, _z_transport_peer_unicast_slist_t *peers) {
     bool is_first = true;
     _z_zint_t sn = first_sn;
+    z_result_t ret = _Z_RES_OK;
     // Encode message on temp buffer
     _Z_RETURN_IF_ERR(_z_network_message_encode(frag_buff, n_msg));
     // Fragment message
@@ -77,28 +80,30 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
         }
         // Serialize fragment
         __unsafe_z_prepare_wbuf(&ztc->_wbuf, ztc->_link->_cap._flow);
-        z_result_t ret = __unsafe_z_serialize_zenoh_fragment(&ztc->_wbuf, frag_buff, reliability, sn, is_first);
-        if (ret != _Z_RES_OK) {
-            _Z_ERROR("Fragment serialization failed with err %d", ret);
-            return ret;
+        z_result_t encode_ret = __unsafe_z_serialize_zenoh_fragment(&ztc->_wbuf, frag_buff, reliability, sn, is_first);
+        if (encode_ret != _Z_RES_OK) {
+            _Z_ERROR("Fragment serialization failed with err %d", encode_ret);
+            return encode_ret;
         }
         // Send fragment
         __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link->_cap._flow);
         if (peers == NULL) {
-            _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf, NULL));
+            _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf));
         } else {
             _z_transport_peer_unicast_slist_t *curr_list = peers;
             while (curr_list != NULL) {
                 _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-                // Send on peer socket
-                _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
+                z_result_t send_ret = _z_link_peer_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_link_peer);
+                if ((ret == _Z_RES_OK) && (send_ret != _Z_RES_OK)) {
+                    ret = send_ret;
+                }
                 curr_list = _z_transport_peer_unicast_slist_next(curr_list);
             }
         }
         ztc->_transmitted = true;  // Tell session we transmitted data
         is_first = false;
     }
-    return _Z_RES_OK;
+    return ret;
 }
 
 static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
@@ -139,15 +144,18 @@ static inline bool _z_transport_tx_batch_has_data(_z_transport_common_t *ztc) {
 
 static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc, _z_transport_peer_unicast_slist_t *peers) {
     __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link->_cap._flow);
+    z_result_t ret = _Z_RES_OK;
     // Send network message
     if (peers == NULL) {
-        _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf, NULL));
+        _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf));
     } else {
         _z_transport_peer_unicast_slist_t *curr_list = peers;
         while (curr_list != NULL) {
             _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-            // Send on peer socket
-            _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
+            z_result_t send_ret = _z_link_peer_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_link_peer);
+            if ((ret == _Z_RES_OK) && (send_ret != _Z_RES_OK)) {
+                ret = send_ret;
+            }
             curr_list = _z_transport_peer_unicast_slist_next(curr_list);
         }
     }
@@ -155,7 +163,7 @@ static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc, _z_tr
 #if Z_FEATURE_BATCHING == 1
     ztc->_batch_count = 0;
 #endif
-    return _Z_RES_OK;
+    return ret;
 }
 
 static z_result_t _z_transport_tx_flush_or_incr_batch(_z_transport_common_t *ztc,
@@ -402,7 +410,7 @@ z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg
     return ret;
 }
 
-z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg, _z_sys_net_socket_t *socket) {
+z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg, _z_link_peer_t *peer) {
     z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer to serialize the message on
@@ -446,8 +454,9 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
                 ret = _Z_ERR_GENERIC;
                 break;
         }
-        // Send the wbuf on the socket
-        ret = _z_link_send_wbuf(zl, &wbf, socket);
+    }
+    if (ret == _Z_RES_OK) {
+        ret = peer == NULL ? _z_link_send_wbuf(zl, &wbf) : _z_link_peer_send_wbuf(zl, &wbf, peer);
     }
     _z_wbuf_clear(&wbf);
 
@@ -514,10 +523,20 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                     // Send to a single peer, convert to peer list
                     _z_transport_peer_unicast_slist_t *dst_list = _z_transport_peer_unicast_slist_push_empty(NULL);
                     if (dst_list != NULL) {
-                        memcpy(_z_transport_peer_unicast_slist_value(dst_list), (_z_transport_peer_unicast_t *)peer,
-                               sizeof(_z_transport_peer_unicast_t));
-                        // Send message
-                        ret = _z_transport_tx_send_n_msg(ztc, z_msg, reliability, cong_ctrl, dst_list);
+                        _z_transport_peer_unicast_t *dst_peer = _z_transport_peer_unicast_slist_value(dst_list);
+                        const _z_transport_peer_unicast_t *src_peer = (const _z_transport_peer_unicast_t *)peer;
+                        // SAFETY: dst_peer points to a _z_transport_peer_unicast_t slist node and the copy is bounded
+                        // by that exact object size.
+                        // Flawfinder: ignore [CWE-120]
+                        memcpy(dst_peer, src_peer, sizeof(*dst_peer));
+                        dst_peer->_link_peer = _z_link_peer_clone(&src_peer->_link_peer);
+                        if (_z_link_peer_check(&dst_peer->_link_peer)) {
+                            // Send message
+                            ret = _z_transport_tx_send_n_msg(ztc, z_msg, reliability, cong_ctrl, dst_list);
+                            _z_link_peer_clear(&dst_peer->_link_peer);
+                        } else {
+                            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                        }
                         z_free(dst_list);
                     }
                 }

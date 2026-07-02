@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/common/socket_ops.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/transport/tcp.h"
@@ -28,11 +29,32 @@
 
 #if Z_FEATURE_LINK_TLS == 1
 
+typedef struct {
+    _z_tls_socket_t _tls;
+} _z_tls_link_state_t;
+
+static _z_tls_link_state_t *_z_tls_link_state(_z_link_t *link) { return (_z_tls_link_state_t *)_z_link_state(link); }
+
+static size_t _z_link_peer_read_tls(const _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len);
+static size_t _z_link_peer_write_tls(const _z_link_t *link, const _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+
+static const _z_link_peer_ops_t _z_tls_peer_ops = {
+    ._read_f = _z_link_peer_read_tls,
+    ._write_f = _z_link_peer_write_tls,
+    ._set_blocking_f = _z_link_socket_peer_set_blocking,
+    ._get_endpoints_f = _z_link_socket_peer_get_endpoints,
+    ._close_f = _z_link_socket_peer_close,
+};
+
 uint16_t _z_get_link_mtu_tls(void) { return 65535; }
 
-z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
+bool _z_endpoint_tls_matches(const _z_endpoint_t *endpoint) {
     _z_string_t tls_str = _z_string_alias_str(TLS_SCHEMA);
-    if (!_z_string_equals(&endpoint->_locator._protocol, &tls_str)) {
+    return _z_string_equals(&endpoint->_locator._protocol, &tls_str);
+}
+
+z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
+    if (!_z_endpoint_tls_matches(endpoint)) {
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
@@ -83,6 +105,11 @@ static _z_config_t _z_tls_merge_config(_z_str_intmap_t *endpoint_cfg, const _z_c
 }
 
 static z_result_t _z_f_link_open_tls(_z_link_t *self) {
+    _z_tls_link_state_t *state = _z_tls_link_state(self);
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
     z_result_t ret = _Z_RES_OK;
 
     char *hostname = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
@@ -99,16 +126,27 @@ static z_result_t _z_f_link_open_tls(_z_link_t *self) {
         return ret;
     }
 
-    ret = _z_open_tls(&self->_socket._tls, &rep, hostname, &self->_endpoint._config, false);
+    ret = _z_open_tls(&state->_tls, &rep, hostname, &self->_endpoint._config, false);
     _z_tcp_endpoint_clear(&rep);
     z_free(hostname);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS open failed");
+    } else {
+        // Link-owned TLS state is closed through _z_close_tls(); peer handles only provide link-peer ops.
+        ret = _z_link_socket_peer_from_socket(&self->_peer, state->_tls._sock, NULL, &_z_tls_peer_ops);
+        if (ret != _Z_RES_OK) {
+            _z_close_tls(&state->_tls);
+        }
     }
     return ret;
 }
 
 static z_result_t _z_f_link_listen_tls(_z_link_t *self) {
+    _z_tls_link_state_t *state = _z_tls_link_state(self);
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
     z_result_t ret = _Z_RES_OK;
 
     char *host = _z_tcp_address_parse_host(&self->_endpoint._locator._address);
@@ -125,48 +163,68 @@ static z_result_t _z_f_link_listen_tls(_z_link_t *self) {
         return ret;
     }
 
-    ret = _z_listen_tls(&self->_socket._tls, &rep, &self->_endpoint._config);
+    ret = _z_listen_tls(&state->_tls, &rep, &self->_endpoint._config);
     _z_tcp_endpoint_clear(&rep);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS listen failed");
+    } else {
+        // Link-owned TLS state is closed through _z_close_tls(); peer handles only provide link-peer ops.
+        ret = _z_link_socket_peer_from_socket(&self->_peer, state->_tls._sock, NULL, &_z_tls_peer_ops);
+        if (ret != _Z_RES_OK) {
+            _z_close_tls(&state->_tls);
+        }
     }
 
     z_free(host);
     return ret;
 }
 
-static void _z_f_link_close_tls(_z_link_t *self) { _z_close_tls(&self->_socket._tls); }
-
-static size_t _z_f_link_write_tls(const _z_link_t *self, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
-    // Use provided socket if available, otherwise fall back to link socket
-    if (socket != NULL && socket->_tls_sock != NULL) {
-        return _z_write_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
-    } else {
-        return _z_write_tls(&self->_socket._tls, ptr, len);
+static void _z_f_link_close_tls(_z_link_t *self) {
+    _z_tls_link_state_t *state = _z_tls_link_state(self);
+    if (state != NULL) {
+        _z_close_tls(&state->_tls);
     }
 }
 
+static size_t _z_f_link_write_tls(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(&self->_peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
+        _Z_ERROR("TLS context not found in socket");
+        return SIZE_MAX;
+    }
+    return _z_write_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
+}
+
 static size_t _z_f_link_write_all_tls(const _z_link_t *self, const uint8_t *ptr, size_t len) {
-    return _z_write_all_tls(&self->_socket._tls, ptr, len);
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(&self->_peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
+        _Z_ERROR("TLS context not found in socket");
+        return SIZE_MAX;
+    }
+    return _z_write_all_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
 }
 
 static size_t _z_f_link_read_tls(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     _ZP_UNUSED(addr);
-    return _z_read_tls(&self->_socket._tls, ptr, len);
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(&self->_peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
+        _Z_ERROR("TLS context not found in socket");
+        return SIZE_MAX;
+    }
+    return _z_read_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
 }
 
-static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
-                                       _z_sys_net_socket_t *socket) {
+static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     _ZP_UNUSED(addr);
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(&self->_peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
+        _Z_ERROR("TLS context not found in socket");
+        return SIZE_MAX;
+    }
 
     size_t n = (size_t)0;
     do {
-        size_t rb;
-        if (socket != NULL && socket->_tls_sock != NULL) {
-            rb = _z_read_tls((_z_tls_socket_t *)socket->_tls_sock, &ptr[n], len - n);
-        } else {
-            rb = _z_read_tls(&self->_socket._tls, &ptr[n], len - n);
-        }
+        size_t rb = _z_read_tls((_z_tls_socket_t *)socket->_tls_sock, &ptr[n], len - n);
 
         if (rb == SIZE_MAX) {
             n = rb;
@@ -178,18 +236,124 @@ static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size
     return n;
 }
 
-static size_t _z_f_link_tls_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    if (socket._tls_sock == NULL) {
+static void _z_f_link_free_tls(_z_link_t *self) { _ZP_UNUSED(self); }
+
+static size_t _z_link_peer_read_tls(const _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len) {
+    _ZP_UNUSED(link);
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
         _Z_ERROR("TLS context not found in socket");
         return SIZE_MAX;
     }
-    return _z_read_tls((_z_tls_socket_t *)socket._tls_sock, ptr, len);
+    return _z_read_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
 }
 
-static void _z_f_link_free_tls(_z_link_t *self) { _ZP_UNUSED(self); }
+static size_t _z_link_peer_write_tls(const _z_link_t *link, const _z_link_peer_t *peer, const uint8_t *ptr,
+                                     size_t len) {
+    _ZP_UNUSED(link);
+    const _z_sys_net_socket_t *socket = _z_link_socket_peer_get_socket_const(peer);
+    if ((socket == NULL) || (socket->_tls_sock == NULL)) {
+        _Z_ERROR("TLS context not found in socket");
+        return SIZE_MAX;
+    }
+    return _z_write_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
+}
+
+static void _z_link_peer_close_tls_socket(_z_sys_net_socket_t *socket) {
+    if (socket == NULL) {
+        return;
+    }
+    if (socket->_tls_sock != NULL) {
+        _z_close_tls_socket(socket);
+    } else {
+        _z_tcp_close(socket);
+    }
+}
+
+static z_result_t _z_f_link_open_peer_tls(const _z_link_t *link, _z_link_peer_t *peer, const _z_string_t *locator,
+                                          const _z_config_t *session_cfg) {
+    _ZP_UNUSED(link);
+
+    _z_endpoint_t ep;
+    z_result_t ret = _z_endpoint_from_string(&ep, locator);
+    if (ret != _Z_RES_OK) {
+        _z_endpoint_clear(&ep);
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+    }
+
+    _z_sys_net_socket_t socket = {0};
+    if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+        ret = _z_new_peer_tls(&ep, &socket, session_cfg);
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
+        ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
+    }
+    _z_endpoint_clear(&ep);
+
+    if (ret == _Z_RES_OK) {
+        ret = _z_link_socket_peer_from_socket(peer, socket, _z_link_peer_close_tls_socket, &_z_tls_peer_ops);
+        if (ret != _Z_RES_OK) {
+            _z_link_peer_close_tls_socket(&socket);
+        }
+    }
+    return ret;
+}
+
+static z_result_t _z_f_link_peer_from_link_tls(const _z_link_t *link, _z_link_peer_t *peer) {
+    if ((link == NULL) || (peer == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    *peer = _z_link_peer_clone(&link->_peer);
+    return _z_link_peer_check(peer) ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
+
+static z_result_t _z_f_link_accept_tls(const _z_link_t *link, _z_link_peer_t *peer) {
+    if ((link == NULL) || (peer == NULL)) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    const _z_sys_net_socket_t *listen_socket = _z_link_socket_peer_get_socket_const(&link->_peer);
+    if (listen_socket == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    _z_sys_net_socket_t con_socket = {0};
+    z_result_t ret = _z_tcp_accept(listen_socket, &con_socket);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    ret = _z_link_socket_peer_from_socket(peer, con_socket, _z_link_peer_close_tls_socket, &_z_tls_peer_ops);
+    if (ret != _Z_RES_OK) {
+        _z_tcp_close(&con_socket);
+        return ret;
+    }
+
+    ret = _z_link_socket_peer_set_blocking(peer, true);
+    if (ret != _Z_RES_OK) {
+        _z_link_peer_clear(peer);
+        return ret;
+    }
+
+    ret = _z_tls_accept(_z_link_socket_peer_get_socket(peer), listen_socket);
+    if (ret != _Z_RES_OK) {
+        _z_link_peer_clear(peer);
+    }
+    return ret;
+}
 
 z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_config_t *session_cfg) {
-    zl->_type = _Z_LINK_TYPE_TLS;
+    _Z_RETURN_IF_ERR(_z_endpoint_tls_valid(endpoint));
+
+    _z_tls_link_state_t *state = (_z_tls_link_state_t *)z_malloc(sizeof(_z_tls_link_state_t));
+    if (state == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    memset(state, 0, sizeof(_z_tls_link_state_t));
+
+    zl->_state = state;
+    zl->_drop_f = z_free;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_STREAM;
     zl->_cap._is_reliable = true;
@@ -210,7 +374,10 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
     zl->_write_all_f = _z_f_link_write_all_tls;
     zl->_read_f = _z_f_link_read_tls;
     zl->_read_exact_f = _z_f_link_read_exact_tls;
-    zl->_read_socket_f = _z_f_link_tls_read_socket;
+    zl->_wait_peers_readable_f = _z_link_socket_wait_peers_readable;
+    zl->_open_peer_f = _z_f_link_open_peer_tls;
+    zl->_peer_from_link_f = _z_f_link_peer_from_link_tls;
+    zl->_accept_peer_f = _z_f_link_accept_tls;
     zl->_free_f = _z_f_link_free_tls;
 
     return _Z_RES_OK;
