@@ -173,16 +173,21 @@ typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_ITER_T
 //
 // All per-index state is merged into a single slot array. Because the bucket
 // count is always equal to the capacity, slot i simultaneously serves as:
-//   _node     : key/value payload of node i
-//   _next     : index of the next node in the chain, or the next free slot
-//   _bucket   : index of the first node in bucket i, INDEX_NONE = empty
-//   _present  : whether node i currently holds a live entry
+//   _node      : key/value payload of node i
+//   _next      : index of the next node in the bucket chain, or the next free slot if _bucket == INDEX_NONE
+//   _bucket    : index of the first node in bucket i, INDEX_NONE = empty
+//   _next_live : an index of the live node preceeding this one in the iteration order, or INDEX_NONE if this is the
+//   first live node.
+//   _prev_live : an index of the live node following this one in the iteration order, or INDEX_NONE if
+//   this is the last live node.
+//   If both _prev_live and _next_live are INDEX_NONE, then this node is not live (not present in the map).
 
 typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE {
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE _node;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _next;
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _bucket;
-    bool _present;
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _next_live;
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _prev_live;
 } _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE;
 
 // ── Map type ──────────────────────────────────────────────────────────────────
@@ -193,6 +198,7 @@ typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE {
 typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_TYPE {
     _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE _slots[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY];
     _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _free_head;
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _live_head;
     size_t _size;  // number of live entries
 } _ZP_STATIC_HASHMAP_TEMPLATE_TYPE;
 
@@ -203,7 +209,8 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, init)(_ZP_STATIC_HA
         map->_slots[b]._bucket = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     }
     for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map->_slots[i]._present = false;
+        map->_slots[i]._next_live = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+        map->_slots[i]._prev_live = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     }
     for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
         map->_slots[i]._next = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
@@ -211,6 +218,7 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, init)(_ZP_STATIC_HA
     map->_slots[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1]._next =
         _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
     map->_free_head = 0;
+    map->_live_head = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
     map->_size = 0;
 }
 
@@ -231,7 +239,11 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
         return _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // pool full
     }
     map->_free_head = map->_slots[idx]._next;
-    map->_slots[idx]._present = true;
+    map->_slots[idx]._next_live = map->_live_head;
+    if (map->_live_head != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
+        map->_slots[map->_live_head]._prev_live = idx;
+    }
+    map->_live_head = idx;
     return idx;
 }
 
@@ -239,7 +251,16 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(_ZP_STAT
                                                                         _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx) {
     map->_slots[idx]._next = map->_free_head;
     map->_free_head = idx;
-    map->_slots[idx]._present = false;
+    if (map->_slots[idx]._prev_live != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
+        map->_slots[map->_slots[idx]._prev_live]._next_live = map->_slots[idx]._next_live;
+    } else {
+        map->_live_head = map->_slots[idx]._next_live;
+    }
+    if (map->_slots[idx]._next_live != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
+        map->_slots[map->_slots[idx]._next_live]._prev_live = map->_slots[idx]._prev_live;
+    }
+    map->_slots[idx]._next_live = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+    map->_slots[idx]._prev_live = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
 }
 
 // ── get_iter ──────────────────────────────────────────────────────────────────
@@ -392,18 +413,13 @@ static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_T
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             iter_next)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map,
                                                                        _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE pos) {
-    for (size_t i = pos + 1; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        if (map->_slots[i]._present) {
-            return (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)i;
-        }
-    }
-    return _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+    return pos == _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE ? pos : map->_slots[pos]._next_live;
 }
 
 // Returns the iterator of the first live slot, or an end iterator if the map is empty.
 static inline _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
                                                             begin)(const _ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
-    return map->_slots[0]._present ? 0 : _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_next)(map, 0);
+    return map->_live_head;
 }
 
 // Returns an invalid post-end iterator.
@@ -452,11 +468,11 @@ static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
         _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
 #endif
     }
+    if (next_idx != NULL) {
+        *next_idx = map->_slots[idx]._next_live;
+    }
     _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, pool_free)(map, idx);
     map->_size--;
-    if (next_idx != NULL) {
-        *next_idx = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, iter_next)(map, idx);
-    }
 }
 // ── remove ────────────────────────────────────────────────────────────────────
 // Removes and destroys the entry for key. Returns true if the key was found.
@@ -494,30 +510,11 @@ static inline bool _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME,
 
 static inline void _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_STATIC_HASHMAP_TEMPLATE_TYPE *map) {
     // Walk every bucket chain and destroy live entries
-    for (size_t b = 0; b < _ZP_STATIC_HASHMAP_TEMPLATE_BUCKET_COUNT; b++) {
-        _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
-        while (idx != _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE) {
-            _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
-            _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(_ZP_STATIC_HASHMAP_TEMPLATE_NODE_KEY(n));
-#ifndef _ZP_STATIC_HASHMAP_TEMPLATE_IS_SET
-            _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
-#endif
-            idx = map->_slots[idx]._next;
-        }
-        map->_slots[b]._bucket = _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE begin = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, begin)(map);
+    _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE end = _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, end)(map);
+    while (begin != end) {
+        _ZP_CAT(_ZP_STATIC_HASHMAP_TEMPLATE_NAME, remove_at)(map, begin, NULL, &begin);
     }
-    // Mark all slots as free
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map->_slots[i]._present = false;
-    }
-    // Rebuild the free list
-    for (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE i = 0; i + 1 < _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY; i++) {
-        map->_slots[i]._next = (_ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
-    }
-    map->_slots[_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY - 1]._next =
-        _ZP_STATIC_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
-    map->_free_head = 0;
-    map->_size = 0;
 }
 
 // ── Undef all macros ──────────────────────────────────────────────────────────
