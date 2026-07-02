@@ -39,12 +39,19 @@
 // Required:
 //   _ZP_HASHMAP_TEMPLATE_KEY_TYPE
 //       type of the key
-//   _ZP_HASHMAP_TEMPLATE_VAL_TYPE
-//       type of the value
 //   _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) -> size_t
 //       hash function for the key
 //
+// Hashset mode:
+//   If _ZP_HASHMAP_TEMPLATE_VAL_TYPE is left undefined, this template generates
+//   a hashset instead of a hashmap: the node type is the key type itself, the
+//   get / const_get / remove functions are not generated, and insert takes no
+//   value argument.
+//
 // Optional:
+//   _ZP_HASHMAP_TEMPLATE_VAL_TYPE
+//       type of the value (when defined, a hashmap is generated; when omitted,
+//       a hashset is generated)
 //   _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(key_a_ptr, key_b_ptr) -> bool
 //       equality function for keys (default: *key_a_ptr == *key_b_ptr)
 //   _ZP_HASHMAP_TEMPLATE_NAME
@@ -91,9 +98,10 @@
 #error "_ZP_HASHMAP_TEMPLATE_KEY_TYPE must be defined before including hashmap_template.h"
 #define _ZP_HASHMAP_TEMPLATE_KEY_TYPE int
 #endif
+// When no value type is supplied, generate a hashset (node type == key type)
+// instead of a hashmap.
 #ifndef _ZP_HASHMAP_TEMPLATE_VAL_TYPE
-#error "_ZP_HASHMAP_TEMPLATE_VAL_TYPE must be defined before including hashmap_template.h"
-#define _ZP_HASHMAP_TEMPLATE_VAL_TYPE int
+#define _ZP_HASHMAP_TEMPLATE_IS_SET
 #endif
 #ifndef _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN
 #error "_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN must be defined before including hashmap_template.h"
@@ -114,7 +122,11 @@
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_NAME
+#ifdef _ZP_HASHMAP_TEMPLATE_IS_SET
+#define _ZP_HASHMAP_TEMPLATE_NAME _ZP_CAT(_ZP_HASHMAP_TEMPLATE_KEY_TYPE, hset)
+#else
 #define _ZP_HASHMAP_TEMPLATE_NAME _ZP_CAT(_ZP_HASHMAP_TEMPLATE_KEY_TYPE, _ZP_CAT(_ZP_HASHMAP_TEMPLATE_VAL_TYPE, hmap))
+#endif
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN
@@ -127,9 +139,11 @@
 #define _ZP_HASHMAP_TEMPLATE_KEY_TRIVIALLY_MOVABLE
 #define _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(dst, src) *(dst) = *(src);
 #endif
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
 #ifndef _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN
 #define _ZP_HASHMAP_TEMPLATE_VAL_TRIVIALLY_MOVABLE
 #define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) *(dst) = *(src);
+#endif
 #endif
 
 #ifndef _ZP_HASHMAP_TEMPLATE_ALLOC_FN
@@ -144,9 +158,16 @@
 // #define _ZP_HASHMAP_TEMPLATE_REALLOC_FN(ptr, bytes) realloc(ptr, bytes)
 
 // A slot is trivially relocatable (bitwise copyable) only when both its key and
-// value are trivially movable.
+// value are trivially movable. In hashset mode there is no value, so the slot is
+// trivially relocatable whenever the key is.
+#ifdef _ZP_HASHMAP_TEMPLATE_IS_SET
+#if defined(_ZP_HASHMAP_TEMPLATE_KEY_TRIVIALLY_MOVABLE)
+#define _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
+#endif
+#else
 #if defined(_ZP_HASHMAP_TEMPLATE_KEY_TRIVIALLY_MOVABLE) && defined(_ZP_HASHMAP_TEMPLATE_VAL_TRIVIALLY_MOVABLE)
 #define _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
+#endif
 #endif
 
 // ── Index / iterator type ─────────────────────────────────────────────────────
@@ -169,12 +190,23 @@
 
 // ── Node ──────────────────────────────────────────────────────────────────────
 //
-// The public node type holds just the key/value payload exposed to callers.
+// In hashmap mode the public node type holds the key/value payload exposed to
+// callers.  In hashset mode the node type is simply the key type itself.
+//
+// _ZP_HASHMAP_TEMPLATE_NODE_KEY(node_ptr) yields a pointer to the key stored in
+// a node regardless of the mode, so the shared code below can be written
+// uniformly.
 
+#ifdef _ZP_HASHMAP_TEMPLATE_IS_SET
+typedef _ZP_HASHMAP_TEMPLATE_KEY_TYPE _ZP_HASHMAP_TEMPLATE_NODE_TYPE;
+#define _ZP_HASHMAP_TEMPLATE_NODE_KEY(node_ptr) (node_ptr)
+#else
 typedef struct _ZP_HASHMAP_TEMPLATE_NODE_TYPE {
     _ZP_HASHMAP_TEMPLATE_KEY_TYPE key;
     _ZP_HASHMAP_TEMPLATE_VAL_TYPE val;
 } _ZP_HASHMAP_TEMPLATE_NODE_TYPE;
+#define _ZP_HASHMAP_TEMPLATE_NODE_KEY(node_ptr) (&(node_ptr)->key)
+#endif
 
 // Public typedefs for the key and value types. Applying `const` to these
 // typedefs (e.g. `const <name>_key_t *`) qualifies the whole aliased type, which
@@ -183,7 +215,9 @@ typedef struct _ZP_HASHMAP_TEMPLATE_NODE_TYPE {
 // e.g. `const char **` for a `char *` key, qualifying the wrong pointer level and
 // discarding qualifiers at call sites.
 typedef _ZP_HASHMAP_TEMPLATE_KEY_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, key_t);
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
 typedef _ZP_HASHMAP_TEMPLATE_VAL_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, val_t);
+#endif
 
 // Public typedef for the index/iterator type so callers can store indices
 // without spelling out the internal macro.
@@ -301,8 +335,11 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     for (size_t i = map->_capacity; i-- > 0;) {
         new_slots[i]._present = map->_slots[i]._present;
         if (map->_slots[i]._present) {
-            _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&new_slots[i]._node.key, &map->_slots[i]._node.key);
+            _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node),
+                                             _ZP_HASHMAP_TEMPLATE_NODE_KEY(&map->_slots[i]._node));
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
             _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&new_slots[i]._node.val, &map->_slots[i]._node.val);
+#endif
         } else {
             // relink only empty slots, since occupied ones will likely have different links due to rehashing
             new_slots[i]._next = map->_slots[i]._next;
@@ -330,7 +367,8 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     // Re-hash every live entry into the new bucket heads (indices are preserved).
     for (size_t i = 0; i < map->_capacity; i++) {
         if (new_slots[i]._present) {
-            size_t b = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(&new_slots[i]._node.key) % new_capacity;
+            size_t b =
+                _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node)) % new_capacity;
             new_slots[i]._next = new_slots[b]._bucket;
             new_slots[b]._bucket = (_ZP_HASHMAP_TEMPLATE_INDEX_TYPE)i;
         }
@@ -386,7 +424,7 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
     while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
         const _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(&n->key, key)) {
+        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n), key)) {
             return idx;
         }
         idx = map->_slots[idx]._next;
@@ -394,6 +432,7 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     return _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
 }
 
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
 // ── get ───────────────────────────────────────────────────────────────────────
 // Returns a pointer to the value for key, or NULL if not found.
 
@@ -419,6 +458,7 @@ static inline const _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, val_t) *
     }
     return NULL;
 }
+#endif  // !_ZP_HASHMAP_TEMPLATE_IS_SET
 
 // ── contains ─────────────────────────────────────────────────────────────────
 
@@ -460,20 +500,26 @@ static inline const _ZP_HASHMAP_TEMPLATE_NODE_TYPE *_ZP_CAT(_ZP_HASHMAP_TEMPLATE
 }
 
 // ── insert ────────────────────────────────────────────────────────────────────
-// Takes ownership of *key and *val via move.
-// If key already exists: old value is destroyed, new value is moved in.
-// The new key is destroyed (existing key kept).
+// Takes ownership of *key (and, in hashmap mode, *val) via move.
+// If key already exists: in hashmap mode the old value is destroyed and the new
+// value is moved in; in hashset mode the entry is left unchanged. In both modes
+// the incoming key is destroyed (the existing key is kept).
 // Grows the pool (doubling its capacity) when full.
 // Returns the iterator to the inserted/updated node.
 // Returns an invalid iterator only when an allocation fails (and the key is not
 // already present) or the maximum addressable capacity has been reached.
-// *val can be NULL, in this case the entry will be created with an uninitialized value,
-// and can be initialized manually by calling _at at the returned iterator.
+// In hashmap mode *val can be NULL, in which case the entry will be created with
+// an uninitialized value that can be initialized manually via _at at the
+// returned iterator.
 
 static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
                                                      insert)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
-                                                             _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key,
-                                                             _ZP_HASHMAP_TEMPLATE_VAL_TYPE *val) {
+                                                             _ZP_HASHMAP_TEMPLATE_KEY_TYPE *key
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
+                                                             ,
+                                                             _ZP_HASHMAP_TEMPLATE_VAL_TYPE *val
+#endif
+) {
     // Ensure the map has a backing store.
     if (map->_capacity == 0) {
         if (!_ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(map, _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY)) {
@@ -486,13 +532,15 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
     while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
-        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(&n->key, key)) {
+        if (_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n), key)) {
             // Update: destroy incoming key, replace value in-place.
             _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(key);
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
             _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
             if (val != NULL) {
                 _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
             }
+#endif
             return idx;
         }
         idx = map->_slots[idx]._next;
@@ -517,10 +565,12 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
 
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE new_idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_alloc)(map);
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[new_idx]._node;
-    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&n->key, key);
+    _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n), key);
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
     if (val != NULL) {
         _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&n->val, val);
     }
+#endif
     // Prepend to bucket chain (O(1)).
     map->_slots[new_idx]._next = map->_slots[b]._bucket;
     map->_slots[b]._bucket = new_idx;
@@ -578,7 +628,7 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
     // Re-derive the bucket from the node's own key so the caller does not need
     // to supply it separately.
-    size_t b = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(&n->key) % map->_capacity;
+    size_t b = _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n)) % map->_capacity;
     // Walk the chain to find the predecessor and unlink idx.
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE prev = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE cur = map->_slots[b]._bucket;
@@ -592,11 +642,15 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
         map->_slots[prev]._next = map->_slots[idx]._next;
     }
     if (out_node != NULL) {
-        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(&out_node->key, &n->key);
+        _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(out_node), _ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
         _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(&out_node->val, &n->val);
+#endif
     } else {
-        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
+        _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
         _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
+#endif
     }
     _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, pool_free)(map, idx);
     map->_size--;
@@ -606,16 +660,21 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
 }
 
 // ── remove ────────────────────────────────────────────────────────────────────
-// If out_val != NULL the value is moved out; otherwise it is destroyed.
-// Returns true if the key was found.
+// Removes and destroys the entry for key. Returns true if the key was found.
+// In hashmap mode if out_val != NULL the value is moved out; otherwise it is destroyed.
 
 static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove)(_ZP_HASHMAP_TEMPLATE_TYPE *map,
-                                                              const _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, key_t) * key,
-                                                              _ZP_HASHMAP_TEMPLATE_VAL_TYPE *out_val) {
+                                                              const _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, key_t) * key
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
+                                                              ,
+                                                              _ZP_HASHMAP_TEMPLATE_VAL_TYPE *out_val
+#endif
+) {
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, get_iter)(map, key);
     if (idx == _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
         return false;  // not found
     }
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
     if (out_val != NULL) {
         _ZP_HASHMAP_TEMPLATE_NODE_TYPE temp;
         _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, &temp, NULL);
@@ -624,6 +683,9 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove)(_ZP_HASHMAP_TEMPLA
     } else {
         _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, NULL, NULL);
     }
+#else
+    _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(map, idx, NULL, NULL);
+#endif
     return true;
 }
 
@@ -636,8 +698,10 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, clear)(_ZP_HASHMAP_TEMPLAT
         _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
         while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
             _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
-            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
+            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
             _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
+#endif
             idx = map->_slots[idx]._next;
         }
         map->_slots[b]._bucket = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
@@ -662,8 +726,10 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
     for (size_t i = 0; i < map->_capacity; i++) {
         if (map->_slots[i]._present) {
             _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[i]._node;
-            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(&n->key);
+            _ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
+#ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
             _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(&n->val);
+#endif
         }
     }
     _ZP_HASHMAP_TEMPLATE_FREE_FN(map->_slots);
@@ -699,9 +765,13 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 #ifdef _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
 #undef _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
 #endif
+#ifdef _ZP_HASHMAP_TEMPLATE_IS_SET
+#undef _ZP_HASHMAP_TEMPLATE_IS_SET
+#endif
 #undef _ZP_HASHMAP_TEMPLATE_INDEX_TYPE
 #undef _ZP_HASHMAP_TEMPLATE_TYPE
 #undef _ZP_HASHMAP_TEMPLATE_NODE_TYPE
+#undef _ZP_HASHMAP_TEMPLATE_NODE_KEY
 #undef _ZP_HASHMAP_TEMPLATE_SLOT_TYPE
 #undef _ZP_HASHMAP_TEMPLATE_ITER_TYPE
 #undef _ZP_HASHMAP_TEMPLATE_INDEX_NONE

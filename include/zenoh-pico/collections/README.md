@@ -12,8 +12,8 @@ The templates documented here are:
 | `vector_template.h`            | Dynamic array (vector)  | Heap (growable)    |
 | `static_vector_template.h`     | Dynamic array (vector)  | Inline, fixed cap. |
 | `static_bit_vector_template.h` | Bit vector (0/1 bits)   | Inline, fixed cap. |
-| `hashmap_template.h`           | Hash map                | Heap (growable)    |
-| `static_hashmap_template.h`    | Hash map                | Inline, fixed cap. |
+| `hashmap_template.h`           | Hash map / hash set     | Heap (growable)    |
+| `static_hashmap_template.h`    | Hash map / hash set     | Inline, fixed cap. |
 | `static_deque_template.h`      | Double-ended queue      | Inline, fixed cap. |
 | `static_pqueue_template.h`     | Binary-heap priority q. | Inline, fixed cap. |
 | `variant_template.h`           | Tagged union (variant)  | Inline             |
@@ -346,6 +346,10 @@ A growable hash map using **separate chaining** over a single contiguous node po
 It is the dynamically-growable counterpart of `static_hashmap_template.h` and exposes
 the same interface plus growth/allocation helpers.
 
+If `_ZP_HASHMAP_TEMPLATE_VAL_TYPE` is left **undefined**, the template instead
+generates a growable **hash set** (see [Hash-set mode](#hash-set-mode-1) below): the
+node type is the key type itself and the value-related surface is dropped.
+
 Key design points:
 
 * Nodes live in one flat pool (one allocation) for good cache locality; bucket heads
@@ -361,19 +365,19 @@ Key design points:
 | Macro                                      | Required | Default                    | Purpose                                                                                         |
 | ------------------------------------------ | :------: | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | `_ZP_HASHMAP_TEMPLATE_KEY_TYPE`            |    ✅    | —                          | Key type.                                                                                       |
-| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`            |    ✅    | —                          | Value type.                                                                                     |
 | `_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`      |    ✅    | —                          | Hash of `*k` → `size_t`.                                                                        |
+| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`            |    ❌    | —                          | Value type. When omitted, a **hash set** is generated.                                          |
 | `_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`      |    ❌    | `*a == *b`                 | Key equality.                                                                                   |
 | `_ZP_HASHMAP_TEMPLATE_NAME`                |    ❌    | derived from key/val types | Base name for generated symbols.                                                                |
 | `_ZP_HASHMAP_TEMPLATE_INDEX_TYPE`          |    ❌    | `uint32_t`                 | Unsigned index/iterator type; its max value is reserved as a sentinel, so capacity ≤ `max - 1`. |
 | `_ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY`    |    ❌    | `16`                       | Entries/buckets reserved on first insert.                                                       |
 | `_ZP_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)`   |    ❌    | no-op                      | Destroy a key.                                                                                  |
-| `_ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)`   |    ❌    | no-op                      | Destroy a value.                                                                                |
+| `_ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)`   |    ❌    | no-op                      | Destroy a value. (Ignored in hash-set mode.)                                                    |
 | `_ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a key.                                                                                     |
-| `_ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a value.                                                                                   |
+| `_ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a value. (Ignored in hash-set mode.)                                                       |
 | `_ZP_HASHMAP_TEMPLATE_ALLOC_FN(bytes)`     |    ❌    | `malloc`                   | Allocate memory.                                                                                |
 | `_ZP_HASHMAP_TEMPLATE_FREE_FN(ptr)`        |    ❌    | `free`                     | Free memory.                                                                                    |
-| `_ZP_HASHMAP_TEMPLATE_REALLOC_FN(p,bytes)` |    ❌    | (unused)                   | In-place pool growth when key+value are trivially movable.                                      |
+| `_ZP_HASHMAP_TEMPLATE_REALLOC_FN(p,bytes)` |    ❌    | (unused)                   | In-place pool growth when key+value are trivially movable (key only in hash-set mode).          |
 
 ### Generated types
 
@@ -445,6 +449,50 @@ int *got = i2i_get(&m, &k);   // *got == 100
 i2i_destroy(&m);
 ```
 
+### Hash-set mode
+
+When `_ZP_HASHMAP_TEMPLATE_VAL_TYPE` is not defined, the same header generates a
+growable **hash set** — a heap-backed set of unique keys. All key configuration macros
+(including the allocator and `REALLOC_FN`) behave as above; the value macros
+(`VAL_TYPE`, `VAL_DESTROY_FN`, `VAL_MOVE_FN`) are not used, and the default name becomes
+`<key_type>hset` instead of `<key><val>hmap`.
+
+Differences from the hash-map mode:
+
+* `NAME_elem_t` **is** the key type itself (not a `{ key, val }` struct), and no
+  `NAME_val_t` typedef is generated. `NAME_at` / `NAME_const_at` return a pointer to
+  the key.
+* `NAME_insert(NAME_t *s, KEY_TYPE *k)` takes **no value argument**. If the key is
+  already present the incoming key is destroyed and the existing entry is left
+  unchanged; otherwise the key is moved in (growing the pool if needed).
+* The value-oriented lookups `NAME_get` / `NAME_const_get` are **not** generated (use
+  `NAME_contains` / `NAME_get_iter`).
+* `NAME_remove(NAME_t *s, const NAME_key_t *k)` takes **no `out` argument**: it finds,
+  removes and destroys the entry, returning `true` if the key was present.
+* In-place growth via `REALLOC_FN` kicks in when the **key** alone is trivially movable
+  (there is no value to consider).
+
+Everything else (`init`, `new`, `reserve`, `size`, `capacity`, `is_empty`, `contains`,
+`get_iter`, `at`/`const_at`, `remove_at`, `clear`, `destroy`, `begin`/`end`/`iter_next`)
+works exactly as in the hash-map mode.
+
+```c
+static inline size_t id_hash(const uint32_t *k) { return *k; }
+
+#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE     uint32_t
+#define _ZP_HASHMAP_TEMPLATE_NAME         idset
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN  id_hash
+#include "zenoh-pico/collections/hashmap_template.h"
+
+idset_t s = idset_new();
+uint32_t a = 7, b = 7;
+idset_insert(&s, &a);
+idset_insert(&s, &b);              // duplicate: incoming key destroyed, size stays 1
+bool has = idset_contains(&s, &a); // true
+idset_remove(&s, &a);              // returns true
+idset_destroy(&s);
+```
+
 ---
 
 ## `static_hashmap_template.h` — fixed-capacity hash map
@@ -453,20 +501,24 @@ Separate-chaining hash map backed by a **fixed-size, inline node pool** — no h
 allocation. The capacity is also used as the number of buckets, and the index type is
 chosen automatically to be the smallest that fits the capacity.
 
+If `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE` is left **undefined**, the template instead
+generates a **hash set** (see [Hash-set mode](#hash-set-mode) below): the node type is
+the key type itself and the value-related surface is dropped.
+
 ### Configuration macros
 
-| Macro                                           | Required | Default                    | Purpose                              |
-| ----------------------------------------------- | :------: | -------------------------- | ------------------------------------ |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE`          |    ✅    | —                          | Key type.                            |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`          |    ✅    | —                          | Value type.                          |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`    |    ✅    | —                          | Hash of `*k` → `size_t`.             |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`    |    ❌    | `*a == *b`                 | Key equality.                        |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_NAME`              |    ❌    | derived from key/val types | Base name for generated symbols.     |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY`          |    ❌    | `16`                       | Max entries (also the bucket count). |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)` |    ❌    | no-op                      | Destroy a key.                       |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)` |    ❌    | no-op                      | Destroy a value.                     |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a key.                          |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a value.                        |
+| Macro                                           | Required | Default                    | Purpose                                                          |
+| ----------------------------------------------- | :------: | -------------------------- | ---------------------------------------------------------------- |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE`          |    ✅    | —                          | Key type.                                                        |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`    |    ✅    | —                          | Hash of `*k` → `size_t`.                                         |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`          |    ❌    | —                          | Value type. When omitted, a **hash set** is generated.           |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`    |    ❌    | `*a == *b`                 | Key equality.                                                    |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_NAME`              |    ❌    | derived from key/val types | Base name for generated symbols.                                 |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY`          |    ❌    | `16`                       | Max entries (also the bucket count).                             |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)` |    ❌    | no-op                      | Destroy a key.                                                   |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)` |    ❌    | no-op                      | Destroy a value. (Ignored in hash-set mode.)                     |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a key.                                                      |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a value. (Ignored in hash-set mode.)                        |
 
 ### API
 
@@ -501,6 +553,48 @@ tasks_t m = tasks_new();
 size_t k = 7; int v = 1;
 tasks_insert(&m, &k, &v);
 tasks_destroy(&m);
+```
+
+### Hash-set mode
+
+When `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE` is not defined, the same header generates
+a **hash set** — a fixed-capacity set of unique keys. All key configuration macros
+behave as above; the value macros (`VAL_TYPE`, `VAL_DESTROY_FN`, `VAL_MOVE_FN`) are not
+used, and the default name becomes `<key_type>hset` instead of `<key><val>hmap`.
+
+Differences from the hash-map mode:
+
+* `NAME_elem_t` **is** the key type itself (not a `{ key, val }` struct), and no
+  `NAME_val_t` typedef is generated. `NAME_at` / `NAME_const_at` return a pointer to
+  the key.
+* `NAME_insert(NAME_t *s, KEY_TYPE *k)` takes **no value argument**. If the key is
+  already present the incoming key is destroyed and the existing entry is left
+  unchanged; otherwise the key is moved in.
+* The value-oriented lookups `NAME_get` / `NAME_const_get` are **not** generated (use
+  `NAME_contains` / `NAME_get_iter`).
+* `NAME_remove(NAME_t *s, const NAME_key_t *k)` takes **no `out` argument**: it finds,
+  removes and destroys the entry, returning `true` if the key was present.
+
+Everything else (`init`, `new`, `size`, `is_empty`, `contains`, `get_iter`,
+`at`/`const_at`, `remove_at`, `destroy`, `begin`/`end`/`iter_next`) works exactly as
+in the hash-map mode.
+
+```c
+static inline size_t id_hash(const uint32_t *k) { return *k; }
+
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE     uint32_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME         idset
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN  id_hash
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY     32
+#include "zenoh-pico/collections/static_hashmap_template.h"
+
+idset_t s = idset_new();
+uint32_t a = 7, b = 7;
+idset_insert(&s, &a);
+idset_insert(&s, &b);              // duplicate: incoming key destroyed, size stays 1
+bool has = idset_contains(&s, &a); // true
+idset_remove(&s, &a);              // returns true
+idset_destroy(&s);
 ```
 
 ---
@@ -913,7 +1007,9 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
 * **`static_bit_vector`** — ordered list of single bits (0/1) with a known maximum;
   packed storage with a configurable block type, no `malloc`.
 * **`hashmap` (heap)** — key→value lookup, unbounded, stable iterators; needs `malloc`.
-* **`static_hashmap`** — key→value lookup with a known maximum; no `malloc`.
+  Omitting the value type turns it into a growable **hash set** (unique keys, no values).
+* **`static_hashmap`** — key→value lookup with a known maximum; no `malloc`. Omitting
+  the value type turns it into a **hash set** (unique keys, no values).
 * **`static_deque`** — bounded FIFO/LIFO with O(1) push/pop at both ends; no `malloc`.
 * **`static_pqueue`** — bounded priority queue (binary heap); no `malloc`.
 * **`variant`** — one value out of several distinct types; no `malloc`.
