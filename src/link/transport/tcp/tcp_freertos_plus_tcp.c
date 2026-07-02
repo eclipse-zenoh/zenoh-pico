@@ -94,7 +94,7 @@ static z_result_t _z_tcp_freertos_plus_tcp_listen(_z_sys_net_socket_t *sock, con
         sock->_socket = FREERTOS_INVALID_SOCKET;
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
-    if (FreeRTOS_listen(sock->_socket, Z_LISTEN_MAX_CONNECTION_NB) != 0) {
+    if (FreeRTOS_listen(sock->_socket, Z_MAX_NUM_PEERS) != 0) {
         FreeRTOS_closesocket(sock->_socket);
         sock->_socket = FREERTOS_INVALID_SOCKET;
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);

@@ -190,7 +190,7 @@ static z_result_t _z_tcp_posix_listen(_z_sys_net_socket_t *sock, const _z_sys_ne
         }
         _Z_DEBUG("bind() successful for address %s", addr_str);
 
-        if (listen(sock->_fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+        if (listen(sock->_fd, Z_MAX_NUM_PEERS) < 0) {
             _Z_DEBUG("listen() failed for address %s: %s", addr_str, strerror(errno));
             if (it->ai_next == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);

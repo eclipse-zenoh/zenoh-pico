@@ -138,7 +138,7 @@ static z_result_t _z_tcp_zephyr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
             break;
         }
 
-        if (listen(sock->_fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+        if (listen(sock->_fd, Z_MAX_NUM_PEERS) < 0) {
             if (it->ai_next != NULL) {
                 continue;
             }

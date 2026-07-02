@@ -82,7 +82,7 @@ _z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ctx, _z_executor_t *executor
         return _z_fut_fn_result_wake_up_after(1000);
     }
 
-    if (_z_transport_peer_unicast_slist_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
+    if (_z_transport_peer_unicast_slist_len(ztu->_peers) >= Z_MAX_NUM_PEERS) {
         _Z_INFO("Refusing connection as max connections currently reached");
 #if Z_FEATURE_LINK_TLS == 1
         _z_close_tls_socket(&con_socket);

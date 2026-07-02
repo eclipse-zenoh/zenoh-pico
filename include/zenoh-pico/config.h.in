@@ -308,9 +308,9 @@
 #define Z_GET_TIMEOUT_DEFAULT 10000
 
 /**
- * Maximum number of connections for unicast listen sockets.
+ * Maximum number of simultaneously connected remote peers per session.
  */
-#define Z_LISTEN_MAX_CONNECTION_NB 10
+#define Z_MAX_NUM_PEERS 10
 
 /**
  * Default "nop" instruction

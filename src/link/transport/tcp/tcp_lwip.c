@@ -160,7 +160,7 @@ static z_result_t _z_tcp_lwip_listen(_z_sys_net_socket_t *sock, const _z_sys_net
             ret = _Z_ERR_GENERIC;
             break;
         }
-        if (listen(_z_lwip_socket_get(*sock), Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+        if (listen(_z_lwip_socket_get(*sock), Z_MAX_NUM_PEERS) < 0) {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;

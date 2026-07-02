@@ -188,7 +188,7 @@ static z_result_t _z_tcp_windows_listen(_z_sys_net_socket_t *sock, const _z_sys_
                 break;
             }
         }
-        if (listen(sock->_sock._fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+        if (listen(sock->_sock._fd, Z_MAX_NUM_PEERS) < 0) {
             if (it->ai_next == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;

@@ -178,7 +178,7 @@ These options can be changed manually in `config.h.in` if your build system invo
 * `Z_REQ_RESOLUTION`: Length of the request id as enum value (0: 8bits, 1: 16 bits, 2: 32 bits, 3: 64 bits)
 * `Z_RX_CACHE_SIZE`: Width of the rx cache, when activated.
 * `Z_GET_TIMEOUT_DEFAULT`: Default value for a request timeout, in milliseconds.
-* `Z_LISTEN_MAX_CONNECTION_NB`: Maximum number of connections on a listening socket.
+* `Z_MAX_NUM_PEERS`: Maximum number of simultaneously connected remote peers per session.
 * `ZP_ASM_NOP`: Change this options if your platform doesn't have a standard `nop` instruction.
 
 Generated compile-time options

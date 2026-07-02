@@ -236,10 +236,10 @@ static bool test_peer_connection(void) {
         printf("Unable to open main session!\n");
         return false;
     }
-    z_owned_session_t sess_array[Z_LISTEN_MAX_CONNECTION_NB + 1];
-    z_owned_config_t cfg_array[Z_LISTEN_MAX_CONNECTION_NB + 1];
+    z_owned_session_t sess_array[Z_MAX_NUM_PEERS + 1];
+    z_owned_config_t cfg_array[Z_MAX_NUM_PEERS + 1];
     // // Open max peers
-    for (int i = 0; i < Z_LISTEN_MAX_CONNECTION_NB; i++) {
+    for (int i = 0; i < Z_MAX_NUM_PEERS; i++) {
         z_config_default(&cfg_array[i]);
         zp_config_insert(z_loan_mut(cfg_array[i]), Z_CONFIG_MODE_KEY, "peer");
         zp_config_insert(z_loan_mut(cfg_array[i]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
@@ -250,10 +250,10 @@ static bool test_peer_connection(void) {
         z_sleep_ms(100);
     }
     // Fail to open a new one
-    z_config_default(&cfg_array[Z_LISTEN_MAX_CONNECTION_NB]);
-    zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
-    if (z_open(&sess_array[Z_LISTEN_MAX_CONNECTION_NB], z_move(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), NULL) == Z_OK) {
+    z_config_default(&cfg_array[Z_MAX_NUM_PEERS]);
+    zp_config_insert(z_loan_mut(cfg_array[Z_MAX_NUM_PEERS]), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(cfg_array[Z_MAX_NUM_PEERS]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
+    if (z_open(&sess_array[Z_MAX_NUM_PEERS], z_move(cfg_array[Z_MAX_NUM_PEERS]), NULL) == Z_OK) {
         printf("Should not have been able to open this session\n");
         return false;
     }
