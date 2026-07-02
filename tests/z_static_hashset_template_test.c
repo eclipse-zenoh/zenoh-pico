@@ -49,14 +49,15 @@ typedef struct {
 
 static inline owned_str_t owned_str_make(const char *s) {
     owned_str_t o;
-    o.str = strdup(s);
+    o.str = malloc(strlen(s) + 1);
     assert(o.str != NULL);
+    memcpy(o.str, s, strlen(s) + 1);
     return o;
 }
 static inline size_t owned_str_hash(const owned_str_t *k) {
-    size_t h = 1469598103934665603u;
+    size_t h = 5381;
     for (const char *p = k->str; *p != '\0'; p++) {
-        h = (h ^ (size_t)(unsigned char)*p) * 1099511628211u;
+        h = (h << 5) + (h ^ (size_t)(unsigned char)*p);
     }
     return h;
 }
