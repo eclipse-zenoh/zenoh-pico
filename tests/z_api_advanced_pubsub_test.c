@@ -720,12 +720,14 @@ static void test_advanced_local_pubsub(void) {
 #endif
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    test_advanced_history(false);
+    bool retransmission_only = argc > 1 && strcmp(argv[1], "--retransmission-only") == 0;
+
+    if (!retransmission_only) {
+        test_advanced_history(false);
 #if defined(ZENOH_LINUX)
-    test_advanced_history(true);
+        test_advanced_history(true);
 #endif
+    }
 #ifdef Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY
     test_advanced_retransmission();
     test_advanced_retransmission_periodic();
