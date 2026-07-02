@@ -258,16 +258,6 @@ bool _z_session_has_router_peer(const _z_session_t *session);
  * Upgrade a weak session reference to a strong one if the session is open, otherwise return null.
  */
 _z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *weak);
-/**
- * Get informations about an zenoh-net session.
- *
- * Parameters:
- *     session: A zenoh-net session. The caller keeps its ownership.
- *
- * Returns:
- *     A :c:type:`_z_config_t` map containing informations on the given zenoh-net session.
- */
-_z_config_t *_z_info(const _z_session_t *session);
 
 /*------------------ Zenoh-Pico Session Management Auxiliary ------------------*/
 /**

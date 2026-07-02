@@ -25,11 +25,6 @@
 extern "C" {
 #endif
 
-// Properties returned by _z_info()
-#define Z_INFO_PID_KEY 0x00
-#define Z_INFO_PEER_PID_KEY 0x01
-#define Z_INFO_ROUTER_PID_KEY 0x02
-
 /**
  * Zenoh-net properties are represented as int-string map.
  */

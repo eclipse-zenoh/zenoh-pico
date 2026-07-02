@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
@@ -32,24 +33,10 @@
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 void _zp_multicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     void *ctx = callback->context;
-    _z_transport_peer_multicast_slist_t *l = zt->_transport._multicast._peers;
-    for (; l != NULL; l = _z_transport_peer_multicast_slist_next(l)) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(l);
-        z_id_t id = val->common._remote_zid;
-
+    const _z_transport_peer_multicast_t *peer = NULL;
+    _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &zt->_transport._multicast._peers, peer) {
+        z_id_t id = peer->common._remote_zid;
         callback->call(&id, ctx);
-    }
-}
-
-void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
-    _z_transport_peer_multicast_slist_t *xs = zt->_transport._multicast._peers;
-    while (xs != NULL) {
-        _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(xs);
-        _z_string_t remote_zid_str = _z_id_to_string(&peer->common._remote_zid);
-        _zp_config_insert_string(ps, Z_INFO_PEER_PID_KEY, &remote_zid_str);
-        _z_string_clear(&remote_zid_str);
-
-        xs = _z_transport_peer_multicast_slist_next(xs);
     }
 }
 
@@ -57,10 +44,5 @@ void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
 void _zp_multicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(callback);
-}
-
-void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(ps);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1

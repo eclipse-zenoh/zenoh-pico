@@ -15,6 +15,7 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/net/session.h"
@@ -327,9 +328,9 @@ static void _z_connectivity_replay_transport_history(_z_session_t *session,
         }
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE: {
-            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
-                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap,
+                                   &transport->_transport._multicast._peers, peer) {
                 _z_info_transport_event_t event = {0};
                 event.kind = Z_SAMPLE_KIND_PUT;
                 _z_info_transport_from_peer(&event.transport, &peer->common, true);
@@ -374,9 +375,9 @@ static void _z_connectivity_replay_link_history(_z_session_t *session, _z_connec
         }
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE: {
-            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
-                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap,
+                                   &transport->_transport._multicast._peers, peer) {
                 if (!_z_connectivity_dispatch_link_put_for_peer(callback, transport_common, &peer->common, true,
                                                                 has_transport_filter, transport_filter)) {
                     break;

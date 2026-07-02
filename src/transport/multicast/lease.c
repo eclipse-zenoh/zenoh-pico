@@ -16,11 +16,13 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/multicast/connectivity.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
@@ -81,56 +83,18 @@ _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z
 #endif
 }
 
-static _z_zint_t _z_get_minimum_lease(_z_transport_peer_multicast_slist_t *peers, _z_zint_t local_lease) {
+static _z_zint_t _z_get_minimum_lease(const _z_address_to_transport_peer_multicast_hmap_t *peers,
+                                      _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
-
-    _z_transport_peer_multicast_slist_t *it = peers;
-    while (it != NULL) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(it);
-        _z_zint_t lease = val->_lease;
+    const _z_transport_peer_multicast_t *peer = NULL;
+    _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, peers, peer) {
+        _z_zint_t lease = peer->_lease;
         if (lease < ret) {
             ret = lease;
         }
-
-        it = _z_transport_peer_multicast_slist_next(it);
     }
 
     return ret;
-}
-
-static bool _zp_multicast_peer_is_expired(const _z_transport_peer_multicast_t *target,
-                                          const _z_transport_peer_multicast_t *peer) {
-    _ZP_UNUSED(target);
-    return !peer->common._received;
-}
-
-static void _zp_multicast_report_disconnected_events(_z_transport_multicast_t *ztm,
-                                                     _z_transport_peer_multicast_slist_t **dropped_peers) {
-    if (dropped_peers == NULL || *dropped_peers == NULL) {
-        return;
-    }
-
-#if Z_FEATURE_CONNECTIVITY == 1
-    uint16_t mtu = 0;
-    bool is_streamed = false;
-    bool is_reliable = false;
-    _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
-#endif
-
-    _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
-    _z_transport_peer_multicast_slist_t *it = *dropped_peers;
-    while (it != NULL) {
-        _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
-        _Z_INFO("Deleting peer because it has expired after %zums", peer->_lease);
-        _z_interest_peer_disconnected(s, &peer->common);
-#if Z_FEATURE_CONNECTIVITY == 1
-        _z_connectivity_peer_event_data_t disconnected_peer = {0};
-        _z_connectivity_peer_event_data_alias_from_common(&disconnected_peer, &peer->common);
-        _z_connectivity_peer_disconnected(s, &disconnected_peer, true, mtu, is_streamed, is_reliable);
-#endif
-        it = _z_transport_peer_multicast_slist_next(it);
-    }
-    _z_transport_peer_multicast_slist_free(dropped_peers);
 }
 
 _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *executor) {
@@ -142,20 +106,19 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
     } else if (ztm->_common._state == _Z_TRANSPORT_STATE_RECONNECTING) {
         return _z_fut_fn_result_suspend();
     }
-
-    _z_transport_peer_multicast_slist_t *dropped_peers = _z_transport_peer_multicast_slist_new();
-    _z_transport_peer_mutex_lock(&ztm->_common);
-    ztm->_peers = _z_transport_peer_multicast_slist_extract_all_filter(ztm->_peers, &dropped_peers,
-                                                                       _zp_multicast_peer_is_expired, NULL);
-    _z_transport_peer_multicast_slist_t *curr_list = ztm->_peers;
-    while (curr_list != NULL) {
-        _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_slist_value(curr_list);
-        curr_peer->common._received = false;
-        curr_list = _z_transport_peer_multicast_slist_next(curr_list);
+    _z_address_to_transport_peer_multicast_hmap_iter_t iter =
+        _z_address_to_transport_peer_multicast_hmap_begin(&ztm->_peers);
+    while (iter != _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
+        _z_transport_peer_multicast_t *peer = &_z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val;
+        if (peer->common._received) {
+            peer->common._received = false;
+            iter = _z_address_to_transport_peer_multicast_hmap_iter_next(&ztm->_peers, iter);
+        } else {
+            _Z_INFO("Deleting peer because it has expired after %zums", peer->_lease);
+            _zp_multicast_remove_peer_by_iter(ztm, iter);
+        }
     }
-    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
-    _z_transport_peer_mutex_unlock(&ztm->_common);
-    _zp_multicast_report_disconnected_events(ztm, &dropped_peers);
+    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(&ztm->_peers, ztm->_common._lease);
     return _z_fut_fn_result_wake_up_after(min_lease);
 }
 
@@ -176,7 +139,7 @@ _z_fut_fn_result_t _zp_multicast_keep_alive_task_fn(void *ztm_arg, _z_executor_t
     }
     ztm->_common._transmitted = false;
     _z_transport_peer_mutex_lock(&ztm->_common);
-    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
+    unsigned long min_lease = (unsigned long)_z_get_minimum_lease(&ztm->_peers, ztm->_common._lease);
     _z_transport_peer_mutex_unlock(&ztm->_common);
     return _z_fut_fn_result_wake_up_after(min_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
 }

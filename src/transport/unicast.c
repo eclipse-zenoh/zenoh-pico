@@ -40,27 +40,10 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback)
     }
 }
 
-void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps, int mode) {
-    uint_fast8_t config_entry = (mode == Z_WHATAMI_CLIENT) ? Z_INFO_ROUTER_PID_KEY : Z_INFO_PEER_PID_KEY;
-    _z_transport_peer_unicast_slist_t *xs = zt->_transport._unicast._peers;
-    while (xs != NULL) {
-        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(xs);
-        _z_string_t remote_zid_str = _z_id_to_string(&peer->common._remote_zid);
-        _zp_config_insert_string(ps, config_entry, &remote_zid_str);
-        _z_string_clear(&remote_zid_str);
-        xs = _z_transport_peer_unicast_slist_next(xs);
-    }
-}
-
 #else
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(callback);
 }
 
-void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps, int mode) {
-    _ZP_UNUSED(zt);
-    _ZP_UNUSED(ps);
-    _ZP_UNUSED(mode);
-}
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

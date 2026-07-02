@@ -24,6 +24,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/advanced_cache.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
@@ -1091,9 +1092,9 @@ z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_trans
         }
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE: {
-            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
-                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap,
+                                   &transport->_transport._multicast._peers, peer) {
                 _z_info_transport_t info_transport;
                 _z_info_transport_from_peer(&info_transport, &peer->common, true);
                 z_closure_transport_call(&callback->_this._val, &info_transport);
@@ -1168,9 +1169,9 @@ z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *ca
         }
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE: {
-            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
-                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &transport->_transport._multicast._peers,
+                             peer) {
                 _z_info_transport_t info_transport;
                 _z_info_transport_from_peer(&info_transport, &peer->common, true);
                 if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {

@@ -16,6 +16,7 @@
 
 #include "zenoh-pico/api/encoding.h"
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/json_encoder.h"
@@ -449,11 +450,12 @@ static z_result_t _ze_admin_space_encode_unicast_peer(_z_json_encoder_t *je, con
 }
 
 static z_result_t _ze_admin_space_encode_multicast_peer(_z_json_encoder_t *je,
-                                                        const _z_transport_peer_multicast_t *peer) {
+                                                        const _z_transport_peer_multicast_t *peer,
+                                                        const _z_slice_t *remote_addr) {
     _Z_RETURN_IF_ERR(_z_json_encoder_start_object(je));
     _Z_RETURN_IF_ERR(_ze_admin_space_encode_peer_common(je, &peer->common));
     _Z_RETURN_IF_ERR(_z_json_encoder_write_key(je, "remote_addr"));
-    _Z_RETURN_IF_ERR(_z_json_encoder_write_z_slice(je, &peer->_remote_addr));
+    _Z_RETURN_IF_ERR(_z_json_encoder_write_z_slice(je, remote_addr));
     return _z_json_encoder_end_object(je);
 }
 
@@ -470,12 +472,12 @@ static z_result_t _ze_admin_space_encode_unicast_peers(_z_json_encoder_t *je,
 }
 
 static z_result_t _ze_admin_space_encode_multicast_peers(_z_json_encoder_t *je,
-                                                         const _z_transport_peer_multicast_slist_t *peers) {
+                                                         const _z_address_to_transport_peer_multicast_hmap_t *peers) {
     _Z_RETURN_IF_ERR(_z_json_encoder_start_array(je));
 
-    for (; peers != NULL; peers = _z_transport_peer_multicast_slist_next(peers)) {
-        const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(peers);
-        _Z_RETURN_IF_ERR(_ze_admin_space_encode_multicast_peer(je, peer));
+    const _z_address_to_transport_peer_multicast_hmap_elem_t *entry = NULL;
+    _ZP_CONST_FOREACH (_z_address_to_transport_peer_multicast_hmap, peers, entry) {
+        _Z_RETURN_IF_ERR(_ze_admin_space_encode_multicast_peer(je, &entry->val, &entry->key));
     }
 
     return _z_json_encoder_end_array(je);
@@ -508,7 +510,7 @@ static z_result_t _ze_admin_space_encode_transport_multicast(_z_json_encoder_t *
         ret = _z_json_encoder_write_key(je, "peers");
     }
     if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_encode_multicast_peers(je, tp->_peers);
+        ret = _ze_admin_space_encode_multicast_peers(je, &tp->_peers);
     }
 
     _z_transport_peer_mutex_unlock(&tp->_common);
@@ -551,14 +553,14 @@ static z_result_t _ze_admin_space_encode_transport_peers(_z_json_encoder_t *je, 
         case _Z_TRANSPORT_MULTICAST_TYPE: {
             _z_transport_multicast_t *mtp = &tp->_transport._multicast;
             _z_transport_peer_mutex_lock(&mtp->_common);
-            ret = _ze_admin_space_encode_multicast_peers(je, mtp->_peers);
+            ret = _ze_admin_space_encode_multicast_peers(je, &mtp->_peers);
             _z_transport_peer_mutex_unlock(&mtp->_common);
             break;
         }
         case _Z_TRANSPORT_RAWETH_TYPE: {
             _z_transport_multicast_t *rtp = &tp->_transport._raweth;
             _z_transport_peer_mutex_lock(&rtp->_common);
-            ret = _ze_admin_space_encode_multicast_peers(je, rtp->_peers);
+            ret = _ze_admin_space_encode_multicast_peers(je, &rtp->_peers);
             _z_transport_peer_mutex_unlock(&rtp->_common);
             break;
         }
@@ -651,6 +653,7 @@ typedef struct {
 
 typedef struct {
     const _z_transport_peer_multicast_t *peer;
+    const _z_slice_t *remote_addr;
 } _ze_admin_space_multicast_peer_ctx_t;
 
 static z_result_t _ze_admin_space_encode_pico_transport_0_unicast_peer(_z_json_encoder_t *je, void *ctx) {
@@ -660,7 +663,7 @@ static z_result_t _ze_admin_space_encode_pico_transport_0_unicast_peer(_z_json_e
 
 static z_result_t _ze_admin_space_encode_pico_transport_0_multicast_peer(_z_json_encoder_t *je, void *ctx) {
     const _ze_admin_space_multicast_peer_ctx_t *pctx = (const _ze_admin_space_multicast_peer_ctx_t *)ctx;
-    return _ze_admin_space_encode_multicast_peer(je, pctx->peer);
+    return _ze_admin_space_encode_multicast_peer(je, pctx->peer, pctx->remote_addr);
 }
 
 static void _ze_admin_space_query_handle_pico_transport_0_unicast_peers(const z_loaned_query_t *query,
@@ -704,21 +707,20 @@ static void _ze_admin_space_query_handle_pico_transport_0_multicast_peers(const 
                                                                           _ze_admin_space_reply_list_t **replies) {
     _z_transport_peer_mutex_lock(&tp->_common);
 
-    for (_z_transport_peer_multicast_slist_t *peers = tp->_peers; peers != NULL;
-         peers = _z_transport_peer_multicast_slist_next(peers)) {
-        const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(peers);
-
+    const _z_address_to_transport_peer_multicast_hmap_elem_t *entry = NULL;
+    _ZP_CONST_FOREACH (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, entry) {
         z_owned_keyexpr_t ke;
         z_result_t ret;
 
-        ret = _ze_admin_space_pico_transports_0_peers_peer_ke(&ke, local_zid, &peer->common._remote_zid);
+        ret = _ze_admin_space_pico_transports_0_peers_peer_ke(&ke, local_zid, &entry->val.common._remote_zid);
         if (ret != _Z_RES_OK) {
             _Z_WARN("Failed to build key expression for pico/session/transports/0/peers peer query: %d", ret);
             continue;
         }
 
         _ze_admin_space_multicast_peer_ctx_t ctx = {
-            .peer = peer,
+            .peer = &entry->val,
+            .remote_addr = &entry->key,
         };
 
         ret = _ze_admin_space_reply_if_intersects(query, z_keyexpr_loan(&ke), &ctx, replies,

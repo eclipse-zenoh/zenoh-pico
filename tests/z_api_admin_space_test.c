@@ -18,6 +18,7 @@
 
 #include "utils/assert_helpers.h"
 #include "zenoh-pico.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/utils/string.h"
 
 #if Z_FEATURE_ADMIN_SPACE == 1
@@ -446,21 +447,7 @@ static void admin_space_test_keyexprs_init(admin_space_test_keyexprs_t *kes, con
 
 static size_t expected_admin_space_reply_count(const _z_session_t *session) {
     size_t count = 5;  // pico, session, transports, transports/0, transports/0/peers
-
-    switch (session->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            count += _z_transport_peer_unicast_slist_len(session->_tp._transport._unicast._peers);
-            break;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            count += _z_transport_peer_multicast_slist_len(session->_tp._transport._multicast._peers);
-            break;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            count += _z_transport_peer_multicast_slist_len(session->_tp._transport._raweth._peers);
-            break;
-        default:
-            break;
-    }
-
+    count += _z_transport_get_peers_count(&session->_tp);
     return count;
 }
 
@@ -482,10 +469,8 @@ static void verify_peers_array_json_unicast(const z_loaned_string_t *payload, co
 
 static void verify_peers_array_json_multicast(const z_loaned_string_t *payload, const _z_transport_multicast_t *tp) {
     assert_json_array(payload);
-
-    for (_z_transport_peer_multicast_slist_t *it = tp->_peers; it != NULL;
-         it = _z_transport_peer_multicast_slist_next(it)) {
-        const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
+    const _z_transport_peer_multicast_t *peer = NULL;
+    _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, peer) {
         assert_contains_peer_header(payload, &peer->common._remote_zid, peer->common._remote_whatami, true);
     }
 }
@@ -614,10 +599,8 @@ static void verify_admin_space_query(const z_loaned_session_t *zs, const admin_s
 
         case _Z_TRANSPORT_MULTICAST_TYPE: {
             const _z_transport_multicast_t *tp = &session->_tp._transport._multicast;
-            for (_z_transport_peer_multicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_multicast_slist_next(it)) {
-                const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
-
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(peers_ke), &peer->common._remote_zid);
@@ -633,10 +616,8 @@ static void verify_admin_space_query(const z_loaned_session_t *zs, const admin_s
 
         case _Z_TRANSPORT_RAWETH_TYPE: {
             const _z_transport_multicast_t *tp = &session->_tp._transport._raweth;
-            for (_z_transport_peer_multicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_multicast_slist_next(it)) {
-                const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
-
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(peers_ke), &peer->common._remote_zid);
@@ -946,10 +927,8 @@ void test_admin_space_transport_0_peer_endpoints_succeeds(void) {
 
         case _Z_TRANSPORT_MULTICAST_TYPE: {
             const _z_transport_multicast_t *tp = &session->_tp._transport._multicast;
-            for (_z_transport_peer_multicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_multicast_slist_next(it)) {
-                const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
-
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(kes.peers_ke), &peer->common._remote_zid);
@@ -969,10 +948,8 @@ void test_admin_space_transport_0_peer_endpoints_succeeds(void) {
 
         case _Z_TRANSPORT_RAWETH_TYPE: {
             const _z_transport_multicast_t *tp = &session->_tp._transport._raweth;
-            for (_z_transport_peer_multicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_multicast_slist_next(it)) {
-                const _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
-
+            const _z_transport_peer_multicast_t *peer = NULL;
+            _ZP_CONST_FOREACH_VAL (_z_address_to_transport_peer_multicast_hmap, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(kes.peers_ke), &peer->common._remote_zid);

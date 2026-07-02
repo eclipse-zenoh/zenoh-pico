@@ -16,11 +16,13 @@
 
 #include <stddef.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/common/rx.h"
+#include "zenoh-pico/transport/multicast/connectivity.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
@@ -44,14 +46,18 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
         // Decode one session message
         _z_transport_message_t t_msg;
         ret = _z_transport_message_decode(&t_msg, &zbuf);
-        if (ret != _Z_RES_OK) {
-            _Z_ERROR("Connection closed due to malformed message: %d", ret);
-            break;
+        if (ret == _Z_RES_OK) {
+            ret = _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
         }
-
-        ret = _z_multicast_handle_transport_message(ztm, &t_msg, &ztm->_zbuf_addr);
         if (ret != _Z_RES_OK) {
-            _Z_ERROR("Dropping message due to processing error: %d", ret);
+            // failed to decode or process the message, let us close the connection and let distant peer to retry again.
+            _z_address_to_transport_peer_multicast_hmap_iter_t iter =
+                _z_address_to_transport_peer_multicast_hmap_get_iter(&ztm->_peers, &ztm->_zbuf_addr);
+            if (iter != _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
+                _Z_WARN("Closing connection with distant node at %.*s due to malformed message: %d",
+                        (int)ztm->_zbuf_addr.len, (const char *)ztm->_zbuf_addr.start, ret);
+                _zp_multicast_remove_peer_by_iter(ztm, iter);
+            }
             break;
         }
     }
@@ -72,6 +78,7 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
 }
 
 _z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *executor) {
+    (void)executor;
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
     if (ztm->_common._state == _Z_TRANSPORT_STATE_CLOSED) {
         return _z_fut_fn_result_ready();
@@ -86,12 +93,8 @@ _z_fut_fn_result_t _zp_multicast_read_task_fn(void *ztm_arg, _z_executor_t *exec
         return _z_fut_fn_result_continue();
 #endif
     }
-    if (ret < _Z_RES_OK) {
-        // TODO: report failure and disconnect ?
-        _Z_WARN("Multicast read task failed");
-        return _zp_multicast_failed_result(ztm, executor);
-    } else {
-        return _z_fut_fn_result_continue();
-    }
+    // We ignore errors for now, as they are handled by the processing function and all
+    // peers responsible for the errors are disconnected
+    return _z_fut_fn_result_continue();
 }
 #endif

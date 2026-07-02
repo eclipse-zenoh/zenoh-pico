@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 void _zp_multicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback);
-void _zp_multicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
 
 #ifdef __cplusplus
 }

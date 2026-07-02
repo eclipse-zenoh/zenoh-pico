@@ -28,6 +28,7 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/session/weak_session.h"
+#include "zenoh-pico/utils/hash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,22 +91,24 @@ void _z_connectivity_peer_event_data_alias_from_common(_z_connectivity_peer_even
 
 typedef struct {
     _z_transport_peer_common_t common;
-    _z_slice_t _remote_addr;
     _z_conduit_sn_list_t _sn_rx_sns;
     // SN numbers
     _z_zint_t _sn_res;
     volatile _z_zint_t _lease;
 } _z_transport_peer_multicast_t;
 
-size_t _z_transport_peer_multicast_size(const _z_transport_peer_multicast_t *src);
 void _z_transport_peer_multicast_clear(_z_transport_peer_multicast_t *src);
-void _z_transport_peer_multicast_copy(_z_transport_peer_multicast_t *dst, const _z_transport_peer_multicast_t *src);
-bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
-                                    const _z_transport_peer_multicast_t *right);
-_Z_ELEM_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, _z_transport_peer_multicast_size,
-               _z_transport_peer_multicast_clear, _z_transport_peer_multicast_copy, _z_noop_move,
-               _z_transport_peer_multicast_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SLIST_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, true)
+
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE _z_slice_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE _z_transport_peer_multicast_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(x) _z_fnv1_hash((x)->start, (x)->len)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(x, y) _z_slice_eq((x), (y))
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_address_to_transport_peer_multicast_hmap
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_MAX_NUM_PEERS
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN _z_slice_clear
+#define _ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN _z_transport_peer_multicast_clear
+// default move
+#include "zenoh-pico/collections/static_hashmap_template.h"
 
 typedef enum _z_unicast_peer_flow_state_e {
     _Z_FLOW_STATE_INACTIVE = 0,
@@ -240,7 +243,7 @@ typedef struct _z_transport_multicast_t {
     uint8_t _zbuf_addr_buf[_Z_MULTICAST_ADDR_BUFF_SIZE];
     _z_slice_t _zbuf_addr;
     // Known valid peers
-    _z_transport_peer_multicast_slist_t *_peers;
+    _z_address_to_transport_peer_multicast_hmap_t _peers;
     // T message send function
     _zp_f_send_tmsg _send_f;
 } _z_transport_multicast_t;
@@ -287,7 +290,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_sys_net_socket_t socket, bool owns_socket,
                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
-size_t _z_transport_get_peers_count(_z_transport_t *zt);
+size_t _z_transport_get_peers_count(const _z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);

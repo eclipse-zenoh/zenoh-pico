@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
@@ -618,14 +619,10 @@ bool _z_session_has_router_peer(const _z_session_t *session) {
             peers = _z_transport_peer_unicast_slist_next(peers);
         }
     } else if (session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
-        _z_transport_peer_multicast_slist_t *peers = session->_tp._transport._multicast._peers;
-        while (peers != NULL) {
-            _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(peers);
-            if (peer->common._remote_whatami == Z_WHATAMI_ROUTER) {
-                return true;
-            }
-            peers = _z_transport_peer_multicast_slist_next(peers);
-        }
+        const _z_transport_peer_multicast_t *peer = NULL;
+        _ZP_CONST_FIND_VAL(_z_address_to_transport_peer_multicast_hmap, &session->_tp._transport._multicast._peers,
+                           peer, _->common._remote_whatami == Z_WHATAMI_ROUTER);
+        return (peer != NULL);
     }
     return false;
 }
@@ -636,30 +633,6 @@ _z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *weak) {
         _z_session_rc_drop(&sess_rc);
     }
     return sess_rc;
-}
-
-_z_config_t *_z_info(const _z_session_t *zn) {
-    _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
-    if (ps != NULL) {
-        _z_config_init(ps);
-        _z_string_t s = _z_id_to_string(&zn->_local_zid);
-        _zp_config_insert_string(ps, Z_INFO_PID_KEY, &s);
-        _z_string_clear(&s);
-
-        switch (zn->_tp._type) {
-            case _Z_TRANSPORT_UNICAST_TYPE:
-                _zp_unicast_info_session(&zn->_tp, ps, zn->_mode);
-                break;
-            case _Z_TRANSPORT_MULTICAST_TYPE:
-            case _Z_TRANSPORT_RAWETH_TYPE:
-                _zp_multicast_info_session(&zn->_tp, ps);
-                break;
-            default:
-                break;
-        }
-    }
-
-    return ps;
 }
 
 z_result_t _zp_read(_z_session_t *zn, bool single_read) { return _z_read(&zn->_tp, single_read); }

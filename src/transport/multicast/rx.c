@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/link/transport/socket.h"
@@ -29,6 +30,7 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/common/platform.h"
+#include "zenoh-pico/transport/multicast/connectivity.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -158,33 +160,16 @@ static z_result_t _z_multicast_remote_addr_to_endpoint(const _z_transport_multic
 }
 #endif
 
-static _z_transport_peer_multicast_t *_z_find_peer_entry(_z_transport_peer_multicast_slist_t *l,
-                                                         _z_slice_t *remote_addr) {
-    _z_transport_peer_multicast_t *ret = NULL;
-
-    _z_transport_peer_multicast_slist_t *xs = l;
-    for (; xs != NULL; xs = _z_transport_peer_multicast_slist_next(xs)) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(xs);
-        if (val->_remote_addr.len != remote_addr->len) {
-            continue;
-        }
-        if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
-            ret = val;
-        }
-    }
-
-    return ret;
-}
-
 static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_frame_t *msg,
-                                            _z_transport_peer_multicast_t *entry) {
+                                            _z_address_to_transport_peer_multicast_hmap_iter_t iter) {
     // Check peer
-    if (entry == NULL) {
+    if (iter == _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
         _Z_INFO("Dropping _Z_FRAME from unknown peer");
         return _Z_RES_OK;
     }
+    _z_transport_peer_multicast_t *peer = &_z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val;
     // Note that we receive data from peer
-    entry->common._received = true;
+    peer->common._received = true;
 
     z_reliability_t tmsg_reliability;
     // Check if the SN is correct
@@ -192,24 +177,24 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
         tmsg_reliability = Z_RELIABILITY_RELIABLE;
         // @TODO: amend once reliability is in place. For the time being only
         //        monotonic SNs are ensured
-        if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, msg->_sn)) {
-            entry->_sn_rx_sns._val._plain._reliable = msg->_sn;
+        if (_z_sn_precedes(peer->_sn_res, peer->_sn_rx_sns._val._plain._reliable, msg->_sn)) {
+            peer->_sn_rx_sns._val._plain._reliable = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            entry->common._state_reliable = _Z_DBUF_STATE_NULL;
-            _z_wbuf_clear(&entry->common._dbuf_reliable);
+            peer->common._state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->common._dbuf_reliable);
 #endif
             _Z_INFO("Reliable message dropped because it is out of order");
             return _Z_RES_OK;
         }
     } else {
         tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
-        if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, msg->_sn)) {
-            entry->_sn_rx_sns._val._plain._best_effort = msg->_sn;
+        if (_z_sn_precedes(peer->_sn_res, peer->_sn_rx_sns._val._plain._best_effort, msg->_sn)) {
+            peer->_sn_rx_sns._val._plain._best_effort = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
-            _z_wbuf_clear(&entry->common._dbuf_best_effort);
+            peer->common._state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->common._dbuf_best_effort);
 #endif
             _Z_INFO("Best effort message dropped because it is out of order");
             return _Z_RES_OK;
@@ -222,22 +207,23 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     while (_z_zbuf_readable_len(&buf) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
-        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &entry->common));
+        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &peer->common));
     }
     return _Z_RES_OK;
 }
 
-static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *ztm, uint8_t header,
-                                                     _z_t_msg_fragment_t *msg, _z_transport_peer_multicast_t *entry) {
+static z_result_t _z_multicast_handle_fragment(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_fragment_t *msg,
+                                               _z_address_to_transport_peer_multicast_hmap_iter_t iter) {
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_FRAGMENTATION == 1
     // Check peer
-    if (entry == NULL) {
+    if (iter == _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
         _Z_INFO("Dropping Z_FRAGMENT from unknown peer");
         return _Z_RES_OK;
     }
+    _z_transport_peer_multicast_t *peer = &_z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val;
     // Note that we receive data from the peer
-    entry->common._received = true;
+    peer->common._received = true;
 
     _z_wbuf_t *dbuf;
     uint8_t *dbuf_state;
@@ -250,28 +236,28 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         // Check SN
         // @TODO: amend once reliability is in place. For the time being only
         //        monotonic SNs are ensured
-        if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, msg->_sn)) {
-            consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, msg->_sn);
-            entry->_sn_rx_sns._val._plain._reliable = msg->_sn;
-            dbuf = &entry->common._dbuf_reliable;
-            dbuf_state = &entry->common._state_reliable;
+        if (_z_sn_precedes(peer->_sn_res, peer->_sn_rx_sns._val._plain._reliable, msg->_sn)) {
+            consecutive = _z_sn_consecutive(peer->_sn_res, peer->_sn_rx_sns._val._plain._reliable, msg->_sn);
+            peer->_sn_rx_sns._val._plain._reliable = msg->_sn;
+            dbuf = &peer->common._dbuf_reliable;
+            dbuf_state = &peer->common._state_reliable;
         } else {
-            _z_wbuf_clear(&entry->common._dbuf_reliable);
-            entry->common._state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->common._dbuf_reliable);
+            peer->common._state_reliable = _Z_DBUF_STATE_NULL;
             _Z_INFO("Reliable message dropped because it is out of order");
             return _Z_RES_OK;
         }
     } else {
         tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
         // Check SN
-        if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, msg->_sn)) {
-            consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, msg->_sn);
-            entry->_sn_rx_sns._val._plain._best_effort = msg->_sn;
-            dbuf = &entry->common._dbuf_best_effort;
-            dbuf_state = &entry->common._state_best_effort;
+        if (_z_sn_precedes(peer->_sn_res, peer->_sn_rx_sns._val._plain._best_effort, msg->_sn)) {
+            consecutive = _z_sn_consecutive(peer->_sn_res, peer->_sn_rx_sns._val._plain._best_effort, msg->_sn);
+            peer->_sn_rx_sns._val._plain._best_effort = msg->_sn;
+            dbuf = &peer->common._dbuf_best_effort;
+            dbuf_state = &peer->common._state_best_effort;
         } else {
-            _z_wbuf_clear(&entry->common._dbuf_best_effort);
-            entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->common._dbuf_best_effort);
+            peer->common._state_best_effort = _Z_DBUF_STATE_NULL;
             _Z_INFO("Best effort message dropped because it is out of order");
             return _Z_RES_OK;
         }
@@ -283,7 +269,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         return _Z_RES_OK;
     }
     // Handle fragment markers
-    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(entry->common._patch)) {
+    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(peer->common._patch)) {
         if (msg->first) {
             _z_wbuf_reset(dbuf);
         } else if (_z_wbuf_len(dbuf) == 0) {
@@ -337,7 +323,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             // Memory clear of the network message data must be handled by the network message layer
-            _z_handle_network_message(&ztm->_common, &zm, &entry->common);
+            _z_handle_network_message(&ztm->_common, &zm, &peer->common);
         } else {
             _Z_INFO("Failed to decode defragmented message");
             _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
@@ -357,131 +343,121 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
     return ret;
 }
 
-static z_result_t _z_multicast_handle_fragment(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_fragment_t *msg,
-                                               _z_transport_peer_multicast_t *entry) {
-    z_result_t ret = _z_multicast_handle_fragment_inner(ztm, header, msg, entry);
-    return ret;
+static z_result_t _z_multicast_handle_join_existing_peer(_z_transport_multicast_t *ztm, _z_slice_t *addr,
+                                                         _z_t_msg_join_t *msg,
+                                                         _z_address_to_transport_peer_multicast_hmap_iter_t iter) {
+    (void)ztm;
+    _z_transport_peer_multicast_t *peer = &_z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val;
+    // Note that we receive data from the peer
+    peer->common._received = true;
+
+    // Check representing capabilities
+    if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
+        (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
+        _Z_WARN("Distant node at %.*s is incompatible config wise", (int)addr->len, (const char *)addr->start);
+        return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+    }
+    // Update SNs
+    _z_conduit_sn_list_copy(&peer->_sn_rx_sns, &msg->_next_sn);
+    _z_conduit_sn_list_decrement(peer->_sn_res, &peer->_sn_rx_sns);
+    // Update lease time (set as ms during)
+    peer->_lease = msg->_lease;
+    return _Z_RES_OK;
 }
 
-static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, _z_slice_t *addr, _z_t_msg_join_t *msg,
-                                                 _z_transport_peer_multicast_t *entry) {
-    // Check proto version
-    if (msg->_version != Z_PROTO_VERSION) {
-        return _Z_RES_OK;
+static z_result_t _z_multicast_handle_join_new_peer(_z_transport_multicast_t *ztm, _z_slice_t *addr,
+                                                    _z_t_msg_join_t *msg) {
+    // If the new node has less representing capabilities then we can't communicate
+    if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
+        (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
+        _Z_INFO("Couldn't accept peer because distant node at %.*s is incompatible config wise.", (int)addr->len,
+                (const char *)addr->start);
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
     }
-    // Check peer
-    if (entry == NULL) {  // New peer
-        // If the new node has less representing capabilities then we can't communicate
-        if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
-            (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
-            _Z_INFO("Couldn't accept peer because distant node is incompatible config wise.");
-            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
-        }
-        // Initialize entry
-        ztm->_peers = _z_transport_peer_multicast_slist_push_empty(ztm->_peers);
-        entry = _z_transport_peer_multicast_slist_value(ztm->_peers);
-        entry->_sn_res = _z_sn_max(msg->_seq_num_res);
-        entry->_remote_addr = _z_slice_duplicate(addr);
-        _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &msg->_next_sn);
-        _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
-        // Update lease time (set as ms during)
-        entry->_lease = msg->_lease;
-        entry->common._remote_zid = msg->_zid;
-        entry->common._remote_whatami = msg->_whatami;
-        entry->common._received = true;
-        entry->common._remote_resources = NULL;
+    // Initialize entry
+    _z_slice_t remote_addr = _z_slice_null();
+    _Z_RETURN_IF_ERR(_z_slice_copy(&remote_addr, addr));
+    _z_transport_peer_mutex_lock(&ztm->_common);
+    _z_address_to_transport_peer_multicast_hmap_iter_t iter =
+        _z_address_to_transport_peer_multicast_hmap_insert(&ztm->_peers, &remote_addr, NULL);
+    if (iter == _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
+        _z_transport_peer_mutex_unlock(&ztm->_common);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    _z_transport_peer_multicast_t *entry = &_z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val;
+    entry->_sn_res = _z_sn_max(msg->_seq_num_res);
+    _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &msg->_next_sn);
+    _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
+    // Update lease time (set as ms during)
+    entry->_lease = msg->_lease;
+    entry->common._remote_zid = msg->_zid;
+    entry->common._remote_whatami = msg->_whatami;
+    entry->common._received = true;
+    entry->common._remote_resources = NULL;
 #if Z_FEATURE_CONNECTIVITY == 1
-        entry->common._link_src = _z_string_null();
-        entry->common._link_dst = _z_string_null();
-        if (ztm->_common._link != NULL) {
-            entry->common._link_src = _z_endpoint_to_string(&ztm->_common._link->_endpoint);
-            (void)_z_multicast_remote_addr_to_endpoint(ztm, addr, &entry->common._link_dst);
-        }
+    entry->common._link_src = _z_string_null();
+    entry->common._link_dst = _z_string_null();
+    if (ztm->_common._link != NULL) {
+        entry->common._link_src = _z_endpoint_to_string(&ztm->_common._link->_endpoint);
+        (void)_z_multicast_remote_addr_to_endpoint(ztm, addr, &entry->common._link_dst);
+    }
 #endif
 #if Z_FEATURE_FRAGMENTATION == 1
-        entry->common._patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
-        entry->common._state_reliable = _Z_DBUF_STATE_NULL;
-        entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
-        entry->common._dbuf_reliable = _z_wbuf_null();
-        entry->common._dbuf_best_effort = _z_wbuf_null();
+    entry->common._patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
+    entry->common._state_reliable = _Z_DBUF_STATE_NULL;
+    entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
+    entry->common._dbuf_reliable = _z_wbuf_null();
+    entry->common._dbuf_best_effort = _z_wbuf_null();
 #endif
-#if Z_FEATURE_CONNECTIVITY == 1
-        _z_connectivity_peer_event_data_t connected_peer = {0};
-        uint16_t mtu = 0;
-        bool is_streamed = false;
-        bool is_reliable = false;
-        _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
-        _z_connectivity_peer_event_data_copy_from_common(&connected_peer, &entry->common);
-        _z_transport_peer_mutex_unlock(&ztm->_common);
-        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztm->_common), &connected_peer, true, mtu,
-                                       is_streamed, is_reliable);
-        _z_connectivity_peer_event_data_clear(&connected_peer);
-        _z_transport_peer_mutex_lock(&ztm->_common);
-#endif
-    } else {  // Existing peer
-        // Note that we receive data from the peer
-        entry->common._received = true;
+    _z_transport_peer_mutex_unlock(&ztm->_common);
+    _zp_multicast_report_connected_event(ztm, iter);
 
-        // Check representing capabilities
-        if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
-            (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
-#if Z_FEATURE_CONNECTIVITY == 1
-            _z_connectivity_peer_event_data_t disconnected_peer = {0};
-            uint16_t mtu = 0;
-            bool is_streamed = false;
-            bool is_reliable = false;
-            _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
-            _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &entry->common);
-#endif
-            // TODO: cleanup here should also be done on mappings/subs/etc...
-            _z_transport_peer_multicast_slist_drop_first_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
-#if Z_FEATURE_CONNECTIVITY == 1
-            _z_transport_peer_mutex_unlock(&ztm->_common);
-            _z_connectivity_peer_disconnected(_z_transport_common_get_session(&ztm->_common), &disconnected_peer, true,
-                                              mtu, is_streamed, is_reliable);
-            _z_connectivity_peer_event_data_clear(&disconnected_peer);
-            _z_transport_peer_mutex_lock(&ztm->_common);
-#endif
-            return _Z_RES_OK;
-        }
-        // Update SNs
-        _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &msg->_next_sn);
-        _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
-        // Update lease time (set as ms during)
-        entry->_lease = msg->_lease;
-    }
     return _Z_RES_OK;
 }
 
 static z_result_t _z_multicast_handle_join(_z_transport_multicast_t *ztm, _z_slice_t *addr, _z_t_msg_join_t *msg,
-                                           _z_transport_peer_multicast_t *entry) {
-    z_result_t ret = _z_multicast_handle_join_inner(ztm, addr, msg, entry);
+                                           _z_address_to_transport_peer_multicast_hmap_iter_t iter) {
+    // Check proto version
+    if (msg->_version != Z_PROTO_VERSION) {
+        _Z_INFO("Couldn't accept peer because distant node at %.*s is incompatible config wise", (int)addr->len,
+                (const char *)addr->start);
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    z_result_t ret;
+    if (iter == _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
+        ret = _z_multicast_handle_join_new_peer(ztm, addr, msg);
+    } else {
+        ret = _z_multicast_handle_join_existing_peer(ztm, addr, msg, iter);
+    }
     return ret;
 }
 
 z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                                  _z_slice_t *addr) {
     z_result_t ret = _Z_RES_OK;
-    _z_transport_peer_mutex_lock(&ztm->_common);
     // Mark the session that we have received data from this peer
-    _z_transport_peer_multicast_t *entry = _z_find_peer_entry(ztm->_peers, addr);
+    _z_address_to_transport_peer_multicast_hmap_iter_t iter =
+        _z_address_to_transport_peer_multicast_hmap_get_iter(&ztm->_peers, addr);
+    if (iter == _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers) &&
+        _Z_MID(t_msg->_header) != _Z_MID_T_JOIN) {
+        _Z_INFO("Received message from unknown peer %.*s", (int)addr->len, (const char *)addr->start);
+        return _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+    }
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
             _Z_DEBUG("Received _Z_FRAME message");
-            ret = _z_multicast_handle_frame(ztm, t_msg->_header, &t_msg->_body._frame, entry);
+            ret = _z_multicast_handle_frame(ztm, t_msg->_header, &t_msg->_body._frame, iter);
             break;
         }
 
         case _Z_MID_T_FRAGMENT:
             _Z_DEBUG("Received Z_FRAGMENT message");
-            ret = _z_multicast_handle_fragment(ztm, t_msg->_header, &t_msg->_body._fragment, entry);
+            ret = _z_multicast_handle_fragment(ztm, t_msg->_header, &t_msg->_body._fragment, iter);
             break;
 
         case _Z_MID_T_KEEP_ALIVE: {
             _Z_DEBUG("Received _Z_KEEP_ALIVE message");
-            if (entry != NULL) {
-                entry->common._received = true;
-            }
+            _z_address_to_transport_peer_multicast_hmap_at(&ztm->_peers, iter)->val.common._received = true;
             break;
         }
 
@@ -497,31 +473,13 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
         case _Z_MID_T_JOIN: {
             _Z_DEBUG("Received _Z_JOIN message");
-            ret = _z_multicast_handle_join(ztm, addr, &t_msg->_body._join, entry);
+            ret = _z_multicast_handle_join(ztm, addr, &t_msg->_body._join, iter);
             break;
         }
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing connection as requested by the remote peer");
-            if (entry != NULL) {
-#if Z_FEATURE_CONNECTIVITY == 1
-                _z_connectivity_peer_event_data_t disconnected_peer = {0};
-                uint16_t mtu = 0;
-                bool is_streamed = false;
-                bool is_reliable = false;
-                _z_transport_get_link_properties(&ztm->_common, &mtu, &is_streamed, &is_reliable);
-                _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &entry->common);
-#endif
-                ztm->_peers = _z_transport_peer_multicast_slist_drop_first_filter(
-                    ztm->_peers, _z_transport_peer_multicast_eq, entry);
-#if Z_FEATURE_CONNECTIVITY == 1
-                _z_transport_peer_mutex_unlock(&ztm->_common);
-                _z_connectivity_peer_disconnected(_z_transport_common_get_session(&ztm->_common), &disconnected_peer,
-                                                  true, mtu, is_streamed, is_reliable);
-                _z_connectivity_peer_event_data_clear(&disconnected_peer);
-                _z_transport_peer_mutex_lock(&ztm->_common);
-#endif
-            }
+            _zp_multicast_remove_peer_by_iter(ztm, iter);
             break;
         }
 
@@ -530,7 +488,6 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             break;
         }
     }
-    _z_transport_peer_mutex_unlock(&ztm->_common);
     return ret;
 }
 

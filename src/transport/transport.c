@@ -25,19 +25,19 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/sleep.h"
 
-size_t _z_transport_get_peers_count(_z_transport_t *zt) {
+size_t _z_transport_get_peers_count(const _z_transport_t *zt) {
     size_t count = 0;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _z_transport_peer_mutex_lock(&zt->_transport._unicast._common);
+            _z_transport_peer_mutex_lock((_z_transport_common_t *)&zt->_transport._unicast._common);
             count = _z_transport_peer_unicast_slist_len(zt->_transport._unicast._peers);
-            _z_transport_peer_mutex_unlock(&zt->_transport._unicast._common);
+            _z_transport_peer_mutex_unlock((_z_transport_common_t *)&zt->_transport._unicast._common);
             return count;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _z_transport_peer_mutex_lock(&zt->_transport._multicast._common);
-            count = _z_transport_peer_multicast_slist_len(zt->_transport._multicast._peers);
-            _z_transport_peer_mutex_unlock(&zt->_transport._multicast._common);
+            _z_transport_peer_mutex_lock((_z_transport_common_t *)&zt->_transport._multicast._common);
+            count = _z_address_to_transport_peer_multicast_hmap_size(&zt->_transport._multicast._peers);
+            _z_transport_peer_mutex_unlock((_z_transport_common_t *)&zt->_transport._multicast._common);
             return count;
         default:
             return 0;
