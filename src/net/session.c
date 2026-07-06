@@ -588,6 +588,7 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
     ret = _z_interest_resend_client_declarations(s);
     if (ret != _Z_RES_OK) {
         _Z_DEBUG("Resending declarations during reopen failed: %i", ret);
+        _z_transport_close(&s->_tp, 0);
         _z_transport_clear(&s->_tp);
         tc->_session = _z_session_rc_clone_as_weak(&zs);
         tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;

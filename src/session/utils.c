@@ -182,6 +182,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     // callbacks currently executing, like in the case of liveliness subscribers/ matching listeners / connectivity
     // events
     _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
+    _z_transport_close(&zn->_tp, 0);
     _z_flush_local_resources(zn);
     _z_flush_remote_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
