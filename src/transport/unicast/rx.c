@@ -33,7 +33,8 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
     size_t to_read = 0;
-    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+    // FIXME: This will only work for a single peer, in client mode.
+    _z_transport_peer_unicast_t *peer = _z_transport_unicast_get_first_peer(ztu);
     do {
         switch (ztu->_common._link->_cap._flow) {
             // Stream capable links
@@ -98,7 +99,8 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
 }
 
 static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_frame_t *msg,
-                                          _z_transport_peer_unicast_t *peer) {
+                                          _z_transport_peer_unicast_hset_iter_t peer_iter) {
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, peer_iter);
     z_reliability_t tmsg_reliability;
     // Check if the SN is correct
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_FRAME_R)) {
@@ -128,20 +130,21 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
             return _Z_RES_OK;
         }
     }
-    // Handle all the zenoh message, one by one
-    // From this point, memory cleaning must be handled by the network message layer
+    // Handle all the zenoh messages, one by one
     _z_network_message_t curr_nmsg = {0};
     _z_zbuf_t buf = _z_slice_as_zbuf(_z_slice_view_deref(&msg->_payload));
     while (_z_zbuf_readable_len(&buf) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
-        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztu->_common, &curr_nmsg, &peer->common));
+        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztu->_common, &curr_nmsg, peer_iter));
     }
     return _Z_RES_OK;
 }
 
 static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, uint8_t header,
-                                                   _z_t_msg_fragment_t *msg, _z_transport_peer_unicast_t *peer) {
+                                                   _z_t_msg_fragment_t *msg,
+                                                   _z_transport_peer_unicast_hset_iter_t peer_iter) {
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, peer_iter);
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_t *dbuf;
@@ -238,12 +241,12 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Decode message
-        _z_zenoh_message_t zm = {0};
+        _z_network_message_t zm = {0};
         ret = _z_network_message_decode(&zm, &zbf);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             // Memory clear of the network message data must be handled by the network message layer
-            _z_handle_network_message(&ztu->_common, &zm, &peer->common);
+            _z_handle_network_message(&ztu->_common, &zm, peer_iter);
         } else {
             _Z_INFO("Failed to decode defragmented message");
             _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
@@ -257,20 +260,20 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(header);
     _ZP_UNUSED(msg);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_iter);
     _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
 #endif
     return ret;
 }
 
 static z_result_t _z_unicast_handle_fragment(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_fragment_t *msg,
-                                             _z_transport_peer_unicast_t *peer) {
-    z_result_t ret = _z_unicast_handle_fragment_inner(ztu, header, msg, peer);
+                                             _z_transport_peer_unicast_hset_iter_t peer_iter) {
+    z_result_t ret = _z_unicast_handle_fragment_inner(ztu, header, msg, peer_iter);
     return ret;
 }
 
 z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg,
-                                               _z_transport_peer_unicast_t *peer) {
+                                               _z_transport_peer_unicast_hset_iter_t peer) {
     z_result_t ret = _Z_RES_OK;
 
     switch (_Z_MID(t_msg->_header)) {
@@ -323,10 +326,10 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
 }
 
 z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg,
-                                               _z_transport_peer_unicast_t *peer) {
+                                               _z_transport_peer_unicast_hset_iter_t peer) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

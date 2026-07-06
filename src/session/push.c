@@ -22,28 +22,26 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability,
-                           _z_transport_peer_common_t *peer) {
+z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability, size_t peer_id) {
     if (push->_body._is_put) {
         const _z_msg_put_t *put = &push->_body._body._put;
         return _z_trigger_subscriptions_put(zn, &push->_key, _z_bytes_view_deref(&put->_payload),
                                             _z_encoding_view_deref(&put->_encoding), &put->_commons._timestamp,
                                             push->_qos, _z_bytes_view_deref(&put->_attachment), reliability,
-                                            &put->_commons._source_info, peer);
+                                            &put->_commons._source_info, peer_id);
     } else {
         const _z_msg_del_t *del = &push->_body._body._del;
         return _z_trigger_subscriptions_del(zn, &push->_key, &del->_commons._timestamp, push->_qos,
                                             _z_bytes_view_deref(&del->_attachment), reliability,
-                                            &del->_commons._source_info, peer);
+                                            &del->_commons._source_info, peer_id);
     }
 }
 #else
-z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability,
-                           _z_transport_peer_common_t *peer) {
+z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability, size_t peer_id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(push);
     _ZP_UNUSED(reliability);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
     return _Z_RES_OK;
 }
 #endif

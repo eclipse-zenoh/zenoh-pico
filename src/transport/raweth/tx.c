@@ -27,6 +27,7 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/transport/multicast/transport.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -80,23 +81,6 @@ static z_result_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_s
         }
     }
     return ret;
-}
-
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the following mutexes are locked before calling this function:
- *  - ztm->_mutex_inner
- */
-static _z_zint_t __unsafe_z_raweth_get_sn(_z_transport_multicast_t *ztm, z_reliability_t reliability) {
-    _z_zint_t sn;
-    if (reliability == Z_RELIABILITY_RELIABLE) {
-        sn = ztm->_common._sn_tx_reliable;
-        ztm->_common._sn_tx_reliable = _z_sn_increment(ztm->_common._sn_res, ztm->_common._sn_tx_reliable);
-    } else {
-        sn = ztm->_common._sn_tx_best_effort;
-        ztm->_common._sn_tx_best_effort = _z_sn_increment(ztm->_common._sn_res, ztm->_common._sn_tx_best_effort);
-    }
-    return sn;
 }
 
 static void __unsafe_z_raweth_prepare_header(_z_link_t *zl, _z_wbuf_t *wbf) {
@@ -198,11 +182,13 @@ z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_mes
     return ret;
 }
 
-z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
+z_result_t _z_transport_raweth_send_t_msg(_z_transport_multicast_t *ztr, const _z_transport_message_t *t_msg) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
+    _z_transport_common_t *ztc = &ztr->_common;
 
     _z_transport_tx_mutex_lock(ztc, true);
+    // TODO: batch handling ?
     // Reset wbuf
     _z_wbuf_reset(&ztc->_wbuf);
     // Set socket info
@@ -222,14 +208,13 @@ z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_m
     return ret;
 }
 
-z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                z_congestion_control_t cong_ctrl) {
+z_result_t _z_transport_raweth_send_n_msg(_z_transport_multicast_t *ztr, const _z_network_message_t *n_msg,
+                                          z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
     z_result_t ret = _Z_RES_OK;
-    _z_transport_multicast_t *ztm = &zn->_tp._transport._raweth;
     _Z_DEBUG(">> send network message");
 
     // Acquire the lock and drop the message if needed
-    ret = _z_transport_tx_mutex_lock(&ztm->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_transport_tx_mutex_lock(&ztr->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Dropping zenoh message because of congestion control");
         return ret;
@@ -251,62 +236,62 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
             break;
     }
     // Reset wbuf
-    _z_wbuf_reset(&ztm->_common._wbuf);
+    _z_wbuf_reset(&ztr->_common._wbuf);
     // Set socket info
-    _Z_CLEAN_RETURN_IF_ERR(_zp_raweth_set_socket(keyexpr, &ztm->_common._link->_socket._raweth),
-                           _z_transport_tx_mutex_unlock(&ztm->_common));
+    _Z_CLEAN_RETURN_IF_ERR(_zp_raweth_set_socket(keyexpr, &ztr->_common._link->_socket._raweth),
+                           _z_transport_tx_mutex_unlock(&ztr->_common));
     // Prepare buff
-    __unsafe_z_raweth_prepare_header(ztm->_common._link, &ztm->_common._wbuf);
+    __unsafe_z_raweth_prepare_header(ztr->_common._link, &ztr->_common._wbuf);
     // Set the frame header
-    _z_zint_t sn = __unsafe_z_raweth_get_sn(ztm, reliability);
+    _z_zint_t sn = _z_transport_multicast_get_sn(ztr, reliability);
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
     // Encode the frame header
-    _Z_CLEAN_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_common._wbuf, &t_msg),
-                           _z_transport_tx_mutex_unlock(&ztm->_common));
+    _Z_CLEAN_RETURN_IF_ERR(_z_transport_message_encode(&ztr->_common._wbuf, &t_msg),
+                           _z_transport_tx_mutex_unlock(&ztr->_common));
     // Encode the network message
-    if (_z_network_message_encode(&ztm->_common._wbuf, n_msg) == _Z_RES_OK) {
+    if (_z_network_message_encode(&ztr->_common._wbuf, n_msg) == _Z_RES_OK) {
         // Write the eth header
-        _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm->_common._link, &ztm->_common._wbuf),
-                               _z_transport_tx_mutex_unlock(&ztm->_common));
+        _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztr->_common._link, &ztr->_common._wbuf),
+                               _z_transport_tx_mutex_unlock(&ztr->_common));
         // Send the wbuf on the socket
-        _Z_CLEAN_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztm->_common._link, &ztm->_common._wbuf),
-                               _z_transport_tx_mutex_unlock(&ztm->_common));
+        _Z_CLEAN_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztr->_common._link, &ztr->_common._wbuf),
+                               _z_transport_tx_mutex_unlock(&ztr->_common));
         // Mark the session that we have transmitted data
-        ztm->_common._transmitted = true;
+        ztr->_common._transmitted = true;
     } else {  // The message does not fit in the current batch, let's fragment it
 #if Z_FEATURE_FRAGMENTATION == 1
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf;
         if (_z_wbuf_init(&fbf, _Z_FRAG_BUFF_BASE_SIZE, true) != _Z_RES_OK) {
             _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-            _z_transport_tx_mutex_unlock(&ztm->_common);
+            _z_transport_tx_mutex_unlock(&ztr->_common);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         // Encode the message on the expandable wbuf
-        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _z_transport_tx_mutex_unlock(&ztm->_common));
+        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _z_transport_tx_mutex_unlock(&ztr->_common));
         // Fragment and send the message
         bool is_first = true;
         while (_z_wbuf_len(&fbf) > 0) {
             if (is_first) {
                 // Get the fragment sequence number
-                sn = __unsafe_z_raweth_get_sn(ztm, reliability);
+                sn = _z_transport_multicast_get_sn(ztr, reliability);
             }
             // Reset wbuf
-            _z_wbuf_reset(&ztm->_common._wbuf);
+            _z_wbuf_reset(&ztr->_common._wbuf);
             // Prepare buff
-            __unsafe_z_raweth_prepare_header(ztm->_common._link, &ztm->_common._wbuf);
+            __unsafe_z_raweth_prepare_header(ztr->_common._link, &ztr->_common._wbuf);
             // Serialize one fragment
             _Z_CLEAN_RETURN_IF_ERR(
-                __unsafe_z_serialize_zenoh_fragment(&ztm->_common._wbuf, &fbf, reliability, sn, is_first),
-                _z_transport_tx_mutex_unlock(&ztm->_common));
+                _z_wbuf_serialize_zenoh_fragment(&ztr->_common._wbuf, &fbf, reliability, sn, is_first),
+                _z_transport_tx_mutex_unlock(&ztr->_common));
             // Write the eth header
-            _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztm->_common._link, &ztm->_common._wbuf),
-                                   _z_transport_tx_mutex_unlock(&ztm->_common));
+            _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(ztr->_common._link, &ztr->_common._wbuf),
+                                   _z_transport_tx_mutex_unlock(&ztr->_common));
             // Send the wbuf on the socket
-            _Z_CLEAN_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztm->_common._link, &ztm->_common._wbuf),
-                                   _z_transport_tx_mutex_unlock(&ztm->_common));
+            _Z_CLEAN_RETURN_IF_ERR(_z_raweth_link_send_wbuf(ztr->_common._link, &ztr->_common._wbuf),
+                                   _z_transport_tx_mutex_unlock(&ztr->_common));
             // Mark the session that we have transmitted data
-            ztm->_common._transmitted = true;
+            ztr->_common._transmitted = true;
             is_first = false;
         }
         // Clear the expandable buffer
@@ -315,7 +300,7 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
         _Z_INFO("Sending the message required fragmentation feature that is deactivated.");
 #endif
     }
-    _z_transport_tx_mutex_unlock(&ztm->_common);
+    _z_transport_tx_mutex_unlock(&ztr->_common);
     return ret;
 }
 
@@ -325,18 +310,27 @@ z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_mes
     _ZP_UNUSED(t_msg);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
-z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
-    _ZP_UNUSED(ztc);
+z_result_t _z_transport_raweth_send_t_msg(_z_transport_multicast_t *zte, const _z_transport_message_t *t_msg) {
+    _ZP_UNUSED(zte);
     _ZP_UNUSED(t_msg);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
-z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                z_congestion_control_t cong_ctrl) {
-    _ZP_UNUSED(zn);
+z_result_t _z_transport_raweth_send_n_msg(_z_transport_multicast_t *ztr, const _z_network_message_t *n_msg,
+                                          z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
+    _ZP_UNUSED(ztr);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(cong_ctrl);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
+
+#if Z_FEATURE_BATCHING == 1
+z_result_t _z_transport_raweth_send_n_batch(_z_transport_multicast_t *ztr) {
+    _ZP_UNUSED(ztr);
+    _Z_INFO("Batching not yet supported on raweth transport");
+    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
+    return _Z_ERR_TRANSPORT_TX_FAILED;
+}
+#endif  // Z_FEATURE_BATCHING == 1

@@ -26,6 +26,7 @@
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/connectivity.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -37,8 +38,9 @@
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
-static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
-                                              size_t to_read) {
+static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu,
+                                              _z_transport_peer_unicast_hset_iter_t peer_iter, size_t to_read) {
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, peer_iter);
     // Wrap the main buffer to_read bytes
     _z_zbuf_t zbuf;
     if (peer->flow_state == _Z_FLOW_STATE_READY) {
@@ -57,7 +59,7 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
             _Z_INFO("Connection compromised due to malformed message: %d", ret);
             return ret;
         }
-        ret = _z_unicast_handle_transport_message(ztu, &t_msg, peer);
+        ret = _z_unicast_handle_transport_message(ztu, &t_msg, peer_iter);
         if (ret != _Z_RES_OK) {
             if (ret != _Z_ERR_CONNECTION_CLOSED) {
                 _Z_WARN("Connection compromised due to message processing error: %d", ret);
@@ -74,7 +76,9 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
     return _Z_RES_OK;
 }
 
-static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer, size_t *to_read) {
+static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_hset_iter_t peer_iter,
+                                   size_t *to_read) {
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, peer_iter);
     switch (ztu->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_readable_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -110,8 +114,9 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
 }
 
 z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
-    _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-    if (curr_peer == NULL) {
+    // FIXME: This will only work for a single peer, in client mode.
+    _z_transport_peer_unicast_hset_iter_t curr_peer_iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
+    if (curr_peer_iter == _z_transport_peer_unicast_hset_end(&ztu->_peers)) {
         _Z_ERROR("Invalid router endpoint\n");
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
     }
@@ -119,15 +124,15 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     if (single_read) {
         _z_transport_message_t t_msg;
         _Z_RETURN_IF_ERR(_z_unicast_recv_t_msg(ztu, &t_msg));
-        _Z_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer));
+        _Z_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer_iter));
     } else {
         // Prepare buffer
         _z_zbuf_reset(&ztu->_common._zbuf);
         size_t to_read = 0;
         // Retrieve data if any
-        if (_z_unicast_client_read(ztu, curr_peer, &to_read)) {
+        if (_z_unicast_client_read(ztu, curr_peer_iter, &to_read)) {
             // Process data
-            _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read))
+            _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer_iter, to_read))
         } else {
             return _Z_NO_DATA_PROCESSED;
         }
@@ -136,35 +141,46 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
 }
 
 #if Z_FEATURE_UNICAST_PEER == 1
-static void _z_unicast_wait_iter_reset(_z_socket_wait_iter_t *iter) { iter->_current_entry = NULL; }
+
+typedef struct _z_socket_wait_iter_context_t {
+    _z_transport_unicast_t *ztu;
+    _z_transport_peer_unicast_hset_iter_t iter;
+} _z_socket_wait_iter_context_t;
+
+static void _z_unicast_wait_iter_reset(_z_socket_wait_iter_t *iter) {
+    _z_socket_wait_iter_context_t *ctx = (_z_socket_wait_iter_context_t *)iter->_ctx;
+    ctx->iter = _z_transport_peer_unicast_hset_end(&ctx->ztu->_peers);
+}
 
 static bool _z_unicast_wait_iter_next(_z_socket_wait_iter_t *iter) {
-    _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)iter->_ctx;
-    if (iter->_current_entry == NULL) {
-        iter->_current_entry = ztu->_peers;
+    _z_socket_wait_iter_context_t *ctx = (_z_socket_wait_iter_context_t *)iter->_ctx;
+    if (ctx->iter == _z_transport_peer_unicast_hset_end(&ctx->ztu->_peers)) {
+        ctx->iter = _z_transport_peer_unicast_hset_begin(&ctx->ztu->_peers);
     } else {
-        iter->_current_entry =
-            _z_transport_peer_unicast_slist_next((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+        ctx->iter = _z_transport_peer_unicast_hset_iter_next(&ctx->ztu->_peers, ctx->iter);
     }
-    return iter->_current_entry != NULL;
+    return ctx->iter != _z_transport_peer_unicast_hset_end(&ctx->ztu->_peers);
 }
 
 static const _z_sys_net_socket_t *_z_unicast_wait_iter_get_socket(const _z_socket_wait_iter_t *iter) {
-    _z_transport_peer_unicast_t *peer =
-        _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+    _z_socket_wait_iter_context_t *ctx = (_z_socket_wait_iter_context_t *)iter->_ctx;
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ctx->ztu->_peers, ctx->iter);
     return &peer->_socket;
 }
 
 static void _z_unicast_wait_iter_set_ready(_z_socket_wait_iter_t *iter, bool ready) {
-    _z_transport_peer_unicast_t *peer =
-        _z_transport_peer_unicast_slist_value((_z_transport_peer_unicast_slist_t *)iter->_current_entry);
+    _z_socket_wait_iter_context_t *ctx = (_z_socket_wait_iter_context_t *)iter->_ctx;
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ctx->ztu->_peers, ctx->iter);
     peer->_pending = ready;
 }
 
 static z_result_t _z_unicast_wait_peer_event(_z_transport_unicast_t *ztu) {
+    _z_socket_wait_iter_context_t ctx = {
+        .ztu = ztu,
+        .iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers),
+    };
     _z_socket_wait_iter_t iter = {
-        ._ctx = ztu,
-        ._current_entry = NULL,
+        ._ctx = &ctx,
         ._reset = _z_unicast_wait_iter_reset,
         ._next = _z_unicast_wait_iter_next,
         ._get_socket = _z_unicast_wait_iter_get_socket,
@@ -287,14 +303,12 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
 }
 
 static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
-    _z_transport_peer_mutex_lock(&ztu->_common);
-    _z_transport_peer_unicast_slist_t *curr_list = ztu->_peers;
-    _z_transport_peer_unicast_slist_t *prev = NULL;
-    _z_transport_peer_unicast_slist_t *prev_drop = NULL;
+    _z_peer_mask_bitset_t expired_peers = _z_peer_mask_bitset_new();
     size_t to_read = 0;
-    while (curr_list != NULL) {
-        bool drop_peer = false;
-        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
+    for (_z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
+         iter != _z_transport_peer_unicast_hset_end(&ztu->_peers);
+         iter = _z_transport_peer_unicast_hset_iter_next(&ztu->_peers, iter)) {
+        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, iter);
         if (curr_peer->_pending) {
             curr_peer->_pending = false;
             // Read data from socket
@@ -304,11 +318,11 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
                 do {
                     message_to_process = false;
                     // Process one message
-                    if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+                    if (_z_unicast_process_messages(ztu, iter, to_read) != _Z_RES_OK) {
                         // Failed to process, drop peer
                         _Z_ERROR("Dropping peer due to processing error");
-                        drop_peer = true;
-                        prev_drop = prev;
+                        _z_peer_mask_bitset_set(&expired_peers, iter, true);
+                        _zp_unicast_report_disconnected_event(ztu, iter);
                         break;
                     } else if (curr_peer->flow_state != _Z_FLOW_STATE_READY) {
                         // Process remaining data
@@ -320,47 +334,15 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
                     }
                 } while (message_to_process);
             } else if (res == _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED) {
-                drop_peer = true;
-                prev_drop = prev;
+                _z_peer_mask_bitset_set(&expired_peers, iter, true);
+                _zp_unicast_report_disconnected_event(ztu, iter);
             } else if (res == _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR) {
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
         }
-        // Update previous only if current node is not dropped
-        if (!drop_peer) {
-            prev = curr_list;
-        }
-        // Progress list
-        curr_list = _z_transport_peer_unicast_slist_next(curr_list);
-        // Drop peer if needed
-        if (drop_peer) {
-            _Z_DEBUG("Dropping peer");
-            _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
-#if Z_FEATURE_CONNECTIVITY == 1
-            _z_connectivity_peer_event_data_t disconnected_peer = {0};
-            uint16_t mtu = 0;
-            bool is_streamed = false;
-            bool is_reliable = false;
-            _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
-            _z_connectivity_peer_event_data_copy_from_common(&disconnected_peer, &curr_peer->common);
-#endif
-            _z_interest_peer_disconnected(zs, &curr_peer->common);
-            ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
-#if Z_FEATURE_CONNECTIVITY == 1
-            _z_transport_peer_mutex_unlock(&ztu->_common);
-            _z_connectivity_peer_disconnected(zs, &disconnected_peer, false, mtu, is_streamed, is_reliable);
-            _z_connectivity_peer_event_data_clear(&disconnected_peer);
-            _z_transport_peer_mutex_lock(&ztu->_common);
-            curr_list = ztu->_peers;
-            prev = NULL;
-            prev_drop = NULL;
-            _z_zbuf_reset(&ztu->_common._zbuf);
-            continue;
-#endif
-        }
         _z_zbuf_reset(&ztu->_common._zbuf);
     }
-    _z_transport_peer_mutex_unlock(&ztu->_common);
+    _zp_unicast_remove_peers_by_mask(ztu, expired_peers);
     return _Z_RES_OK;
 }
 #endif
@@ -375,11 +357,11 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
 
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     if (mode == Z_WHATAMI_CLIENT) {
-        _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-        assert(curr_peer != NULL);
+        _z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
+        assert(iter != _z_transport_peer_unicast_hset_end(&ztu->_peers));
         size_t to_read = 0;
         // Retrieve data
-        if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
+        if (!_z_unicast_client_read(ztu, iter, &to_read)) {
             // nothing to read
 #if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
             return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
@@ -387,16 +369,16 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
             return _z_fut_fn_result_continue();
 #endif
         }
-        if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+        if (_z_unicast_process_messages(ztu, iter, to_read) != _Z_RES_OK) {
             _Z_INFO("Read task failed, closing session\n");
             return _zp_unicast_failed_result(ztu, executor);
         }
     }
 #if Z_FEATURE_UNICAST_PEER == 1
     if (mode == Z_WHATAMI_PEER) {
-        bool has_peers = !_z_transport_peer_unicast_slist_is_empty(ztu->_peers);
-        if (!has_peers) {
-            return _z_fut_fn_result_wake_up_after(100);
+        if (_z_transport_peer_unicast_hset_is_empty(&ztu->_peers)) {
+            return _z_fut_fn_result_wake_up_after(100);  // No peers, wait for a while before checking again
+            // TODO: rather suspend the task and wake it up when a new peer is added
         }
         z_result_t read_res = _z_unicast_wait_peer_event(ztu);
         if (read_res == _Z_NO_DATA_PROCESSED) {
@@ -406,7 +388,6 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
             return _z_fut_fn_result_continue();
 #endif
         }
-
         if (read_res != _Z_RES_OK || _zp_unicast_process_peer_event(ztu) != _Z_RES_OK) {
             // TODO: Close transport on error. Probably we should just close the failed peer and
             // initiate reconnection task.

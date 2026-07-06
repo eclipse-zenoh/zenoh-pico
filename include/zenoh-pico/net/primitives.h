@@ -78,7 +78,7 @@ z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
+z_result_t _z_undeclare_local_resource(_z_session_t *zn, uint16_t rid);
 
 /**
  * Declare keyexpr if it is necessary and allowed.

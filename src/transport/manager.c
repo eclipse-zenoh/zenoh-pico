@@ -30,40 +30,6 @@
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/sleep.h"
 
-#if Z_FEATURE_CONNECTIVITY == 1
-static void _z_new_peer_dispatch_connected_event(_z_transport_unicast_t *ztu, const _z_transport_peer_unicast_t *peer) {
-    if (ztu == NULL || peer == NULL) {
-        return;
-    }
-
-    _z_connectivity_peer_event_data_t connected_peer = {0};
-    uint16_t mtu = 0;
-    bool is_streamed = false;
-    bool is_reliable = false;
-    bool has_event_data = false;
-
-    _z_transport_peer_mutex_lock(&ztu->_common);
-    _z_transport_peer_unicast_slist_t *it = ztu->_peers;
-    while (it != NULL) {
-        _z_transport_peer_unicast_t *current_peer = _z_transport_peer_unicast_slist_value(it);
-        if (current_peer == peer) {
-            _z_transport_get_link_properties(&ztu->_common, &mtu, &is_streamed, &is_reliable);
-            _z_connectivity_peer_event_data_copy_from_common(&connected_peer, &current_peer->common);
-            has_event_data = true;
-            break;
-        }
-        it = _z_transport_peer_unicast_slist_next(it);
-    }
-    _z_transport_peer_mutex_unlock(&ztu->_common);
-
-    if (has_event_data) {
-        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztu->_common), &connected_peer, false, mtu,
-                                       is_streamed, is_reliable);
-        _z_connectivity_peer_event_data_clear(&connected_peer);
-    }
-}
-#endif
-
 static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t *locator, const _z_id_t *local_zid,
                                           const _z_config_t *session_cfg) {
     z_result_t ret = _Z_RES_OK;
@@ -93,7 +59,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
             // Fill peer list
             if (ret == _Z_RES_OK) {
                 ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl), false,
-                                                    NULL);
+                                                    false);
             }
             break;
         }
@@ -154,7 +120,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
                     ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
-                                                        false, NULL);
+                                                        false, false);
                 } else {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1
                     _z_fut_t f = _z_fut_null();
@@ -239,17 +205,7 @@ z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_s
                 _z_socket_close(&socket);
                 return ret;
             }
-            _z_transport_peer_unicast_t *peer = NULL;
-            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, socket, true, &peer);
-            if ((ret == _Z_RES_OK) && (peer != NULL)) {
-                (void)_z_interest_push_declarations_to_peer(
-                    _z_transport_common_get_session(&zt->_transport._unicast._common), &peer->common);
-            }
-#if Z_FEATURE_CONNECTIVITY == 1
-            if ((ret == _Z_RES_OK) && (peer != NULL)) {
-                _z_new_peer_dispatch_connected_event(&zt->_transport._unicast, peer);
-            }
-#endif
+            ret = _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, socket, true, true);
         } break;
 
         default:

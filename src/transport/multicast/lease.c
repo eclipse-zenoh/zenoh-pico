@@ -25,6 +25,8 @@
 #include "zenoh-pico/transport/multicast/connectivity.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/transport.h"
+#include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -39,20 +41,23 @@ z_result_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_id_t zid = _z_transport_common_get_session(&ztm->_common)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
-    return ztm->_send_f(&ztm->_common, &jsm);
+    return ztm->_is_raweth ? _z_transport_raweth_send_t_msg(ztm, &jsm) : _z_transport_multicast_send_t_msg(ztm, &jsm);
 }
 
 z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    return ztm->_send_f(&ztm->_common, &t_msg);
+    return ztm->_is_raweth ? _z_transport_raweth_send_t_msg(ztm, &t_msg)
+                           : _z_transport_multicast_send_t_msg(ztm, &t_msg);
 }
 
 _z_fut_fn_result_t _zp_multicast_failed_result(_z_transport_multicast_t *ztm, _z_executor_t *executor) {
     _z_session_t *session = _z_transport_common_get_session(&ztm->_common);
-
-#if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(session);
-#endif
+    for (_z_address_to_transport_peer_multicast_hmap_iter_t iter =
+             _z_address_to_transport_peer_multicast_hmap_begin(&ztm->_peers);
+         iter != _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers);
+         iter = _z_address_to_transport_peer_multicast_hmap_iter_next(&ztm->_peers, iter)) {
+        _zp_multicast_report_disconnected_event(ztm, iter);
+    }
     _z_session_transport_mutex_lock(session);
 #if Z_FEATURE_AUTO_RECONNECT == 1
     // Store weak session, to reuse for reconnection
@@ -115,6 +120,7 @@ _z_fut_fn_result_t _zp_multicast_lease_task_fn(void *ztm_arg, _z_executor_t *exe
             iter = _z_address_to_transport_peer_multicast_hmap_iter_next(&ztm->_peers, iter);
         } else {
             _Z_INFO("Deleting peer because it has expired after %zums", peer->_lease);
+            _zp_multicast_report_disconnected_event(ztm, iter);
             _zp_multicast_remove_peer_by_iter(ztm, iter);
         }
     }

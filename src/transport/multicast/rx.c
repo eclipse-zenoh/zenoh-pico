@@ -207,7 +207,7 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     while (_z_zbuf_readable_len(&buf) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, &buf));
         curr_nmsg._reliability = tmsg_reliability;
-        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &peer->common));
+        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, iter));
     }
     return _Z_RES_OK;
 }
@@ -318,12 +318,11 @@ static z_result_t _z_multicast_handle_fragment(_z_transport_multicast_t *ztm, ui
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Decode message
-        _z_zenoh_message_t zm = {0};
+        _z_network_message_t zm = {0};
         ret = _z_network_message_decode(&zm, &zbf);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
-            // Memory clear of the network message data must be handled by the network message layer
-            _z_handle_network_message(&ztm->_common, &zm, &peer->common);
+            _z_handle_network_message(&ztm->_common, &zm, iter);
         } else {
             _Z_INFO("Failed to decode defragmented message");
             _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
@@ -393,7 +392,6 @@ static z_result_t _z_multicast_handle_join_new_peer(_z_transport_multicast_t *zt
     entry->common._remote_zid = msg->_zid;
     entry->common._remote_whatami = msg->_whatami;
     entry->common._received = true;
-    entry->common._remote_resources = NULL;
 #if Z_FEATURE_CONNECTIVITY == 1
     entry->common._link_src = _z_string_null();
     entry->common._link_dst = _z_string_null();
@@ -479,6 +477,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing connection as requested by the remote peer");
+            _zp_multicast_report_disconnected_event(ztm, iter);
             _zp_multicast_remove_peer_by_iter(ztm, iter);
             break;
         }

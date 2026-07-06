@@ -459,10 +459,8 @@ static void verify_peer_json(const z_loaned_string_t *payload, const z_id_t *exp
 
 static void verify_peers_array_json_unicast(const z_loaned_string_t *payload, const _z_transport_unicast_t *tp) {
     assert_json_array(payload);
-
-    for (_z_transport_peer_unicast_slist_t *it = tp->_peers; it != NULL;
-         it = _z_transport_peer_unicast_slist_next(it)) {
-        const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(it);
+    const _z_transport_peer_unicast_t *peer = NULL;
+    _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &tp->_peers, peer) {
         assert_contains_peer_header(payload, &peer->common._remote_zid, peer->common._remote_whatami, false);
     }
 }
@@ -580,10 +578,8 @@ static void verify_admin_space_query(const z_loaned_session_t *zs, const admin_s
     switch (session->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
             const _z_transport_unicast_t *tp = &session->_tp._transport._unicast;
-            for (_z_transport_peer_unicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_unicast_slist_next(it)) {
-                const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(it);
-
+            const _z_transport_peer_unicast_t *peer = NULL;
+            _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(peers_ke), &peer->common._remote_zid);
@@ -904,10 +900,8 @@ void test_admin_space_transport_0_peer_endpoints_succeeds(void) {
     switch (session->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
             const _z_transport_unicast_t *tp = &session->_tp._transport._unicast;
-            for (_z_transport_peer_unicast_slist_t *it = tp->_peers; it != NULL;
-                 it = _z_transport_peer_unicast_slist_next(it)) {
-                const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(it);
-
+            const _z_transport_peer_unicast_t *peer = NULL;
+            _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &tp->_peers, peer) {
                 z_owned_keyexpr_t peer_ke;
                 z_internal_keyexpr_null(&peer_ke);
                 build_pico_transport_0_peer_ke(&peer_ke, z_loan(kes.peers_ke), &peer->common._remote_zid);

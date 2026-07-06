@@ -42,6 +42,7 @@ z_result_t _z_oam_decode(_z_n_msg_oam_t *oam, _z_zbuf_t *zbf, uint8_t header);
 z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg);
 z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf);
 
+bool _z_network_message_get_express_status(const _z_network_message_t *msg);
 #ifdef __cplusplus
 }
 #endif

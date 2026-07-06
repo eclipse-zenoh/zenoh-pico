@@ -21,21 +21,21 @@
 
 z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wireexpr_t *key,
                                     const _z_msg_reply_t *reply, const _z_entity_global_id_t *replier_id,
-                                    _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
+                                    _z_n_qos_t qos, size_t peer_id) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
     _z_keyexpr_view_t keyexpr;
     char buf[Z_MAX_KEYEXPR_LENGTH];
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
-    ret = _z_trigger_query_reply_partial(zn, id, _z_keyexpr_view_deref(&keyexpr), reply, replier_id, qos, peer);
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer_id, buf, Z_MAX_KEYEXPR_LENGTH));
+    ret = _z_trigger_query_reply_partial(zn, id, _z_keyexpr_view_deref(&keyexpr), reply, replier_id, qos, peer_id);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
     _ZP_UNUSED(key);
     _ZP_UNUSED(reply);
     _ZP_UNUSED(replier_id);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
 #endif
     return ret;
 }

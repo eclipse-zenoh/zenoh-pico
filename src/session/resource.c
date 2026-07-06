@@ -136,7 +136,7 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_resource_slist_t *xs, co
 }
 
 z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t *out, const _z_wireexpr_t *expr,
-                                             _z_transport_peer_common_t *peer, char *out_buf, size_t out_buf_len) {
+                                             size_t peer_id, char *out_buf, size_t out_buf_len) {
     *out = _z_keyexpr_view_null();
     z_result_t ret = _Z_ERR_NULL;
     if (expr != NULL && _z_wireexpr_check(expr)) {
@@ -145,8 +145,7 @@ z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t
             return _Z_RES_OK;
         }
         _z_session_mutex_lock(zn);
-        _z_resource_slist_t *decls =
-            (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
+        _z_resource_slist_t *decls = _z_wireexpr_is_local(expr) ? zn->_local_resources : zn->_remote_resources[peer_id];
         ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &out_buf, &out_buf_len);
         _z_session_mutex_unlock(zn);
         if (ret == _Z_RES_OK) {
@@ -158,13 +157,12 @@ z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t
 }
 
 z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
-                                        _z_transport_peer_common_t *peer) {
+                                        size_t peer_id) {
     *out = _z_keyexpr_null();
     z_result_t ret = _Z_ERR_NULL;
     if (expr != NULL && _z_wireexpr_check(expr)) {
         _z_session_mutex_lock(zn);
-        _z_resource_slist_t *decls =
-            (_z_wireexpr_is_local(expr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
+        _z_resource_slist_t *decls = _z_wireexpr_is_local(expr) ? zn->_local_resources : zn->_remote_resources[peer_id];
         char *buf = NULL;
         size_t buf_len = 0;
         ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &buf, &buf_len);
@@ -177,89 +175,103 @@ z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, con
     return ret;
 }
 
-z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
-                                      _z_transport_peer_common_t *peer, uint16_t *out_id) {
-    _z_resource_slist_t **resources = (peer == NULL) ? &zn->_local_resources : &peer->_remote_resources;
-    _z_resource_slist_t *parent_resources =
-        (expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL) ? zn->_local_resources : peer->_remote_resources;
-
-    _z_keyexpr_t new_key = _z_keyexpr_null();
-    _z_keyexpr_view_t ke_view = _z_keyexpr_view_null();
-    if (expr->_id != Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, expr->_id);
-        if (res == NULL) {
-            _Z_ERROR("Unknown scope: %d, for mapping: %d", (unsigned int)expr->_id, (int)expr->_mapping);
-            return _Z_ERR_ENTITY_DECLARATION_FAILED;
-        }
-        if (_z_wireexpr_has_suffix(expr)) {
-            const _z_string_t *suffix = _z_string_view_deref(&expr->_suffix);
-            if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, suffix, NULL, 0) != _Z_RES_OK) {
-                _Z_ERROR("Failed to allocate memory for new string");
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
-            ke_view = _z_keyexpr_view_from_keyexpr(&new_key);
-        } else if (id == Z_RESOURCE_ID_NONE && *resources == parent_resources) {
-            // declaration of already declared resource
-            res->_refcount++;
-            *out_id = res->_id;
-            return _Z_RES_OK;
-        }
+z_result_t _z_register_local_resource_inner(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id) {
+    _z_keyexpr_view_t ke_view = _z_keyexpr_view_from_string(key);
+    _z_resource_t *res = _z_get_resource_by_key_inner(zn->_local_resources, _z_keyexpr_view_deref(&ke_view));
+    if (res != NULL) {  // declaration of already declared resource
+        res->_refcount++;
+        *out_id = res->_id;
+        return _Z_RES_OK;
     } else {
-        ke_view = _z_keyexpr_view_from_string_view(&expr->_suffix);
-    }
-
-    if (id == Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, _z_keyexpr_view_deref(&ke_view));
-        if (res != NULL) {  // declaration of already declared resource
-            res->_refcount++;
-            _z_keyexpr_clear(&new_key);
-            *out_id = res->_id;
-            return _Z_RES_OK;
-        }
-    }
-    _z_keyexpr_t ke;
-    if (_z_keyexpr_check(&new_key)) {
-        _z_keyexpr_move(&ke, &new_key);
-    } else {
+        _z_keyexpr_t ke = _z_keyexpr_null();
         _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke, _z_keyexpr_view_deref(&ke_view)));
+        zn->_local_resources = _z_resource_slist_push_empty(zn->_local_resources);
+        res = _z_resource_slist_value(zn->_local_resources);
+        res->_refcount = 1;
+        res->_key = ke;
+        res->_id = _z_get_resource_id(zn);
+        *out_id = res->_id;
     }
-
-    *resources = _z_resource_slist_push_empty(*resources);
-    _z_resource_t *res = _z_resource_slist_value(*resources);
-    res->_refcount = 1;
-    res->_key = ke;
-    res->_id = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
-    *out_id = res->_id;
     return _Z_RES_OK;
 }
 
-z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
-                                _z_transport_peer_common_t *peer, uint16_t *out_id) {
+z_result_t _z_register_local_resource(_z_session_t *zn, const _z_string_t *expr, uint16_t *out_id) {
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
-    z_result_t ret = _z_register_resource_inner(zn, expr, id, peer, out_id);
+    z_result_t ret = _z_register_local_resource_inner(zn, expr, out_id);
     _z_session_mutex_unlock(zn);
-
     return ret;
 }
 
-z_result_t _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer) {
-    bool is_local = (peer == NULL);
-    _Z_DEBUG("unregistering: id %d, mapping: %s", id, is_local ? "local" : "remote");
-    _z_session_mutex_lock(zn);
-    _z_resource_slist_t **resources = is_local ? &zn->_local_resources : &peer->_remote_resources;
-    _z_resource_t res = {0};
-    res._id = id;
-    _z_resource_slist_t *res_ptr = _z_resource_slist_find(*resources, _z_resource_eq, &res);
-    z_result_t ret = _Z_RESOURCE_POSITIVE_REF_COUNT;
-    if (res_ptr == NULL) {
-        ret = _Z_ERR_KEYEXPR_UNKNOWN;
+z_result_t _z_register_remote_resource_inner(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id, size_t peer_id) {
+    _z_resource_slist_t **resources = &zn->_remote_resources[peer_id];
+    _z_resource_slist_t *parent_resources =
+        key->_mapping == _Z_KEYEXPR_MAPPING_LOCAL ? zn->_local_resources : *resources;
+    _z_string_t new_key = _z_string_null();
+    if (key->_id != Z_RESOURCE_ID_NONE) {
+        _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, key->_id);
+        if (res == NULL) {
+            _Z_ERROR("Unknown scope: %d, for mapping: %d", (unsigned int)key->_id, (int)key->_mapping);
+            return _Z_ERR_ENTITY_DECLARATION_FAILED;
+        }
+        if (_z_wireexpr_has_suffix(key)) {
+            _Z_RETURN_IF_ERR(
+                _z_string_concat(&new_key, &res->_key._keyexpr, _z_string_view_deref(&key->_suffix), NULL, 0));
+        } else {
+            _Z_RETURN_IF_ERR(_z_string_copy(&new_key, &res->_key._keyexpr));
+        }
     } else {
-        _z_resource_slist_value(res_ptr)->_refcount--;
-        if (_z_resource_slist_value(res_ptr)->_refcount == 0) {
-            ret = _Z_RES_OK;
-            *resources = _z_resource_slist_drop_first_filter(*resources, _z_resource_eq, &res);
+        _Z_RETURN_IF_ERR(_z_string_copy(&new_key, _z_string_view_deref(&key->_suffix)));
+    }
+    *resources = _z_resource_slist_push_empty(*resources);
+    _z_resource_t *res = _z_resource_slist_value(*resources);
+    res->_refcount = 1;
+    _z_keyexpr_from_string(&res->_key, &new_key);
+    res->_id = id;
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_register_remote_resource(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id, size_t peer_id) {
+    if (key->_mapping != _Z_KEYEXPR_MAPPING_REMOTE) {
+        _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    }
+    z_result_t ret = _z_register_remote_resource_inner(zn, key, id, peer_id);
+    if (key->_mapping != _Z_KEYEXPR_MAPPING_REMOTE) {
+        _z_session_mutex_unlock(zn);
+    }
+    return ret;
+}
+
+z_result_t _z_unregister_remote_resource(_z_session_t *zn, uint16_t id, size_t peer_id) {
+    _Z_DEBUG("unregistering remote resource: id %d, peer_id: %zu", id, peer_id);
+    // No particular locking is needed here, since this function is only called by rx thread
+    _z_resource_t *res = _z_get_resource_by_id_inner(zn->_remote_resources[peer_id], id);
+    if (res == NULL) {
+        return _Z_ERR_KEYEXPR_UNKNOWN;
+    } else {
+        zn->_remote_resources[peer_id] =
+            _z_resource_slist_drop_first_filter(zn->_remote_resources[peer_id], _z_resource_eq, res);
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_unregister_local_resource_inner(_z_session_t *zn, uint16_t id) {
+    _z_resource_t *res = _z_get_resource_by_id_inner(zn->_local_resources, id);
+    if (res == NULL) {
+        return _Z_ERR_KEYEXPR_UNKNOWN;
+    } else {
+        res->_refcount--;
+        if (res->_refcount == 0) {
+            zn->_local_resources = _z_resource_slist_drop_first_filter(zn->_local_resources, _z_resource_eq, res);
         }
     }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_unregister_local_resource(_z_session_t *zn, uint16_t id) {
+    _Z_DEBUG("unregistering local resource: id %d", id);
+    _z_session_mutex_lock(zn);
+    z_result_t ret = _z_unregister_local_resource_inner(zn, id);
     _z_session_mutex_unlock(zn);
     return ret;
 }
@@ -268,4 +280,20 @@ void _z_flush_local_resources(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
     _z_resource_slist_free(&zn->_local_resources);
     _z_session_mutex_unlock(zn);
+}
+
+void _z_flush_remote_resources(_z_session_t *zn) {
+    // No particular locking is needed here, since this function is only called once runtime is stopped,
+    // and thus no other thread should be accessing the remote resources at this point.
+    for (size_t i = 0; i < Z_MAX_NUM_PEERS; i++) {
+        _z_resource_slist_free(&zn->_remote_resources[i]);
+    }
+}
+
+void _z_flush_remote_resources_for_peer(_z_session_t *zn, size_t peer_id) {
+    // No particular locking is needed here, since this function is only called by rx thread when a peer is
+    // disconnected.
+    if (peer_id < Z_MAX_NUM_PEERS) {
+        _z_resource_slist_free(&zn->_remote_resources[peer_id]);
+    }
 }

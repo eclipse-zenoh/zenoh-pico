@@ -120,7 +120,7 @@ _Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t
 
 typedef struct _z_query_id {
     uint32_t rid;
-    void *peer_id;
+    uint32_t peer_id;
 } _z_query_id_t;
 
 #define _ZP_HASHMAP_TEMPLATE_NAME _z_rid_to_count_hmap
@@ -128,8 +128,12 @@ typedef struct _z_query_id {
 #define _ZP_HASHMAP_TEMPLATE_VAL_TYPE uint32_t
 #define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(query_id1, query_id2) \
     (((query_id1)->rid == (query_id2)->rid) && ((query_id1)->peer_id == (query_id2)->peer_id))
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) \
-    ((size_t)((query_id)->rid) ^ (size_t)(uintptr_t)((query_id)->peer_id))
+#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(query_id) _z_hash_combine((size_t)query_id->rid, (size_t)query_id->peer_id)
+#define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 8
+#define _ZP_HASHMAP_TEMPLATE_INDEX_TYPE uint16_t
+#define _ZP_HASHMAP_TEMPLATE_ALLOC_FN z_malloc
+#define _ZP_HASHMAP_TEMPLATE_FREE_FN z_free
+#define _ZP_HASHMAP_TEMPLATE_REALLOC_FN z_realloc
 #include "zenoh-pico/collections/hashmap_template.h"
 
 typedef struct _z_session_t {
@@ -158,8 +162,9 @@ typedef struct _z_session_t {
     _z_mutex_t _mutex_last_timestamp;
 #endif
 
-    // Session declarations
+    // Declared key-expressions
     _z_resource_slist_t *_local_resources;
+    _z_resource_slist_t *_remote_resources[Z_MAX_NUM_PEERS];
 
     // Information for session restoring and asynchronous peer connection
     _z_config_t _config;
@@ -298,8 +303,6 @@ void _z_connectivity_peer_connected(_z_session_t *session, const _z_connectivity
                                     bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
 void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_connectivity_peer_event_data_t *peer,
                                        bool is_multicast, uint16_t mtu, bool is_streamed, bool is_reliable);
-void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, const _z_transport_common_t *transport,
-                                                      const _z_connectivity_peer_event_data_t *peer, bool is_multicast);
 #endif
 
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {

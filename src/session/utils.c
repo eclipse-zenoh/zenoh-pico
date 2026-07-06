@@ -93,6 +93,9 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
     // Initialize the data structs
     zn->_local_resources = NULL;
+    for (size_t i = 0; i < Z_MAX_NUM_PEERS; i++) {
+        zn->_remote_resources[i] = NULL;
+    }
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_subscriptions = NULL;
     zn->_liveliness_subscriptions = NULL;
@@ -180,6 +183,7 @@ z_result_t _z_session_close(_z_session_t *zn) {
     // events
     _Z_RETURN_IF_ERR(_z_runtime_stop(&zn->_runtime));
     _z_flush_local_resources(zn);
+    _z_flush_remote_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
 #endif

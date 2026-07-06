@@ -157,12 +157,7 @@ static size_t open_test_peer_count(z_owned_session_t *session) {
     if (zs->_tp._type != _Z_TRANSPORT_UNICAST_TYPE) {
         return 0;
     }
-
-    _z_transport_unicast_t *ztu = &zs->_tp._transport._unicast;
-    _z_transport_peer_mutex_lock(&ztu->_common);
-    size_t len = _z_transport_peer_unicast_slist_len(ztu->_peers);
-    _z_transport_peer_mutex_unlock(&ztu->_common);
-    return len;
+    return _z_transport_get_peers_count(&zs->_tp);
 }
 
 static bool open_test_wait_for_peer_count(z_owned_session_t *target, size_t expected_count,

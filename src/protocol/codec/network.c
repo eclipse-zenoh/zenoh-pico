@@ -662,3 +662,18 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) 
             _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
 }
+
+bool _z_network_message_get_express_status(const _z_network_message_t *msg) {
+    switch (msg->_tag) {
+        case _Z_N_DECLARE:
+            return _Z_HAS_FLAG(msg->_body._declare._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        case _Z_N_PUSH:
+            return _Z_HAS_FLAG(msg->_body._push._qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        case _Z_N_REQUEST:
+            return _Z_HAS_FLAG(msg->_body._request._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        case _Z_N_RESPONSE:
+            return _Z_HAS_FLAG(msg->_body._response._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        default:
+            return false;
+    }
+}

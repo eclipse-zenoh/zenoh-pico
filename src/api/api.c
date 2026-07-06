@@ -1081,9 +1081,8 @@ z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_trans
 
     switch (transport->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
-            _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
-                _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+            const _z_transport_peer_unicast_t *peer = NULL;
+            _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &transport->_transport._unicast._peers, peer) {
                 _z_info_transport_t info_transport;
                 _z_info_transport_from_peer(&info_transport, &peer->common, false);
                 z_closure_transport_call(&callback->_this._val, &info_transport);
@@ -1148,9 +1147,8 @@ z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *ca
 
     switch (transport->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
-            _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
-            for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
-                _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+            const _z_transport_peer_unicast_t *peer = NULL;
+            _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &transport->_transport._unicast._peers, peer) {
                 _z_info_transport_t info_transport;
                 _z_info_transport_from_peer(&info_transport, &peer->common, false);
                 if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
@@ -2468,7 +2466,7 @@ z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     // Send current batch without dropping
-    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
+    return _z_send_n_batch(session);
 }
 
 z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
@@ -2478,7 +2476,7 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     }
     _Z_RETURN_IF_ERR(_z_transport_stop_batching(&session->_tp));
     // Send remaining batch without dropping
-    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
+    return _z_send_n_batch(session);
 }
 #endif
 

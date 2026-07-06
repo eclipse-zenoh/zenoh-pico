@@ -33,13 +33,15 @@ uint16_t _z_get_resource_id(_z_session_t *zn);
 // Return a keyexpr view from a wireexpr. With the lifetime bound to the wireexpr itself, if it has no prefix, or to
 // that of out_buf, if it has a prefix. The out_buf must be large enough to hold the keyexpr string representation.
 z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t *out, const _z_wireexpr_t *expr,
-                                             _z_transport_peer_common_t *peer, char *out_buf, size_t out_buf_len);
-z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
-                                        _z_transport_peer_common_t *peer);
-z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id,
-                                _z_transport_peer_common_t *peer, uint16_t *out_id);
-z_result_t _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer);
+                                             size_t peer_id, char *out_buf, size_t out_buf_len);
+z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr, size_t peer_id);
+z_result_t _z_register_remote_resource(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id, size_t peer_id);
+z_result_t _z_register_local_resource(_z_session_t *zn, const _z_string_t *expr, uint16_t *out_id);
+z_result_t _z_unregister_remote_resource(_z_session_t *zn, uint16_t id, size_t peer_id);
+z_result_t _z_unregister_local_resource(_z_session_t *zn, uint16_t id);
 void _z_flush_local_resources(_z_session_t *zn);
+void _z_flush_remote_resources(_z_session_t *zn);
+void _z_flush_remote_resources_for_peer(_z_session_t *zn, size_t peer_id);
 
 #ifdef __cplusplus
 }

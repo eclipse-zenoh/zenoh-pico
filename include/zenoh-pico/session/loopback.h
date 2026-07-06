@@ -53,7 +53,7 @@ z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t ri
 #if defined(Z_TEST_HOOKS)
 typedef z_result_t (*_z_session_send_override_fn)(_z_session_t *zn, const _z_network_message_t *n_msg,
                                                   z_reliability_t reliability, z_congestion_control_t cong_ctrl,
-                                                  void *peer, bool *handled);
+                                                  const _z_peer_mask_bitset_t *opt_peer_mask, bool *handled);
 void _z_transport_set_send_n_msg_override(_z_session_send_override_fn fn);
 #endif
 

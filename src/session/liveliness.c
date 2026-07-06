@@ -35,10 +35,9 @@
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t id, const _z_wireexpr_t *wireexpr,
-                                                      const _z_timestamp_t *timestamp,
-                                                      _z_transport_peer_common_t *peer) {
+                                                      const _z_timestamp_t *timestamp, size_t peer_id) {
     _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer));
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_from_wireexpr(zn, &ke, wireexpr, peer_id));
     z_result_t ret = _Z_RES_OK;
     _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke));
 
@@ -60,7 +59,7 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
         }
         _z_session_mutex_unlock(zn);
         // Note: we are inside rx thread, => ke_on_heap will not be cleared until we return
-        _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, ke_on_heap, timestamp, peer));
+        _Z_SET_IF_OK(ret, _z_trigger_liveliness_subscriptions_declare(zn, ke_on_heap, timestamp, peer_id));
     }
 
     if (ret != _Z_RES_OK) {
@@ -72,8 +71,8 @@ z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t
     return ret;
 }
 
-z_result_t _z_liveliness_process_remote_token_undeclare(_z_session_t *zn, uint32_t id,
-                                                        const _z_timestamp_t *timestamp) {
+z_result_t _z_liveliness_process_remote_token_undeclare(_z_session_t *zn, uint32_t id, const _z_timestamp_t *timestamp,
+                                                        size_t peer_id) {
     z_result_t ret = _Z_RES_OK;
 
     _z_keyexpr_t key = _z_keyexpr_null();
@@ -89,13 +88,13 @@ z_result_t _z_liveliness_process_remote_token_undeclare(_z_session_t *zn, uint32
     _z_session_mutex_unlock(zn);
 
     if (_z_keyexpr_check(&key)) {
-        ret = _z_trigger_liveliness_subscriptions_undeclare(zn, &key, timestamp);
+        ret = _z_trigger_liveliness_subscriptions_undeclare(zn, &key, timestamp, peer_id);
         _z_keyexpr_clear(&key);
     }
     return ret;
 }
 
-z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn) {
+z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn, size_t peer_id) {
     z_result_t ret = _Z_RES_OK;
 
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
@@ -108,7 +107,7 @@ z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn) {
     _z_timestamp_t tm = _z_timestamp_null();
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
         _z_keyexpr_t *key = _z_keyexpr_intmap_iterator_value(&iter);
-        ret = _z_trigger_liveliness_subscriptions_undeclare(zn, key, &tm);
+        ret = _z_trigger_liveliness_subscriptions_undeclare(zn, key, &tm, peer_id);
         if (ret != _Z_RES_OK) {
             break;
         }
@@ -150,12 +149,12 @@ _z_liveliness_pending_query_t *_z_unsafe_liveliness_register_pending_query(_z_se
 
 static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t interest_id,
                                                     const _z_wireexpr_t *wireexpr, const _z_timestamp_t *timestamp,
-                                                    _z_transport_peer_common_t *peer) {
+                                                    size_t peer_id) {
     _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", wireexpr->_id, (int)_z_string_view_len(&wireexpr->_suffix),
              _z_string_view_data(&wireexpr->_suffix), (unsigned int)wireexpr->_mapping);
     _z_keyexpr_view_t ke_view;
     char buf[Z_MAX_KEYEXPR_LENGTH];
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer, buf, Z_MAX_KEYEXPR_LENGTH));
+    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &ke_view, wireexpr, peer_id, buf, Z_MAX_KEYEXPR_LENGTH));
     z_result_t ret = _Z_RES_OK;
     const _z_keyexpr_t *ke = _z_keyexpr_view_deref(&ke_view);
 
@@ -209,32 +208,33 @@ z_result_t _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id)
 
 /**************** Interest processing ****************/
 
-z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
-                                               _z_transport_peer_common_t *peer) {
+z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl, size_t peer_id) {
 #if Z_FEATURE_QUERY == 1
     if (decl->_interest_id.has_value) {
         _z_liveliness_pending_query_reply(zn, decl->_interest_id.value, &decl->_decl._body._decl_token._keyexpr,
-                                          &decl->_ext_timestamp, peer);
+                                          &decl->_ext_timestamp, peer_id);
     }
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
     return _z_liveliness_process_remote_token_declare(
-        zn, decl->_decl._body._decl_token._id, &decl->_decl._body._decl_token._keyexpr, &decl->_ext_timestamp, peer);
+        zn, decl->_decl._body._decl_token._id, &decl->_decl._body._decl_token._keyexpr, &decl->_ext_timestamp, peer_id);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
     return _Z_RES_OK;
 #endif
 }
 
-z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl, size_t peer_id) {
 #if Z_FEATURE_SUBSCRIPTION == 1
-    return _z_liveliness_process_remote_token_undeclare(zn, decl->_decl._body._undecl_token._id, &decl->_ext_timestamp);
+    return _z_liveliness_process_remote_token_undeclare(zn, decl->_decl._body._undecl_token._id, &decl->_ext_timestamp,
+                                                        peer_id);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
+    _ZP_UNUSED(peer_id);
     return _Z_RES_OK;
 #endif
 }
@@ -289,17 +289,17 @@ void _z_liveliness_clear(_z_session_t *zn) {
 
 #else  // Z_FEATURE_LIVELINESS == 0
 
-z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
-                                               _z_transport_peer_common_t *peer) {
+z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl, size_t peer_id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
     return _Z_RES_OK;
 }
 
-z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl, size_t peer_id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
+    _ZP_UNUSED(peer_id);
     return _Z_RES_OK;
 }
 

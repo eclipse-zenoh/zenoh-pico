@@ -31,11 +31,10 @@ cmake --build "$SHARED_BUILD_DIR" -j --target \
   z_endpoint_test \
   z_tls_test \
   z_executor_test \
-  z_background_executor_test \
-  z_local_loopback_test
+  z_background_executor_test
 
 ctest --test-dir "$SHARED_BUILD_DIR" --output-on-failure \
-  -R '^z_endpoint_test$|^z_tls_test$|^z_executor_test$|^z_background_executor_test$|^z_local_loopback_test$' \
+  -R '^z_endpoint_test$|^z_tls_test$|^z_executor_test$|^z_background_executor_test$' \
   --timeout 420
 
 cmake -S "$SOURCE_DIR" -B "$STATIC_BUILD_DIR" \

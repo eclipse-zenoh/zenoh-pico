@@ -14,8 +14,11 @@
 #ifndef INCLUDE_ZENOH_PICO_TRANSPORT_MULTICAST_CONNECTIVITY_H
 #define INCLUDE_ZENOH_PICO_TRANSPORT_MULTICAST_CONNECTIVITY_H
 
-#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/multicast/transport.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void _zp_multicast_report_disconnected_event(_z_transport_multicast_t *ztm,
                                              _z_address_to_transport_peer_multicast_hmap_iter_t disconnected_peer_iter);
@@ -24,4 +27,8 @@ void _zp_multicast_report_connected_event(_z_transport_multicast_t *ztm,
 
 void _zp_multicast_remove_peer_by_iter(_z_transport_multicast_t *ztm,
                                        _z_address_to_transport_peer_multicast_hmap_iter_t iter);
+#ifdef __cplusplus
+}
+#endif
+
 #endif  // INCLUDE_ZENOH_PICO_TRANSPORT_MULTICAST_CONNECTIVITY_H

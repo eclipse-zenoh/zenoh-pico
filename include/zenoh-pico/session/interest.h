@@ -32,15 +32,13 @@ void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 
 void _z_interest_init(_z_session_t *zn);
 void _z_flush_interest(_z_session_t *zn);
-z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare_t *decl,
-                                        _z_transport_peer_common_t *peer);
-z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl,
-                                          _z_transport_peer_common_t *peer);
-z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id, _z_transport_peer_common_t *peer);
+z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare_t *decl, size_t peer_id);
+z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl, size_t peer_id);
+z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id, size_t peer_id);
 z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
 z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *wireexpr, uint32_t id, uint8_t flags,
-                                        _z_transport_peer_common_t *peer);
-z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, _z_transport_peer_common_t *peer);
+                                        size_t peer_id);
+z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, size_t peer_id);
 z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn);
 #if Z_FEATURE_AUTO_RECONNECT == 1
 /**
@@ -49,7 +47,7 @@ z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn);
  */
 z_result_t _z_interest_resend_client_declarations(_z_session_t *zn);
 #endif
-void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t *peer);
+void _z_interest_peer_disconnected(_z_session_t *zn, size_t peer_id);
 void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest);
 
 #ifdef __cplusplus

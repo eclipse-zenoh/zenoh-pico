@@ -76,10 +76,11 @@ void _z_msg_query_fill(_z_msg_query_t *msg, const _z_slice_t *parameters, z_cons
     msg->_ext_attachment = attachment != NULL ? _z_bytes_view_from_bytes(attachment) : _z_bytes_view_null();
 }
 
-void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
-                         z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
-                         const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
-                         _z_n_qos_t qos, const _z_source_info_t *source_info, bool implicit_anyke) {
+void _z_n_msg_make_query(_z_network_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters,
+                         _z_zint_t qid, z_reliability_t reliability, z_consolidation_mode_t consolidation,
+                         const _z_bytes_t *payload, const _z_encoding_t *encoding, uint64_t timeout_ms,
+                         const _z_bytes_t *attachment, _z_n_qos_t qos, const _z_source_info_t *source_info,
+                         bool implicit_anyke) {
     msg->_tag = _Z_N_REQUEST;
     msg->_reliability = reliability;
     msg->_body._request._tag = _Z_REQUEST_QUERY;

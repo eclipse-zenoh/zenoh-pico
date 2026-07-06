@@ -36,13 +36,13 @@ typedef struct _z_write_filter_registration_t {
 static bool _z_filter_target_peer_eq(const void *left, const void *right) {
     const _z_filter_target_t *left_val = (const _z_filter_target_t *)left;
     const _z_filter_target_t *right_val = (const _z_filter_target_t *)right;
-    return left_val->peer == right_val->peer;
+    return left_val->peer_id == right_val->peer_id;
 }
 
 static bool _z_filter_target_eq(const void *left, const void *right) {
     const _z_filter_target_t *left_val = (const _z_filter_target_t *)left;
     const _z_filter_target_t *right_val = (const _z_filter_target_t *)right;
-    return (left_val->peer == right_val->peer) && (left_val->decl_id == right_val->decl_id);
+    return (left_val->peer_id == right_val->peer_id) && (left_val->decl_id == right_val->decl_id);
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -53,8 +53,8 @@ static void _z_write_filter_mutex_lock(_z_write_filter_ctx_t *ctx) { _ZP_UNUSED(
 static void _z_write_filter_mutex_unlock(_z_write_filter_ctx_t *ctx) { _ZP_UNUSED(ctx); }
 #endif
 
-static bool _z_write_filter_push_target(_z_write_filter_ctx_t *ctx, _z_transport_peer_common_t *peer, uint32_t id) {
-    _z_filter_target_t target = {.peer = (uintptr_t)peer, .decl_id = id};
+static bool _z_write_filter_push_target(_z_write_filter_ctx_t *ctx, size_t peer_id, uint32_t id) {
+    _z_filter_target_t target = {.peer_id = peer_id, .decl_id = id};
     ctx->targets = _z_filter_target_slist_push(ctx->targets, &target);
     if (ctx->targets == NULL) {  // Allocation can fail
         return false;
@@ -62,8 +62,8 @@ static bool _z_write_filter_push_target(_z_write_filter_ctx_t *ctx, _z_transport
     return true;
 }
 
-static inline bool _z_write_filter_peer_allowed(const _z_write_filter_ctx_t *ctx, _z_transport_peer_common_t *peer) {
-    return ((peer == NULL) && ctx->allow_local) || ((peer != NULL) && ctx->allow_remote);
+static inline bool _z_write_filter_peer_allowed(const _z_write_filter_ctx_t *ctx, size_t peer_id) {
+    return peer_id == _Z_LOCAL_PEER_ID ? ctx->allow_local : ctx->allow_remote;
 }
 
 static void _z_write_filter_ctx_update_state(_z_write_filter_ctx_t *ctx) {
@@ -191,7 +191,7 @@ static void _z_write_filter_session_unregister(_z_write_filter_ctx_t *ctx) {
     z_free(registration);
 }
 
-static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg) {
+static void _z_write_filter_callback(const _z_interest_msg_t *msg, size_t peer_id, void *arg) {
     _z_write_filter_ctx_t *ctx = (_z_write_filter_ctx_t *)arg;
     // Process message
     _z_write_filter_mutex_lock(ctx);
@@ -199,23 +199,23 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
         case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:
         case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE: {
             // the message might be a redeclare - so we need to remove the previous one first
-            _z_filter_target_t target = {.decl_id = msg->id, .peer = (uintptr_t)peer};
+            _z_filter_target_t target = {.decl_id = msg->id, .peer_id = peer_id};
             ctx->targets = _z_filter_target_slist_drop_first_filter(ctx->targets, _z_filter_target_eq, &target);
-            bool peer_allowed = _z_write_filter_peer_allowed(ctx, peer);
+            bool peer_allowed = _z_write_filter_peer_allowed(ctx, peer_id);
             if (peer_allowed &&
                 (!ctx->is_complete ||
                  (msg->is_complete && (ctx->is_aggregate || _z_keyexpr_includes(msg->key, &ctx->key))))) {
-                _z_write_filter_push_target(ctx, peer, msg->id);
+                _z_write_filter_push_target(ctx, peer_id, msg->id);
             }
             break;
         }
         case _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER:
         case _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE: {
-            _z_filter_target_t target = {.decl_id = msg->id, .peer = (uintptr_t)peer};
+            _z_filter_target_t target = {.decl_id = msg->id, .peer_id = peer_id};
             ctx->targets = _z_filter_target_slist_drop_first_filter(ctx->targets, _z_filter_target_eq, &target);
         } break;
         case _Z_INTEREST_MSG_TYPE_CONNECTION_DROPPED: {
-            _z_filter_target_t target = {.decl_id = 0, .peer = (uintptr_t)peer};
+            _z_filter_target_t target = {.decl_id = 0, .peer_id = peer_id};
             ctx->targets = _z_filter_target_slist_drop_all_filter(ctx->targets, _z_filter_target_peer_eq, &target);
         } break;
         default:

@@ -34,7 +34,7 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
                                            const _z_timestamp_t *timestamp, const _z_bytes_t *attachment,
                                            z_reliability_t reliability, const _z_source_info_t *source_info) {
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, keyexpr, payload, encoding, kind, timestamp,
-                                         qos, attachment, reliability, source_info, NULL);
+                                         qos, attachment, reliability, source_info, _Z_LOCAL_PEER_ID);
 }
 #else
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
@@ -64,7 +64,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     (void)timeout_ms;
     _z_msg_query_t msg;
     _z_msg_query_fill(&msg, parameters, consolidation, payload, encoding, source_info, attachment, implicit_anyke);
-    return _z_trigger_queryables(zn, keyexpr, &msg, (uint32_t)qid, qos, NULL);
+    return _z_trigger_queryables(zn, keyexpr, &msg, (uint32_t)qid, qos, _Z_LOCAL_PEER_ID);
 }
 #else
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
@@ -101,12 +101,12 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, _z_session_
             msg._body._is_put = true;
             _z_msg_put_fill(&msg._body._body._put, timestamp, source_info, payload, encoding, attachment);
             return _z_trigger_query_reply_partial(zn, _z_query_get_ref(query)->_id.rid, keyexpr, &msg, &replier_id, qos,
-                                                  NULL);
+                                                  _Z_LOCAL_PEER_ID);
         case Z_SAMPLE_KIND_DELETE:
             msg._body._is_put = false;
             _z_msg_del_fill(&msg._body._body._del, timestamp, source_info, attachment);
             return _z_trigger_query_reply_partial(zn, _z_query_get_ref(query)->_id.rid, keyexpr, &msg, &replier_id, qos,
-                                                  NULL);
+                                                  _Z_LOCAL_PEER_ID);
         default:
             return _Z_ERR_INVALID;
     }

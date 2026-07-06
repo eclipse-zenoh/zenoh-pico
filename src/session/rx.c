@@ -36,38 +36,34 @@
 
 /*------------------ Handle message ------------------*/
 
-static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *decl,
-                                          _z_transport_peer_common_t *peer) {
+z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, size_t peer_id) {
     switch (decl->_decl._tag) {
-        case _Z_DECL_KEXPR: {
-            uint16_t _res_id;
-            return _z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr, decl->_decl._body._decl_kexpr._id,
-                                        peer, &_res_id);
-        }
+        case _Z_DECL_KEXPR:
+            return _z_register_remote_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr,
+                                               decl->_decl._body._decl_kexpr._id, peer_id);
 
         case _Z_UNDECL_KEXPR:
-            _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, peer);
-            break;
+            return _z_unregister_remote_resource(zn, decl->_decl._body._undecl_kexpr._id, peer_id);
 
         case _Z_DECL_SUBSCRIBER:
-            return _z_interest_process_declares(zn, decl, peer);
+            return _z_interest_process_declares(zn, decl, peer_id);
 
         case _Z_DECL_QUERYABLE:
-            return _z_interest_process_declares(zn, decl, peer);
+            return _z_interest_process_declares(zn, decl, peer_id);
 
         case _Z_DECL_TOKEN:
-            _Z_RETURN_IF_ERR(_z_liveliness_process_token_declare(zn, decl, peer));
-            return _z_interest_process_declares(zn, decl, peer);
+            _Z_RETURN_IF_ERR(_z_liveliness_process_token_declare(zn, decl, peer_id));
+            return _z_interest_process_declares(zn, decl, peer_id);
 
         case _Z_UNDECL_SUBSCRIBER:
-            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer_id);
 
         case _Z_UNDECL_QUERYABLE:
-            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer_id);
 
         case _Z_UNDECL_TOKEN:
-            _Z_RETURN_IF_ERR(_z_liveliness_process_token_undeclare(zn, decl));
-            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
+            _Z_RETURN_IF_ERR(_z_liveliness_process_token_undeclare(zn, decl, peer_id));
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer_id);
 
         case _Z_DECL_FINAL:
             _Z_RETURN_IF_ERR(_z_liveliness_process_declare_final(zn, decl));
@@ -75,7 +71,7 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             if (!decl->_interest_id.has_value) {
                 _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
             }
-            return _z_interest_process_declare_final(zn, decl->_interest_id.value, peer);
+            return _z_interest_process_declare_final(zn, decl->_interest_id.value, peer_id);
 
         default:
             _Z_INFO("Received unknown declare tag: %d\n", decl->_decl._tag);
@@ -84,16 +80,11 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
     return _Z_RES_OK;
 }
 
-static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, _z_transport_peer_common_t *peer) {
-    z_result_t ret = _z_handle_declare_inner(zn, decl, peer);
-    return ret;
-}
-
 static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_request_t *req,
-                                    z_reliability_t reliability, _z_transport_peer_common_t *peer) {
+                                    z_reliability_t reliability, size_t peer_id) {
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(transport);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
     _z_session_t *zn = _z_transport_common_get_session(transport);
     _ZP_UNUSED(zn);
     switch (req->_tag) {
@@ -102,9 +93,9 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
             _z_keyexpr_view_t ke_view;
             char buf[Z_MAX_KEYEXPR_LENGTH];
             _Z_RETURN_IF_ERR(
-                _z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
+                _z_get_keyexpr_view_from_wireexpr(zn, &ke_view, &req->_key, peer_id, buf, Z_MAX_KEYEXPR_LENGTH));
             return _z_trigger_queryables(zn, _z_keyexpr_view_deref(&ke_view), &req->_body._query, (uint32_t)req->_rid,
-                                         req->_ext_qos, peer);
+                                         req->_ext_qos, peer_id);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             break;
@@ -117,11 +108,12 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(
                 zn, &req->_key, _z_bytes_view_deref(&put->_payload), _z_encoding_view_deref(&put->_encoding),
                 &put->_commons._timestamp, req->_ext_qos, _z_bytes_view_deref(&put->_attachment), reliability,
-                &put->_commons._source_info, peer));
+                &put->_commons._source_info, peer_id));
 #endif
             _z_network_message_t final;
             _z_n_msg_make_response_final(&final, req->_rid);
-            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
+            _z_peer_mask_bitset_t peer_mask = _z_peer_mask_bitset_make_from_single_peer(peer_id);
+            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, &peer_mask);
 #if Z_FEATURE_SUBSCRIPTION == 0
             (void)req;
 #endif
@@ -133,11 +125,12 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
             // Memory cleaning must be done in the feature layer
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_del(zn, &req->_key, &del->_commons._timestamp, req->_ext_qos,
                                                           _z_bytes_view_deref(&del->_attachment), reliability,
-                                                          &del->_commons._source_info, peer));
+                                                          &del->_commons._source_info, peer_id));
 #endif
             _z_network_message_t final;
             _z_n_msg_make_response_final(&final, req->_rid);
-            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
+            _z_peer_mask_bitset_t peer_mask = _z_peer_mask_bitset_make_from_single_peer(peer_id);
+            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, &peer_mask);
 #if Z_FEATURE_SUBSCRIPTION == 0
             (void)req;
 #endif
@@ -152,13 +145,13 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
     return _Z_RES_OK;
 }
 
-static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp, _z_transport_peer_common_t *peer) {
+static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp, size_t peer_id) {
 #if Z_FEATURE_QUERY == 1
     _z_entity_global_id_t replier_id = {.zid = resp->_ext_responder._zid, .eid = resp->_ext_responder._eid};
     switch (resp->_tag) {
         case _Z_RESPONSE_BODY_REPLY:
             return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id,
-                                            resp->_ext_qos, peer);
+                                            resp->_ext_qos, peer_id);
         case _Z_RESPONSE_BODY_ERR:
             return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err, &replier_id);
         default:
@@ -167,35 +160,34 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     }
 #else
     _ZP_UNUSED(zn);
-    _ZP_UNUSED(peer);
+    _ZP_UNUSED(peer_id);
 #endif
     return _Z_RES_OK;
 }
 
-z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_message_t *msg,
-                                     _z_transport_peer_common_t *peer) {
+z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_network_message_t *msg, size_t peer_id) {
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _z_transport_common_get_session(transport);
 
     switch (msg->_tag) {
         case _Z_N_DECLARE:
             _Z_DEBUG("Handling _Z_N_DECLARE: %i", msg->_body._declare._decl._tag);
-            ret = _z_handle_declare(zn, &msg->_body._declare, peer);
+            ret = _z_handle_declare(zn, &msg->_body._declare, peer_id);
             break;
 
         case _Z_N_PUSH:
             _Z_DEBUG("Handling _Z_N_PUSH");
-            ret = _z_trigger_push(zn, &msg->_body._push, msg->_reliability, peer);
+            ret = _z_trigger_push(zn, &msg->_body._push, msg->_reliability, peer_id);
             break;
 
         case _Z_N_REQUEST:
             _Z_DEBUG("Handling _Z_N_REQUEST");
-            ret = _z_handle_request(transport, &msg->_body._request, msg->_reliability, peer);
+            ret = _z_handle_request(transport, &msg->_body._request, msg->_reliability, peer_id);
             break;
 
         case _Z_N_RESPONSE:
             _Z_DEBUG("Handling _Z_N_RESPONSE");
-            ret = _z_handle_response(zn, &msg->_body._response, peer);
+            ret = _z_handle_response(zn, &msg->_body._response, peer_id);
             break;
 
         case _Z_N_RESPONSE_FINAL:
@@ -208,7 +200,7 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
             _z_n_msg_interest_t *interest = &msg->_body._interest;
             if ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0) {
                 _z_interest_process_interest(zn, &interest->_interest._keyexpr, interest->_interest._id,
-                                             interest->_interest.flags, peer);
+                                             interest->_interest.flags, peer_id);
             } else {
                 _z_interest_process_interest_final(zn, interest->_interest._id);
             }

@@ -45,14 +45,10 @@ enum _z_batching_state_e {
     _Z_BATCHING_ACTIVE = 1,
 };
 
-// Forward declaration to avoid cyclical include
-typedef _z_slist_t _z_resource_slist_t;
-
 typedef struct {
     _z_id_t _remote_zid;
     z_whatami_t _remote_whatami;
     volatile bool _received;
-    _z_resource_slist_t *_remote_resources;
 #if Z_FEATURE_CONNECTIVITY == 1
     _z_string_t _link_src;
     _z_string_t _link_dst;
@@ -72,19 +68,13 @@ typedef struct {
 typedef struct {
     _z_id_t _remote_zid;
     z_whatami_t _remote_whatami;
-    _z_string_t _link_src;
-    _z_string_t _link_dst;
-    bool _owns_endpoints;
+    _z_string_view_t _link_src;
+    _z_string_view_t _link_dst;
 } _z_connectivity_peer_event_data_t;
 #endif
 
 void _z_transport_peer_common_clear(_z_transport_peer_common_t *src);
-void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src);
-bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right);
 #if Z_FEATURE_CONNECTIVITY == 1
-void _z_connectivity_peer_event_data_clear(_z_connectivity_peer_event_data_t *event_data);
-void _z_connectivity_peer_event_data_copy_from_common(_z_connectivity_peer_event_data_t *dst,
-                                                      const _z_transport_peer_common_t *src);
 void _z_connectivity_peer_event_data_alias_from_common(_z_connectivity_peer_event_data_t *dst,
                                                        const _z_transport_peer_common_t *src);
 #endif
@@ -135,16 +125,29 @@ typedef struct {
 } _z_transport_peer_unicast_t;
 
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src);
-void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_transport_peer_unicast_t *src);
-size_t _z_transport_peer_unicast_size(const _z_transport_peer_unicast_t *src);
-bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const _z_transport_peer_unicast_t *right);
-_Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transport_peer_unicast_size,
-               _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move,
-               _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
-#define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE _z_transport_peer_unicast_t
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(x) _z_id_hash(&(x)->common._remote_zid)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(x, y) _z_id_eq(&(x)->common._remote_zid, &(y)->common._remote_zid)
+#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_transport_peer_unicast_hset
+#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_MAX_NUM_PEERS
+#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN _z_transport_peer_unicast_clear
+// default move
+#include "zenoh-pico/collections/static_hashmap_template.h"
 
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME _z_peer_mask_bitset
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_SIZE Z_MAX_NUM_PEERS
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_BLOCK_TYPE uint8_t
+#define _ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET 1
+#include "zenoh-pico/collections/static_bit_vector_template.h"
+
+#define _Z_LOCAL_PEER_ID Z_MAX_NUM_PEERS  // The local peer is always the last one in the bitset
+
+static inline _z_peer_mask_bitset_t _z_peer_mask_bitset_make_from_single_peer(size_t peer_id) {
+    _z_peer_mask_bitset_t bitset = _z_peer_mask_bitset_new();
+    _z_peer_mask_bitset_set_at(&bitset, peer_id, true);
+    return bitset;
+}
 typedef enum _z_transport_state_t {
     _Z_TRANSPORT_STATE_CLOSED = 0,
     _Z_TRANSPORT_STATE_RECONNECTING = 1,
@@ -195,9 +198,6 @@ typedef struct {
 #endif
 } _z_transport_common_t;
 
-// Send function prototype
-typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_transport_message_t *t_msg);
-
 typedef enum {
     _Z_PENDING_PEER_STATE_PENDING = 0,
     _Z_PENDING_PEER_STATE_DONE = 1,
@@ -230,12 +230,19 @@ void _z_pending_peers_move(_z_pending_peers_t *dst, _z_pending_peers_t *src);
 typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
-    _z_transport_peer_unicast_slist_t *_peers;
+    _z_transport_peer_unicast_hset_t _peers;
     _z_pending_peers_t _pending_peers;
 } _z_transport_unicast_t;
 
-#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
+static inline _z_transport_peer_unicast_t *_z_transport_unicast_get_first_peer(_z_transport_unicast_t *ztu) {
+    _z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
+    if (iter == _z_transport_peer_unicast_hset_end(&ztu->_peers)) {
+        return NULL;
+    }
+    return _z_transport_peer_unicast_hset_at(&ztu->_peers, iter);
+}
 
+#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
 typedef struct _z_transport_multicast_t {
     _z_transport_common_t _common;
     // Persistent source address associated with the current contents of _zbuf.
@@ -244,8 +251,7 @@ typedef struct _z_transport_multicast_t {
     _z_slice_t _zbuf_addr;
     // Known valid peers
     _z_address_to_transport_peer_multicast_hmap_t _peers;
-    // T message send function
-    _zp_f_send_tmsg _send_f;
+    bool _is_raweth;
 } _z_transport_multicast_t;
 
 typedef enum {
@@ -287,8 +293,7 @@ typedef struct {
 } _z_transport_multicast_establish_param_t;
 
 z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
-                                         _z_sys_net_socket_t socket, bool owns_socket,
-                                         _z_transport_peer_unicast_t **output_peer);
+                                         _z_sys_net_socket_t socket, bool owns_socket, bool notify_connectivity);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 size_t _z_transport_get_peers_count(const _z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);

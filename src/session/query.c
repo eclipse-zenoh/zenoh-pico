@@ -105,8 +105,8 @@ _z_pending_query_t *_z_unsafe_register_pending_query(_z_session_t *zn) {
 
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t *keyexpr,
                                           const _z_msg_reply_t *msg, const _z_entity_global_id_t *replier_id,
-                                          _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
-    (void)peer;
+                                          _z_n_qos_t qos, size_t peer_id) {
+    (void)peer_id;
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
 
     // Get query infos

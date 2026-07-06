@@ -25,6 +25,7 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
+#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -71,8 +72,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     ztu->_common._lease = param->_lease;
     // Transport link for unicast
     ztu->_common._link = zl;
-
-    ztu->_peers = _z_transport_peer_unicast_slist_new();
+    _z_transport_peer_unicast_hset_init(&ztu->_peers);
     ztu->_pending_peers = _z_pending_peers_null();
     return _Z_RES_OK;
 }
@@ -299,7 +299,7 @@ z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bo
     z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-    ret = _z_transport_tx_send_t_msg(&ztu->_common, &cm, NULL);
+    ret = _z_transport_unicast_send_t_msg(ztu, &cm, NULL);
     return ret;
 }
 
@@ -308,7 +308,7 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
 }
 
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu) {
-    _z_transport_peer_unicast_slist_free(&ztu->_peers);
+    _z_transport_peer_unicast_hset_destroy(&ztu->_peers);
     _z_pending_peers_clear(&ztu->_pending_peers);
     _z_transport_common_clear(
         &ztu->_common);  // free common in the very end, as peers might access the link data in common while being freed

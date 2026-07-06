@@ -30,7 +30,7 @@ size_t _z_transport_get_peers_count(const _z_transport_t *zt) {
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             _z_transport_peer_mutex_lock((_z_transport_common_t *)&zt->_transport._unicast._common);
-            count = _z_transport_peer_unicast_slist_len(zt->_transport._unicast._peers);
+            count = _z_transport_peer_unicast_hset_size(&zt->_transport._unicast._peers);
             _z_transport_peer_mutex_unlock((_z_transport_common_t *)&zt->_transport._unicast._common);
             return count;
         case _Z_TRANSPORT_MULTICAST_TYPE:

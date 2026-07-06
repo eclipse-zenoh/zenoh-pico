@@ -56,6 +56,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
             if (iter != _z_address_to_transport_peer_multicast_hmap_end(&ztm->_peers)) {
                 _Z_WARN("Closing connection with distant node at %.*s due to malformed message: %d",
                         (int)ztm->_zbuf_addr.len, (const char *)ztm->_zbuf_addr.start, ret);
+                _zp_multicast_report_disconnected_event(ztm, iter);
                 _zp_multicast_remove_peer_by_iter(ztm, iter);
             }
             break;

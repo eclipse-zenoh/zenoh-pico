@@ -239,7 +239,7 @@ typedef struct _z_interest_msg_t {
 /**
  * The callback signature of the functions handling interest messages.
  */
-typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg);
+typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, size_t peer_id, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -272,7 +272,7 @@ typedef enum {
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_transport_peer_common_t *_peer;
+    size_t _peer_id;
     uint32_t _id;
     uint8_t _type;
     bool _complete;

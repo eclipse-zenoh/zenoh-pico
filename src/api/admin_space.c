@@ -460,11 +460,11 @@ static z_result_t _ze_admin_space_encode_multicast_peer(_z_json_encoder_t *je,
 }
 
 static z_result_t _ze_admin_space_encode_unicast_peers(_z_json_encoder_t *je,
-                                                       const _z_transport_peer_unicast_slist_t *peers) {
+                                                       const _z_transport_peer_unicast_hset_t *peers) {
     _Z_RETURN_IF_ERR(_z_json_encoder_start_array(je));
 
-    for (; peers != NULL; peers = _z_transport_peer_unicast_slist_next(peers)) {
-        const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(peers);
+    const _z_transport_peer_unicast_t *peer = NULL;
+    _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, peers, peer) {
         _Z_RETURN_IF_ERR(_ze_admin_space_encode_unicast_peer(je, peer));
     }
 
@@ -493,7 +493,7 @@ static z_result_t _ze_admin_space_encode_transport_unicast(_z_json_encoder_t *je
         ret = _z_json_encoder_write_key(je, "peers");
     }
     if (ret == _Z_RES_OK) {
-        ret = _ze_admin_space_encode_unicast_peers(je, tp->_peers);
+        ret = _ze_admin_space_encode_unicast_peers(je, &tp->_peers);
     }
 
     _z_transport_peer_mutex_unlock(&tp->_common);
@@ -546,7 +546,7 @@ static z_result_t _ze_admin_space_encode_transport_peers(_z_json_encoder_t *je, 
         case _Z_TRANSPORT_UNICAST_TYPE: {
             _z_transport_unicast_t *utp = &tp->_transport._unicast;
             _z_transport_peer_mutex_lock(&utp->_common);
-            ret = _ze_admin_space_encode_unicast_peers(je, utp->_peers);
+            ret = _ze_admin_space_encode_unicast_peers(je, &utp->_peers);
             _z_transport_peer_mutex_unlock(&utp->_common);
             break;
         }
@@ -671,11 +671,8 @@ static void _ze_admin_space_query_handle_pico_transport_0_unicast_peers(const z_
                                                                         _z_transport_unicast_t *tp,
                                                                         _ze_admin_space_reply_list_t **replies) {
     _z_transport_peer_mutex_lock(&tp->_common);
-
-    for (_z_transport_peer_unicast_slist_t *peers = tp->_peers; peers != NULL;
-         peers = _z_transport_peer_unicast_slist_next(peers)) {
-        const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(peers);
-
+    const _z_transport_peer_unicast_t *peer = NULL;
+    _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &tp->_peers, peer) {
         z_owned_keyexpr_t ke;
         z_result_t ret;
 
@@ -697,7 +694,6 @@ static void _ze_admin_space_query_handle_pico_transport_0_unicast_peers(const z_
 
         z_keyexpr_drop(z_keyexpr_move(&ke));
     }
-
     _z_transport_peer_mutex_unlock(&tp->_common);
 }
 
@@ -811,58 +807,55 @@ static void _ze_admin_space_query_handle_connectivity_session(const z_loaned_que
     _z_transport_peer_mutex_lock(&session->_tp._transport._unicast._common);
 
     const _z_transport_common_t *transport_common = &session->_tp._transport._unicast._common;
-    const _z_transport_peer_unicast_slist_t *peers = session->_tp._transport._unicast._peers;
-    while (peers != NULL) {
-        const _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(peers);
-
+    const _z_transport_peer_unicast_t *peer = NULL;
+    _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &session->_tp._transport._unicast._peers, peer) {
         z_owned_keyexpr_t transport_ke;
         z_result_t ret =
             _ze_admin_space_session_transport_ke(&transport_ke, &session->_local_zid, &peer->common._remote_zid);
-        if (ret == _Z_RES_OK) {
-            if (z_keyexpr_intersects(z_query_keyexpr(query), z_keyexpr_loan(&transport_ke))) {
-                z_owned_bytes_t payload;
-                ret = _ze_admin_space_encode_connectivity_transport_payload(&payload, &peer->common._remote_zid,
-                                                                            peer->common._remote_whatami, false, false);
-                if (ret == _Z_RES_OK) {
-                    ret =
-                        _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&transport_ke), z_bytes_move(&payload), replies);
-                }
-                if (ret != _Z_RES_OK) {
-                    _Z_WARN("Failed to add connectivity transport status reply: %d", ret);
-                }
-            }
-            z_keyexpr_drop(z_keyexpr_move(&transport_ke));
-        } else {
+        if (ret != _Z_RES_OK) {
             _Z_WARN("Failed to build key expression for connectivity transport status: %d", ret);
+            continue;
         }
+        if (z_keyexpr_intersects(z_query_keyexpr(query), z_keyexpr_loan(&transport_ke))) {
+            z_owned_bytes_t payload;
+            ret = _ze_admin_space_encode_connectivity_transport_payload(&payload, &peer->common._remote_zid,
+                                                                        peer->common._remote_whatami, false, false);
+            _Z_SET_IF_OK(
+                ret, _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&transport_ke), z_bytes_move(&payload), replies));
+            if (ret != _Z_RES_OK) {
+                _Z_WARN("Failed to add connectivity transport status reply: %d", ret);
+                z_keyexpr_drop(z_keyexpr_move(&transport_ke));
+                continue;
+            }
+        }
+        z_keyexpr_drop(z_keyexpr_move(&transport_ke));
 
         z_owned_keyexpr_t link_ke;
         ret = _ze_admin_space_session_link_ke(&link_ke, &session->_local_zid, &peer->common._remote_zid,
                                               &peer->common._remote_zid);
-        if (ret == _Z_RES_OK) {
-            if (z_keyexpr_intersects(z_query_keyexpr(query), z_keyexpr_loan(&link_ke))) {
-                uint16_t mtu;
-                bool is_streamed;
-                bool is_reliable;
-                _z_transport_link_properties_from_transport(transport_common, &mtu, &is_streamed, &is_reliable);
-
-                z_owned_bytes_t payload;
-                z_internal_bytes_null(&payload);
-                ret = _ze_admin_space_encode_connectivity_link_payload(
-                    &payload, &peer->common._link_src, &peer->common._link_dst, mtu, is_streamed, is_reliable);
-                if (ret == _Z_RES_OK) {
-                    ret = _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&link_ke), z_bytes_move(&payload), replies);
-                }
-                if (ret != _Z_RES_OK) {
-                    _Z_WARN("Failed to add connectivity link status reply: %d", ret);
-                }
-            }
-            z_keyexpr_drop(z_keyexpr_move(&link_ke));
-        } else {
+        if (ret != _Z_RES_OK) {
             _Z_WARN("Failed to build key expression for connectivity link status: %d", ret);
+            continue;
         }
+        if (z_keyexpr_intersects(z_query_keyexpr(query), z_keyexpr_loan(&link_ke))) {
+            uint16_t mtu;
+            bool is_streamed;
+            bool is_reliable;
+            _z_transport_link_properties_from_transport(transport_common, &mtu, &is_streamed, &is_reliable);
 
-        peers = _z_transport_peer_unicast_slist_next(peers);
+            z_owned_bytes_t payload;
+            z_internal_bytes_null(&payload);
+            ret = _ze_admin_space_encode_connectivity_link_payload(
+                &payload, &peer->common._link_src, &peer->common._link_dst, mtu, is_streamed, is_reliable);
+            _Z_SET_IF_OK(ret,
+                         _ze_admin_space_add_reply_bytes(z_keyexpr_loan(&link_ke), z_bytes_move(&payload), replies));
+            if (ret != _Z_RES_OK) {
+                _Z_WARN("Failed to add connectivity link status reply: %d", ret);
+                z_keyexpr_drop(z_keyexpr_move(&link_ke));
+                continue;
+            }
+        }
+        z_keyexpr_drop(z_keyexpr_move(&link_ke));
     }
 
     _z_transport_peer_mutex_unlock(&session->_tp._transport._unicast._common);

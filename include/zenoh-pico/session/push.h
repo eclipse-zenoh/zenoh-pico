@@ -25,8 +25,7 @@
 extern "C" {
 #endif
 
-z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability,
-                           _z_transport_peer_common_t *peer);
+z_result_t _z_trigger_push(_z_session_t *zn, const _z_n_msg_push_t *push, z_reliability_t reliability, size_t peer_id);
 
 #ifdef __cplusplus
 }

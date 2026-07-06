@@ -32,7 +32,6 @@ typedef void (*_z_socket_wait_iter_set_ready_f)(_z_socket_wait_iter_t *iter, boo
 
 struct _z_socket_wait_iter_t {
     void *_ctx;
-    void *_current_entry;
     _z_socket_wait_iter_reset_f _reset;
     _z_socket_wait_iter_next_f _next;
     _z_socket_wait_iter_get_socket_f _get_socket;

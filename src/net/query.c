@@ -37,13 +37,14 @@ z_result_t _z_received_query_count_increase(_z_session_t *zn, const _z_query_own
 }
 
 z_result_t _z_session_send_reply_final(_z_session_t *session, const _z_query_id_t *query_id) {
-    if (query_id->peer_id == NULL) {
+    if (query_id->peer_id == _Z_LOCAL_PEER_ID) {
         return _z_session_deliver_reply_final_locally(session, query_id->rid);
     } else {
-        _z_zenoh_message_t z_msg;
+        _z_network_message_t z_msg;
         _z_n_msg_make_response_final(&z_msg, query_id->rid);
+        _z_peer_mask_bitset_t peer_bitmask = _z_peer_mask_bitset_make_from_single_peer((size_t)query_id->peer_id);
         z_result_t ret =
-            _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, query_id->peer_id);
+            _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, &peer_bitmask);
         return ret;
     }
 }

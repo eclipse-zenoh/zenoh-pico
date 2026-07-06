@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 typedef struct {
-    uintptr_t peer;
+    size_t peer_id;
     uint32_t decl_id;
 } _z_filter_target_t;
 

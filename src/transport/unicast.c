@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/algorithms_template.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/common/tx.h"
@@ -32,11 +33,9 @@
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     void *ctx = callback->context;
-    _z_transport_peer_unicast_slist_t *l = zt->_transport._unicast._peers;
-    for (; l != NULL; l = _z_transport_peer_unicast_slist_next(l)) {
-        _z_transport_peer_unicast_t *val = _z_transport_peer_unicast_slist_value(l);
-        z_id_t id = val->common._remote_zid;
-        callback->call(&id, ctx);
+    const _z_transport_peer_unicast_t *peer = NULL;
+    _ZP_CONST_FOREACH (_z_transport_peer_unicast_hset, &zt->_transport._unicast._peers, peer) {
+        callback->call(&peer->common._remote_zid, ctx);
     }
 }
 
