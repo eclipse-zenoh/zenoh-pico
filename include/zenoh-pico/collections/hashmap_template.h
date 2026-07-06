@@ -230,11 +230,12 @@ typedef _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_HASHMAP_TEMPLATE_ITER_TYPEDEF;
 //   _node      : key/value payload of node i
 //   _next      : index of the next node in the bucket chain, or the next free slot if _bucket == INDEX_NONE
 //   _bucket    : index of the first node in bucket i, INDEX_NONE = empty
-//   _next_live : an index of the live node preceeding this one in the iteration order, or INDEX_NONE if this is the
+//   _next_live : an index of the live node following this one in the iteration order, or INDEX_NONE if this is the
 //   first live node.
-//   _prev_live : an index of the live node following this one in the iteration order, or INDEX_NONE if
+//   _prev_live : an index of the live node preceding this one in the iteration order, or INDEX_NONE if
 //   this is the last live node.
-//   If both _prev_live and _next_live are INDEX_NONE, then this node is not live (not present in the map).
+//   If both _prev_live and _next_live are INDEX_NONE and the node is not pointed by _live_head,
+//   then this node is not live (not present in the map).
 
 typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE _node;
@@ -245,6 +246,11 @@ typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
 } _ZP_HASHMAP_TEMPLATE_SLOT_TYPE;
 
 #define _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE (SIZE_MAX / sizeof(_ZP_HASHMAP_TEMPLATE_SLOT_TYPE))
+
+#define _ZP_HASHMAP_NODE_IS_LIVE(map_ptr, node_iter)                               \
+    ((map_ptr)->_slots[node_iter]._next_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
+     (map_ptr)->_slots[node_iter]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
+     (map_ptr)->_live_head == (size_t)(node_iter))
 
 // ── Map type ──────────────────────────────────────────────────────────────────
 //
@@ -339,8 +345,7 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     for (size_t i = 0; i < map->_capacity; i++) {
         new_slots[i]._next_live = map->_slots[i]._next_live;
         new_slots[i]._prev_live = map->_slots[i]._prev_live;
-        if (map->_slots[i]._next_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE ||
-            map->_slots[i]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
+        if (_ZP_HASHMAP_NODE_IS_LIVE(map, i)) {
             _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node),
                                              _ZP_HASHMAP_TEMPLATE_NODE_KEY(&map->_slots[i]._node));
 #ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
@@ -371,21 +376,22 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
         new_slots[i]._next = free_head;
         free_head = (_ZP_HASHMAP_TEMPLATE_INDEX_TYPE)i;
     }
-    // Re-hash every live entry into the new bucket heads (indices are preserved).
+
+    _ZP_HASHMAP_TEMPLATE_FREE_FN(map->_slots);
+    map->_slots = new_slots;
+    map->_free_head = free_head;
+    // Do not update capacity yet, since the re-hash below needs to know the old capacity to iterate over all live
+    // entries Re-hash every live entry into the new bucket heads (indices are preserved).
     for (size_t i = 0; i < map->_capacity; i++) {
-        if (new_slots[i]._next_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE ||
-            new_slots[i]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
+        if (_ZP_HASHMAP_NODE_IS_LIVE(map, i)) {
             size_t b =
                 _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node)) % new_capacity;
             new_slots[i]._next = new_slots[b]._bucket;
             new_slots[b]._bucket = (_ZP_HASHMAP_TEMPLATE_INDEX_TYPE)i;
         }
     }
-
-    _ZP_HASHMAP_TEMPLATE_FREE_FN(map->_slots);
-    map->_slots = new_slots;
     map->_capacity = new_capacity;
-    map->_free_head = free_head;
+
     return true;
 }
 
@@ -721,6 +727,7 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
     _ZP_HASHMAP_TEMPLATE_FREE_FN(map->_slots);
     map->_slots = NULL;
     map->_capacity = 0;
+    map->_free_head = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
 }
 
 // ── Undef all macros ──────────────────────────────────────────────────────────
@@ -761,4 +768,5 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 #undef _ZP_HASHMAP_TEMPLATE_INDEX_NONE
 #undef _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY
 #undef _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE
+#undef _ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE
 #undef _ZP_HASHMAP_TEMPLATE_ITER_TYPEDEF
