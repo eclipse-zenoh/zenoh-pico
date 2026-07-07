@@ -96,7 +96,6 @@
 
 #ifndef _ZP_HASHMAP_TEMPLATE_KEY_TYPE
 #error "_ZP_HASHMAP_TEMPLATE_KEY_TYPE must be defined before including hashmap_template.h"
-#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE int
 #endif
 // When no value type is supplied, generate a hashset (node type == key type)
 // instead of a hashmap.
@@ -234,8 +233,7 @@ typedef _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_HASHMAP_TEMPLATE_ITER_TYPEDEF;
 //   first live node.
 //   _prev_live : an index of the live node preceding this one in the iteration order, or INDEX_NONE if
 //   this is the last live node.
-//   If both _prev_live and _next_live are INDEX_NONE and the node is not pointed by _live_head,
-//   then this node is not live (not present in the map).
+//   Live entries are threaded through these links starting at map->_live_head.
 
 typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE _node;
@@ -248,8 +246,7 @@ typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
 #define _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE (SIZE_MAX / sizeof(_ZP_HASHMAP_TEMPLATE_SLOT_TYPE))
 
 #define _ZP_HASHMAP_NODE_IS_LIVE(map_ptr, node_iter)                               \
-    ((map_ptr)->_slots[node_iter]._next_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
-     (map_ptr)->_slots[node_iter]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
+    ((map_ptr)->_slots[node_iter]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
      (map_ptr)->_live_head == (size_t)(node_iter))
 
 // ── Map type ──────────────────────────────────────────────────────────────────

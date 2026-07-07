@@ -180,8 +180,7 @@ typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_ITER_T
 //   first live node.
 //   _prev_live : an index of the live node preceding this one in the iteration order, or INDEX_NONE if
 //   this is the last live node.
-//   If both _prev_live and _next_live are INDEX_NONE and the node is not pointed by _live_head,
-//   then this node is not live (not present in the map).
+//   Live entries are threaded through these links starting at map->_live_head.
 
 typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE {
     _ZP_STATIC_HASHMAP_TEMPLATE_NODE_TYPE _node;
