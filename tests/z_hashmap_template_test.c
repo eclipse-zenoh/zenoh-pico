@@ -80,6 +80,7 @@ typedef struct {
 #define _ZP_HASHMAP_TEMPLATE_INITIAL_CAPACITY 2
 #define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN int_hash
 #define _ZP_HASHMAP_TEMPLATE_KEY_EQ_FN int_eq
+#define _ZP_HASHMAP_TEMPLATE_VAL_MOVE_FN(dst, src) (*(dst) = *(src), (src)->str = NULL)
 #define _ZP_HASHMAP_TEMPLATE_VAL_DESTROY_FN(p) free((p)->str)
 #include "zenoh-pico/collections/hashmap_template.h"
 
@@ -439,9 +440,6 @@ static void test_realloc_grow_path(void) {
 
 // Regression test for the free-list rebuild during growth of a PARTIALLY-FILLED
 // map (capacity > size, i.e. some old slots are already on the free list).
-// A previous refactor seeded the new free list with INDEX_NONE instead of the
-// existing free head, orphaning the old free slots: pool_alloc would then hand
-// back INDEX_NONE on a non-full map and the caller would write out of bounds.
 // This exercises all three relocation strategies: memcpy (u32map), realloc
 // (reallocmap) and per-entry move with a destructor (strmap).
 static void test_partial_fill_grow_preserves_free_list(void) {
