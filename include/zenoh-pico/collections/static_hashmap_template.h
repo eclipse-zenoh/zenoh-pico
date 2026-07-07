@@ -177,9 +177,9 @@ typedef _ZP_STATIC_HASHMAP_TEMPLATE_ITER_TYPE _ZP_STATIC_HASHMAP_TEMPLATE_ITER_T
 //   _next      : index of the next node in the bucket chain, or the next free slot if _bucket == INDEX_NONE
 //   _bucket    : index of the first node in bucket i, INDEX_NONE = empty
 //   _next_live : an index of the live node following this one in the iteration order, or INDEX_NONE if this is the
-//   first live node.
+//   last live node.
 //   _prev_live : an index of the live node preceding this one in the iteration order, or INDEX_NONE if
-//   this is the last live node.
+//   this is the first live node.
 //   Live entries are threaded through these links starting at map->_live_head.
 
 typedef struct _ZP_STATIC_HASHMAP_TEMPLATE_SLOT_TYPE {
