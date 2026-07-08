@@ -19,7 +19,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/common/socket_ops.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/transport/serial_protocol.h"
 
 #if Z_FEATURE_LINK_SERIAL == 1
@@ -135,8 +135,6 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     zl->_endpoint = endpoint;
 
-    zl->_open_f = _z_f_link_open_serial;
-    zl->_listen_f = _z_f_link_listen_serial;
     zl->_close_f = _z_f_link_close_serial;
 
     zl->_write_f = _z_f_link_write_serial;
@@ -148,4 +146,17 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_serial_create(_z_link_t *link, _z_endpoint_t *endpoint,
+                                               const _z_config_t *session_cfg) {
+    _ZP_UNUSED(session_cfg);
+    return _z_new_link_serial(link, *endpoint);
+}
+
+const _z_link_driver_t _z_link_driver_serial = {
+    ._validate_f = _z_endpoint_serial_valid,
+    ._create_f = _z_link_driver_serial_create,
+    ._open_f = _z_f_link_open_serial,
+    ._listen_f = NULL,
+};
 #endif

@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/common/socket_ops.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/transport/udp_unicast.h"
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
@@ -53,15 +53,10 @@ static const _z_link_peer_ops_t _z_udp_unicast_peer_ops = {
 z_result_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
     _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    z_result_t ret = _z_udp_unicast_address_valid(&endpoint->_locator._address);
-    if (ret != _Z_RES_OK) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-    }
-    return ret;
+    return _z_udp_unicast_address_valid(&endpoint->_locator._address);
 }
 
 z_result_t _z_f_link_open_udp_unicast(_z_link_t *self) {
@@ -178,8 +173,6 @@ z_result_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     zl->_endpoint = endpoint;
 
-    zl->_open_f = _z_f_link_open_udp_unicast;
-    zl->_listen_f = _z_f_link_listen_udp_unicast;
     zl->_close_f = _z_f_link_close_udp_unicast;
 
     zl->_write_f = _z_f_link_write_udp_unicast;
@@ -191,4 +184,17 @@ z_result_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_udp_unicast_create(_z_link_t *link, _z_endpoint_t *endpoint,
+                                                    const _z_config_t *session_cfg) {
+    _ZP_UNUSED(session_cfg);
+    return _z_new_link_udp_unicast(link, *endpoint);
+}
+
+const _z_link_driver_t _z_link_driver_udp_unicast = {
+    ._validate_f = _z_endpoint_udp_unicast_valid,
+    ._create_f = _z_link_driver_udp_unicast_create,
+    ._open_f = _z_f_link_open_udp_unicast,
+    ._listen_f = NULL,
+};
 #endif

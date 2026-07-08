@@ -19,7 +19,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/config/raweth.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/transport/raweth.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/platform.h"
@@ -490,15 +490,11 @@ static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, s
 static uint16_t _z_get_link_mtu_raweth(void) { return _ZP_MAX_ETH_FRAME_SIZE; }
 
 z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
-    z_result_t ret = _Z_RES_OK;
-
-    // Check the root
     _z_string_t str_cmp = _z_string_alias_str(RAWETH_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &str_cmp)) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
-    return ret;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
@@ -516,8 +512,6 @@ z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     zl->_endpoint = endpoint;
 
-    zl->_open_f = _z_f_link_open_raweth;
-    zl->_listen_f = _z_f_link_listen_raweth;
     zl->_close_f = _z_f_link_close_raweth;
 
     zl->_write_f = _z_f_link_write_raweth;
@@ -528,6 +522,19 @@ z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_raweth_create(_z_link_t *link, _z_endpoint_t *endpoint,
+                                               const _z_config_t *session_cfg) {
+    _ZP_UNUSED(session_cfg);
+    return _z_new_link_raweth(link, *endpoint);
+}
+
+const _z_link_driver_t _z_link_driver_raweth = {
+    ._validate_f = _z_endpoint_raweth_valid,
+    ._create_f = _z_link_driver_raweth_create,
+    ._open_f = NULL,
+    ._listen_f = _z_f_link_listen_raweth,
+};
 
 size_t _z_raweth_config_strlen(const _z_str_intmap_t *s) {
     RAWETH_CONFIG_MAPPING_BUILD

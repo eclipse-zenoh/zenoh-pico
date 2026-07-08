@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"

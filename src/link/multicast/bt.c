@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/transport/bt.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -40,12 +40,10 @@ static const _z_bt_link_state_t *_z_bt_link_state_const(const _z_link_t *link) {
 z_result_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
     _z_string_t bt_str = _z_string_alias_str(BT_SCHEMA);
     if (!_z_string_equals(&ep->_locator._protocol, &bt_str)) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (_z_string_len(&ep->_locator._address) == (size_t)0) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
@@ -186,8 +184,6 @@ z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     zl->_endpoint = endpoint;
 
-    zl->_open_f = _z_f_link_open_bt;
-    zl->_listen_f = _z_f_link_listen_bt;
     zl->_close_f = _z_f_link_close_bt;
 
     zl->_write_f = _z_f_link_write_bt;
@@ -198,4 +194,16 @@ z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_bt_create(_z_link_t *link, _z_endpoint_t *endpoint, const _z_config_t *session_cfg) {
+    _ZP_UNUSED(session_cfg);
+    return _z_new_link_bt(link, *endpoint);
+}
+
+const _z_link_driver_t _z_link_driver_bt = {
+    ._validate_f = _z_endpoint_bt_valid,
+    ._create_f = _z_link_driver_bt_create,
+    ._open_f = _z_f_link_open_bt,
+    ._listen_f = _z_f_link_listen_bt,
+};
 #endif

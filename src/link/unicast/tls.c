@@ -19,8 +19,8 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/common/socket_ops.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/link/transport/tcp.h"
 #include "zenoh-pico/link/transport/tls_stream.h"
 #include "zenoh-pico/utils/config.h"
@@ -37,6 +37,7 @@ static _z_tls_link_state_t *_z_tls_link_state(_z_link_t *link) { return (_z_tls_
 
 static size_t _z_link_peer_read_tls(const _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len);
 static size_t _z_link_peer_write_tls(const _z_link_t *link, const _z_link_peer_t *peer, const uint8_t *ptr, size_t len);
+z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket, const _z_config_t *session_cfg);
 
 static const _z_link_peer_ops_t _z_tls_peer_ops = {
     ._read_f = _z_link_peer_read_tls,
@@ -51,15 +52,10 @@ uint16_t _z_get_link_mtu_tls(void) { return 65535; }
 z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
     _z_string_t tls_str = _z_string_alias_str(TLS_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &tls_str)) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    z_result_t ret = _z_tcp_address_valid(&endpoint->_locator._address);
-    if (ret != _Z_RES_OK) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-    }
-    return ret;
+    return _z_tcp_address_valid(&endpoint->_locator._address);
 }
 
 static _z_config_t _z_tls_merge_config(_z_str_intmap_t *endpoint_cfg, const _z_config_t *session_cfg) {
@@ -347,8 +343,6 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
     _Z_DEBUG("TLS locator: '%.*s'", (int)_z_string_len(&endpoint->_locator._address),
              _z_string_data(&endpoint->_locator._address));
 
-    zl->_open_f = _z_f_link_open_tls;
-    zl->_listen_f = _z_f_link_listen_tls;
     zl->_close_f = _z_f_link_close_tls;
     zl->_write_f = _z_f_link_write_tls;
     zl->_write_all_f = _z_f_link_write_all_tls;
@@ -362,6 +356,17 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint, const _z_conf
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_tls_create(_z_link_t *link, _z_endpoint_t *endpoint, const _z_config_t *session_cfg) {
+    return _z_new_link_tls(link, endpoint, session_cfg);
+}
+
+const _z_link_driver_t _z_link_driver_tls = {
+    ._validate_f = _z_endpoint_tls_valid,
+    ._create_f = _z_link_driver_tls_create,
+    ._open_f = _z_f_link_open_tls,
+    ._listen_f = _z_f_link_listen_tls,
+};
 
 z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket, const _z_config_t *session_cfg) {
     _z_sys_net_endpoint_t sys_endpoint = {0};

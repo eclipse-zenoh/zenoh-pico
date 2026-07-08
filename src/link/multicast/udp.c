@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver.h"
 #include "zenoh-pico/link/transport/udp_multicast.h"
 #include "zenoh-pico/link/transport/udp_unicast.h"
 
@@ -40,19 +40,16 @@ static const _z_udp_multicast_link_state_t *_z_udp_multicast_link_state_const(co
 z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
     _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     z_result_t ret = _z_udp_unicast_address_valid(&endpoint->_locator._address);
     if (ret != _Z_RES_OK) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return ret;
     }
 
     const char *iface = _z_str_intmap_get(&endpoint->_config, UDP_CONFIG_IFACE_KEY);
     if (iface == NULL) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
@@ -155,8 +152,6 @@ z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     zl->_endpoint = endpoint;
 
-    zl->_open_f = _z_f_link_open_udp_multicast;
-    zl->_listen_f = _z_f_link_listen_udp_multicast;
     zl->_close_f = _z_f_link_close_udp_multicast;
 
     zl->_write_f = _z_f_link_write_udp_multicast;
@@ -167,5 +162,18 @@ z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
 
     return _Z_RES_OK;
 }
+
+static z_result_t _z_link_driver_udp_multicast_create(_z_link_t *link, _z_endpoint_t *endpoint,
+                                                      const _z_config_t *session_cfg) {
+    _ZP_UNUSED(session_cfg);
+    return _z_new_link_udp_multicast(link, *endpoint);
+}
+
+const _z_link_driver_t _z_link_driver_udp_multicast = {
+    ._validate_f = _z_endpoint_udp_multicast_valid,
+    ._create_f = _z_link_driver_udp_multicast_create,
+    ._open_f = NULL,
+    ._listen_f = _z_f_link_listen_udp_multicast,
+};
 
 #endif

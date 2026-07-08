@@ -77,8 +77,6 @@ struct _z_link_t;            // Forward declaration to be used in _z_f_link_*
 struct _z_link_peer_t;       // Forward declaration to be used in _z_link_peer_ops_t
 struct _z_link_peer_iter_t;  // Forward declaration to be used in _z_f_link_wait_peers_readable
 
-typedef z_result_t (*_z_f_link_open)(struct _z_link_t *self);
-typedef z_result_t (*_z_f_link_listen)(struct _z_link_t *self);
 typedef void (*_z_f_link_close)(struct _z_link_t *self);
 typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
 typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
@@ -213,8 +211,6 @@ typedef struct _z_link_t {
     _z_link_state_drop_f _state_drop_f;
     _z_link_peer_t _peer;
 
-    _z_f_link_open _open_f;
-    _z_f_link_listen _listen_f;
     _z_f_link_close _close_f;
     _z_f_link_write _write_f;
     _z_f_link_write_all _write_all_f;

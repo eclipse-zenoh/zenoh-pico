@@ -16,123 +16,78 @@
 
 #include <stddef.h>
 
-#include "zenoh-pico/config.h"
-#include "zenoh-pico/link/config/raweth.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/driver_registry.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
-#if Z_FEATURE_LINK_TLS != 1
-    _ZP_UNUSED(session_cfg);
-#endif
+typedef enum {
+    _Z_LINK_OPERATION_OPEN,
+    _Z_LINK_OPERATION_LISTEN,
+} _z_link_operation_t;
+
+static inline _z_link_driver_activate_f _z_link_driver_operation_f(const _z_link_driver_t *driver,
+                                                                   _z_link_operation_t operation) {
+    switch (operation) {
+        case _Z_LINK_OPERATION_OPEN:
+            return driver->_open_f;
+        case _Z_LINK_OPERATION_LISTEN:
+            return driver->_listen_f;
+    }
+    return NULL;
+}
+
+static z_result_t _z_link_create_and_activate(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg,
+                                              _z_link_operation_t operation) {
     z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
-    if (ret == _Z_RES_OK) {
-        // Create transport link
-        if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tcp(zl, &ep);
-        } else
-#if Z_FEATURE_LINK_UDP_UNICAST == 1
-            if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_udp_unicast(zl, ep);
-        } else
-#endif
-#if Z_FEATURE_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_bt(zl, ep);
-        } else
-#endif
-#if Z_FEATURE_LINK_SERIAL == 1
-            if (_z_endpoint_serial_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_serial(zl, ep);
-        } else
-#endif
-#if Z_FEATURE_LINK_WS == 1
-            if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_ws(zl, &ep);
-        } else
-#endif
-#if Z_FEATURE_LINK_TLS == 1
-            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tls(zl, &ep, session_cfg);
-        } else
-#endif
-        {
-            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
-            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
-        }
-        if (ret == _Z_RES_OK) {
-            // Open transport link for communication
-            if (zl->_open_f(zl) != _Z_RES_OK) {
-                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
-                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
-                _z_link_clear(zl);
-            }
-        } else {
-            _z_endpoint_clear(&ep);
-        }
-    } else {
+    if (ret != _Z_RES_OK) {
         _z_endpoint_clear(&ep);
         _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
+        return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
-    return ret;
+    const _z_link_driver_t *const *drivers = _z_link_driver_registry();
+    // The registry is NULL terminated.
+    for (size_t i = 0; drivers[i] != NULL; i++) {
+        const _z_link_driver_t *driver = drivers[i];
+        _z_link_driver_activate_f activate_f = _z_link_driver_operation_f(driver, operation);
+
+        if (activate_f == NULL) {
+            continue;
+        }
+        ret = driver->_validate_f(&ep);
+        if (ret != _Z_RES_OK) {
+            _Z_DEBUG("Link driver %zu rejected locator for %s: %d", i,
+                     operation == _Z_LINK_OPERATION_OPEN ? "open" : "listen", (int)ret);
+            continue;
+        }
+
+        ret = driver->_create_f(zl, &ep, session_cfg);
+        if (ret != _Z_RES_OK) {
+            _z_endpoint_clear(&ep);
+            return ret;
+        }
+
+        if (activate_f(zl) != _Z_RES_OK) {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
+            _z_link_clear(zl);
+            return _Z_ERR_TRANSPORT_OPEN_FAILED;
+        }
+        return _Z_RES_OK;
+    }
+
+    _z_endpoint_clear(&ep);
+    _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
+    return _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
+}
+
+z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
+    return _z_link_create_and_activate(zl, locator, session_cfg, _Z_LINK_OPERATION_OPEN);
 }
 
 z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
-#if Z_FEATURE_LINK_TLS != 1
-    _ZP_UNUSED(session_cfg);
-#endif
-    z_result_t ret = _Z_RES_OK;
-
-    _z_endpoint_t ep;
-    ret = _z_endpoint_from_string(&ep, locator);
-    if (ret == _Z_RES_OK) {
-        // Create transport link
-        if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tcp(zl, &ep);
-        } else
-#if Z_FEATURE_LINK_TLS == 1
-            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tls(zl, &ep, session_cfg);
-        } else
-#endif
-#if Z_FEATURE_LINK_UDP_MULTICAST == 1
-            if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_udp_multicast(zl, ep);
-        } else
-#endif
-#if Z_FEATURE_LINK_BLUETOOTH == 1
-            if (_z_endpoint_bt_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_bt(zl, ep);
-        } else
-#endif
-            if (_z_endpoint_raweth_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_raweth(zl, ep);
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
-            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
-        }
-        if (ret == _Z_RES_OK) {
-            // Open transport link for listening
-            if (zl->_listen_f(zl) != _Z_RES_OK) {
-                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
-                ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
-                _z_link_clear(zl);
-            }
-        } else {
-            _z_endpoint_clear(&ep);
-        }
-    } else {
-        _z_endpoint_clear(&ep);
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-        ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
-    }
-
-    return ret;
+    return _z_link_create_and_activate(zl, locator, session_cfg, _Z_LINK_OPERATION_LISTEN);
 }
 
 void _z_link_clear(_z_link_t *l) {
