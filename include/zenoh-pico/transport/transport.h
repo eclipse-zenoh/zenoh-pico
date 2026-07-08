@@ -126,14 +126,14 @@ typedef struct {
 
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src);
 
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE _z_transport_peer_unicast_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(x) _z_id_hash(&(x)->common._remote_zid)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(x, y) _z_id_eq(&(x)->common._remote_zid, &(y)->common._remote_zid)
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME _z_transport_peer_unicast_hset
-#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY Z_MAX_NUM_PEERS
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN _z_transport_peer_unicast_clear
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_TYPE _z_transport_peer_unicast_t
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_HASH_FN(x) _z_id_hash(&(x)->common._remote_zid)
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_EQ_FN(x, y) _z_id_eq(&(x)->common._remote_zid, &(y)->common._remote_zid)
+#define _ZP_STATIC_HASHSET_TEMPLATE_NAME _z_transport_peer_unicast_hset
+#define _ZP_STATIC_HASHSET_TEMPLATE_CAPACITY Z_MAX_NUM_PEERS
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_DESTROY_FN _z_transport_peer_unicast_clear
 // default move
-#include "zenoh-pico/collections/static_hashmap_template.h"
+#include "zenoh-pico/collections/static_hashset_template.h"
 
 #define _ZP_STATIC_BIT_VECTOR_TEMPLATE_NAME _z_peer_mask_bitset
 #define _ZP_STATIC_BIT_VECTOR_TEMPLATE_SIZE Z_MAX_NUM_PEERS
