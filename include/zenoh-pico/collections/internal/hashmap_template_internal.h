@@ -315,11 +315,12 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, init)(_ZP_HASHMAP_TEMPLATE
         map->_slots[i]._next = (_ZP_HASHMAP_TEMPLATE_ITER_TYPE)(i + 1);
     }
     map->_slots[_ZP_HASHMAP_TEMPLATE_CAPACITY - 1]._next = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;  // end of free list
+    map->_free_head = 0;
 #else
     map->_slots = NULL;
     map->_capacity = 0;
+    map->_free_head = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
 #endif
-    map->_free_head = 0;
     map->_live_head = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
     map->_size = 0;
 }
