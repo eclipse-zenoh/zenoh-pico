@@ -7,16 +7,18 @@ C preprocessor.
 
 The templates documented here are:
 
-| Header                         | Container               | Storage            |
-| ------------------------------ | ----------------------- | ------------------ |
-| `vector_template.h`            | Dynamic array (vector)  | Heap (growable)    |
-| `static_vector_template.h`     | Dynamic array (vector)  | Inline, fixed cap. |
-| `static_bit_vector_template.h` | Bit vector (0/1 bits)   | Inline, fixed cap. |
-| `hashmap_template.h`           | Hash map / hash set     | Heap (growable)    |
-| `static_hashmap_template.h`    | Hash map / hash set     | Inline, fixed cap. |
-| `static_deque_template.h`      | Double-ended queue      | Inline, fixed cap. |
-| `static_pqueue_template.h`     | Binary-heap priority q. | Inline, fixed cap. |
-| `variant_template.h`           | Tagged union (variant)  | Inline             |
+| Header                              | Container               | Storage            |
+| ----------------------------------- | ----------------------- | ------------------ |
+| `vector_template.h`                 | Dynamic array (vector)  | Heap (growable)    |
+| `static_vector_template.h`          | Dynamic array (vector)  | Inline, fixed cap. |
+| `static_bit_vector_template.h`      | Bit vector (0/1 bits)   | Inline, fixed cap. |
+| `hashmap_template.h`                | Hash map                | Heap (growable)    |
+| `hashset_template.h`                | Hash set                | Heap (growable)    |
+| `static_hashmap_template.h`         | Hash map                | Inline, fixed cap. |
+| `static_hashset_template.h`         | Hash set                | Inline, fixed cap. |
+| `static_deque_template.h`           | Double-ended queue      | Inline, fixed cap. |
+| `static_pqueue_template.h`          | Binary-heap priority q. | Inline, fixed cap. |
+| `variant_template.h`                | Tagged union (variant)  | Inline             |
 
 In addition, `algorithms_template.h` provides generic iteration / search / removal
 helper macros that work on any of the above containers exposing an iterator interface
@@ -78,7 +80,7 @@ lives on the stack or is embedded in another struct).
 
 ### Custom allocators (heap containers only)
 
-The heap-backed containers (`vector_template.h`, `hashmap_template.h`) accept optional
+The heap-backed containers (`vector_template.h`, `hashmap_template.h`, `hashset_template.h`) accept optional
 `ALLOC_FN` / `FREE_FN` (and an optional `REALLOC_FN`) so they can be wired to a custom
 allocator. They default to `malloc` / `free`.
 
@@ -346,9 +348,7 @@ A growable hash map using **separate chaining** over a single contiguous node po
 It is the dynamically-growable counterpart of `static_hashmap_template.h` and exposes
 the same interface plus growth/allocation helpers.
 
-If `_ZP_HASHMAP_TEMPLATE_VAL_TYPE` is left **undefined**, the template instead
-generates a growable **hash set** (see [Hash-set mode](#hash-set-mode-1) below): the
-node type is the key type itself and the value-related surface is dropped.
+For a hash set (unique keys without values), see [`hashset_template.h`](#hashset_templateh--heap-allocated-hash-set).
 
 Key design points:
 
@@ -366,7 +366,7 @@ Key design points:
 | ------------------------------------------ | :------: | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | `_ZP_HASHMAP_TEMPLATE_KEY_TYPE`            |    ✅    | —                          | Key type.                                                                                       |
 | `_ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`      |    ✅    | —                          | Hash of `*k` → `size_t`.                                                                        |
-| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`            |    ❌    | —                          | Value type. When omitted, a **hash set** is generated.                                          |
+| `_ZP_HASHMAP_TEMPLATE_VAL_TYPE`            |    ✅    | —                          | Value type.                                                       |
 | `_ZP_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`      |    ❌    | `*a == *b`                 | Key equality.                                                                                   |
 | `_ZP_HASHMAP_TEMPLATE_NAME`                |    ❌    | derived from key/val types | Base name for generated symbols.                                                                |
 | `_ZP_HASHMAP_TEMPLATE_INDEX_TYPE`          |    ❌    | `uint32_t`                 | Unsigned index/iterator type; its max value is reserved as a sentinel, so capacity ≤ `max - 1`. |
@@ -449,47 +449,89 @@ int *got = i2i_get(&m, &k);   // *got == 100
 i2i_destroy(&m);
 ```
 
-### Hash-set mode
+---
 
-When `_ZP_HASHMAP_TEMPLATE_VAL_TYPE` is not defined, the same header generates a
-growable **hash set** — a heap-backed set of unique keys. All key configuration macros
-(including the allocator and `REALLOC_FN`) behave as above; the value macros
-(`VAL_TYPE`, `VAL_DESTROY_FN`, `VAL_MOVE_FN`) are not used, and the default name becomes
-`<key_type>hset` instead of `<key><val>hmap`.
+## `hashset_template.h` — heap-allocated hash set
 
-Differences from the hash-map mode:
+A growable hash set — a heap-backed collection of unique keys with no associated
+values.  Shares the same internal implementation as `hashmap_template.h` but generates
+only the set-oriented API: no `get`/`const_get`, and `insert`/`remove` take no value argument.
 
-* `NAME_elem_t` **is** the key type itself (not a `{ key, val }` struct), and no
-  `NAME_val_t` typedef is generated. `NAME_at` / `NAME_const_at` return a pointer to
-  the key.
-* `NAME_insert(NAME_t *s, KEY_TYPE *k)` takes **no value argument**. If the key is
-  already present the incoming key is destroyed and the existing entry is left
-  unchanged; otherwise the key is moved in (growing the pool if needed).
-* The value-oriented lookups `NAME_get` / `NAME_const_get` are **not** generated (use
-  `NAME_contains` / `NAME_get_iter`).
-* `NAME_remove(NAME_t *s, const NAME_key_t *k)` takes **no `out` argument**: it finds,
-  removes and destroys the entry, returning `true` if the key was present.
-* In-place growth via `REALLOC_FN` kicks in when the **key** alone is trivially movable
-  (there is no value to consider).
+### Configuration macros
 
-Everything else (`init`, `new`, `reserve`, `size`, `capacity`, `is_empty`, `contains`,
-`get_iter`, `at`/`const_at`, `remove_at`, `clear`, `destroy`, `begin`/`end`/`iter_next`)
-works exactly as in the hash-map mode.
+| Macro                                      | Required | Default                    | Purpose                                                                                         |
+| ------------------------------------------ | :------: | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `_ZP_HASHSET_TEMPLATE_KEY_TYPE`            |    ✅    | —                          | Key type (the set element).                                                                     |
+| `_ZP_HASHSET_TEMPLATE_KEY_HASH_FN(k)`      |    ✅    | —                          | Hash of `*k` → `size_t`.                                                                        |
+| `_ZP_HASHSET_TEMPLATE_KEY_EQ_FN(a,b)`      |    ❌    | `*a == *b`                 | Key equality.                                                                                   |
+| `_ZP_HASHSET_TEMPLATE_NAME`                |    ❌    | `<key_type>hset`           | Base name for generated symbols.                                                                |
+| `_ZP_HASHSET_TEMPLATE_INDEX_TYPE`          |    ❌    | `uint32_t`                 | Unsigned index/iterator type; its max value is reserved as a sentinel, so capacity ≤ `max - 1`. |
+| `_ZP_HASHSET_TEMPLATE_INITIAL_CAPACITY`    |    ❌    | `16`                       | Entries/buckets reserved on first insert.                                                       |
+| `_ZP_HASHSET_TEMPLATE_KEY_DESTROY_FN(k)`   |    ❌    | no-op                      | Destroy a key.                                                                                  |
+| `_ZP_HASHSET_TEMPLATE_KEY_MOVE_FN(d,s)`    |    ❌    | `*d = *s`                  | Move a key.                                                                                     |
+| `_ZP_HASHSET_TEMPLATE_ALLOC_FN(bytes)`     |    ❌    | `malloc`                   | Allocate memory.                                                                                |
+| `_ZP_HASHSET_TEMPLATE_FREE_FN(ptr)`        |    ❌    | `free`                     | Free memory.                                                                                    |
+| `_ZP_HASHSET_TEMPLATE_REALLOC_FN(p,bytes)` |    ❌    | (unused)                   | In-place pool growth when key is trivially movable.                                             |
+
+### Generated types
+
+```c
+typedef KEY_TYPE   NAME_key_t;
+typedef KEY_TYPE   NAME_elem_t;    // the set element (alias for key)
+typedef INDEX_TYPE NAME_iter_t;    // pool index / iterator
+
+typedef struct NAME_t { /* opaque pool + bookkeeping */ } NAME_t;
+```
+
+An invalid iterator is the all-ones value of the index type; compare against
+`NAME_end(&set)` rather than relying on a literal.
+
+### API
+
+| Function                                                                             | Description                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *s)`                                                          | Initialise empty (no allocation until first insert).                                                                                                                                                                                            |
+| `NAME_t NAME_new(void)`                                                              | Return a new empty set.                                                                                                                                                                                                                         |
+| `bool NAME_reserve(NAME_t *s, size_t min_cap)`                                       | Ensure capacity for `min_cap` entries. `false` on allocation failure.                                                                                                                                                                           |
+| `size_t NAME_size(const NAME_t *s)`                                                  | Number of live entries.                                                                                                                                                                                                                         |
+| `size_t NAME_capacity(const NAME_t *s)`                                              | Pool capacity.                                                                                                                                                                                                                                  |
+| `bool NAME_is_empty(const NAME_t *s)`                                                | `true` if empty.                                                                                                                                                                                                                                |
+| `NAME_iter_t NAME_insert(NAME_t *s, KEY_TYPE *k)`                                    | Move `*k` in. If the key already exists, the *incoming key* is destroyed and the entry is left unchanged. Returns the entry iterator, or an invalid iterator on allocation failure / capacity exhaustion. |
+| `bool NAME_contains(const NAME_t *s, const NAME_key_t *k)`                           | `true` if `k` is present.                                                                                                                                                                                                                       |
+| `NAME_iter_t NAME_get_iter(const NAME_t *s, const NAME_key_t *k)`                    | Iterator to the entry for `k`, or an invalid iterator.                                                                                                                                                                                          |
+| `NAME_elem_t *NAME_at(NAME_t *s, NAME_iter_t i)`                                     | Element at iterator `i` (UB if `i` is invalid).                                                                                                                                                                                                 |
+| `const NAME_elem_t *NAME_const_at(const NAME_t *s, NAME_iter_t i)`                   | Const variant of `at`.                                                                                                                                                                                                                          |
+| `bool NAME_remove(NAME_t *s, const NAME_key_t *k)`                                   | Remove entry for `k`. `true` if found.                                                                                                                                                                                                          |
+| `void NAME_remove_at(NAME_t *s, NAME_iter_t i, NAME_elem_t *out, NAME_iter_t *next)` | Remove the entry at `i` (move element to `out`, else destroy); if `next != NULL`, set `*next` to the following iterator.                                                                                                                        |
+| `void NAME_clear(NAME_t *s)`                                                         | Destroy all entries but keep the backing store.                                                                                                                                                                                                 |
+| `void NAME_destroy(NAME_t *s)`                                                       | Destroy all entries and free the backing store.                                                                                                                                                                                                 |
+| `NAME_iter_t NAME_begin(const NAME_t *s)`                                            | Iterator to the first entry, or `end` if empty.                                                                                                                                                                                                 |
+| `NAME_iter_t NAME_end(const NAME_t *s)`                                              | Invalid post-end iterator.                                                                                                                                                                                                                      |
+| `NAME_iter_t NAME_iter_next(const NAME_t *s, NAME_iter_t i)`                         | Iterator to the next entry.                                                                                                                                                                                                                     |
+
+### Iteration
+
+```c
+for (NAME_iter_t i = NAME_begin(&s); i != NAME_end(&s); i = NAME_iter_next(&s, i)) {
+    NAME_elem_t *e = NAME_at(&s, i);
+    // use *e (the set element)
+}
+```
+
+### Example
 
 ```c
 static inline size_t id_hash(const uint32_t *k) { return *k; }
 
-#define _ZP_HASHMAP_TEMPLATE_KEY_TYPE     uint32_t
-#define _ZP_HASHMAP_TEMPLATE_NAME         idset
-#define _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN  id_hash
-#include "zenoh-pico/collections/hashmap_template.h"
+#define _ZP_HASHSET_TEMPLATE_KEY_TYPE     uint32_t
+#define _ZP_HASHSET_TEMPLATE_NAME         idset
+#define _ZP_HASHSET_TEMPLATE_KEY_HASH_FN  id_hash
+#include "zenoh-pico/collections/hashset_template.h"
 
 idset_t s = idset_new();
-uint32_t a = 7, b = 7;
+uint32_t a = 7;
 idset_insert(&s, &a);
-idset_insert(&s, &b);              // duplicate: incoming key destroyed, size stays 1
 bool has = idset_contains(&s, &a); // true
-idset_remove(&s, &a);              // returns true
 idset_destroy(&s);
 ```
 
@@ -501,9 +543,7 @@ Separate-chaining hash map backed by a **fixed-size, inline node pool** — no h
 allocation. The capacity is also used as the number of buckets, and the index type is
 chosen automatically to be the smallest that fits the capacity.
 
-If `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE` is left **undefined**, the template instead
-generates a **hash set** (see [Hash-set mode](#hash-set-mode) below): the node type is
-the key type itself and the value-related surface is dropped.
+For a hash set (unique keys without values), see [`static_hashset_template.h`](#static_hashset_templateh--fixed-capacity-hash-set).
 
 ### Configuration macros
 
@@ -511,31 +551,69 @@ the key type itself and the value-related surface is dropped.
 | ----------------------------------------------- | :------: | -------------------------- | ---------------------------------------------------------------- |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE`          |    ✅    | —                          | Key type.                                                        |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN(k)`    |    ✅    | —                          | Hash of `*k` → `size_t`.                                         |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`          |    ❌    | —                          | Value type. When omitted, a **hash set** is generated.           |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE`          |    ✅    | —                          | Value type.                                                      |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_EQ_FN(a,b)`    |    ❌    | `*a == *b`                 | Key equality.                                                    |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_NAME`              |    ❌    | derived from key/val types | Base name for generated symbols.                                 |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY`          |    ❌    | `16`                       | Max entries (also the bucket count).                             |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_DESTROY_FN(k)` |    ❌    | no-op                      | Destroy a key.                                                   |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)` |    ❌    | no-op                      | Destroy a value. (Ignored in hash-set mode.)                     |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_DESTROY_FN(v)` |    ❌    | no-op                      | Destroy a value.                                                 |
 | `_ZP_STATIC_HASHMAP_TEMPLATE_KEY_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a key.                                                      |
-| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a value. (Ignored in hash-set mode.)                        |
+| `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a value.                                                    |
+
+### Generated types
+
+```c
+typedef struct NAME_elem_t {     // a key/value node
+    KEY_TYPE key;
+    VAL_TYPE val;
+} NAME_elem_t;
+
+typedef KEY_TYPE   NAME_key_t;
+typedef VAL_TYPE   NAME_val_t;
+typedef ITER_TYPE  NAME_iter_t;  // pool index / iterator (auto-selected from capacity)
+
+typedef struct NAME_t { /* inline pool + bookkeeping */ } NAME_t;
+```
+
+An invalid iterator is the all-ones value of the index type; compare against
+`NAME_end(&map)` rather than relying on a literal.
 
 ### API
 
-The static hash map exposes the same lookup, mutation and iteration surface as the
-heap map: `init`, `new`, `size`, `is_empty`, `get`/`const_get`, `contains`,
-`get_iter`, `at`/`const_at`, `insert`, `remove`, `remove_at`, `destroy`, and
-`begin`/`end`/`iter_next`. The generated types `NAME_t`, `NAME_elem_t`,
-`NAME_key_t`, `NAME_val_t` and `NAME_iter_t` are analogous.
+| Function                                                                             | Description                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *m)`                                                          | Zero-initialise empty in place.                                                                                                                                                                                                              |
+| `NAME_t NAME_new(void)`                                                              | Return a new (zero-initialised) empty map.                                                                                                                                                                                                   |
+| `size_t NAME_size(const NAME_t *m)`                                                  | Number of live entries.                                                                                                                                                                                                                      |
+| `bool NAME_is_empty(const NAME_t *m)`                                                | `true` if empty.                                                                                                                                                                                                                             |
+| `NAME_iter_t NAME_insert(NAME_t *m, KEY_TYPE *k, VAL_TYPE *v)`                       | Move `*k`/`*v` in. If the key exists, the old value is destroyed and replaced and the *incoming key* is destroyed. `v` may be `NULL` to create an uninitialised value. Returns the entry iterator, or an invalid iterator when the pool is exhausted. |
+| `VAL_TYPE *NAME_get(NAME_t *m, const NAME_key_t *k)`                                 | Pointer to the value for `k`, or `NULL`.                                                                                                                                                                                                     |
+| `const NAME_val_t *NAME_const_get(const NAME_t *m, const NAME_key_t *k)`             | Const variant of `get`.                                                                                                                                                                                                                      |
+| `bool NAME_contains(const NAME_t *m, const NAME_key_t *k)`                           | `true` if `k` is present.                                                                                                                                                                                                                    |
+| `NAME_iter_t NAME_get_iter(const NAME_t *m, const NAME_key_t *k)`                    | Iterator to the entry for `k`, or an invalid iterator.                                                                                                                                                                                       |
+| `NAME_elem_t *NAME_at(NAME_t *m, NAME_iter_t i)`                                     | Node at iterator `i` (UB if `i` is invalid).                                                                                                                                                                                                 |
+| `const NAME_elem_t *NAME_const_at(const NAME_t *m, NAME_iter_t i)`                   | Const variant of `at`.                                                                                                                                                                                                                       |
+| `bool NAME_remove(NAME_t *m, const NAME_key_t *k, VAL_TYPE *out)`                    | Remove entry for `k` (move value to `out`, else destroy). `true` if found.                                                                                                                                                                   |
+| `void NAME_remove_at(NAME_t *m, NAME_iter_t i, NAME_elem_t *out, NAME_iter_t *next)` | Remove the entry at `i` (move node to `out`, else destroy); if `next != NULL`, set `*next` to the following iterator.                                                                                                                        |
+| `void NAME_destroy(NAME_t *m)`                                                       | Destroy all entries and reset the map for reuse (frees nothing since storage is inline).                                                                                                                                                     |
+| `NAME_iter_t NAME_begin(const NAME_t *m)`                                            | Iterator to the first entry, or `end` if empty.                                                                                                                                                                                              |
+| `NAME_iter_t NAME_end(const NAME_t *m)`                                              | Invalid post-end iterator.                                                                                                                                                                                                                   |
+| `NAME_iter_t NAME_iter_next(const NAME_t *m, NAME_iter_t i)`                         | Iterator to the next entry.                                                                                                                                                                                                                  |
 
-Differences from the heap map:
+Differences from the heap map (`hashmap_template.h`):
 
-* **No** `capacity`, `reserve`, `clear`, allocator macros, or `INDEX_TYPE` /
-  `INITIAL_CAPACITY` configuration — capacity is the fixed compile-time `CAPACITY`.
-* `NAME_insert` returns an invalid iterator only when the **pool is exhausted** and
-  the key is not already present (there is no allocation/growth step).
-* `NAME_destroy` resets the map for reuse (it does not free anything, since storage
-  is inline).
+* **No** `capacity`, `reserve`, `clear`, or allocator configuration — capacity is the fixed compile-time `CAPACITY`.
+* Index type is auto-selected from `CAPACITY` (uint8_t / uint16_t / uint32_t).
+* `NAME_destroy` resets the map for reuse rather than freeing memory.
+
+### Iteration
+
+```c
+for (NAME_iter_t i = NAME_begin(&m); i != NAME_end(&m); i = NAME_iter_next(&m, i)) {
+    NAME_elem_t *e = NAME_at(&m, i);
+    // use e->key, e->val
+}
+```
 
 ### Example
 
@@ -555,45 +633,89 @@ tasks_insert(&m, &k, &v);
 tasks_destroy(&m);
 ```
 
-### Hash-set mode
+---
 
-When `_ZP_STATIC_HASHMAP_TEMPLATE_VAL_TYPE` is not defined, the same header generates
-a **hash set** — a fixed-capacity set of unique keys. All key configuration macros
-behave as above; the value macros (`VAL_TYPE`, `VAL_DESTROY_FN`, `VAL_MOVE_FN`) are not
-used, and the default name becomes `<key_type>hset` instead of `<key><val>hmap`.
+## `static_hashset_template.h` — fixed-capacity hash set
 
-Differences from the hash-map mode:
+A fixed-capacity hash set — a compile-time-sized collection of unique keys with no
+associated values.  Shares the same internal implementation as `static_hashmap_template.h`
+but generates only the set-oriented API: no `get`/`const_get`, and `insert`/`remove` take no value argument.
 
-* `NAME_elem_t` **is** the key type itself (not a `{ key, val }` struct), and no
-  `NAME_val_t` typedef is generated. `NAME_at` / `NAME_const_at` return a pointer to
-  the key.
-* `NAME_insert(NAME_t *s, KEY_TYPE *k)` takes **no value argument**. If the key is
-  already present the incoming key is destroyed and the existing entry is left
-  unchanged; otherwise the key is moved in.
-* The value-oriented lookups `NAME_get` / `NAME_const_get` are **not** generated (use
-  `NAME_contains` / `NAME_get_iter`).
-* `NAME_remove(NAME_t *s, const NAME_key_t *k)` takes **no `out` argument**: it finds,
-  removes and destroys the entry, returning `true` if the key was present.
+### Configuration macros
 
-Everything else (`init`, `new`, `size`, `is_empty`, `contains`, `get_iter`,
-`at`/`const_at`, `remove_at`, `destroy`, `begin`/`end`/`iter_next`) works exactly as
-in the hash-map mode.
+| Macro                                           | Required | Default                    | Purpose                                                          |
+| ----------------------------------------------- | :------: | -------------------------- | ---------------------------------------------------------------- |
+| `_ZP_STATIC_HASHSET_TEMPLATE_KEY_TYPE`          |    ✅    | —                          | Key type (the set element).                                      |
+| `_ZP_STATIC_HASHSET_TEMPLATE_KEY_HASH_FN(k)`    |    ✅    | —                          | Hash of `*k` → `size_t`.                                         |
+| `_ZP_STATIC_HASHSET_TEMPLATE_KEY_EQ_FN(a,b)`    |    ❌    | `*a == *b`                 | Key equality.                                                    |
+| `_ZP_STATIC_HASHSET_TEMPLATE_NAME`              |    ❌    | `<key_type>hset`           | Base name for generated symbols.                                 |
+| `_ZP_STATIC_HASHSET_TEMPLATE_CAPACITY`          |    ❌    | `16`                       | Max entries (also the bucket count).                             |
+| `_ZP_STATIC_HASHSET_TEMPLATE_KEY_DESTROY_FN(k)` |    ❌    | no-op                      | Destroy a key.                                                   |
+| `_ZP_STATIC_HASHSET_TEMPLATE_KEY_MOVE_FN(d,s)`  |    ❌    | `*d = *s`                  | Move a key.                                                      |
+
+### Generated types
+
+```c
+typedef KEY_TYPE   NAME_key_t;
+typedef KEY_TYPE   NAME_elem_t;    // the set element (alias for key)
+typedef ITER_TYPE  NAME_iter_t;    // pool index / iterator (auto-selected from capacity)
+
+typedef struct NAME_t { /* inline pool + bookkeeping */ } NAME_t;
+```
+
+An invalid iterator is the all-ones value of the index type; compare against
+`NAME_end(&set)` rather than relying on a literal.
+
+### API
+
+| Function                                                                             | Description                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `void NAME_init(NAME_t *s)`                                                          | Zero-initialise empty in place.                                                                                                                                                                                                                 |
+| `NAME_t NAME_new(void)`                                                              | Return a new (zero-initialised) empty set.                                                                                                                                                                                                      |
+| `size_t NAME_size(const NAME_t *s)`                                                  | Number of live entries.                                                                                                                                                                                                                         |
+| `bool NAME_is_empty(const NAME_t *s)`                                                | `true` if empty.                                                                                                                                                                                                                                |
+| `NAME_iter_t NAME_insert(NAME_t *s, KEY_TYPE *k)`                                    | Move `*k` in. If the key already exists, the *incoming key* is destroyed and the entry is left unchanged. Returns the entry iterator, or an invalid iterator when the pool is exhausted and the key is not present.                             |
+| `bool NAME_contains(const NAME_t *s, const NAME_key_t *k)`                           | `true` if `k` is present.                                                                                                                                                                                                                       |
+| `NAME_iter_t NAME_get_iter(const NAME_t *s, const NAME_key_t *k)`                    | Iterator to the entry for `k`, or an invalid iterator.                                                                                                                                                                                          |
+| `NAME_elem_t *NAME_at(NAME_t *s, NAME_iter_t i)`                                     | Element at iterator `i` (UB if `i` is invalid).                                                                                                                                                                                                 |
+| `const NAME_elem_t *NAME_const_at(const NAME_t *s, NAME_iter_t i)`                   | Const variant of `at`.                                                                                                                                                                                                                          |
+| `bool NAME_remove(NAME_t *s, const NAME_key_t *k)`                                   | Remove entry for `k`. `true` if found.                                                                                                                                                                                                          |
+| `void NAME_remove_at(NAME_t *s, NAME_iter_t i, NAME_elem_t *out, NAME_iter_t *next)` | Remove the entry at `i` (move element to `out`, else destroy); if `next != NULL`, set `*next` to the following iterator.                                                                                                                        |
+| `void NAME_destroy(NAME_t *s)`                                                       | Reset the set for reuse (destroys all entries; frees nothing since storage is inline).                                                                                                                                                          |
+| `NAME_iter_t NAME_begin(const NAME_t *s)`                                            | Iterator to the first entry, or `end` if empty.                                                                                                                                                                                                 |
+| `NAME_iter_t NAME_end(const NAME_t *s)`                                              | Invalid post-end iterator.                                                                                                                                                                                                                      |
+| `NAME_iter_t NAME_iter_next(const NAME_t *s, NAME_iter_t i)`                         | Iterator to the next entry.                                                                                                                                                                                                                     |
+
+Differences from the heap set (`hashset_template.h`):
+
+* **No** `capacity`, `reserve`, `clear`, or allocator configuration — capacity is the fixed compile-time `CAPACITY`.
+* Index type is auto-selected from `CAPACITY` (uint8_t / uint16_t / uint32_t).
+* `NAME_destroy` resets the set for reuse rather than freeing memory.
+
+### Iteration
+
+```c
+for (NAME_iter_t i = NAME_begin(&s); i != NAME_end(&s); i = NAME_iter_next(&s, i)) {
+    NAME_elem_t *e = NAME_at(&s, i);
+    // use *e (the set element)
+}
+```
+
+### Example
 
 ```c
 static inline size_t id_hash(const uint32_t *k) { return *k; }
 
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_TYPE     uint32_t
-#define _ZP_STATIC_HASHMAP_TEMPLATE_NAME         idset
-#define _ZP_STATIC_HASHMAP_TEMPLATE_KEY_HASH_FN  id_hash
-#define _ZP_STATIC_HASHMAP_TEMPLATE_CAPACITY     32
-#include "zenoh-pico/collections/static_hashmap_template.h"
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_TYPE     uint32_t
+#define _ZP_STATIC_HASHSET_TEMPLATE_NAME         idset
+#define _ZP_STATIC_HASHSET_TEMPLATE_KEY_HASH_FN  id_hash
+#define _ZP_STATIC_HASHSET_TEMPLATE_CAPACITY     32
+#include "zenoh-pico/collections/static_hashset_template.h"
 
 idset_t s = idset_new();
-uint32_t a = 7, b = 7;
+uint32_t a = 7;
 idset_insert(&s, &a);
-idset_insert(&s, &b);              // duplicate: incoming key destroyed, size stays 1
 bool has = idset_contains(&s, &a); // true
-idset_remove(&s, &a);              // returns true
 idset_destroy(&s);
 ```
 
@@ -1002,14 +1124,14 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
 
 * **`vector` (heap)** — ordered list, unbounded, random access (incl. positional
   `insert`/`remove`); needs `malloc`.
-* **`static_vector`** — ordered list with a known maximum (incl. positional
+* **`static_vector`** — ordered list with a known maximum capacity (incl. positional
   `insert`/`remove`); no `malloc`.
-* **`static_bit_vector`** — ordered list of single bits (0/1) with a known maximum;
+* **`static_bit_vector`** — ordered list of single bits (0/1) with a known maximum capacity;
   packed storage with a configurable block type, no `malloc`.
 * **`hashmap` (heap)** — key→value lookup, unbounded, stable iterators; needs `malloc`.
-  Omitting the value type turns it into a growable **hash set** (unique keys, no values).
-* **`static_hashmap`** — key→value lookup with a known maximum; no `malloc`. Omitting
-  the value type turns it into a **hash set** (unique keys, no values).
+* **`hashset` (heap)** — unique-key set, unbounded, stable iterators; needs `malloc`.
+* **`static_hashmap`** — key→value lookup with a known maximum capacity; no `malloc`.
+* **`static_hashset`** — unique-key set with a known maximum capacity; no `malloc`.
 * **`static_deque`** — bounded FIFO/LIFO with O(1) push/pop at both ends; no `malloc`.
 * **`static_pqueue`** — bounded priority queue (binary heap); no `malloc`.
 * **`variant`** — one value out of several distinct types; no `malloc`.
@@ -1018,6 +1140,8 @@ _ZP_REMOVE(intvec, &v, *_ < 0);                 // drop all negative values
 
 See the corresponding tests under `tests/` (e.g. `z_vector_template_test.c`,
 `z_static_bit_vector_template_test.c`, `z_hashmap_template_test.c`,
-`z_static_deque_test.c`, `z_static_pqueue_test.c`, `z_variant_template_test.c`) for
+`z_hashset_template_test.c`, `z_static_hashmap_template_test.c`,
+`z_static_hashset_template_test.c`, `z_static_deque_test.c`,
+`z_static_pqueue_test.c`, `z_variant_template_test.c`) for
 complete, compilable usage examples. The vector and hash-map tests also exercise the
 `algorithms_template.h` macros.
