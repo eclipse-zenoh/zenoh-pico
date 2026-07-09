@@ -15,10 +15,9 @@
 // Internal template engine for hashmap/hashset with separate chaining using a
 // contiguous node pool.
 //
-// This is the shared implementation used by hashmap_template.h,
-// hashset_template.h, static_hashmap_template.h and static_hashset_template.h.
-// Prefer including those wrappers directly; only include this file if you need
-// fine-grained control over the generation process.
+// This is the shared internal implementation used by hashmap_template.h,
+// hashset_template.h, static_hashmap_template.h and static_hashset_template.h,
+// which should not be included directly.
 //
 // Two storage modes are supported, selected by _ZP_HASHMAP_TEMPLATE_IS_STATIC:
 //   * Dynamic (default): heap-allocated pool that grows on demand.

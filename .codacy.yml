@@ -1,4 +1,5 @@
 ---
 exclude_paths:
   - "include/zenoh-pico/collections/*_template.h"
+  - "include/zenoh-pico/collections/internal/*_template_internal.h"
   - "tests/*"
