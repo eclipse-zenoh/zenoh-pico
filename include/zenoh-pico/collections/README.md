@@ -1047,7 +1047,7 @@ calls. Include the header next to the container instantiation:
 | `_ZP_CONST_FIND_VAL(name, ptr, var, predicate)`       | `const` counterpart of `_ZP_FIND_VAL`.                                                                                                                                                                 |
 | `_ZP_IT_FIND(name, ptr, begin, end, predicate)`       | Advance the iterator `begin` to the first element in the range `[begin, end)` matching `predicate` (`_` bound to the element); leaves `begin == end` if none. `begin`/`end` are `NAME_iter_t` lvalues. |
 | `_ZP_CONST_IT_FIND(name, ptr, begin, end, predicate)` | `const` counterpart of `_ZP_IT_FIND`.                                                                                                                                                                  |
-| `_ZP_REMOVE(name, ptr, predicate)`                    | Remove every element matching `predicate` (`_` bound to the element), destroying it in place. Requires the container to provide `NAME_remove_at` (hash maps and both vectors).                         |
+| `_ZP_REMOVE(name, ptr, predicate)`                    | Remove every element matching `predicate` (`_` bound to the element), destroying it in place. Requires the container to provide `NAME_remove_at` (hash maps, hash sets, vectors and bit vectors).      |
 
 > **Notes**
 >
@@ -1055,9 +1055,7 @@ calls. Include the header next to the container instantiation:
 >   exactly like a `for` loop.
 > * The `_FIND*` and `_REMOVE` macros expand to statements (they internally start by
 >   assigning `var_name = NULL`); place them where a statement is expected.
-> * `_ZP_REMOVE` relies on `remove_at`, which is provided by the hash maps and by both
->   the heap and static vectors. The predicate must not have side effects that modify
->   the collection.
+> * The predicate in `_ZP_REMOVE` must not have side effects that modify the collection.
 > * Because bit vector provides only const version of `at`, only the const iteration helpers
 >   (`_ZP_CONST_FOREACH`, `_ZP_CONST_FIND`, `_ZP_CONST_IT_FIND`) are directly compatible
 >   with bit vector.
