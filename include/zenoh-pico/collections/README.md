@@ -1002,8 +1002,8 @@ NAME_iter_t  NAME_iter_next(const NAME_t *, NAME_iter_t)
 NAME_elem_t *NAME_at(NAME_t *, NAME_iter_t)            // + NAME_const_at
 ```
 
-In practice this means the **vectors** and **hash maps**. The deque, priority queue
-and variant do not expose iterators and are not supported.
+In practice this means the **vectors**, **bit vectors**, **hash maps** and **hash sets**.
+The deque, priority queue and variant do not expose iterators and are not supported.
 
 Every macro takes the container's base name (`collection_name`, e.g. `intvec`) as its
 first argument and a pointer to the instance (`collection_ptr`) as its second, so it

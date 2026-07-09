@@ -269,11 +269,12 @@ typedef struct _ZP_HASHMAP_TEMPLATE_SLOT_TYPE {
 #endif
 
 #ifdef _ZP_HASHMAP_TEMPLATE_IS_STATIC
-#define _ZP_HASHMAP_KEY_BUCKET_INDEX(map_ptr, key_ptr) \
+#define _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX(map_ptr, key_ptr) \
     _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) % _ZP_HASHMAP_TEMPLATE_BUCKET_COUNT
 #else
-#define _ZP_HASHMAP_KEY_BUCKET_INDEX(map_ptr, key_ptr) _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) % (map_ptr)->_capacity
-#define _ZP_HASHMAP_NODE_IS_LIVE(map_ptr, node_iter)                               \
+#define _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX(map_ptr, key_ptr) \
+    _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(key_ptr) % (map_ptr)->_capacity
+#define _ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE(map_ptr, node_iter)                      \
     ((map_ptr)->_slots[node_iter]._prev_live != _ZP_HASHMAP_TEMPLATE_INDEX_NONE || \
      (map_ptr)->_live_head == (size_t)(node_iter))
 #endif
@@ -388,7 +389,7 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     for (size_t i = 0; i < map->_capacity; i++) {
         new_slots[i]._next_live = map->_slots[i]._next_live;
         new_slots[i]._prev_live = map->_slots[i]._prev_live;
-        if (_ZP_HASHMAP_NODE_IS_LIVE(map, i)) {
+        if (_ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE(map, i)) {
             _ZP_HASHMAP_TEMPLATE_KEY_MOVE_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node),
                                              _ZP_HASHMAP_TEMPLATE_NODE_KEY(&map->_slots[i]._node));
 #ifndef _ZP_HASHMAP_TEMPLATE_IS_SET
@@ -426,7 +427,7 @@ static inline bool _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, grow)(_ZP_HASHMAP_TEMPLATE
     // Do not update capacity yet, since the re-hash below needs to know the old capacity to iterate over all live
     // entries. Re-hash every live entry into the new bucket heads (indices are preserved).
     for (size_t i = 0; i < map->_capacity; i++) {
-        if (_ZP_HASHMAP_NODE_IS_LIVE(map, i)) {
+        if (_ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE(map, i)) {
             size_t b =
                 _ZP_HASHMAP_TEMPLATE_KEY_HASH_FN(_ZP_HASHMAP_TEMPLATE_NODE_KEY(&new_slots[i]._node)) % new_capacity;
             new_slots[i]._next = new_slots[b]._bucket;
@@ -494,7 +495,7 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
         return _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
     }
 #endif
-    size_t b = _ZP_HASHMAP_KEY_BUCKET_INDEX(map, key);
+    size_t b = _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX(map, key);
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
     while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
         const _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
@@ -619,7 +620,7 @@ static inline _ZP_HASHMAP_TEMPLATE_ITER_TYPE _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME,
     }
 #endif
 
-    size_t b = _ZP_HASHMAP_KEY_BUCKET_INDEX(map, key);
+    size_t b = _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX(map, key);
     // Walk the chain looking for an existing entry with the same key.
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE idx = map->_slots[b]._bucket;
     while (idx != _ZP_HASHMAP_TEMPLATE_INDEX_NONE) {
@@ -715,7 +716,7 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, remove_at)(_ZP_HASHMAP_TEM
     _ZP_HASHMAP_TEMPLATE_NODE_TYPE *n = &map->_slots[idx]._node;
     // Re-derive the bucket from the node's own key so the caller does not need
     // to supply it separately.
-    size_t b = _ZP_HASHMAP_KEY_BUCKET_INDEX(map, _ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
+    size_t b = _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX(map, _ZP_HASHMAP_TEMPLATE_NODE_KEY(n));
     // Walk the chain to find the predecessor and unlink idx.
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE prev = _ZP_HASHMAP_TEMPLATE_INDEX_NONE;
     _ZP_HASHMAP_TEMPLATE_ITER_TYPE cur = map->_slots[b]._bucket;
@@ -835,6 +836,11 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 #ifdef _ZP_HASHMAP_TEMPLATE_REALLOC_FN
 #undef _ZP_HASHMAP_TEMPLATE_REALLOC_FN
 #endif
+#undef _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY
+#undef _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE
+#undef _ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE
+#endif
+
 #ifdef _ZP_HASHMAP_TEMPLATE_KEY_TRIVIALLY_MOVABLE
 #undef _ZP_HASHMAP_TEMPLATE_KEY_TRIVIALLY_MOVABLE
 #endif
@@ -844,10 +850,6 @@ static inline void _ZP_CAT(_ZP_HASHMAP_TEMPLATE_NAME, destroy)(_ZP_HASHMAP_TEMPL
 #ifdef _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
 #undef _ZP_HASHMAP_TEMPLATE_SLOT_TRIVIALLY_MOVABLE
 #endif
-#undef _ZP_HASHMAP_TEMPLATE_MAX_CAPACITY
-#undef _ZP_HASHMAP_TEMPLATE_MAX_ALLOC_SIZE
-#undef _ZP_HASHMAP_TEMPLATE_NODE_IS_LIVE
-#endif
 
-#undef _ZP_HASHMAP_KEY_BUCKET_INDEX
+#undef _ZP_HASHMAP_TEMPLATE_KEY_BUCKET_INDEX
 #undef _ZP_HASHMAP_TEMPLATE_IS_SET
