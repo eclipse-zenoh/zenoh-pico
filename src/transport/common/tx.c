@@ -178,6 +178,7 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
     }
 }
 
+#if Z_FEATURE_BATCHING == 1
 z_result_t _z_send_n_batch(_z_session_t *zn) {
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -191,3 +192,4 @@ z_result_t _z_send_n_batch(_z_session_t *zn) {
             return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
 }
+#endif

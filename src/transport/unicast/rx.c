@@ -329,7 +329,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                                                _z_transport_peer_unicast_hset_iter_t peer) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
-    _ZP_UNUSED(peer_id);
+    _ZP_UNUSED(peer);
     _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

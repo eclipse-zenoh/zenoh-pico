@@ -141,7 +141,8 @@ void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src);
 #define _ZP_STATIC_BIT_VECTOR_TEMPLATE_IS_SET 1
 #include "zenoh-pico/collections/static_bit_vector_template.h"
 
-#define _Z_LOCAL_PEER_ID Z_MAX_NUM_PEERS  // The local peer is always the last one in the bitset
+#define _Z_LOCAL_PEER_ID \
+    Z_MAX_NUM_PEERS  // The local peer is not part of the peer mask, so we use a special value to represent it.
 
 static inline _z_peer_mask_bitset_t _z_peer_mask_bitset_make_from_single_peer(size_t peer_id) {
     _z_peer_mask_bitset_t bitset = _z_peer_mask_bitset_new();

@@ -45,7 +45,7 @@ static z_result_t _z_transport_multicast_flush_buffer(_z_transport_multicast_t *
 static z_result_t _z_transport_multicast_send_t_msg_inner(_z_transport_multicast_t *ztm,
                                                           const _z_transport_message_t *t_msg) {
 #if Z_FEATURE_BATCHING == 1
-    if (ztm->_common._batch_state == _Z_BATCHING_ACTIVE || ztm->_common._batch_count > 0) {
+    if (ztm->_common._batch_state == _Z_BATCHING_ACTIVE && ztm->_common._batch_count > 0) {
         _Z_RETURN_IF_ERR(_z_transport_multicast_flush_buffer(ztm));
     }
 #endif
