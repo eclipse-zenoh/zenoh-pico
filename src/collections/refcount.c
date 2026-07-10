@@ -69,6 +69,8 @@ bool _z_rc_decrease_strong(void** cnt) {
     if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
+    // ensure we see the latest state of the value before we destroy it
+    _z_atomic_thread_fence(_z_memory_order_acquire);
     // destroy fake weak that we created during strong init
     _z_rc_decrease_weak(cnt);
     return true;
@@ -153,6 +155,7 @@ bool _z_simple_rc_decrease(void* rc) {
     if (_z_atomic_size_fetch_sub(&c->_strong_cnt, 1, _z_memory_order_release) > 1) {
         return false;
     }
+    _z_atomic_thread_fence(_z_memory_order_acquire);
     return true;
 }
 
