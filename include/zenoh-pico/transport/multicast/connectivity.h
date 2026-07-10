@@ -27,6 +27,7 @@ void _zp_multicast_report_connected_event(_z_transport_multicast_t *ztm,
 
 void _zp_multicast_remove_peer_by_iter(_z_transport_multicast_t *ztm,
                                        _z_address_to_transport_peer_multicast_hmap_iter_t iter);
+void _zp_multicast_remove_peers_by_mask(_z_transport_multicast_t *ztm, _z_peer_mask_bitset_t peers);
 #ifdef __cplusplus
 }
 #endif

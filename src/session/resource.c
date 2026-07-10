@@ -232,6 +232,7 @@ z_result_t _z_register_remote_resource_inner(_z_session_t *zn, const _z_wireexpr
 }
 
 z_result_t _z_register_remote_resource(_z_session_t *zn, const _z_wireexpr_t *key, uint16_t id, size_t peer_id) {
+    // No particular locking is needed here for now, since only rx thread can access remote resources list
     if (key->_mapping != _Z_KEYEXPR_MAPPING_REMOTE) {
         _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     }
@@ -243,6 +244,7 @@ z_result_t _z_register_remote_resource(_z_session_t *zn, const _z_wireexpr_t *ke
 }
 
 z_result_t _z_unregister_remote_resource(_z_session_t *zn, uint16_t id, size_t peer_id) {
+    // No particular locking is needed here for now, since only rx thread can access remote resources list
     _Z_DEBUG("unregistering remote resource: id %d, peer_id: %zu", id, peer_id);
     // No particular locking is needed here, since this function is only called by rx thread
     _z_resource_t *res = _z_get_resource_by_id_inner(zn->_remote_resources[peer_id], id);

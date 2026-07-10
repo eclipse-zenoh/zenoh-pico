@@ -37,16 +37,16 @@ static _z_zint_t _z_transport_unicast_get_sn(_z_transport_unicast_t *ztu, z_reli
 static z_result_t _z_transport_unicast_flush_buffer(_z_transport_unicast_t *ztu,
                                                     const _z_peer_mask_bitset_t *opt_peers) {
     _z_wbuf_finalize(&ztu->_common._wbuf, ztu->_common._link->_cap._flow);
+    // FIXME: normally we should hold a peers lock from the moment we acquite the bitmask, to the moment we finish
+    // iterating, since some peers can be removed, and even re-added at the positions specified by mask in the
+    // meantime (even while iterating). Intentionally keeping non-thread-safe for now, since this is how it was before,
+    // before we rework locking mechanisms.
     if (opt_peers == NULL) {
         _z_transport_peer_unicast_t *peer = NULL;
         _ZP_FOREACH (_z_transport_peer_unicast_hset, &ztu->_peers, peer) {
             _z_link_send_wbuf(ztu->_common._link, &ztu->_common._wbuf, &peer->_socket);
         }
     } else {
-        // FIXME: normally we should hold a peers lock from the moment we acquite the bitmask, to the moment we finish
-        // iterating, since some peers can be removed, and even re-added at the positions specified by mask in the
-        // meantime. Intentionally keeping non-thread-safe for now, since this is how it was before, before we rework
-        // locking mechanisms.
         for (_z_peer_mask_bitset_iter_t it = _z_peer_mask_bitset_begin_true(opt_peers);
              it != _z_peer_mask_bitset_end(opt_peers); it = _z_peer_mask_bitset_iter_next_true(opt_peers, it)) {
             _z_transport_peer_unicast_t *peer =

@@ -303,6 +303,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_u
 }
 
 static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
+    // No particular locking for peers is needed here, since peers can only be modified by rx thread
     _z_peer_mask_bitset_t expired_peers = _z_peer_mask_bitset_new();
     size_t to_read = 0;
     for (_z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);

@@ -62,3 +62,17 @@ void _zp_multicast_remove_peer_by_iter(_z_transport_multicast_t *ztm,
     _z_address_to_transport_peer_multicast_hmap_remove_at(&ztm->_peers, iter, NULL, NULL);
     _z_transport_peer_mutex_unlock(&ztm->_common);
 }
+
+void _zp_multicast_remove_peers_by_mask(_z_transport_multicast_t *ztm, _z_peer_mask_bitset_t peers) {
+    _z_peer_mask_bitset_iter_t expired_iter = _z_peer_mask_bitset_begin_true(&peers);
+    _z_peer_mask_bitset_iter_t expired_end = _z_peer_mask_bitset_end(&peers);
+    if (expired_iter == expired_end) {
+        return;
+    }
+    _z_transport_peer_mutex_lock(&ztm->_common);
+    for (; expired_iter != expired_end; expired_iter = _z_peer_mask_bitset_iter_next_true(&peers, expired_iter)) {
+        _z_address_to_transport_peer_multicast_hmap_remove_at(
+            &ztm->_peers, (_z_address_to_transport_peer_multicast_hmap_iter_t)expired_iter, NULL, NULL);
+    }
+    _z_transport_peer_mutex_unlock(&ztm->_common);
+}
