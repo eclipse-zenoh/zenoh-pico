@@ -96,16 +96,15 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
 #if Z_FEATURE_UNICAST_PEER == 1
     if (mode == Z_WHATAMI_PEER) {
         _z_peer_mask_bitset_t expired_peers = _z_peer_mask_bitset_new();
-        _z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
-        _z_transport_peer_unicast_hset_iter_t end = _z_transport_peer_unicast_hset_end(&ztu->_peers);
-        while (iter != end) {
+        for (_z_transport_peer_unicast_hset_iter_t iter = _z_transport_peer_unicast_hset_begin(&ztu->_peers);
+             iter != _z_transport_peer_unicast_hset_end(&ztu->_peers);
+             iter = _z_transport_peer_unicast_hset_iter_next(&ztu->_peers, iter)) {
             _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_hset_at(&ztu->_peers, iter);
             if (!peer->common._received) {
                 _z_peer_mask_bitset_set_at(&expired_peers, (size_t)iter, true);
                 _zp_unicast_report_disconnected_event(ztu, iter);
             }
             peer->common._received = false;
-            iter = _z_transport_peer_unicast_hset_iter_next(&ztu->_peers, iter);
         }
         _zp_unicast_remove_peers_by_mask(ztu, expired_peers);
     }
