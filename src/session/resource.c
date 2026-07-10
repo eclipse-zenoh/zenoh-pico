@@ -144,10 +144,13 @@ z_result_t _z_get_keyexpr_view_from_wireexpr(_z_session_t *zn, _z_keyexpr_view_t
             *out = _z_keyexpr_view_from_string_view(&expr->_suffix);
             return _Z_RES_OK;
         }
-        _z_session_mutex_lock(zn);
-        _z_resource_slist_t *decls = _z_wireexpr_is_local(expr) ? zn->_local_resources : zn->_remote_resources[peer_id];
-        ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &out_buf, &out_buf_len);
-        _z_session_mutex_unlock(zn);
+        if (_z_wireexpr_is_local(expr)) {
+            _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
+            ret = _z_get_keyexpr_from_wireexpr_inner(zn->_local_resources, expr, &out_buf, &out_buf_len);
+            _z_session_mutex_unlock(zn);
+        } else {  // no locking is required for remote resources, since they can only be accessed by the rx thread
+            ret = _z_get_keyexpr_from_wireexpr_inner(zn->_remote_resources[peer_id], expr, &out_buf, &out_buf_len);
+        }
         if (ret == _Z_RES_OK) {
             _z_string_view_t sv = _z_string_view_make(out_buf, out_buf_len);
             *out = _z_keyexpr_view_from_string_view(&sv);
@@ -161,12 +164,15 @@ z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, con
     *out = _z_keyexpr_null();
     z_result_t ret = _Z_ERR_NULL;
     if (expr != NULL && _z_wireexpr_check(expr)) {
-        _z_session_mutex_lock(zn);
-        _z_resource_slist_t *decls = _z_wireexpr_is_local(expr) ? zn->_local_resources : zn->_remote_resources[peer_id];
         char *buf = NULL;
         size_t buf_len = 0;
-        ret = _z_get_keyexpr_from_wireexpr_inner(decls, expr, &buf, &buf_len);
-        _z_session_mutex_unlock(zn);
+        if (_z_wireexpr_is_local(expr)) {
+            _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
+            ret = _z_get_keyexpr_from_wireexpr_inner(zn->_local_resources, expr, &buf, &buf_len);
+            _z_session_mutex_unlock(zn);
+        } else {  // no locking is required for remote resources, since they can only be accessed by the rx thread
+            ret = _z_get_keyexpr_from_wireexpr_inner(zn->_remote_resources[peer_id], expr, &buf, &buf_len);
+        }
         if (ret == _Z_RES_OK) {
             _z_string_t s = _z_string_from_substr_custom_deleter(buf, buf_len, _z_delete_context_default());
             _z_keyexpr_from_string(out, &s);
