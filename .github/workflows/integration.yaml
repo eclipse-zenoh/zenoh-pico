@@ -22,12 +22,18 @@ env:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        include:
+        - name: ubuntu-latest with ASAN
+          os: ubuntu-latest
+          asan: 1
+        - name: macOS-latest
+          os: macOS-latest
+          asan: 0
 
     steps:
       - name: Clone this repository
@@ -78,9 +84,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
+          key: ${{ runner.os }}-asan${{ matrix.asan }}-ccache-integration-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
           restore-keys: |
-            ${{ runner.os }}-ccache-integration-
+            ${{ runner.os }}-asan${{ matrix.asan }}-ccache-integration-
 
       - name: Compile debug
         run: make all
@@ -100,6 +106,7 @@ jobs:
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
           Z_FEATURE_ADMIN_SPACE: 1
+          ASAN: ${{ matrix.asan }}
 
       - name: Download and extract Zenoh
         if: runner.os == 'Linux'
@@ -129,80 +136,10 @@ jobs:
           BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
           BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
           Z_FEATURE_LINK_TLS: 1
-          Z_FEATURE_LOCAL_QUERYABLE: 1
-          Z_FEATURE_LOCAL_SUBSCRIBER: 1
-          Z_FEATURE_UNSTABLE_API: 1
-
-  asan-build:
-    name: Build on ubuntu-latest with ASAN
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-
-    steps:
-      - name: Clone this repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Setup mbedtls (Linux)
-        if: runner.os == 'Linux'
-        uses: eclipse-zenoh/ci/setup-mbedtls@main
-        with:
-          mbedtls-version: mbedtls-3.6.5
-
-      - name: Install ccache (Linux)
-        run: |
-          sudo apt-get update && sudo apt-get install -y ccache
-
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-ccache-integration-asan-${{ hashFiles('CMakeLists.txt', 'GNUmakefile', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
-          restore-keys: |
-            ${{ runner.os }}-ccache-integration-asan-
-            ${{ runner.os }}-ccache-integration-
-
-      - name: Install TLS dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
-
-      - name: Compile debug
-        run: make all
-        env:
-          CC: ccache cc
-          CXX: ccache c++
-          CCACHE_DIR: ~/.ccache
-          CCACHE_BASEDIR: ${{ github.workspace }}
-          CCACHE_COMPILERCHECK: content
-          BUILD_TYPE: Debug
-          BUILD_TESTING: OFF
-          BUILD_INTEGRATION: ON
-          Z_FEATURE_LINK_TLS: 1
           Z_FEATURE_UNSTABLE_API: 1
           Z_FEATURE_LOCAL_QUERYABLE: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
-          ASAN: 1
-
-      - name: Download and extract Zenoh
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: eclipse-zenoh/zenoh
-          latest: true
-          fileName: ${{ env.ZENOH_LINUX_ASSET }}
-          out-file-path: build/tests
-          extract: true
-
-      - name: Test debug
-        run: make test
-        timeout-minutes: 40
-        env:
-          BUILD_TYPE: Debug # Workaround for Windows as it seems the previous step is being ignored
-          BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
-          BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
-          Z_FEATURE_LINK_TLS: 1
-          Z_FEATURE_UNSTABLE_API: 1
-          Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          Z_FEATURE_ADMIN_SPACE: 1
+          ASAN: ${{ matrix.asan }}
