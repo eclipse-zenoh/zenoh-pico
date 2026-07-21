@@ -36,6 +36,13 @@
 
 #define SERIAL_CONNECT_THROTTLE_TIME_MS 250
 
+#if defined(ZENOH_THREADX_STM32)
+static uint8_t _z_stm32_rx_raw_buf[_Z_SERIAL_MAX_COBS_BUF_SIZE];
+static uint8_t _z_stm32_rx_tmp_buf[_Z_SERIAL_MFS_SIZE];
+static uint8_t _z_stm32_tx_raw_buf[_Z_SERIAL_MAX_COBS_BUF_SIZE];
+static uint8_t _z_stm32_tx_tmp_buf[_Z_SERIAL_MFS_SIZE];
+#endif
+
 typedef struct {
     bool _from_pins;
     uint32_t _baudrate;
@@ -143,17 +150,23 @@ static size_t _z_serial_write_all(_z_sys_net_socket_t sock, const uint8_t *ptr, 
 }
 
 static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+#if defined(ZENOH_THREADX_STM32)
+    uint8_t *raw_buf = _z_stm32_rx_raw_buf;
+#else
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if (raw_buf == NULL) {
         _Z_ERROR("Failed to allocate serial COBS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t rb = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
         size_t chunk = _z_serial_read(sock, &raw_buf[rb], 1);
         if (chunk != 1) {
+#if !defined(ZENOH_THREADX_STM32)
             z_free(raw_buf);
+#endif
             return SIZE_MAX;
         }
 
@@ -163,20 +176,30 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
         }
     }
 
+#if defined(ZENOH_THREADX_STM32)
+    uint8_t *tmp_buf = _z_stm32_rx_tmp_buf;
+#else
     uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     if (tmp_buf == NULL) {
         z_free(raw_buf);
         _Z_ERROR("Failed to allocate serial MFS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+#if !defined(ZENOH_THREADX_STM32)
     z_free(raw_buf);
     z_free(tmp_buf);
+#endif
     return ret;
 }
 
 static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
+#if defined(ZENOH_THREADX_STM32)
+    uint8_t *tmp_buf = _z_stm32_tx_tmp_buf;
+    uint8_t *raw_buf = _z_stm32_tx_raw_buf;
+#else
     uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if ((raw_buf == NULL) || (tmp_buf == NULL)) {
@@ -185,18 +208,23 @@ static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t he
         _Z_ERROR("Failed to allocate serial COBS and/or MFS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t raw_len =
         _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
     if (raw_len == SIZE_MAX) {
+#if !defined(ZENOH_THREADX_STM32)
         z_free(raw_buf);
         z_free(tmp_buf);
+#endif
         return SIZE_MAX;
     }
 
     size_t written = _z_serial_write_all(sock, raw_buf, raw_len);
+#if !defined(ZENOH_THREADX_STM32)
     z_free(raw_buf);
     z_free(tmp_buf);
+#endif
     return (written == raw_len) ? len : SIZE_MAX;
 }
 

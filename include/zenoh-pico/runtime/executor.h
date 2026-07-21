@@ -159,7 +159,11 @@ static inline void _z_fut_data_move(_z_fut_data_t *dst, _z_fut_data_t *src) {
 static inline size_t _z_size_fut_data_hmap_hash(const size_t *key) { return *key; }
 
 #ifndef _ZP_EXECUTOR_MAX_NUM_FUTURES
+#if defined(ZENOH_THREADX_STM32)
+#define _ZP_EXECUTOR_MAX_NUM_FUTURES 16
+#else
 #define _ZP_EXECUTOR_MAX_NUM_FUTURES 64
+#endif
 #endif
 
 #define _ZP_EXECUTOR_MAX_FUT_BUCKET_COUNT (_ZP_EXECUTOR_MAX_NUM_FUTURES * 3 / 2)  // 0.66 load factor

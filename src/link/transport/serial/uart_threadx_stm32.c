@@ -90,7 +90,7 @@ static size_t _z_threadx_stm32_uart_fill_frame(void) {
     size_t rb = 0;
 
     if (tx_semaphore_get(&_z_threadx_stm32_data_ready_semaphore, TX_TIMER_TICKS_PER_SECOND) != TX_SUCCESS) {
-        return SIZE_MAX;
+        return 0;
     }
 
     if (_z_threadx_stm32_delimiter_offset < _z_threadx_stm32_last_dma_offset) {
@@ -98,7 +98,11 @@ static size_t _z_threadx_stm32_uart_fill_frame(void) {
     } else {
         rb = _z_threadx_stm32_delimiter_offset - _z_threadx_stm32_last_dma_offset;
     }
-    if (rb == 0 || rb > sizeof(_z_threadx_stm32_frame_buffer)) {
+    
+    if (rb == 0) {
+        return 0;
+    }
+    if (rb > sizeof(_z_threadx_stm32_frame_buffer)) {
         return SIZE_MAX;
     }
 
