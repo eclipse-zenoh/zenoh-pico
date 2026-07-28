@@ -90,7 +90,7 @@ static size_t _z_threadx_stm32_uart_fill_frame(void) {
     size_t rb = 0;
 
     if (tx_semaphore_get(&_z_threadx_stm32_data_ready_semaphore, TX_TIMER_TICKS_PER_SECOND) != TX_SUCCESS) {
-        return 0;
+        return SIZE_MAX;
     }
 
     if (_z_threadx_stm32_delimiter_offset < _z_threadx_stm32_last_dma_offset) {
@@ -195,17 +195,35 @@ void zptxstm32_rx_event_cb(UART_HandleTypeDef *huart, uint16_t offset) {
     if (offset == last_offset) {
         return;
     }
+
+    uint16_t end_offset = offset;
+    
+    // If the DMA buffer wrapped around, we first process up to the end of the buffer
     if (offset < last_offset) {
-        last_offset = 0;
+        end_offset = RX_DMA_BUFFER_SIZE;
     }
 
-    while (last_offset < offset) {
+    while (last_offset < end_offset) {
         if (_z_threadx_stm32_dma_buffer[last_offset] == (uint8_t)0x00) {
-            tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_WAIT_FOREVER);
+            // Using NO_WAIT in ISR is required to avoid HardFaults
+            tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT);
             _z_threadx_stm32_delimiter_offset = last_offset + 1;
             tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
         }
         ++last_offset;
+    }
+    
+    // If we processed to the end of the buffer, wrap back to 0 and process the remainder
+    if (offset < last_offset && last_offset == RX_DMA_BUFFER_SIZE) {
+        last_offset = 0;
+        while (last_offset < offset) {
+            if (_z_threadx_stm32_dma_buffer[last_offset] == (uint8_t)0x00) {
+                tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT);
+                _z_threadx_stm32_delimiter_offset = last_offset + 1;
+                tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
+            }
+            ++last_offset;
+        }
     }
 }
 

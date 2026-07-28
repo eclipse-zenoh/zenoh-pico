@@ -161,8 +161,15 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
 #endif
 
     size_t rb = 0;
+    size_t timeout_cnt = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
         size_t chunk = _z_serial_read(sock, &raw_buf[rb], 1);
+        if (chunk == 0) {
+            continue;
+        }
+        if (chunk == SIZE_MAX) {
+            return SIZE_MAX;
+        }
         if (chunk != 1) {
 #if !defined(ZENOH_THREADX_STM32)
             z_free(raw_buf);
@@ -195,7 +202,12 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
     return ret;
 }
 
+volatile uint32_t my_send_serial_internal_calls = 0;
+volatile uint32_t my_send_serial_internal_len = 0;
+
 static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
+    my_send_serial_internal_calls++;
+    my_send_serial_internal_len = len;
 #if defined(ZENOH_THREADX_STM32)
     uint8_t *tmp_buf = _z_stm32_tx_tmp_buf;
     uint8_t *raw_buf = _z_stm32_tx_raw_buf;
@@ -281,14 +293,20 @@ z_result_t _z_serial_protocol_listen(_z_serial_socket_t *sock, const _z_endpoint
 void _z_serial_protocol_close(_z_serial_socket_t *sock) { _z_serial_close(&sock->_sock); }
 
 z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
+    z_clock_t start = z_clock_now();
+
     while (true) {
         uint8_t header = _Z_FLAG_SERIAL_INIT;
 
         _z_send_serial_internal(sock, header, NULL, 0);
         uint8_t tmp;
         size_t ret = _z_read_serial_internal(sock, &header, &tmp, sizeof(tmp));
+        
         if (ret == SIZE_MAX) {
-            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
+            if (z_clock_elapsed_ms(&start) > Z_TRANSPORT_CONNECT_TIMEOUT) {
+                _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
+            }
+            continue; // Retry sending INIT
         }
 
         if (_Z_HAS_FLAG(header, _Z_FLAG_SERIAL_ACK) && _Z_HAS_FLAG(header, _Z_FLAG_SERIAL_INIT)) {
