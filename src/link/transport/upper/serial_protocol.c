@@ -168,6 +168,10 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
             if (rb == 0) {
                 return SIZE_MAX;
             }
+            timeout_cnt++;
+            if (timeout_cnt > 10) {
+                return SIZE_MAX;
+            }
             continue;
         }
         if (chunk == SIZE_MAX) {
@@ -179,6 +183,8 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
 #endif
             return SIZE_MAX;
         }
+
+        timeout_cnt = 0;
 
         rb++;
         if (raw_buf[rb - 1] == (uint8_t)0x00) {
