@@ -73,16 +73,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 }
 
 z_result_t _z_task_join(_z_task_t *task) {
-    while (1) {
-        UINT state;
-        UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
-        if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-
-        if ((state == TX_COMPLETED) || (state == TX_TERMINATED)) break;
-
-        tx_thread_sleep(1);
-    }
-
+    tx_thread_terminate(&(task->threadx_thread));
     tx_thread_delete(&(task->threadx_thread));
     return _Z_RES_OK;
 }
