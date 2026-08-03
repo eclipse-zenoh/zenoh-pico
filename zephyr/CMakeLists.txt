@@ -8,21 +8,6 @@ zephyr_library()
 
 zephyr_compile_definitions(ZENOH_ZEPHYR)
 
-# Read version file and split it on '.' (dot) to extract components
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/../version.txt version)
-string(STRIP "${version}" version)
-string(REPLACE "." ";" version_list "${version}")
-
-# Populate the zenoh-pico version variables
-set(ZENOH_PICO ${version})
-list(POP_FRONT version_list ZENOH_PICO_MAJOR ZENOH_PICO_MINOR ZENOH_PICO_PATCH ZENOH_PICO_TWEAK)
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/../include/zenoh-pico.h
-  @ONLY
-)
-
 function(assign_kconfig feature text)
   string(REPLACE Z_FEATURE CONFIG_ZENOH_PICO kconfig ${feature})
   if(${kconfig})
