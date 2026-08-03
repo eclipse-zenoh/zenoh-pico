@@ -39,7 +39,7 @@ jobs:
       branch: ${{ steps.create-release-branch.outputs.branch }}
     steps:
       - name: Checkout this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.branch || 'main' }}
           fetch-tags: true
@@ -67,7 +67,7 @@ jobs:
           github-token: ${{ secrets.BOT_TOKEN_WORKFLOW }}
 
       - name: Checkout this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.create-release-branch.outputs.branch }}
           fetch-tags: true
@@ -88,7 +88,7 @@ jobs:
       build-linux-matrix: ${{ steps.pre-build.outputs.build-linux-matrix }}
     steps:
       - name: Clone this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.tag.outputs.branch }}
 
@@ -101,7 +101,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Clone this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.tag.outputs.branch }}
 
@@ -112,13 +112,13 @@ jobs:
           VERSION: ${{ needs.tag.outputs.version }}
 
       - name: Upload macOS library archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-macos.outputs.archive-lib }}
           path: ${{ steps.build-macos.outputs.archive-lib }}
 
       - name: Upload macOS examples archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-macos.outputs.archive-examples }}
           path: ${{ steps.build-macos.outputs.archive-examples }}
@@ -132,7 +132,7 @@ jobs:
       matrix: ${{ fromJson(needs.pre-build.outputs.build-linux-matrix) }}
     steps:
       - name: Clone this repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.tag.outputs.branch }}
 
@@ -144,25 +144,25 @@ jobs:
           TARGET: ${{ matrix.target }}
 
       - name: Upload Linux library archive for ${{ matrix.target }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-linux.outputs.archive-lib }}
           path: ${{ steps.build-linux.outputs.archive-lib }}
 
       - name: Upload Linux examples archive for ${{ matrix.target }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-linux.outputs.archive-examples }}
           path: ${{ steps.build-linux.outputs.archive-examples }}
 
       - name: Upload Linux RPM archive for ${{ matrix.target }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-linux.outputs.archive-rpm }}
           path: ${{ steps.build-linux.outputs.archive-rpm }}
 
       - name: Upload Linux DEB archive for ${{ matrix.target }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.build-linux.outputs.archive-deb }}
           path: ${{ steps.build-linux.outputs.archive-deb }}
