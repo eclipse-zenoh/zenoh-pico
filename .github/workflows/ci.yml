@@ -699,6 +699,18 @@ jobs:
           out-file-path: zenoh-standalone
           extract: true
 
+      - name: Diagnose GitHub API access
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --silent --show-error \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --dump-header /tmp/github-headers \
+            --output /tmp/github-response \
+            https://api.github.com/repos/Shopify/toxiproxy/releases/tags/v2.12.0
+          awk 'tolower($1) ~ /^http|^x-ratelimit|^content-type/ { print }' /tmp/github-headers
+          head -c 500 /tmp/github-response
+
       - name: Download Toxiproxy
         uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1.13
         with:
