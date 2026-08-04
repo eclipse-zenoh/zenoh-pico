@@ -482,7 +482,7 @@ The simplest way to run some of the example is to get a Docker image of the **ze
 
 ### 3.1. Starting the Zenoh Router
 
-Assuming you've pulled the Docker image of the **zenoh** router on a Linux host (to leverage UDP multicast scouting as explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
+Assuming you've pulled the Docker image of the **zenoh** router on a Linux host to [leverage UDP multicast scouting](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 
 ```bash
 docker run --init --net host eclipse/zenoh:main
