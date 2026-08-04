@@ -668,6 +668,8 @@ jobs:
   connection_restore_test:
     name: Connection restore test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -704,6 +706,7 @@ jobs:
           tag: v${{ env.TOXIPROXY_VERSION }}
           fileName: toxiproxy-server-linux-amd64
           out-file-path: .
+          token: ${{ github.token }}
 
       - name: Start Toxiproxy
         run: |
@@ -716,7 +719,6 @@ jobs:
           sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
           chmod +x ./zenoh-standalone/zenohd
-          RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
           RUST_LOG=debug python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
         env:
