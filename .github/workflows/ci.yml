@@ -703,7 +703,9 @@ jobs:
             https://github.com/Shopify/toxiproxy/releases/download/v2.12.0/toxiproxy-server-linux-amd64 \
             --output toxiproxy-server-linux-amd64
 
-          echo "556d891134a3c582dc4d3b3c7a1a3f7335fd55142e5965769855a00b944e13e48302fc  toxiproxy-server-linux-amd64" \
+      - name: Verify Toxiproxy
+        run: |
+          echo "556d891134a3c582dc1e1a3f7335fd55142e5965769855a00b944e13e48302fc  toxiproxy-server-linux-amd64" \
             | sha256sum --check
 
       - name: Start Toxiproxy
