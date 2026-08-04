@@ -26,7 +26,6 @@ concurrency:
 
 env:
   ZENOH_ASSET: zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
-  TOXIPROXY_VERSION: 2.12.0
 
 jobs:
   run_tests:
@@ -668,8 +667,6 @@ jobs:
   connection_restore_test:
     name: Connection restore test
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -699,26 +696,15 @@ jobs:
           out-file-path: zenoh-standalone
           extract: true
 
-      - name: Diagnose GitHub API access
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          curl --silent --show-error \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            --dump-header /tmp/github-headers \
-            --output /tmp/github-response \
-            https://api.github.com/repos/Shopify/toxiproxy/releases/tags/v2.12.0
-          awk 'tolower($1) ~ /^http|^x-ratelimit|^content-type/ { print }' /tmp/github-headers
-          head -c 500 /tmp/github-response
-
+      # Use curl directly instead of release-downloader to avoid issues with Shopify/toxiproxy IP allowlist restriction
       - name: Download Toxiproxy
-        uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1.13
-        with:
-          repository: Shopify/toxiproxy
-          tag: v${{ env.TOXIPROXY_VERSION }}
-          fileName: toxiproxy-server-linux-amd64
-          out-file-path: .
-          token: ${{ github.token }}
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/Shopify/toxiproxy/releases/download/v2.12.0/toxiproxy-server-linux-amd64 \
+            --output toxiproxy-server-linux-amd64
+
+          echo "556d891134a3c582dc4d3b3c7a1a3f7335fd55142e5965769855a00b944e13e48302fc  toxiproxy-server-linux-amd64" \
+            | sha256sum --check
 
       - name: Start Toxiproxy
         run: |
