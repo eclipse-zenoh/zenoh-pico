@@ -25,9 +25,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: jwlawson/actions-setup-cmake@v1.14
-      - uses: mymindstorm/setup-emsdk@v12
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
       - name: Compile debug
         run: |
           mkdir build
