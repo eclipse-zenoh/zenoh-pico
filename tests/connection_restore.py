@@ -456,7 +456,7 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd")
+        print("Usage: python3 ./connection_restore.py /path/to/zenohd")
         sys.exit(1)
 
     router_command = STDBUF_CMD + [sys.argv[1]] + ROUTER_ARGS
