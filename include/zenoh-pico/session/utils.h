@@ -31,6 +31,10 @@ extern "C" {
 _z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t id, _z_string_t *locator, const uint32_t timeout,
                                  const bool exit_on_first);
 
+static inline bool _z_scout_should_exit_on_first(const bool exit_on_first, const _z_hello_t *hello) {
+    return exit_on_first && hello != NULL && (_z_string_svec_len(&hello->_locators) > 0);
+}
+
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid);
 void _z_session_clear(_z_session_t *zn);
 z_result_t _z_session_close(_z_session_t *zn);
