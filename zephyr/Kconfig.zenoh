@@ -5,6 +5,14 @@ config ZENOH_PICO
 
 if ZENOH_PICO
 
+config ZENOH_PICO_INTEREST
+	bool "Zenoh interest protocol support"
+	help
+	  The zenoh interest protocol facilitates features such as
+	  writer side filtering by allowing peers to show interest
+	  in topics and thereby allowing selective publishing logic
+	  based off the presence of interest within the network.
+
 config ZENOH_PICO_LINK_SERIAL
 	bool "Serial Link"
 	help
@@ -40,6 +48,16 @@ config ZENOH_PICO_RAWETH_TRANSPORT
 	help
 	  Raw Ethernet Support
 
+config ZENOH_PICO_MULTICAST_TRANSPORT
+	bool "Multicast Transort Support"
+	help
+	  Multicast Transport Support
+
+config ZENOH_PICO_UNICAST_TRANSPORT
+	bool "Unicast Transport Support"
+	help
+	  Unicast Transport Support
+
 config ZENOH_PICO_LINK_TCP
 	bool "TCP Link"
 	help
@@ -65,5 +83,185 @@ config ZENOH_PICO_LINK_WS
 	help
 	  WS Link
 
-endif
+config ZENOH_PICO_UNICAST_PEER
+	bool "Unicast Peer Mode"
+	help
+	  Unicast Peer Mode
 
+config ZENOH_PICO_AUTO_RECONNECT
+	bool "Autoreconnect"
+	help
+	  Autoreconnect
+
+config ZENOH_PICO_ADMIN_SPACE
+	bool "Toggle admin space support"
+	help
+	  Toggle admin space support
+
+config ZENOH_PICO_ADVANCED_PUBLICATION
+	bool "Toggle advanced publication feature"
+	help
+	  Toggle advanced publication feature
+
+config ZENOH_PICO_ADVANCED_SUBSCRIPTION
+	bool "Toggle advanced subscription feature"
+	help
+	  Toggle advanced subscription feature
+
+config ZENOH_PICO_BATCHING
+	bool "Toggle batching"
+	help
+	  Toggle batching
+
+config ZENOH_PICO_BATCH_PEER_MUTEX
+	bool "Toggle peer mutex lock at a batch level"
+	help
+	  Toggle peer mutex lock at a batch level
+
+config ZENOH_PICO_BATCH_TX_MUTEX
+	bool "Toggle tx mutex lock at a batch level"
+	help
+	  Toggle tx mutex lock at a batch level
+
+config ZENOH_PICO_CONNECTIVITY
+	bool "Toggle connectivity status/events API (unstable)"
+	help
+	  Toggle connectivity status/events API (unstable)
+
+config ZENOH_PICO_ENCODING_VALUES
+	bool "Toggle encoding values"
+	help
+	  Toggle encoding values
+
+config ZENOH_PICO_FRAGMENTATION
+	bool "Toggle fragmentation"
+	help
+	  Toggle fragmentation
+
+config ZENOH_PICO_LINK_BLUETOOTH
+	bool "Toggle Bluetooth links"
+	help
+	  Toggle Bluetooth links
+
+config ZENOH_PICO_LINK_SERIAL_USB
+	bool "Toggle Serial USB links"
+	help
+	  Toggle Serial USB links
+
+config ZENOH_PICO_LINK_TLS
+	bool "Toggle TLS links"
+	help
+	  Toggle TLS links
+
+config ZENOH_PICO_LIVELINESS
+	bool "Toggle liveliness feature"
+	help
+	  Toggle liveliness feature
+
+config ZENOH_PICO_LOCAL_QUERYABLE
+	bool "Toggle local queriables"
+	help
+	  Toggle local queriables
+
+config ZENOH_PICO_LOCAL_SUBSCRIBER
+	bool "Toggle local subscriptions"
+	help
+	  Toggle local subscriptions
+
+config ZENOH_PICO_MATCHING
+	bool "Toggle matching feature"
+	help
+	  Toggle matching feature
+
+config ZENOH_PICO_MULTICAST_DECLARATIONS
+	bool "Toggle multicast resource declarations"
+	help
+	  Toggle multicast resource declarations
+
+config ZENOH_PICO_RX_CACHE
+	bool "Toggle RX_CACHE"
+	help
+	  Toggle RX_CACHE
+
+config ZENOH_PICO_SESSION_CHECK
+	bool "Toggle publisher/querier session check"
+	help
+	  Toggle publisher/querier session check
+
+config ZENOH_PICO_TCP_NODELAY
+	bool "Toggle TCP_NODELAY"
+	help
+	  Toggle TCP_NODELAY
+
+config ZENOH_PICO_UNSTABLE_API
+	bool "Toggle unstable Zenoh-C API"
+	help
+	  Toggle unstable Zenoh-C API
+
+config ZENOH_PICO_FRAG_MAX_SIZE
+	int "Use this to override the maximum size for fragmented messages"
+	default 4096
+	help
+	  Use this to override the maximum size for fragmented messages
+
+config ZENOH_PICO_BATCH_UNICAST_SIZE
+	int "Use this to override the maximum unicast batch size"
+	default 2048
+	help
+	  Use this to override the maximum unicast batch size
+
+config ZENOH_PICO_BATCH_MULTICAST_SIZE
+	int "Use this to override the maximum multicast batch size"
+	default 2048
+	help
+	  Use this to override the maximum multicast batch size
+
+config ZENOH_PICO_CONFIG_SOCKET_TIMEOUT
+	int "Default socket timeout in milliseconds"
+	default 100
+	help
+	  Default socket timeout in milliseconds
+
+config ZENOH_PICO_TRANSPORT_LEASE
+	int "Link lease duration in milliseconds to announce to other zenoh nodes"
+	default 10000
+	help
+	  Link lease duration in milliseconds to announce to other zenoh nodes
+
+config ZENOH_PICO_TRANSPORT_LEASE_EXPIRE_FACTOR
+	int "Default session lease expire factor."
+	default 3
+	help
+	  Default session lease expire factor.
+
+config ZENOH_PICO_RUNTIME_MAX_TASKS
+	int "Maximum number of tasks in zenoh-pico's runtime"
+	default 64
+	help
+	  Maximum number of tasks in zenoh-pico's runtime
+
+config ZENOH_PICO_RUNTIME_IDLE_READ_TASK_SLEEP
+	int "Idle read task sleep duration in milliseconds."
+	default 0
+	help
+	  Idle read task sleep duration in milliseconds.
+
+config ZENOH_PICO_TRANSPORT_ACCEPT_TIMEOUT
+	int "Link accept timeout in P2P mode in milliseconds"
+	default 1000
+	help
+	  Link accept timeout in P2P mode in milliseconds
+
+config ZENOH_PICO_TRANSPORT_CONNECT_TIMEOUT
+	int "Link connect timeout in P2P mode in milliseconds"
+	default 10000
+	help
+	  Link connect timeout in P2P mode in milliseconds
+
+config ZENOH_PICO_MAX_KEYEXPR_LENGTH
+	int "Maximum key expression length accepted by zenoh-pico."
+	default 256
+	help
+	  Maximum key expression length accepted by zenoh-pico.
+
+endif
