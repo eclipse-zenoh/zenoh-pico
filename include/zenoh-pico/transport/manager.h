@@ -16,18 +16,13 @@
 #define INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
 
 #include "zenoh-pico/collections/slice.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/runtime/runtime.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-enum _z_peer_op_e {
-    _Z_PEER_OP_OPEN = 0,
-    _Z_PEER_OP_LISTEN = 1,
-};
 
 z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_string_t *locator, z_whatami_t mode,
                             int peer_op, const _z_config_t *session_cfg, _z_runtime_t *runtime);

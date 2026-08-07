@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2025 ZettaScale Technology
+// Copyright (c) 2026 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -12,22 +12,19 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_UNICAST_ACCEPT_H
-#define ZENOH_PICO_UNICAST_ACCEPT_H
+#ifndef ZENOH_PICO_LINK_DRIVER_REGISTRY_H
+#define ZENOH_PICO_LINK_DRIVER_REGISTRY_H
 
-#include "zenoh-pico/runtime/runtime.h"
-#include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/link/driver.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
-_z_fut_fn_result_t _zp_unicast_accept_task_fn(void *ztu_arg, _z_executor_t *executor);
-#endif
+const _z_link_driver_t *const *_z_link_driver_registry(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ZENOH_PICO_UNICAST_ACCEPT_H */
+#endif /* ZENOH_PICO_LINK_DRIVER_REGISTRY_H */

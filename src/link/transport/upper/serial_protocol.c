@@ -204,9 +204,6 @@ z_result_t _z_serial_endpoint_valid(const _z_endpoint_t *endpoint) {
     _z_serial_endpoint_cfg_t cfg;
     z_result_t ret = _z_serial_endpoint_parse(&cfg, endpoint);
     _z_serial_endpoint_cfg_clear(&cfg);
-    if (ret != _Z_RES_OK) {
-        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
-    }
     return ret;
 }
 

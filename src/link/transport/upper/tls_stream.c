@@ -401,7 +401,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
         return ret;
     }
 
-    // Needed for _read_socket_f callback which requires TLS context
+    // Needed by socket-backed peer reads, which require the TLS context.
     sock->_sock._tls_sock = (void *)sock;
 
     int mbedret = mbedtls_ssl_config_defaults(&sock->_tls_ctx->_ssl_config, MBEDTLS_SSL_IS_CLIENT,
@@ -522,7 +522,7 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep
         return ret;
     }
 
-    // Needed for _read_socket_f callback which requires TLS context
+    // Needed by socket-backed peer reads, which require the TLS context.
     sock->_sock._tls_sock = (void *)sock;
 
     int mbedret = mbedtls_ssl_config_defaults(&sock->_tls_ctx->_ssl_config, MBEDTLS_SSL_IS_SERVER,

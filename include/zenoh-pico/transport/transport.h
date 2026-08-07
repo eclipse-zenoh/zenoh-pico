@@ -33,6 +33,11 @@
 extern "C" {
 #endif
 
+enum _z_peer_op_e {
+    _Z_PEER_OP_OPEN = 0,
+    _Z_PEER_OP_LISTEN = 1,
+};
+
 enum _z_dbuf_state_e {
     _Z_DBUF_STATE_NULL = 0,
     _Z_DBUF_STATE_INIT = 1,
@@ -116,12 +121,7 @@ typedef enum _z_unicast_peer_flow_state_e {
 
 typedef struct {
     _z_transport_peer_common_t common;
-    _z_sys_net_socket_t _socket;
-    // FIXME: Temporary ownership flag to avoid double-closing sockets
-    // when link and peer structs alias the same underlying fd/TLS.
-    // This should be replaced by proper, explicit ownership semantics
-    // (e.g. a ref-counted socket/TLS handle or single authoritative owner).
-    bool _owns_socket;
+    _z_link_peer_t _link_peer;
     // SN numbers
     _z_zint_t _sn_rx_reliable;
     _z_zint_t _sn_rx_best_effort;
@@ -283,9 +283,13 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
-z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
-                                         _z_sys_net_socket_t socket, bool owns_socket,
+// Consumes link_peer, moving it into the transport on success and clearing it on failure.
+z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu,
+                                         const _z_transport_unicast_establish_param_t *param, _z_link_peer_t *link_peer,
                                          _z_transport_peer_unicast_t **output_peer);
+z_result_t _z_transport_peer_unicast_open(_z_transport_unicast_t *ztu, const _z_id_t *session_id,
+                                          const _z_string_t *locator, const _z_config_t *session_cfg,
+                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 size_t _z_transport_get_peers_count(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);

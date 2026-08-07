@@ -18,12 +18,66 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/iobuf.h"
 
 #undef NDEBUG
 #include <assert.h>
 
 #define RUNS 1000
+
+typedef struct {
+    const size_t *_reads;
+    size_t _read_count;
+    size_t _read_idx;
+    const uint8_t *_data;
+    size_t _data_idx;
+} _z_scripted_peer_read_t;
+
+typedef struct {
+    _z_link_peer_impl_t _base;
+    _z_scripted_peer_read_t *_script;
+} _z_scripted_peer_impl_t;
+
+static void _z_scripted_peer_impl_clear(_z_link_peer_impl_t *base) { _ZP_UNUSED(base); }
+
+static size_t _z_scripted_peer_read(const _z_link_t *link, const _z_link_peer_t *peer, uint8_t *ptr, size_t len) {
+    (void)link;
+    const _z_scripted_peer_impl_t *impl = (const _z_scripted_peer_impl_t *)_z_link_peer_impl_const(peer);
+    _z_scripted_peer_read_t *script = impl == NULL ? NULL : impl->_script;
+    assert(script != NULL);
+    assert(script->_read_idx < script->_read_count);
+
+    size_t rb = script->_reads[script->_read_idx++];
+    if ((rb == SIZE_MAX) || (rb == 0)) {
+        return rb;
+    }
+
+    assert(rb <= len);
+    memcpy(ptr, &script->_data[script->_data_idx], rb);
+    script->_data_idx += rb;
+    return rb;
+}
+
+static const _z_link_peer_ops_t _z_scripted_peer_ops = {
+    ._read_f = _z_scripted_peer_read,
+};
+
+static z_result_t _z_scripted_peer_init(_z_link_peer_t *peer, _z_scripted_peer_read_t *script) {
+    _z_scripted_peer_impl_t *impl = (_z_scripted_peer_impl_t *)z_malloc(sizeof(_z_scripted_peer_impl_t));
+    if (impl == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_link_peer_impl_init(&impl->_base, &_z_scripted_peer_ops, _z_scripted_peer_impl_clear);
+    impl->_script = script;
+    z_result_t ret = _z_link_peer_init(peer, &impl->_base);
+    if (ret != _Z_RES_OK) {
+        _z_link_peer_impl_clear(&impl->_base);
+        z_free(impl);
+        return ret;
+    }
+    return _Z_RES_OK;
+}
 
 /*=============================*/
 /*     Printing functions      */
@@ -315,6 +369,67 @@ void zbuf_view(void) {
     }
 
     _z_zbuf_clear(&zbf);
+}
+
+static void link_peer_recv_exact_zbuf_script(const size_t *reads, size_t read_count, const uint8_t *data, size_t len,
+                                             size_t expected_ret, bool check_payload) {
+    _z_zbuf_t zbf;
+    assert(_z_zbuf_init(&zbf, 16) == _Z_RES_OK);
+    _z_zbuf_set_wpos(&zbf, 1);
+    _z_zbuf_set_rpos(&zbf, 1);
+    size_t initial_wpos = _z_zbuf_get_wpos(&zbf);
+
+    _z_scripted_peer_read_t script = {
+        ._reads = reads,
+        ._read_count = read_count,
+        ._read_idx = 0,
+        ._data = data,
+        ._data_idx = 0,
+    };
+    _z_link_peer_t peer = _z_link_peer_null();
+    assert(_z_scripted_peer_init(&peer, &script) == _Z_RES_OK);
+
+    size_t rb = _z_link_peer_recv_exact_zbuf(NULL, &zbf, len, &peer);
+    _z_link_peer_clear(&peer);
+    assert(rb == expected_ret);
+    if (expected_ret == len) {
+        assert(_z_zbuf_get_wpos(&zbf) == initial_wpos + len);
+        assert(_z_zbuf_readable_len(&zbf) == len);
+        if (check_payload) {
+            for (size_t i = 0; i < len; i++) {
+                assert(_z_zbuf_read(&zbf) == data[i]);
+            }
+        }
+    } else {
+        assert(_z_zbuf_get_wpos(&zbf) == initial_wpos);
+        assert(_z_zbuf_readable_len(&zbf) == 0);
+    }
+
+    _z_zbuf_clear(&zbf);
+}
+
+void link_peer_recv_exact_zbuf_partial_error(void) {
+    printf("\n>>> Link peer exact ZBuf read => Partial then SIZE_MAX\n");
+    const size_t reads[] = {2, SIZE_MAX};
+    const uint8_t data[] = {0x11, 0x22};
+    link_peer_recv_exact_zbuf_script(reads, 2, data, 4, SIZE_MAX, false);
+    printf("Ok\n");
+}
+
+void link_peer_recv_exact_zbuf_partial_zero(void) {
+    printf("\n>>> Link peer exact ZBuf read => Partial then zero\n");
+    const size_t reads[] = {2, 0};
+    const uint8_t data[] = {0x33, 0x44};
+    link_peer_recv_exact_zbuf_script(reads, 2, data, 4, 0, false);
+    printf("Ok\n");
+}
+
+void link_peer_recv_exact_zbuf_partial_success(void) {
+    printf("\n>>> Link peer exact ZBuf read => Partial success\n");
+    const size_t reads[] = {2, 1, 3};
+    const uint8_t data[] = {0x55, 0x66, 0x77, 0x88, 0x99, 0xaa};
+    link_peer_recv_exact_zbuf_script(reads, 3, data, sizeof(data), sizeof(data), true);
+    printf("Ok\n");
 }
 
 void wbuf_writable_readable(void) {
@@ -635,4 +750,7 @@ int main(void) {
         wbuf_reusable_write_zbuf_read();
     }
     test_wbuf_wrap_bytes();
+    link_peer_recv_exact_zbuf_partial_error();
+    link_peer_recv_exact_zbuf_partial_zero();
+    link_peer_recv_exact_zbuf_partial_success();
 }

@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/transport/raweth.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
@@ -29,9 +30,13 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
+    const _z_raweth_socket_t *socket = _z_link_raweth_socket_const(link);
+    if (socket == NULL) {
+        return SIZE_MAX;
+    }
+
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
-    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_writable_space_left(zbf), addr,
-                                  &link->_socket._raweth._whitelist);
+    size_t rb = _z_receive_raweth(&socket->_sock, buff, _z_zbuf_writable_space_left(zbf), addr, &socket->_whitelist);
     // Check validity
     if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;

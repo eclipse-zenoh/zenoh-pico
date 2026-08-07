@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
@@ -48,13 +48,12 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
     }
 
     if (err == _Z_RES_OK) {
-        _z_link_t zl;
-        memset(&zl, 0, sizeof(_z_link_t));
+        _z_link_t *zl = NULL;
         _z_zbuf_t zbf = _z_zbuf_null();
         err = _z_open_link(&zl, locator, NULL);
         if (err == _Z_RES_OK) {
             // Send the scout message
-            if (_z_link_send_wbuf(&zl, wbf, NULL) != _Z_RES_OK) {
+            if (_z_link_send_wbuf(zl, wbf) != _Z_RES_OK) {
                 err = _Z_ERR_TRANSPORT_TX_FAILED;
                 _Z_ERROR_LOG(err);
             } else if (_z_zbuf_init(&zbf, Z_BATCH_UNICAST_SIZE) != _Z_RES_OK) {
@@ -67,7 +66,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                     _z_zbuf_reset(&zbf);
 
                     // Read bytes from the socket
-                    size_t len = _z_link_recv_zbuf(&zl, &zbf, NULL);
+                    size_t len = _z_link_recv_zbuf(zl, &zbf, NULL);
                     if (len == SIZE_MAX) {
                         continue;
                     }
@@ -126,7 +125,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                 }
             }
             _z_zbuf_clear(&zbf);
-            _z_link_clear(&zl);
+            _z_link_free(&zl);
         } else {
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             err = _Z_ERR_TRANSPORT_OPEN_FAILED;
