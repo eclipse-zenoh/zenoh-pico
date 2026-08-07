@@ -3,6 +3,9 @@ import time
 import sys
 import os
 import threading
+import json
+import urllib.error
+import urllib.request
 
 ROUTER_INIT_TIMEOUT_S = 3
 WAIT_MESSAGE_TIMEOUT_S = 15
@@ -14,9 +17,14 @@ SUBSCRIBER_RECEIVE_MESSAGES = ["[Subscriber] Received"]
 ROUTER_ERROR_MESSAGE = "ERROR"
 WRITE_FILTER_OFF_MESSAGE = "write filter state: 1"
 WRITE_FILTER_ACTIVE_MESSAGE = "write filter state: 0"
-ZENOH_PORT = "7447"
+ROUTER_PORT = "7447"
+ZENOH_PORT = "7448"
+TOXIPROXY_API = "http://127.0.0.1:8474"
+TOXIPROXY_NAME = "zenoh-connection-restore"
+TOXIC_UPSTREAM = "drop-upstream"
+TOXIC_DOWNSTREAM = "drop-downstream"
 
-ROUTER_ARGS = ['-l', f'tcp/0.0.0.0:{ZENOH_PORT}', '--no-multicast-scouting']
+ROUTER_ARGS = ['-l', f'tcp/0.0.0.0:{ROUTER_PORT}', '--no-multicast-scouting']
 STDBUF_CMD = ["stdbuf", "-o0"]
 
 DIR_EXAMPLES = "build/examples"
@@ -60,14 +68,78 @@ def terminate_processes(process_list):
     process_list.clear()
 
 
+def toxiproxy_request(method, path, payload=None, ignored_statuses=()):
+    request_data = None
+    headers = {}
+    if payload is not None:
+        request_data = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    request = urllib.request.Request(
+        f"{TOXIPROXY_API}{path}", data=request_data, headers=headers, method=method
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:
+            return response.status
+    except urllib.error.HTTPError as error:
+        if error.code in ignored_statuses:
+            return error.code
+        raise
+
+
+def configure_toxiproxy():
+    start_time = time.time()
+    while time.time() - start_time < WAIT_MESSAGE_TIMEOUT_S:
+        try:
+            toxiproxy_request("GET", "/version")
+            break
+        except urllib.error.URLError:
+            time.sleep(0.2)
+    else:
+        raise Exception("Toxiproxy API is not available.")
+
+    toxiproxy_request("DELETE", f"/proxies/{TOXIPROXY_NAME}", ignored_statuses=(404,))
+    toxiproxy_request(
+        "POST",
+        "/proxies",
+        {
+            "name": TOXIPROXY_NAME,
+            "listen": f"127.0.0.1:{ZENOH_PORT}",
+            "upstream": f"127.0.0.1:{ROUTER_PORT}",
+            "enabled": True,
+        },
+    )
+
+
 def block_connection():
-    subprocess.run(["iptables", "-A", "INPUT", "-p", "tcp", "--dport", ZENOH_PORT, "-j", "DROP"], check=True)
-    subprocess.run(["iptables", "-A", "OUTPUT", "-p", "tcp", "--sport", ZENOH_PORT, "-j", "DROP"], check=True)
+    for name, stream in ((TOXIC_UPSTREAM, "upstream"), (TOXIC_DOWNSTREAM, "downstream")):
+        toxiproxy_request(
+            "POST",
+            f"/proxies/{TOXIPROXY_NAME}/toxics",
+            {
+                "name": name,
+                "type": "timeout",
+                "stream": stream,
+                "attributes": {"timeout": 0},
+            },
+        )
 
 
 def unblock_connection():
-    subprocess.run(["iptables", "-D", "INPUT", "-p", "tcp", "--dport", ZENOH_PORT, "-j", "DROP"], check=False)
-    subprocess.run(["iptables", "-D", "OUTPUT", "-p", "tcp", "--sport", ZENOH_PORT, "-j", "DROP"], check=False)
+    for name in (TOXIC_UPSTREAM, TOXIC_DOWNSTREAM):
+        toxiproxy_request(
+            "DELETE",
+            f"/proxies/{TOXIPROXY_NAME}/toxics/{name}",
+            ignored_statuses=(404,),
+        )
+
+
+def cleanup_toxiproxy():
+    try:
+        unblock_connection()
+        toxiproxy_request("DELETE", f"/proxies/{TOXIPROXY_NAME}", ignored_statuses=(404,))
+    except urllib.error.URLError:
+        pass
 
 
 def wait_messages(client_output, messages):
@@ -384,40 +456,44 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd")
+        print("Usage: python3 ./connection_restore.py /path/to/zenohd")
         sys.exit(1)
 
     router_command = STDBUF_CMD + [sys.argv[1]] + ROUTER_ARGS
 
-    # timeout less than sesson timeout
-    test_connection_drop(router_command, ACTIVE_CLIENT_COMMAND, 15)
-    test_connection_drop(router_command, PASSIVE_CLIENT_COMMAND, 15)
+    configure_toxiproxy()
+    try:
+        # timeout less than session timeout
+        test_connection_drop(router_command, ACTIVE_CLIENT_COMMAND, 15)
+        test_connection_drop(router_command, PASSIVE_CLIENT_COMMAND, 15)
 
-    # timeout more than sesson timeout
-    test_connection_drop(router_command, ACTIVE_CLIENT_COMMAND, 15)
-    test_connection_drop(router_command, PASSIVE_CLIENT_COMMAND, 15)
+        # timeout more than session timeout
+        test_connection_drop(router_command, ACTIVE_CLIENT_COMMAND, 15)
+        test_connection_drop(router_command, PASSIVE_CLIENT_COMMAND, 15)
 
-    # timeout less than sesson timeout
-    test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 8)
-    test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 8)
+        # timeout less than session timeout
+        test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 8)
+        test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 8)
 
-    # timeout more than sesson timeout
-    test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 15)
-    test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 15)
+        # timeout more than session timeout
+        test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 15)
+        test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 15)
 
-    # Existing z_pub <-> z_sub communication survives a router restart
-    test_pub_sub_survive_router_restart(router_command,
-                                        ACTIVE_CLIENT_COMMAND,
-                                        PASSIVE_CLIENT_COMMAND,
-                                        8)
+        # Existing z_pub <-> z_sub communication survives a router restart
+        test_pub_sub_survive_router_restart(router_command,
+                                            ACTIVE_CLIENT_COMMAND,
+                                            PASSIVE_CLIENT_COMMAND,
+                                            8)
 
-    # After a router restart, a new z_sub can receive samples from a pre-restart z_pub
-    test_pub_before_restart_then_new_sub(router_command,
-                                         ACTIVE_CLIENT_COMMAND,
-                                         PASSIVE_CLIENT_COMMAND,
-                                         8)
+        # After a router restart, a new z_sub can receive samples from a pre-restart z_pub
+        test_pub_before_restart_then_new_sub(router_command,
+                                             ACTIVE_CLIENT_COMMAND,
+                                             PASSIVE_CLIENT_COMMAND,
+                                             8)
 
-    test_liveliness_drop(router_command, LIVELINESS_CLIENT_COMMAND, LIVELINESS_SUB_CLIENT_COMMAND)
+        test_liveliness_drop(router_command, LIVELINESS_CLIENT_COMMAND, LIVELINESS_SUB_CLIENT_COMMAND)
+    finally:
+        cleanup_toxiproxy()
 
 
 if __name__ == "__main__":

@@ -696,12 +696,30 @@ jobs:
           out-file-path: zenoh-standalone
           extract: true
 
+      # Use curl directly instead of release-downloader to avoid issues with Shopify/toxiproxy IP allowlist restriction
+      - name: Download Toxiproxy
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/Shopify/toxiproxy/releases/download/v2.12.0/toxiproxy-server-linux-amd64 \
+            --output toxiproxy-server-linux-amd64
+
+      - name: Verify Toxiproxy
+        run: |
+          echo "556d891134a3c582dc1e1a3f7335fd55142e5965769855a00b944e13e48302fc  toxiproxy-server-linux-amd64" \
+            | sha256sum --check
+
+      - name: Start Toxiproxy
+        run: |
+          chmod +x ./toxiproxy-server-linux-amd64
+          ./toxiproxy-server-linux-amd64 --host=127.0.0.1 > toxiproxy.log 2>&1 &
+          echo $! > toxiproxy.pid
+
       - name: Build project and run test
         run: |
           sudo apt update && sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON CMAKE_BUILD_TYPE=Debug ZENOH_DEBUG=3 make
           chmod +x ./zenoh-standalone/zenohd
-          RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
+          RUST_LOG=debug python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
         env:
           CC: ccache cc
@@ -709,6 +727,12 @@ jobs:
           CCACHE_DIR: ~/.ccache
           CCACHE_BASEDIR: ${{ github.workspace }}
           CCACHE_COMPILERCHECK: content
+
+      - name: Stop Toxiproxy
+        if: always()
+        run: |
+          if [ -f toxiproxy.pid ]; then kill "$(cat toxiproxy.pid)" || true; fi
+          if [ -f toxiproxy.log ]; then cat toxiproxy.log; fi
 
   routed_peer_client_test:
     name: Test routed peer client communication
