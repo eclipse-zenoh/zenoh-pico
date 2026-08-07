@@ -18,7 +18,6 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/utils/logging.h"
@@ -121,10 +120,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                     }
                     _z_s_msg_clear(&s_msg);
 
-                    // An empty Hello does not provide a locator for opening a session.
-                    // Keep scouting until a usable Hello arrives or the timeout expires.
-                    if (!_z_hello_slist_is_empty(ret) &&
-                        _z_scout_should_exit_on_first(exit_on_first, _z_hello_slist_value(ret))) {
+                    if (!_z_hello_slist_is_empty(ret) && exit_on_first) {
                         break;
                     }
                 }
