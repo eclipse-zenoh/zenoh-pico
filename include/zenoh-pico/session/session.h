@@ -112,12 +112,13 @@ typedef struct {
     uint32_t _id;
 } _z_publication_t;
 
-// Forward declaration to avoid cyclical include
-typedef struct _z_query_t _z_query_t;
+// Forward type declaration to avoid cyclical include
+typedef struct _z_query_rc_t _z_query_rc_t;
+
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_closure_query_callback_t)(_z_query_t *query, void *arg);
+typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_declared_keyexpr_t _key;
