@@ -19,16 +19,14 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wireexpr_t *key,
-                                    const _z_msg_reply_t *reply, const _z_entity_global_id_t *replier_id,
-                                    _z_n_qos_t qos, _z_transport_peer_common_t *peer) {
+z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_wireexpr_t *key, _z_msg_reply_t *reply,
+                                    _z_entity_global_id_t *replier_id, _z_transport_peer_common_t *peer) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
-    _z_keyexpr_view_t keyexpr;
-    char buf[Z_MAX_KEYEXPR_LENGTH];
-    _Z_RETURN_IF_ERR(_z_get_keyexpr_view_from_wireexpr(zn, &keyexpr, key, peer, buf, Z_MAX_KEYEXPR_LENGTH));
-    ret = _z_trigger_query_reply_partial(zn, id, _z_keyexpr_view_deref(&keyexpr), reply, replier_id, qos, peer);
+    ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put,
+                                         (reply->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE), replier_id,
+                                         peer);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
@@ -40,8 +38,8 @@ z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, const _z_wir
     return ret;
 }
 
-z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, const _z_msg_err_t *error,
-                                const _z_entity_global_id_t *replier_id) {
+z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error,
+                                _z_entity_global_id_t *replier_id) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
@@ -55,7 +53,7 @@ z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, const _z_msg_err
     return ret;
 }
 
-z_result_t _z_trigger_reply_final(_z_session_t *zn, const _z_n_msg_response_final_t *final) {
+z_result_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final) {
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1

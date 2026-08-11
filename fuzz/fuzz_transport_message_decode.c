@@ -22,14 +22,14 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     _z_slice_t slice = _z_slice_alias_buf(data, size);
-    _z_zbuf_t zbf = _z_slice_as_zbuf(&slice);
+    _z_zbuf_t zbf = _z_slice_as_zbuf(slice);
     _z_transport_message_t msg = {0};
 
     if (_z_transport_message_decode(&msg, &zbf) == _Z_RES_OK) {
         // Re-encode valid decoded messages to exercise the transport encode path.
-        _z_wbuf_t wbf = _z_wbuf_null();
+        _z_wbuf_t wbf = _z_wbuf_make(size + 64, true);
 
-        if (_z_wbuf_init(&wbf, size + 64, true) == _Z_RES_OK) {
+        if (_z_wbuf_capacity(&wbf) != 0) {
             if (_z_transport_message_encode(&wbf, &msg) == _Z_RES_OK) {
                 _z_zbuf_t encoded = _z_wbuf_to_zbuf(&wbf);
                 _z_transport_message_t roundtrip = {0};
@@ -43,6 +43,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     _z_zbuf_clear(&zbf);
+    _z_t_msg_clear(&msg);
 
     return 0;
 }

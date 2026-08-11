@@ -68,7 +68,7 @@ z_result_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, boo
     return _Z_RES_OK;
 }
 
-z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_final, bool has_ext) {
+z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_final, bool has_ext, uintptr_t mapping) {
     // Decode id
     _Z_RETURN_IF_ERR(_z_zint32_decode(&interest->_id, zbf));
     if (!is_final) {
@@ -79,7 +79,7 @@ z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_f
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
             // Decode ke
             _Z_RETURN_IF_ERR(_z_wireexpr_decode(&interest->_keyexpr, zbf, _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N),
-                                                _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M)));
+                                                _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M), mapping));
         }
         // Store interest flags (current and future already processed)
         interest->flags = (uint8_t)(interest->flags | (flags & _Z_INTEREST_FLAG_COPY_MASK));
