@@ -16,14 +16,15 @@ name: integration
 on:
   workflow_call:
 
-env:
-  ZENOH_LINUX_ASSET: zenoh-1.9.0-x86_64-unknown-linux-gnu-standalone.zip
-  ZENOH_MACOS_ASSET: zenoh-1.9.0-aarch64-apple-darwin-standalone.zip
-
 jobs:
+  zenoh_version:
+    name: Get Zenoh version
+    uses: ./.github/workflows/zenoh-version.yaml
+
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: zenoh_version
     strategy:
       fail-fast: false
       matrix:
@@ -106,8 +107,8 @@ jobs:
         uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1.13
         with:
           repository: eclipse-zenoh/zenoh
-          latest: true
-          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          tag: ${{ needs.zenoh_version.outputs.zenoh-version }}
+          fileName: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
           out-file-path: build/tests
           extract: true
 
@@ -116,8 +117,8 @@ jobs:
         uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1.13
         with:
           repository: eclipse-zenoh/zenoh
-          latest: true
-          fileName: ${{ env.ZENOH_MACOS_ASSET }}
+          tag: ${{ needs.zenoh_version.outputs.zenoh-version }}
+          fileName: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-aarch64-apple-darwin-standalone.zip
           out-file-path: build/tests
           extract: true
 
@@ -136,6 +137,7 @@ jobs:
   asan-build:
     name: Build on ubuntu-latest with ASAN
     runs-on: ubuntu-latest
+    needs: zenoh_version
     strategy:
       fail-fast: false
 
@@ -191,8 +193,8 @@ jobs:
         uses: robinraju/release-downloader@28fc21f50d76778e7023361aa1f863e717d3d56f # v1.13
         with:
           repository: eclipse-zenoh/zenoh
-          latest: true
-          fileName: ${{ env.ZENOH_LINUX_ASSET }}
+          tag: ${{ needs.zenoh_version.outputs.zenoh-version }}
+          fileName: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
           out-file-path: build/tests
           extract: true
 
