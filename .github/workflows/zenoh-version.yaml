@@ -1,0 +1,37 @@
+#
+# Copyright (c) 2026 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: Get Zenoh version
+
+on:
+  workflow_call:
+    outputs:
+      zenoh-version:
+        description: Zenoh version from version.txt
+        value: ${{ jobs.get_zenoh_version.outputs.zenoh-version }}
+
+jobs:
+  get_zenoh_version:
+    runs-on: ubuntu-latest
+    outputs:
+      zenoh-version: ${{ steps.version.outputs.zenoh-version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - id: version
+        name: Read Zenoh version
+        shell: bash
+        run: echo "zenoh-version=$(tr -d '\r\n' < version.txt)" >> "$GITHUB_OUTPUT"

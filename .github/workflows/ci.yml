@@ -24,9 +24,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  ZENOH_ASSET: zenoh-1.10.0-x86_64-unknown-linux-gnu-standalone.zip
 jobs:
+  zenoh_version:
+    name: Get Zenoh version
+    uses: ./.github/workflows/zenoh-version.yaml
+
   run_tests:
     name: Run unit tests on ubuntu-latest
     runs-on: ubuntu-latest
@@ -210,6 +212,9 @@ jobs:
   modular_build:
     name: Modular build on ubuntu-latest
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     strategy:
       matrix:
         feature_publication: [1, 0]
@@ -407,6 +412,9 @@ jobs:
   st_build:
     name: Build and test in single thread on ubuntu-latest (unstable=${{ matrix.unstable_api }})
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     strategy:
       matrix:
         unstable_api: [0, 1]
@@ -469,6 +477,9 @@ jobs:
   fragment_test:
     name: Test multicast and unicast fragmentation
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -526,6 +537,9 @@ jobs:
   attachment_test:
     name: Test attachments
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -582,6 +596,9 @@ jobs:
   memory_leak_test:
     name: Test examples memory leak
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     steps:
       - name: Setup mbedtls
         uses: eclipse-zenoh/ci/setup-mbedtls@main
@@ -666,6 +683,9 @@ jobs:
   connection_restore_test:
     name: Connection restore test
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -736,6 +756,9 @@ jobs:
   routed_peer_client_test:
     name: Test routed peer client communication
     runs-on: ubuntu-latest
+    needs: zenoh_version
+    env:
+      ZENOH_ASSET: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
