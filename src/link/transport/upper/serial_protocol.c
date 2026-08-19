@@ -185,7 +185,6 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
         }
 
         timeout_cnt = 0;
-
         rb++;
         if (raw_buf[rb - 1] == (uint8_t)0x00) {
             break;
@@ -211,13 +210,14 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
     return ret;
 }
 
-volatile uint32_t my_send_serial_internal_calls = 0;
-volatile uint32_t my_send_serial_internal_len = 0;
+#if defined(ZENOH_THREADX_STM32)
+extern void _z_threadx_stm32_tx_lock(void);
+extern void _z_threadx_stm32_tx_unlock(void);
+#endif
 
 static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    my_send_serial_internal_calls++;
-    my_send_serial_internal_len = len;
 #if defined(ZENOH_THREADX_STM32)
+    _z_threadx_stm32_tx_lock();
     uint8_t *tmp_buf = _z_stm32_tx_tmp_buf;
     uint8_t *raw_buf = _z_stm32_tx_raw_buf;
 #else
@@ -234,7 +234,9 @@ static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t he
     size_t raw_len =
         _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
     if (raw_len == SIZE_MAX) {
-#if !defined(ZENOH_THREADX_STM32)
+#if defined(ZENOH_THREADX_STM32)
+        _z_threadx_stm32_tx_unlock();
+#else
         z_free(raw_buf);
         z_free(tmp_buf);
 #endif
@@ -242,7 +244,9 @@ static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t he
     }
 
     size_t written = _z_serial_write_all(sock, raw_buf, raw_len);
-#if !defined(ZENOH_THREADX_STM32)
+#if defined(ZENOH_THREADX_STM32)
+    _z_threadx_stm32_tx_unlock();
+#else
     z_free(raw_buf);
     z_free(tmp_buf);
 #endif
