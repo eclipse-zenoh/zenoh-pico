@@ -73,8 +73,21 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 }
 
 z_result_t _z_task_join(_z_task_t *task) {
-    tx_thread_terminate(&(task->threadx_thread));
-    tx_thread_delete(&(task->threadx_thread));
+    while (1) {
+        UINT state;
+        UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+
+        if ((state == TX_COMPLETED) || (state == TX_TERMINATED)) break;
+
+        tx_thread_sleep(1);
+    }
+
+    UINT del_status = tx_thread_delete(&(task->threadx_thread));
+    if (del_status != TX_SUCCESS && del_status != TX_THREAD_ERROR) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
     return _Z_RES_OK;
 }
 
@@ -84,8 +97,11 @@ z_result_t _z_task_detach(_z_task_t *task) {
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    // Not implemented
-    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    UINT status = tx_thread_terminate(&(task->threadx_thread));
+    if (status != TX_SUCCESS && status != TX_THREAD_ERROR) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
 }
 
 void _z_task_exit(void) {  // NEW with new vesion
@@ -214,7 +230,8 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
     }
 
     ULONG now = tx_time_get();
-    ULONG target_time = ((abstime->tv_sec * 1000ULL + abstime->tv_nsec / 1000000ULL) * TX_TIMER_TICKS_PER_SECOND) / 1000ULL;
+    ULONG target_time =
+        ((abstime->tv_sec * 1000ULL + abstime->tv_nsec / 1000000ULL) * TX_TIMER_TICKS_PER_SECOND) / 1000ULL;
     ULONG block_duration = (target_time > now) ? (target_time - now) : 0;
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
