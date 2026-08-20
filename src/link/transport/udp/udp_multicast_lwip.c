@@ -15,21 +15,37 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/transport/udp_multicast.h"
 
-#if defined(ZENOH_FREERTOS_LWIP) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
+#if (defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_TI_AM67A) || defined(ZENOH_TI_AM64X)) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
 #include <string.h>
 
 #include "lwip/ip4_addr.h"
 #include "lwip/netdb.h"
 #include "lwip/netif.h"
+#if LWIP_TCPIP_CORE_LOCKING
+#include "lwip/tcpip.h"
+#endif
 #include "udp_multicast_lwip_common.h"
 
 static unsigned long __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr) {
     unsigned int addrlen = 0U;
     _ZP_UNUSED(sa_family);
 
+#if LWIP_TCPIP_CORE_LOCKING
+    /* netif_find/netif_ip4_addr require the core lock when LWIP_TCPIP_CORE_LOCKING=1 */
+    LOCK_TCPIP_CORE();
+#endif
     struct netif *netif = netif_find(iface);
-    if (netif == NULL || !netif_is_up(netif)) {
+    ip4_addr_t ip4_copy;
+    int found = (netif != NULL) && netif_is_up(netif);
+    if (found) {
+        ip4_addr_copy(ip4_copy, *netif_ip4_addr(netif));
+    }
+#if LWIP_TCPIP_CORE_LOCKING
+    UNLOCK_TCPIP_CORE();
+#endif
+
+    if (!found) {
         return 0;
     }
 
@@ -38,8 +54,7 @@ static unsigned long __get_ip_from_iface(const char *iface, int sa_family, struc
         return 0;
     }
     (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
-    const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);
-    inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, ip_2_ip4(ip4_addr));
+    inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, &ip4_copy);
     lsockaddr_in->sin_family = AF_INET;
     lsockaddr_in->sin_port = htons(0);
 
@@ -95,4 +110,4 @@ size_t _z_udp_multicast_write(const _z_sys_net_socket_t sock, const uint8_t *ptr
     return _z_lwip_udp_multicast_write(sock, ptr, len, rep);
 }
 
-#endif
+#endif  /* (ZENOH_FREERTOS_LWIP || ZENOH_TI_AM67A || ZENOH_TI_AM64X) && Z_FEATURE_LINK_UDP_MULTICAST */

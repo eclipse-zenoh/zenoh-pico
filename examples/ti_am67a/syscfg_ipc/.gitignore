@@ -1,0 +1,4 @@
+# SysConfig-generated files — do not commit
+# Generate these with TI SysConfig before building. See ../README.md
+*
+!.gitignore

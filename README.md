@@ -37,6 +37,8 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |    **Emscripten**     |             Websocket            |      IPv4, IPv6     |                   WiFi, Ethernet                   |
 | **FreeRTOS-Plus-TCP** |         UDP (unicast), TCP       |         IPv4        |                      Ethernet                      |
 | **Raspberry Pi Pico** | UDP (unicast and multicast), TCP |         IPv4        |      WiFi (for "W" version), Serial, USB (CDC)     |
+| [**T3 Gemstone O1**](examples/ti_am67a/README.md) (TI AM67A J722S R5F) | UDP (unicast and multicast) | IPv4 | RPMsg IPC (FreeRTOS + lwIP via Linux A53) |
+|    **TI AM64x R5F**   |  UDP (unicast and multicast)     |        IPv4         |         RPMsg IPC (FreeRTOS + lwIP via Linux A53)  |
 
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
@@ -475,6 +477,32 @@ zenohd -l serial//dev/ttyACM1#baudrate=112500
     ```bash
     zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
+
+#### 2.2.8. T3 Gemstone O1 (TI AM67A / J722S) — FreeRTOS R5F over RPMsg IPC
+
+The **T3 Gemstone O1** ([t3gemstone.org](https://t3gemstone.org)) is a development board built around the TI J722S SoC, which integrates a quad-core ARM Cortex-A53 cluster running Linux and a Cortex-R5F real-time core running FreeRTOS.
+
+zenoh-pico runs on the **main-R5FSS0-0** Cortex-R5F core. Network traffic is tunnelled over RPMsg IPC to the Linux A53 core via the `rpmsg_net` kernel module, which exposes a virtual Ethernet device (`rpmsg0`) on the Linux side. From zenoh-pico's perspective the transport is standard UDP multicast over lwIP.
+
+| Core | OS | Role |
+|:----:|:--:|:----:|
+| Cortex-A53 (4×) | Linux | zenoh router / peer (`z_sub`, `z_pub`, `zenohd`) |
+| Cortex-R5F (main-R5FSS0-0) | FreeRTOS | zenoh-pico application |
+
+Two transport modes are supported at build time:
+
+| Mode | CMake flag | Notes |
+|:----:|:----------:|:-----:|
+| CPSW Ethernet (default) | *(none)* | Uses the on-board CPSW MAC + PHY |
+| RPMsg IPC | `-DZENOH_TI_AM67A_IPC=ON` | No PHY required; frames travel over shared DRAM VRINGs |
+
+See [examples/ti_am67a/README.md](examples/ti_am67a/README.md) for full build instructions, SysConfig setup, and usage.
+
+#### 2.2.9. TI AM64x — FreeRTOS R5F over RPMsg IPC
+
+Same architecture as T3 Gemstone O1 / AM67A, targeting the TI AM64x SoC (r5fss0-0) with MCU+ SDK 12.x.
+
+See [examples/ti_am64x/README.md](examples/ti_am64x/README.md) for build instructions, hardware setup, and usage.
 
 ## 3. Running the Examples
 

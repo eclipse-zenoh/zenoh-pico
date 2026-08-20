@@ -1,0 +1,98 @@
+/**
+ * SysConfig script for zenoh-pico TI AM67A — IPC mode (ZENOH_TI_AM67A_IPC).
+ *
+ * Target  : j722s-evm / main-R5FSS0-0 / FreeRTOS
+ * Purpose : UART (DebugP_log), MPU, IPC RPMessage to A53 Linux core.
+ *           No CPSW Ethernet — network traffic flows over the RPMsg IPC channel.
+ *
+ * Required SysConfig version: >= 1.26.2
+ * Required SDK             : MCU-PLUS-SDK-J722S 11.02.01
+ *
+ * Generate:
+ *   /opt/ti/sysconfig_<ver>/sysconfig_cli.sh \
+ *       -s ${MCU_PLUS_SDK_PATH}/.metadata/product.json \
+ *       -o examples/ti_am67a/syscfg_ipc \
+ *       examples/ti_am67a/example_ipc.syscfg
+ *
+ * @cliArgs --device "J722S_TDA4VEN_TDA4AEN_AM67" --package "AMW" --part "Default" --context "main-r5fss0-0" --product "MCU-PLUS-SDK-J722S@11.02.01"
+ * @versions {"tool":"1.28.0"}
+ */
+
+/* ---- Modules -------------------------------------------------------------- */
+const debug_log  = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7  = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const ipc        = scripting.addModule("/drivers/ipc/ipc");
+
+/* ---- Debug log: memory trace only (Linux reads via debugfs trace0) --------- */
+debug_log.enableUartLog        = false;
+debug_log.enableCssLog         = false;
+debug_log.enableSharedMemLog   = false;
+
+/* ---- MPU regions ---------------------------------------------------------- */
+const mpu1 = mpu_armv7.addInstance();
+mpu1.$name             = "CONFIG_MPU_REGISTER";
+mpu1.baseAddr          = 0x0;
+mpu1.size              = 31;
+mpu1.attributes        = "Device";
+mpu1.accessPermissions = "Supervisor RD+WR, User RD";
+mpu1.allowExecute      = false;
+
+const mpu2 = mpu_armv7.addInstance();
+mpu2.$name             = "CONFIG_MPU_TCMA";
+mpu2.size              = 15;
+mpu2.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu3 = mpu_armv7.addInstance();
+mpu3.$name             = "CONFIG_MPU_TCMB";
+mpu3.baseAddr          = 0x41010000;
+mpu3.size              = 15;
+mpu3.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu4 = mpu_armv7.addInstance();
+mpu4.$name             = "CONFIG_MPU_MCU_MSRAM";
+mpu4.baseAddr          = 0x79100000;
+mpu4.size              = 19;
+mpu4.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu5 = mpu_armv7.addInstance();
+mpu5.$name             = "CONFIG_MPU_DDR";
+mpu5.baseAddr          = 0x80000000;
+mpu5.size              = 31;
+mpu5.accessPermissions = "Supervisor RD+WR, User RD";
+
+/* ---- VRING shared memory region (must be non-cached) ----------------------
+ *
+ * The VRING buffers used by IPC RPMessage sit in a dedicated DDR region
+ * that is mapped as Device memory in the MPU so that DMA coherency is
+ * maintained without explicit cache flushes.
+ *
+ * Address and size must match what the Linux remoteproc driver expects
+ * (configured in the device tree, typically at 0xA0000000 for j722s).
+ * Adjust baseAddr/size to match your DTS carveout.
+ */
+const mpu6 = mpu_armv7.addInstance();
+mpu6.$name             = "CONFIG_MPU_LINUX_IPC";
+mpu6.baseAddr          = 0xA2000000;
+mpu6.size              = 21;          /* 2 MB: Linux VRING, resource table, trace buf */
+mpu6.attributes        = "NonCached"; /* Normal Non-Cacheable (tex=1), NOT Device (tex=0) */
+mpu6.accessPermissions = "Supervisor RD+WR, User RD";
+mpu6.allowExecute      = false;
+
+const mpu7 = mpu_armv7.addInstance();
+mpu7.$name             = "CONFIG_MPU_RTOS_IPC_VRING";
+mpu7.baseAddr          = 0xA5000000;
+mpu7.size              = 24;          /* 16 MB: R5F↔R5F VRING (NOLOAD, must be non-cached) */
+mpu7.attributes        = "NonCached";
+mpu7.accessPermissions = "Supervisor RD+WR, User RD";
+mpu7.allowExecute      = false;
+
+/* ---- IPC RPMessage --------------------------------------------------------
+ *
+ * Enable the IPC module so that SysConfig generates:
+ *   ti_drivers_config.c — calls IpcNotify_init + RPMessage_init
+ *   ti_ipc_config.h     — VRING address table
+ *
+ * Enable communication with the Linux A53 core (a53ss0-0).
+ * The VRING addresses are placed in the carveout defined above.
+ */
+ipc.enableLinuxIpc = true;

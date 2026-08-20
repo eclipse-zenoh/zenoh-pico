@@ -1,0 +1,107 @@
+/**
+ * SysConfig script for zenoh-pico TI AM64x — IPC mode (ZENOH_TI_AM64X_IPC).
+ *
+ * Target  : am64x-evm / r5fss0-0 / FreeRTOS
+ * Purpose : UART (DebugP_log), MPU, IPC RPMessage to A53 Linux core.
+ *           No CPSW Ethernet — network traffic flows over the RPMsg IPC channel.
+ *
+ * Required SysConfig version: >= 1.21.2
+ * Required SDK             : MCU_PLUS_SDK_AM64x 12.00.00
+ *
+ * Generate:
+ *   /opt/ti/sysconfig_<ver>/sysconfig_cli.sh \
+ *       -s ${MCU_PLUS_SDK_PATH}/.metadata/product.json \
+ *       -o examples/ti_am64x/syscfg_ipc \
+ *       examples/ti_am64x/example_ipc.syscfg
+ *
+ * On Linux, load the firmware via remoteproc, then:
+ *   sudo insmod rpmsg_net.ko
+ *   sudo ip addr add 192.168.200.2/30 dev rpmsg0
+ *   sudo ip link set rpmsg0 up
+ *
+ * @cliArgs --device "AM64x" --package "ALV" --part "Default" --context "r5fss0-0" --product "MCU_PLUS_SDK_AM64x@12.00.00"
+ * @versions {"tool":"1.28.0"}
+ */
+
+/* ---- Modules -------------------------------------------------------------- */
+const debug_log = scripting.addModule("/kernel/dpl/debug_log");
+const dpl_cfg   = scripting.addModule("/kernel/dpl/dpl_cfg");
+const mpu_armv7 = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const ipc       = scripting.addModule("/drivers/ipc/ipc");
+
+/* ---- UART (DebugP_log output) --------------------------------------------- */
+debug_log.enableUartLog        = false;
+debug_log.enableCssLog         = false;
+debug_log.enableSharedMemLog   = false;
+
+/* ---- MPU regions ---------------------------------------------------------- */
+const mpu1 = mpu_armv7.addInstance();
+mpu1.$name             = "CONFIG_MPU_REGISTER";
+mpu1.baseAddr          = 0x0;
+mpu1.size              = 31;
+mpu1.attributes        = "Device";
+mpu1.accessPermissions = "Supervisor RD+WR, User RD";
+mpu1.allowExecute      = false;
+
+const mpu2 = mpu_armv7.addInstance();
+mpu2.$name             = "CONFIG_MPU_TCMA";
+mpu2.size              = 15;
+mpu2.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu3 = mpu_armv7.addInstance();
+mpu3.$name             = "CONFIG_MPU_TCMB";
+mpu3.baseAddr          = 0x41010000;
+mpu3.size              = 15;
+mpu3.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu4 = mpu_armv7.addInstance();
+mpu4.$name             = "CONFIG_MPU_MSRAM";
+mpu4.baseAddr          = 0x70000000;
+mpu4.size              = 21;
+mpu4.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu5 = mpu_armv7.addInstance();
+mpu5.$name             = "CONFIG_MPU_DDR";
+mpu5.baseAddr          = 0x80000000;
+mpu5.size              = 31;
+mpu5.accessPermissions = "Supervisor RD+WR, User RD";
+
+/* ---- Linux IPC VRING region (must be non-cached) --------------------------
+ *
+ * LINUX_IPC_SHM_MEM at 0xA0000000 — 1 MB carveout for the RPMsg VRING buffers
+ * shared between Linux and the R5F core.  Must be marked NonCached so that
+ * DMA coherency is maintained without explicit cache flushes.
+ *
+ * Address and size must match the Linux device tree reserved-memory carveout
+ * for r5fss0-0.  Typical am64x-evm DTS uses 0xA0000000, length 0x100000.
+ */
+const mpu6 = mpu_armv7.addInstance();
+mpu6.$name             = "CONFIG_MPU_LINUX_IPC";
+mpu6.baseAddr          = 0xA0000000;
+mpu6.size              = 20;           /* 1 MB */
+mpu6.attributes        = "NonCached";
+mpu6.accessPermissions = "Supervisor RD+WR, User RD";
+mpu6.allowExecute      = false;
+
+/* ---- RTOS/NORTOS IPC shared memory (must be non-cached) -------------------
+ *
+ * Used for the VRING between multiple R5F cores and for log/user shared buffers.
+ * Must be non-cached to maintain coherency across cores.
+ */
+const mpu7 = mpu_armv7.addInstance();
+mpu7.$name             = "CONFIG_MPU_IPC_SHM";
+mpu7.baseAddr          = 0xA5000000;
+mpu7.size              = 16;           /* 64 KB */
+mpu7.attributes        = "NonCached";
+mpu7.accessPermissions = "Supervisor RD+WR, User RD";
+mpu7.allowExecute      = false;
+
+/* ---- IPC RPMessage --------------------------------------------------------
+ *
+ * Enable the IPC module so that SysConfig generates:
+ *   ti_drivers_config.c — calls IpcNotify_init + RPMessage_init,
+ *                          declares gRPMessageVringMem and resource_table
+ *
+ * Enable communication with the Linux A53 core (a53ss0-0).
+ */
+ipc.enableLinuxIpc = true;

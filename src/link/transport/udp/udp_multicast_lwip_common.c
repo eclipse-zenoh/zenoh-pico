@@ -27,6 +27,29 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
+// strsep is not part of C99 and is absent on bare-metal toolchains such as
+// TI ARM Clang. Provide a local implementation under those conditions.
+#if defined(ZENOH_TI_AM67A) || defined(ZENOH_TI_AM64X)
+static char *_zp_strsep(char **stringp, const char *delim) {
+    char *start = *stringp;
+    if (start == NULL) {
+        return NULL;
+    }
+    for (char *p = start; *p != '\0'; p++) {
+        for (const char *d = delim; *d != '\0'; d++) {
+            if (*p == *d) {
+                *p = '\0';
+                *stringp = p + 1;
+                return start;
+            }
+        }
+    }
+    *stringp = NULL;
+    return start;
+}
+#define strsep _zp_strsep
+#endif
+
 z_result_t _z_lwip_udp_multicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep,
                                       _z_sys_net_endpoint_t *lep, uint32_t tout, const char *iface,
                                       _z_lwip_udp_multicast_iface_addr_fn get_ip_from_iface) {
@@ -51,7 +74,7 @@ z_result_t _z_lwip_udp_multicast_open(_z_sys_net_socket_t *sock, const _z_sys_ne
                 ret = _Z_ERR_GENERIC;
             }
 
-            if ((ret == _Z_RES_OK) && (getsockname(_z_lwip_socket_get(*sock), lsockaddr, &addrlen) < 0)) {
+            if ((ret == _Z_RES_OK) && (getsockname(_z_lwip_socket_get(*sock), lsockaddr, (socklen_t *)&addrlen) < 0)) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
@@ -210,7 +233,7 @@ void _z_lwip_udp_multicast_close(_z_sys_net_socket_t *sockrecv, _z_sys_net_socke
 size_t _z_lwip_udp_multicast_read(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
                                   const _z_sys_net_endpoint_t lep, _z_slice_t *addr) {
     struct sockaddr_storage raddr;
-    unsigned long replen = sizeof(struct sockaddr_storage);
+    socklen_t replen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = 0;
     do {

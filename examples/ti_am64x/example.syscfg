@@ -1,0 +1,84 @@
+/**
+ * SysConfig script for zenoh-pico T3 Gemstone O1 / TI AM64x examples.
+ *
+ * Target  : am64x-evm / r5fss0-0 / FreeRTOS
+ * Purpose : UART (DebugP_log), MPU, UDMA, CPSW enet + one lwIP netif (DHCP)
+ *
+ * Required SysConfig version: >= 1.21.2
+ * Required SDK             : MCU_PLUS_SDK_AM64x 12.00.00
+ *
+ * Generate with SysConfig CLI (run from repo root after exporting env vars):
+ *
+ *   /opt/ti/sysconfig_<ver>/sysconfig_cli.sh \
+ *       -s ${MCU_PLUS_SDK_PATH}/.metadata/product.json \
+ *       -o examples/ti_am64x/syscfg \
+ *       examples/ti_am64x/example.syscfg
+ *
+ * Or let CMake do it automatically (see examples/ti_am64x/CMakeLists.txt).
+ *
+ * @cliArgs --device "AM64x" --part "Default" --package "ALV" --context "r5fss0-0" --product "MCU_PLUS_SDK_AM64x@12.00.00"
+ * @versions {"tool":"1.28.0"}
+ */
+
+/* ---- Modules -------------------------------------------------------------- */
+const debug_log = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7 = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const enet_cpsw = scripting.addModule("/networking/enet_cpsw/enet_cpsw", {}, false);
+const udma      = scripting.addModule("/drivers/udma/udma", {}, false);
+
+/* ---- UART (DebugP_log output) -------------------------------------------- */
+debug_log.enableUartLog = true;
+debug_log.uartLog.$name = "CONFIG_UART0";
+
+/* ---- MPU regions --------------------------------------------------------- */
+const mpu1 = mpu_armv7.addInstance();
+mpu1.$name             = "CONFIG_MPU_REGISTER";
+mpu1.baseAddr          = 0x0;
+mpu1.size              = 31;
+mpu1.attributes        = "Device";
+mpu1.accessPermissions = "Supervisor RD+WR, User RD";
+mpu1.allowExecute      = false;
+
+const mpu2 = mpu_armv7.addInstance();
+mpu2.$name             = "CONFIG_MPU_TCMA";
+mpu2.size              = 15;
+mpu2.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu3 = mpu_armv7.addInstance();
+mpu3.$name             = "CONFIG_MPU_TCMB";
+mpu3.baseAddr          = 0x41010000;
+mpu3.size              = 15;
+mpu3.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu4 = mpu_armv7.addInstance();
+mpu4.$name             = "CONFIG_MPU_MSRAM";
+mpu4.baseAddr          = 0x70000000;
+mpu4.size              = 23;   /* 8 MB covers all of MSRAM_2 */
+mpu4.accessPermissions = "Supervisor RD+WR, User RD";
+
+const mpu5 = mpu_armv7.addInstance();
+mpu5.$name             = "CONFIG_MPU_DDR";
+mpu5.baseAddr          = 0x80000000;
+mpu5.size              = 31;
+mpu5.accessPermissions = "Supervisor RD+WR, User RD";
+
+/* ---- CPSW Enet + lwIP ----------------------------------------------------- */
+const enet_cpsw1 = enet_cpsw.addInstance();
+
+enet_cpsw1.$name              = "CONFIG_ENET_CPSW0";
+enet_cpsw1.customBoardEnable  = true;   /* Skip board-specific ethphy driver */
+enet_cpsw1.DisableMacPort2    = true;   /* Use only MAC port 1 (RGMII1) */
+
+/* TX / RX DMA channels — one each, default names */
+enet_cpsw1.txDmaChannel[0].$name = "ENET_DMA_TX_CH0";
+enet_cpsw1.rxDmaChannel[0].$name = "ENET_DMA_RX_CH0";
+
+/* One lwIP netif on port 1, set as the default interface */
+enet_cpsw1.netifInstance.create(1);
+enet_cpsw1.netifInstance[0].$name    = "NETIF_INST_ID0";
+enet_cpsw1.netifInstance[0].isDefault = true;
+/* rxDmaChNum / txDmaChNum default to ["0"] — use DMA channel index 0 */
+
+/* ---- UDMA (connected to CPSW enet on AM64x) ------------------------------- */
+const udma1        = udma.addInstance({}, false);
+enet_cpsw1.udmaDrv = udma1;
