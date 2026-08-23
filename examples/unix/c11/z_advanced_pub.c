@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     char buf[256];
     for (int idx = 0; 1; ++idx) {
         z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, value);
+        snprintf(buf, sizeof(buf), "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
         z_owned_bytes_t payload;
         z_bytes_copy_from_str(&payload, buf);

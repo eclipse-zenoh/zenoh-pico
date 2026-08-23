@@ -94,7 +94,7 @@ void setup() {
 void loop() {
     delay(1000);
     char buf[256];
-    sprintf(buf, "[%4d] %s", idx++, VALUE);
+    snprintf(buf, sizeof(buf), "[%4d] %s", idx++, VALUE);
 
     Serial.print("Writing Data ('");
     Serial.print(KEYEXPR);

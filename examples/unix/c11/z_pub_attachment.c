@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     char buf[256];
     for (int idx = 0; idx < n; ++idx) {
         z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, value);
+        snprintf(buf, sizeof(buf), "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         // Create payload
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
         // Add attachment value
         char buf_ind[16];
-        sprintf(buf_ind, "%d", idx);
+        snprintf(buf_ind, sizeof(buf_ind), "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
         ze_owned_serializer_t serializer;
         ze_serializer_empty(&serializer);
