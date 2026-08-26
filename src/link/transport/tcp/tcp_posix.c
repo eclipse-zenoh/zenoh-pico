@@ -86,6 +86,7 @@ static z_result_t _z_tcp_posix_open(_z_sys_net_socket_t *sock, const _z_sys_net_
             ret = _Z_ERR_GENERIC;
         }
 #endif
+#if !defined(ZENOH_WASI)
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
@@ -94,6 +95,7 @@ static z_result_t _z_tcp_posix_open(_z_sys_net_socket_t *sock, const _z_sys_net_
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
+#endif
 
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
         int nosigpipe_val = 1;
@@ -147,6 +149,7 @@ static z_result_t _z_tcp_posix_listen(_z_sys_net_socket_t *sock, const _z_sys_ne
         ret = _Z_ERR_GENERIC;
     }
 #endif
+#if !defined(ZENOH_WASI)
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
@@ -155,6 +158,7 @@ static z_result_t _z_tcp_posix_listen(_z_sys_net_socket_t *sock, const _z_sys_ne
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
+#endif
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     int nosigpipe_val = 1;
     setsockopt(sock->_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&nosigpipe_val, sizeof(int));
@@ -241,6 +245,7 @@ static z_result_t _z_tcp_posix_accept(const _z_sys_net_socket_t *sock_in, _z_sys
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
+#if !defined(ZENOH_WASI)
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
@@ -248,6 +253,7 @@ static z_result_t _z_tcp_posix_accept(const _z_sys_net_socket_t *sock_in, _z_sys
         close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
+#endif
 
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
