@@ -1,0 +1,175 @@
+#
+# Copyright (c) 2026 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: Scheduled Fuzzing
+
+on:
+  schedule:
+    - cron: "0 2 * * 1-6"
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.schedule || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz_scheduled_coverage:
+    name: Fuzzing and coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 390
+    env:
+      FUZZ_TARGETS: >-
+        z_fuzz_scouting_message_decode
+        z_fuzz_transport_message_decode
+        z_fuzz_endpoint_str
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install fuzzing dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang llvm ninja-build
+
+      - name: Select fuzz profile
+        id: profile
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 2 * * 0" ]; then
+            echo "name=weekly" >> "$GITHUB_OUTPUT"
+            echo "total_seconds=18000" >> "$GITHUB_OUTPUT"
+            echo "schedule=0 2 * * 0" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=daily" >> "$GITHUB_OUTPUT"
+            echo "total_seconds=3600" >> "$GITHUB_OUTPUT"
+            echo "schedule=0 2 * * 1-6" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure fuzz build with coverage
+        run: |
+          CC=clang cmake -B build-fuzz -G Ninja \
+            -DBUILD_FUZZERS=ON \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_C_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fprofile-instr-generate"
+
+      - name: Build fuzz targets
+        run: |
+          cmake --build build-fuzz --target $FUZZ_TARGETS
+
+      - name: Prepare corpus
+        run: |
+          mkdir -p fuzz/corpus/scouting_message_decode
+          mkdir -p fuzz/corpus/transport_message_decode
+          mkdir -p fuzz/corpus/endpoint_str
+          cp -r fuzz/seeds/scouting_message/. fuzz/corpus/scouting_message_decode/
+          cp -r fuzz/seeds/transport_message/. fuzz/corpus/transport_message_decode/
+          cp -r fuzz/seeds/endpoint_from_str/. fuzz/corpus/endpoint_str/
+
+      - name: Run scheduled fuzzing and collect coverage
+        run: |
+          set -euo pipefail
+
+          profile_dir="build-fuzz/coverage/${{ steps.profile.outputs.name }}"
+          mkdir -p "$profile_dir"
+
+          total_seconds=${{ steps.profile.outputs.total_seconds }}
+          target_count=3
+          per_target_seconds=$(( total_seconds / target_count ))
+          remainder_seconds=$(( total_seconds % target_count ))
+
+          targets=(
+            "z_fuzz_scouting_message_decode|scouting_message_decode|fuzz/corpus/scouting_message_decode|src/protocol/codec/message.c|src/protocol/definitions/message.c|include/zenoh-pico/protocol/definitions/message.h|include/zenoh-pico/protocol/codec/message.h"
+            "z_fuzz_transport_message_decode|transport_message_decode|fuzz/corpus/transport_message_decode|src/protocol/codec/transport.c|src/protocol/codec/ext.c|src/protocol/definitions/transport.c|include/zenoh-pico/protocol/definitions/transport.h"
+            "z_fuzz_endpoint_str|endpoint_str|fuzz/corpus/endpoint_str|src/link/endpoint.c|include/zenoh-pico/link/endpoint.h"
+          )
+
+          {
+            echo "# Scheduled Fuzz Coverage (${{ steps.profile.outputs.name }})"
+            echo
+            echo "- Trigger: \`${{ github.event_name }}\`"
+            echo "- Schedule: \`${{ steps.profile.outputs.schedule }}\` (UTC)"
+            echo "- Total fuzzing budget: $total_seconds seconds"
+            echo "- Per-target budget: $per_target_seconds seconds"
+            echo
+          } > "$profile_dir/summary.md"
+
+          for index in "${!targets[@]}"; do
+            IFS='|' read -r target stem corpus focus1 focus2 focus3 focus4 <<< "${targets[$index]}"
+            budget=$per_target_seconds
+            if [ "$index" -eq 0 ]; then
+              budget=$(( budget + remainder_seconds ))
+            fi
+
+            echo "Running $target for ${budget}s"
+            log_file="$profile_dir/${stem}.log"
+            LLVM_PROFILE_FILE="$profile_dir/${stem}.profraw" \
+              ./build-fuzz/fuzz/"$target" \
+              -timeout=5 \
+              -max_total_time="$budget" \
+              -print_final_stats=1 \
+              "$corpus" | tee "$log_file"
+
+            llvm-profdata merge -sparse "$profile_dir/${stem}.profraw" \
+              -o "$profile_dir/${stem}.profdata"
+
+            llvm-cov report ./build-fuzz/fuzz/"$target" \
+              -object=./build-fuzz/lib/libzenohpico.so \
+              -instr-profile="$profile_dir/${stem}.profdata" \
+              > "$profile_dir/${stem}.coverage.txt"
+
+            {
+              printf '%s\n' "TOTAL"
+              printf '%s\n' "$focus1" "$focus2" "$focus3" "$focus4" | sed '/^$/d'
+            } > "$profile_dir/${stem}.patterns.txt"
+
+            grep -F -f "$profile_dir/${stem}.patterns.txt" \
+              "$profile_dir/${stem}.coverage.txt" \
+              > "$profile_dir/${stem}.coverage.focused.txt"
+
+            {
+              echo "## $target"
+              echo
+              echo "- Duration: ${budget}s"
+              echo
+              echo '```text'
+              cat "$profile_dir/${stem}.coverage.focused.txt"
+              echo '```'
+              echo
+            } >> "$profile_dir/summary.md"
+          done
+
+      - name: Publish GitHub summary
+        if: always()
+        run: |
+          profile_dir="build-fuzz/coverage/${{ steps.profile.outputs.name }}"
+          if [ -f "$profile_dir/summary.md" ]; then
+            cat "$profile_dir/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "# Scheduled Fuzz Coverage (${{ steps.profile.outputs.name }})"
+              echo
+              echo "Coverage summary was not generated."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload fuzz coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-coverage-${{ steps.profile.outputs.name }}
+          path: build-fuzz/coverage/${{ steps.profile.outputs.name }}
+          if-no-files-found: error
