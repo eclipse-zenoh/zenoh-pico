@@ -312,6 +312,15 @@
 #define Z_LISTEN_MAX_CONNECTION_NB 10
 
 /**
+ * Maximum number of network interfaces to use for multicast scouting.
+ */
+#if Z_FEATURE_SCOUTING == 1
+#define Z_MAX_NUM_SCOUT_INTERFACES 10
+#else
+#define Z_MAX_NUM_SCOUT_INTERFACES 0
+#endif
+
+/**
  * Default "nop" instruction
  */
 #define ZP_ASM_NOP __asm__("nop")

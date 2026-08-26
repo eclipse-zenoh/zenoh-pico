@@ -28,7 +28,10 @@ extern "C" {
 #endif
 
 /*------------------ Session ------------------*/
-_z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t id, _z_string_t *locator, const uint32_t timeout,
+#if Z_FEATURE_SCOUTING == 1
+z_result_t _z_scout_process_hello(const _z_s_msg_hello_t *message, _z_hello_slist_t **hellos, bool exit_on_first);
+#endif
+_z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t id, const _z_string_t *locator, const uint32_t timeout,
                                  const bool exit_on_first);
 
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid);

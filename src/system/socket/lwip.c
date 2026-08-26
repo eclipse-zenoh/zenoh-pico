@@ -26,7 +26,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
-#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED) && Z_FEATURE_LINK_TCP == 1
+#if defined(ZP_PLATFORM_SOCKET_LINKS_ENABLED) && (Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1)
 z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking) {
     int fd = _z_lwip_socket_get(*sock);
     int flags = lwip_fcntl(fd, F_GETFL, 0);

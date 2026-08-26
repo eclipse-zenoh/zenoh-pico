@@ -44,7 +44,8 @@ z_result_t _z_f_link_open_udp_unicast(_z_link_t *self) {
         tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
-    return _z_udp_unicast_open(&self->_socket._udp._sock, self->_socket._udp._rep, tout);
+    const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
+    return _z_udp_unicast_open(&self->_socket._udp._sock, self->_socket._udp._rep, tout, iface);
 }
 
 z_result_t _z_f_link_listen_udp_unicast(_z_link_t *self) {

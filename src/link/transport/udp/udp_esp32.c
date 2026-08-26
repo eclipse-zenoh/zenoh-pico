@@ -131,7 +131,9 @@ z_result_t _z_udp_unicast_endpoint_init(_z_sys_net_endpoint_t *ep, const char *a
 
 void _z_udp_unicast_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_udp_esp32_endpoint_clear(ep); }
 
-z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout,
+                               const char *iface) {
+    _ZP_UNUSED(iface);
     return _z_udp_esp32_open(sock, endpoint, tout);
 }
 

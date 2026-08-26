@@ -37,8 +37,38 @@ z_result_t _z_udp_unicast_endpoint_init(_z_sys_net_endpoint_t *ep, const char *a
 void _z_udp_unicast_endpoint_clear(_z_sys_net_endpoint_t *ep);
 z_result_t _z_udp_unicast_endpoint_init_from_address(_z_sys_net_endpoint_t *ep, const _z_string_t *address);
 
+#if defined(ZP_PLATFORM_SOCKET_POSIX)
+struct ifaddrs;
+typedef struct {
+    struct ifaddrs *_head;
+    struct ifaddrs *_current;
+    int _family;
+    bool _started;
+} _z_udp_unicast_interface_iterator_t;
+#define ZP_PLATFORM_HAS_UDP_INTERFACE_ITERATOR
+#elif defined(ZP_PLATFORM_SOCKET_LWIP)
+struct netif;
+typedef struct {
+    struct netif *_current;
+    int _family;
+    char _name[7];
+    bool _started;
+} _z_udp_unicast_interface_iterator_t;
+#define ZP_PLATFORM_HAS_UDP_INTERFACE_ITERATOR
+#endif
+
+#if defined(ZP_PLATFORM_HAS_UDP_INTERFACE_ITERATOR)
+z_result_t _z_udp_unicast_interface_iterator_init(_z_udp_unicast_interface_iterator_t *iter,
+                                                  const _z_string_t *address);
+bool _z_udp_unicast_interface_iterator_next(_z_udp_unicast_interface_iterator_t *iter);
+// The returned view remains valid until the iterator is advanced or cleared.
+const char *_z_udp_unicast_interface_iterator_deref(const _z_udp_unicast_interface_iterator_t *iter);
+void _z_udp_unicast_interface_iterator_clear(_z_udp_unicast_interface_iterator_t *iter);
+#endif
+
 // flawfinder: ignore
-z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
+z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout,
+                               const char *iface);
 z_result_t _z_udp_unicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout);
 void _z_udp_unicast_close(_z_sys_net_socket_t *sock);
 
