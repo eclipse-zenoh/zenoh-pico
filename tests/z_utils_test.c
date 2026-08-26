@@ -20,9 +20,21 @@
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/time_range.h"
+#include "zenoh-pico/utils/uuid.h"
 
 #undef NDEBUG
 #include <assert.h>
+
+static void test_uuid_to_bytes(void) {
+    const char uuid[] = "00112233-4455-6677-8899-aabbccddeeff";
+    const uint8_t expected[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                                0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+    uint8_t actual[sizeof(expected)];
+
+    _z_uuid_to_bytes(actual, uuid);
+
+    assert(memcmp(actual, expected, sizeof(expected)) == 0);
+}
 
 static void test_query_params(void) {
 #define TEST_PARAMS(str, expected, n)                                 \
@@ -394,6 +406,7 @@ static void test_time_range_contains_fully_bounded_mixed(void) {
 }
 
 int main(void) {
+    test_uuid_to_bytes();
     test_query_params();
     test_time_range();
     test_time_range_contains_null_pointer();
