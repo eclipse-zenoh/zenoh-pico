@@ -35,6 +35,10 @@
 #include "zenoh-pico/link/transport/can.h"
 #endif
 
+#if Z_FEATURE_LINK_ISOTP == 1
+#include "zenoh-pico/link/transport/isotp.h"
+#endif
+
 #if Z_FEATURE_LINK_TLS == 1
 #include "zenoh-pico/link/transport/tls_stream.h"
 #endif
@@ -114,6 +118,7 @@ enum _z_link_type_e {
     _Z_LINK_TYPE_BT,
     _Z_LINK_TYPE_SERIAL,
     _Z_LINK_TYPE_CAN,
+    _Z_LINK_TYPE_ISOTP,
     _Z_LINK_TYPE_WS,
     _Z_LINK_TYPE_TLS,
     _Z_LINK_TYPE_RAWETH,
@@ -137,6 +142,9 @@ typedef struct _z_link_t {
 #endif
 #if Z_FEATURE_LINK_CAN == 1
         _z_can_socket_t _can;
+#endif
+#if Z_FEATURE_LINK_ISOTP == 1
+        _z_isotp_socket_t _isotp;
 #endif
 #if Z_FEATURE_LINK_WS == 1
         _z_ws_socket_t _ws;

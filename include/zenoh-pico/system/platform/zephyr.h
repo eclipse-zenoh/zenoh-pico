@@ -61,7 +61,16 @@ typedef struct {
 #if Z_FEATURE_LINK_CAN == 1
         const struct device *_can_dev;
 #endif
+#if Z_FEATURE_LINK_ISOTP == 1
+        const struct device *_isotp_dev;
+#endif
     };
+#if Z_FEATURE_LINK_ISOTP == 1
+    // Zephyr's ISO-TP contexts are large and must outlive every call, so they
+    // live in a pool in src/system/zephyr/isotp.c and this is the index into
+    // it. -1 means "no slot", which is what a closed link holds.
+    int _isotp_slot;
+#endif
 #if Z_FEATURE_LINK_CAN == 1
     // Per-link receive state. A CAN controller delivers into a message queue,
     // and that queue must belong to ONE link: a shared one lets link A dequeue

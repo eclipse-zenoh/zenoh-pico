@@ -70,20 +70,30 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_conf
             ret = _z_new_link_serial(zl, ep);
         } else
 #endif
+#if Z_FEATURE_LINK_ISOTP == 1
+            // CONNECT SIDE ONLY, deliberately. An ISO-TP peer dials out and is
+            // never registered in _z_listen_link, so it never reaches
+            // _zp_unicast_accept_task -- which wants a socket and an accept()
+            // that no bus has. That is the wall a multicast-only link hits by making every
+            // multicast peer listen; a unicast peer that only connects sidesteps it.
+            if (_z_endpoint_isotp_valid(&ep) == _Z_RES_OK) {
+                ret = _z_new_link_isotp(zl, ep);
+            } else
+#endif
 #if Z_FEATURE_LINK_WS == 1
-            if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_ws(zl, &ep);
-        } else
+                if (_z_endpoint_ws_valid(&ep) == _Z_RES_OK) {
+                ret = _z_new_link_ws(zl, &ep);
+            } else
 #endif
 #if Z_FEATURE_LINK_TLS == 1
-            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tls(zl, &ep, session_cfg);
-        } else
+                if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+                ret = _z_new_link_tls(zl, &ep, session_cfg);
+            } else
 #endif
-        {
-            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
-            ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
-        }
+            {
+                _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
+                ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
+            }
         if (ret == _Z_RES_OK) {
             // Open transport link for communication
             if (zl->_open_f(zl) != _Z_RES_OK) {
@@ -259,6 +269,15 @@ const _z_sys_net_socket_t *_z_link_get_socket(const _z_link_t *link) {
             // callbacks. NULL is the documented contract for "no FD to wait
             // on".
             return NULL;
+#endif
+#if Z_FEATURE_LINK_ISOTP == 1
+        case _Z_LINK_TYPE_ISOTP:
+            // Unlike CAN above, ISO-TP DOES have a real descriptor: the
+            // kernel socket doing the segmentation. It must be returned rather
+            // than NULL, because this is a UNICAST link and the unicast
+            // transport dereferences the result without a NULL check
+            // (_z_new_transport_client -> *_z_link_get_socket).
+            return &link->_socket._isotp._sock;
 #endif
 #if Z_FEATURE_LINK_WS == 1
         case _Z_LINK_TYPE_WS:

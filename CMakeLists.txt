@@ -334,6 +334,12 @@ set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
 set(Z_FEATURE_LINK_CAN 0 CACHE STRING "Toggle CAN / CAN FD links")
+set(Z_FEATURE_LINK_ISOTP 0 CACHE STRING "Toggle CAN unicast over ISO-TP")
+# On unix the link can run on the KERNEL's CAN_ISOTP socket (0, the default) or
+# on the vendored third_party/isotp-c (1). Both are kept on purpose: the kernel
+# is the oracle the vendored library is judged against, and every platform
+# without a kernel ISO-TP has only the vendored one.
+set(Z_FEATURE_LINK_ISOTP_VENDORED 0 CACHE STRING "Use the vendored ISO-TP library instead of the kernel socket")
 set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
@@ -562,10 +568,35 @@ list(APPEND Sources
 )
 list(APPEND Sources ${_zp_platform_sources})
 
+# The vendored ISO-TP library. Only compiled when the unix link is
+# explicitly asked to run on it instead of the kernel's CAN_ISOTP socket; on
+# every other platform there is no kernel ISO-TP and this is the only option.
+# See third_party/isotp-c/VENDOR.md for provenance and licence.
+if(Z_FEATURE_LINK_ISOTP AND Z_FEATURE_LINK_ISOTP_VENDORED)
+  list(APPEND Sources "${CMAKE_CURRENT_SOURCE_DIR}/third_party/isotp-c/isotp.c")
+  list(APPEND Sources "${PROJECT_SOURCE_DIR}/src/system/unix/isotp_vendored.c")
+  # Vendored code is exempt from this project's warning flags. zenoh-pico builds
+  # with -Werror=conversion, which isotp.c does not survive (it assigns uint8_t
+  # into 4-bit bitfields, deliberately). Patching upstream to silence a warning
+  # would make the copy non-verbatim and would have to be redone at every bump;
+  # the warnings belong to upstream, not to this tree.
+  set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/third_party/isotp-c/isotp.c"
+    PROPERTIES COMPILE_OPTIONS "-w")
+endif()
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
+if(Z_FEATURE_LINK_ISOTP AND Z_FEATURE_LINK_ISOTP_VENDORED)
+  # PRIVATE: isotp.h is an implementation detail of the unix port, not part of
+  # zenoh-pico's public surface.
+  if(PICO_STATIC)
+    target_include_directories(${Libname}_static PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/isotp-c")
+  endif()
+  if(PICO_SHARED)
+    target_include_directories(${Libname}_shared PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/isotp-c")
+  endif()
+endif()
 
 if(PICO_STATIC)
   target_sources(zenohpico_static PRIVATE ${Sources})
