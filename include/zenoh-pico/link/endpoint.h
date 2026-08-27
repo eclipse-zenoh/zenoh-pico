@@ -44,6 +44,10 @@ extern "C" {
 #if Z_FEATURE_LINK_TLS == 1
 #define TLS_SCHEMA "tls"
 #endif
+#if Z_FEATURE_LINK_CAN == 1
+// CAN / CAN FD.
+#define CAN_SCHEMA "can"
+#endif
 
 #define LOCATOR_PROTOCOL_SEPARATOR '/'
 #define LOCATOR_METADATA_SEPARATOR '?'

@@ -333,6 +333,7 @@ set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
 set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
+set(Z_FEATURE_LINK_CAN 0 CACHE STRING "Toggle CAN / CAN FD links")
 set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
@@ -561,8 +562,10 @@ list(APPEND Sources
 )
 list(APPEND Sources ${_zp_platform_sources})
 
+
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
+
 
 if(PICO_STATIC)
   target_sources(zenohpico_static PRIVATE ${Sources})
@@ -743,6 +746,7 @@ if(UNIX OR MSVC)
   if(BUILD_TESTING AND CMAKE_C_STANDARD MATCHES "11")
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
+    add_executable(z_can_link_test ${PROJECT_SOURCE_DIR}/tests/z_can_link_test.c)
     add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
     add_executable(z_channels_test ${PROJECT_SOURCE_DIR}/tests/z_channels_test.c)
     add_executable(z_collections_test ${PROJECT_SOURCE_DIR}/tests/z_collections_test.c)
@@ -788,6 +792,7 @@ if(UNIX OR MSVC)
     add_executable(z_variant_template_test ${PROJECT_SOURCE_DIR}/tests/z_variant_template_test.c)
     add_executable(z_test_fragment_decode_error_transport_zbuf ${PROJECT_SOURCE_DIR}/tests/z_test_fragment_decode_error_transport_zbuf.c)
 
+    target_link_libraries(z_can_link_test zenohpico::lib)
     target_link_libraries(z_data_struct_test zenohpico::lib)
     target_link_libraries(z_channels_test zenohpico::lib)
     target_link_libraries(z_collections_test zenohpico::lib)
@@ -863,6 +868,7 @@ if(UNIX OR MSVC)
     endif()
 
     enable_testing()
+    add_test(z_can_link_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_can_link_test)
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
     add_test(z_channels_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_channels_test)
     add_test(z_collections_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_collections_test)
