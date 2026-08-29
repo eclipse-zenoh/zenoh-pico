@@ -20,8 +20,10 @@
 
 #if KERNEL_VERSION_MAJOR == 2
 #include <drivers/uart.h>
+#include <kernel.h>
 #else
 #include <zephyr/drivers/uart.h>
+#include <zephyr/kernel.h>
 #endif
 
 #include "zenoh-pico/utils/logging.h"
@@ -81,11 +83,57 @@ static void _z_zephyr_uart_close(_z_sys_net_socket_t *sock) {
     }
 }
 
+/* Bound the wait, yield between polls, and report a receive error.
+ *
+ * The previous loop spun on `uart_poll_in` with no timeout, no yield and no
+ * error check, and returned `len` whatever happened. Three consequences, all
+ * observed on an MR-CANHUBK344 (S32K344) carrying zenoh over a 115200 line:
+ *
+ *   * No timeout. A peer that stops mid-frame parks this thread forever. The
+ *     other ports do not do this: `tty_posix` returns `SIZE_MAX` when the read
+ *     fails, and callers such as `_z_read_exact_serial` already handle it.
+ *
+ *   * No yield. On a cooperatively scheduled or equal-priority system this
+ *     starves every other thread, including the one that would have refilled
+ *     the line. `k_yield()` and not `z_sleep_ms(1)`: the shortest sleep is a
+ *     whole tick, and at 115200 a byte arrives every 87 us, so sleeping loses
+ *     bytes that yielding does not.
+ *
+ *   * No `uart_err_check`. `uart_poll_in` reports "no character available"; it
+ *     has no way to say "a character was destroyed before you asked". A UART
+ *     overrun is therefore SILENT, and a receiver that only reads the return
+ *     value cannot tell a quiet link from one it is failing to keep up with.
+ *     That indistinguishability cost a long investigation that ended in a bug
+ *     report against the peer, which turned out to be innocent: the overrun
+ *     flag was set on exactly the frame that was truncated and nowhere else.
+ *
+ * The return value now follows the contract the posix port already uses:
+ * `SIZE_MAX` on failure, otherwise the number of bytes actually read.
+ */
+#ifndef Z_ZEPHYR_SERIAL_READ_TIMEOUT_MS
+#define Z_ZEPHYR_SERIAL_READ_TIMEOUT_MS 1000
+#endif
+
 static size_t _z_zephyr_uart_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     for (size_t i = 0; i < len; i++) {
         int res = -1;
+        int64_t deadline = k_uptime_get() + (int64_t)Z_ZEPHYR_SERIAL_READ_TIMEOUT_MS;
         while (res != 0) {
             res = uart_poll_in(sock._serial, &ptr[i]);
+            if (res != 0) {
+                if (k_uptime_get() > deadline) {
+                    return SIZE_MAX;
+                }
+                k_yield();
+            }
+        }
+
+        /* Checked per byte rather than per read: the flag is sticky until it is
+         * read, so taking it here attributes the loss to the byte that was
+         * actually damaged. */
+        int err = uart_err_check(sock._serial);
+        if (err > 0 && (err & UART_ERROR_OVERRUN) != 0) {
+            _Z_ERROR("serial RX overrun after %zu byte(s) -- frame will be dropped", i);
         }
     }
 
