@@ -55,6 +55,18 @@ config ZENOH_PICO_LINK_UDP_MULTICAST
 	help
 	  UDP Multicast
 
+config ZENOH_PICO_LINK_ISOTP
+	bool "CAN unicast over ISO-TP"
+	depends on CAN && ISOTP
+	help
+	  Unicast link over ISO 15765-2, using Zephyr's ISO-TP subsystem
+
+config ZENOH_PICO_LINK_CAN
+	bool "CAN / CAN FD Link"
+	depends on CAN
+	help
+	  Multicast link over a CAN FD bus
+
 config ZENOH_PICO_SCOUTING
 	bool "Scouting UDP"
 	help
