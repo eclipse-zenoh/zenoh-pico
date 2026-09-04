@@ -175,10 +175,12 @@ static z_result_t _z_udp_posix_configure_interface(_z_sys_net_socket_t sock, con
         socklen_t addrlen = 0;
         (void)memset(&local, 0, sizeof(local));
         if (endpoint._iptcp->ai_family == AF_INET) {
+            // Flawfinder: ignore [CWE-120]
             (void)memcpy(&local, it->ifa_addr, sizeof(struct sockaddr_in));
             ((struct sockaddr_in *)&local)->sin_port = 0;
             addrlen = sizeof(struct sockaddr_in);
         } else if (endpoint._iptcp->ai_family == AF_INET6) {
+            // Flawfinder: ignore [CWE-120]
             (void)memcpy(&local, it->ifa_addr, sizeof(struct sockaddr_in6));
             ((struct sockaddr_in6 *)&local)->sin6_port = 0;
             addrlen = sizeof(struct sockaddr_in6);

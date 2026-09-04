@@ -253,6 +253,7 @@ z_result_t _z_scout_process_hello(const _z_s_msg_hello_t *message, _z_hello_slis
     _z_hello_t *hello = _z_hello_slist_value(*hellos);
     hello->_version = message->_version;
     hello->_whatami = message->_whatami;
+    // Flawfinder: ignore [CWE-120]
     memcpy(hello->_zid.id, message->_zid.id, Z_ZID_LENGTH);
     hello->_locators = _z_string_svec_make(locator_count);
     if (hello->_locators._capacity != locator_count) {
