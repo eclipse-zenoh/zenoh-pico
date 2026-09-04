@@ -13,8 +13,9 @@
 //
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/transport/socket.h"
 
-#if defined(ZENOH_WINDOWS)
+#if defined(ZENOH_WINDOWS) && Z_HAS_SOCKET_LINK
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -63,7 +64,7 @@ z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local,
     return _Z_RES_OK;
 }
 
-#elif defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || defined(ZENOH_ZEPHYR)
+#elif (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || defined(ZENOH_ZEPHYR)) && Z_HAS_SOCKET_LINK
 
 #include <stddef.h>
 

@@ -20,6 +20,22 @@
 
 #include "zenoh-pico/system/platform.h"
 
+/* Does this build actually use sockets?
+ *
+ * Being on a socket-capable platform is not the same as having a socket link.
+ * A serial-only image -- e.g. Zephyr with CONFIG_NETWORKING=n -- has no IP
+ * stack at all, so code that reaches for `struct sockaddr`, `socklen_t` or
+ * `AF_INET` cannot compile there, however capable the platform nominally is.
+ *
+ * Files that provide a socket implementation with a not-available stub
+ * alongside it select between the two on this. */
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_TLS == 1 || Z_FEATURE_LINK_WS == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1 || \
+    Z_FEATURE_LINK_UDP_MULTICAST == 1
+#define Z_HAS_SOCKET_LINK 1
+#else
+#define Z_HAS_SOCKET_LINK 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
