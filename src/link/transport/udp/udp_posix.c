@@ -16,7 +16,10 @@
 
 #if defined(ZP_PLATFORM_SOCKET_POSIX)
 
+#include <ifaddrs.h>
+#include <net/if.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <stddef.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -47,7 +50,11 @@ static z_result_t _z_udp_posix_endpoint_init(_z_sys_net_endpoint_t *ep, const ch
 
 static void _z_udp_posix_endpoint_clear(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 
-static z_result_t _z_udp_posix_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
+static z_result_t _z_udp_posix_configure_interface(_z_sys_net_socket_t sock, const _z_sys_net_endpoint_t endpoint,
+                                                   const char *iface);
+
+static z_result_t _z_udp_posix_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout,
+                                    const char *iface) {
     z_result_t ret = _Z_RES_OK;
 
     sock->_fd = socket(endpoint._iptcp->ai_family, endpoint._iptcp->ai_socktype, endpoint._iptcp->ai_protocol);
@@ -59,6 +66,7 @@ static z_result_t _z_udp_posix_open(_z_sys_net_socket_t *sock, const _z_sys_net_
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
+        _Z_SET_IF_OK(ret, _z_udp_posix_configure_interface(*sock, endpoint, iface));
 
         if (ret != _Z_RES_OK) {
             close(sock->_fd);
@@ -121,14 +129,130 @@ static size_t _z_udp_posix_write(_z_sys_net_socket_t sock, const uint8_t *ptr, s
     return (size_t)sendto(sock._fd, ptr, len, 0, endpoint._iptcp->ai_addr, endpoint._iptcp->ai_addrlen);
 }
 
+static bool _z_udp_posix_iface_was_visited(const struct ifaddrs *head, const struct ifaddrs *current, int family) {
+    for (const struct ifaddrs *it = head; it != current; it = it->ifa_next) {
+        if ((it->ifa_addr != NULL) && (it->ifa_addr->sa_family == family) &&
+            (strcmp(it->ifa_name, current->ifa_name) == 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool _z_udp_posix_select_interface(_z_sys_net_socket_t sock, const _z_sys_net_endpoint_t endpoint,
+                                          const struct ifaddrs *iface) {
+    int ret = -1;
+    if (endpoint._iptcp->ai_family == AF_INET) {
+        const struct in_addr *addr = &((const struct sockaddr_in *)iface->ifa_addr)->sin_addr;
+        ret = setsockopt(sock._fd, IPPROTO_IP, IP_MULTICAST_IF, addr, sizeof(*addr));
+    } else if (endpoint._iptcp->ai_family == AF_INET6) {
+        unsigned int ifindex = if_nametoindex(iface->ifa_name);
+        if (ifindex != 0U) {
+            ret = setsockopt(sock._fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex));
+        }
+    }
+    return ret == 0;
+}
+
+static z_result_t _z_udp_posix_configure_interface(_z_sys_net_socket_t sock, const _z_sys_net_endpoint_t endpoint,
+                                                   const char *iface) {
+    if (iface == NULL) {
+        return _Z_RES_OK;
+    }
+
+    z_result_t ret = _Z_ERR_GENERIC;
+    struct ifaddrs *ifaddrs = NULL;
+    if (getifaddrs(&ifaddrs) != 0) {
+        return ret;
+    }
+    for (const struct ifaddrs *it = ifaddrs; it != NULL; it = it->ifa_next) {
+        if ((it->ifa_addr == NULL) || (it->ifa_addr->sa_family != endpoint._iptcp->ai_family) ||
+            ((it->ifa_flags & IFF_UP) == 0U) || (strcmp(it->ifa_name, iface) != 0)) {
+            continue;
+        }
+
+        struct sockaddr_storage local;
+        socklen_t addrlen = 0;
+        (void)memset(&local, 0, sizeof(local));
+        if (endpoint._iptcp->ai_family == AF_INET) {
+            // Flawfinder: ignore [CWE-120]
+            (void)memcpy(&local, it->ifa_addr, sizeof(struct sockaddr_in));
+            ((struct sockaddr_in *)&local)->sin_port = 0;
+            addrlen = sizeof(struct sockaddr_in);
+        } else if (endpoint._iptcp->ai_family == AF_INET6) {
+            // Flawfinder: ignore [CWE-120]
+            (void)memcpy(&local, it->ifa_addr, sizeof(struct sockaddr_in6));
+            ((struct sockaddr_in6 *)&local)->sin6_port = 0;
+            addrlen = sizeof(struct sockaddr_in6);
+        }
+        if ((addrlen != 0U) && (bind(sock._fd, (struct sockaddr *)&local, addrlen) == 0) &&
+            _z_udp_posix_select_interface(sock, endpoint, it)) {
+            ret = _Z_RES_OK;
+        }
+        break;
+    }
+    freeifaddrs(ifaddrs);
+    return ret;
+}
+
+z_result_t _z_udp_unicast_interface_iterator_init(_z_udp_unicast_interface_iterator_t *iter,
+                                                  const _z_string_t *address) {
+    iter->_head = NULL;
+    iter->_current = NULL;
+    iter->_family = 0;
+    iter->_started = false;
+
+    _z_sys_net_endpoint_t endpoint;
+    z_result_t ret = _z_udp_unicast_endpoint_init_from_address(&endpoint, address);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    iter->_family = endpoint._iptcp->ai_family;
+    _z_udp_unicast_endpoint_clear(&endpoint);
+
+    if (getifaddrs(&iter->_head) != 0) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+bool _z_udp_unicast_interface_iterator_next(_z_udp_unicast_interface_iterator_t *iter) {
+    if (iter->_started && (iter->_current == NULL)) {
+        return false;
+    }
+    iter->_current = iter->_started ? iter->_current->ifa_next : iter->_head;
+    iter->_started = true;
+    while ((iter->_current != NULL) &&
+           ((iter->_current->ifa_addr == NULL) || (iter->_current->ifa_addr->sa_family != iter->_family) ||
+            ((iter->_current->ifa_flags & IFF_UP) == 0U) ||
+            _z_udp_posix_iface_was_visited(iter->_head, iter->_current, iter->_family))) {
+        iter->_current = iter->_current->ifa_next;
+    }
+    return iter->_current != NULL;
+}
+
+const char *_z_udp_unicast_interface_iterator_deref(const _z_udp_unicast_interface_iterator_t *iter) {
+    return iter->_current != NULL ? iter->_current->ifa_name : NULL;
+}
+
+void _z_udp_unicast_interface_iterator_clear(_z_udp_unicast_interface_iterator_t *iter) {
+    if (iter->_head != NULL) {
+        freeifaddrs(iter->_head);
+        iter->_head = NULL;
+        iter->_current = NULL;
+    }
+}
+
 z_result_t _z_udp_unicast_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port) {
     return _z_udp_posix_endpoint_init(ep, address, port);
 }
 
 void _z_udp_unicast_endpoint_clear(_z_sys_net_endpoint_t *ep) { _z_udp_posix_endpoint_clear(ep); }
 
-z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
-    return _z_udp_posix_open(sock, endpoint, tout);
+z_result_t _z_udp_unicast_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout,
+                               const char *iface) {
+    return _z_udp_posix_open(sock, endpoint, tout, iface);
 }
 
 z_result_t _z_udp_unicast_listen(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {

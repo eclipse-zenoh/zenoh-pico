@@ -122,6 +122,10 @@ jobs:
           out-file-path: build/tests
           extract: true
 
+      - name: Enable multicast on loopback (Linux)
+        if: runner.os == 'Linux'
+        run: sudo ip link set lo multicast on
+
       - name: Test debug
         run: make test
         timeout-minutes: 40
@@ -197,6 +201,9 @@ jobs:
           fileName: zenoh-${{ needs.zenoh_version.outputs.zenoh-version }}-x86_64-unknown-linux-gnu-standalone.zip
           out-file-path: build/tests
           extract: true
+
+      - name: Enable multicast on loopback
+        run: sudo ip link set lo multicast on
 
       - name: Test debug
         run: make test
