@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     char buf[256];
     for (int idx = 0; idx != n; ++idx) {
         z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, value ? value : "");
+        snprintf(buf, sizeof(buf), "[%4d] %s", idx, value ? value : "");
         printf("Querying '%s' with payload '%s'...\n", selector, buf);
         z_querier_get_options_t get_options;
         z_querier_get_options_default(&get_options);

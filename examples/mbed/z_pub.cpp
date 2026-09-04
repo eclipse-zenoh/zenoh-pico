@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     char buf[256];
     for (int idx = 0; 1; ++idx) {
         z_sleep_s(1);
-        sprintf(buf, "[%4d] %s", idx, VALUE);
+        snprintf(buf, sizeof(buf), "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 
         // Create payload
