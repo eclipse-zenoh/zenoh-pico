@@ -150,6 +150,20 @@ or just include the following line in platformio.ini:
   lib_deps = https://github.com/eclipse-zenoh/zenoh-pico
   ```
 
+When zenoh-pico is used as a PlatformIO library, the number of preallocated
+pthread stacks defaults to 4 and can be changed with a build flag:
+
+  ```ini
+  build_flags = -DCONFIG_ZENOH_PICO_THREADS_NUM=8
+  ```
+
+When zenoh-pico is configured as a Zephyr module instead, set the option in
+`prj.conf`:
+
+  ```ini
+  CONFIG_ZENOH_PICO_THREADS_NUM=8
+  ```
+
 Finally, your code should go into project_dir/src/main.c.
 Check the examples provided in examples directory.
 

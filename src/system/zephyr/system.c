@@ -25,6 +25,7 @@
 #endif
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -63,7 +64,11 @@ void z_free(void *ptr) { k_free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
+#ifdef CONFIG_ZENOH_PICO_THREADS_NUM
+#define Z_THREADS_NUM CONFIG_ZENOH_PICO_THREADS_NUM
+#else
 #define Z_THREADS_NUM 4
+#endif
 
 #ifdef CONFIG_TEST_EXTRA_STACK_SIZE
 #define Z_PTHREAD_STACK_SIZE_DEFAULT CONFIG_MAIN_STACK_SIZE + CONFIG_TEST_EXTRA_STACK_SIZE
@@ -74,24 +79,119 @@ void z_free(void *ptr) { k_free(ptr); }
 #endif
 
 K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SIZE_DEFAULT);
-static int thread_index = 0;
+static bool thread_stack_in_use[Z_THREADS_NUM];
+static bool thread_stack_task_tracked[Z_THREADS_NUM];
+static _z_task_t thread_stack_tasks[Z_THREADS_NUM];
+static pthread_mutex_t thread_stack_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void _z_zephyr_task_release_stack(int stack_slot) {
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    thread_stack_in_use[stack_slot] = false;
+    thread_stack_task_tracked[stack_slot] = false;
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    _Z_DEBUG("zephyr task slot %d released", stack_slot);
+}
+
+static int _z_zephyr_task_stack_slot(const _z_task_t *task) {
+    int stack_slot = -1;
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    for (int i = 0; i < Z_THREADS_NUM; i++) {
+        if (thread_stack_task_tracked[i] && pthread_equal(thread_stack_tasks[i], *task) != 0) {
+            stack_slot = i;
+            break;
+        }
+    }
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    return stack_slot;
+}
 
 /*------------------ Task ------------------*/
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    z_task_attr_t *lattr = NULL;
-    z_task_attr_t tmp;
-    if (attr == NULL) {
-        (void)pthread_attr_init(&tmp);
-        (void)pthread_attr_setstack(&tmp, &thread_stack_area[thread_index++], Z_PTHREAD_STACK_SIZE_DEFAULT);
-        lattr = &tmp;
+    if (attr != NULL) {
+        int rc = pthread_create(task, attr, fun, arg);
+        if (rc != 0) {
+            _z_report_system_error(rc);
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+        }
+        return _Z_RES_OK;
     }
 
-    _Z_CHECK_SYS_ERR(pthread_create(task, lattr, fun, arg));
+    int stack_slot = -1;
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    for (int i = 0; i < Z_THREADS_NUM; i++) {
+        if (!thread_stack_in_use[i]) {
+            thread_stack_in_use[i] = true;
+            stack_slot = i;
+            break;
+        }
+    }
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    if (stack_slot < 0) {
+        _Z_ERROR("zephyr task stack slot OOM: all %d stack slots are in use", Z_THREADS_NUM);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    _Z_DEBUG("zephyr task slot %d allocated for task %p", stack_slot, fun);
+
+    z_task_attr_t tmp;
+    int rc = pthread_attr_init(&tmp);
+    if (rc != 0) {
+        _z_zephyr_task_release_stack(stack_slot);
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+    rc = pthread_attr_setstack(&tmp, &thread_stack_area[stack_slot], Z_PTHREAD_STACK_SIZE_DEFAULT);
+    if (rc != 0) {
+        (void)pthread_attr_destroy(&tmp);
+        _z_zephyr_task_release_stack(stack_slot);
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+
+    rc = pthread_create(task, &tmp, fun, arg);
+    int attr_rc = pthread_attr_destroy(&tmp);
+    if (rc != 0) {
+        _z_zephyr_task_release_stack(stack_slot);
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+    if (attr_rc != 0) {
+        _z_report_system_error(attr_rc);
+    }
+
+    (void)pthread_mutex_lock(&thread_stack_mutex);
+    thread_stack_tasks[stack_slot] = *task;
+    thread_stack_task_tracked[stack_slot] = true;
+    (void)pthread_mutex_unlock(&thread_stack_mutex);
+    return _Z_RES_OK;
 }
 
-z_result_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
+z_result_t _z_task_join(_z_task_t *task) {
+    int stack_slot = _z_zephyr_task_stack_slot(task);
+    int rc = pthread_join(*task, NULL);
+    if (rc != 0) {
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+    if (stack_slot >= 0) {
+        _z_zephyr_task_release_stack(stack_slot);
+    }
+    return _Z_RES_OK;
+}
 
-z_result_t _z_task_detach(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_detach(*task)); }
+z_result_t _z_task_detach(_z_task_t *task) {
+    int stack_slot = _z_zephyr_task_stack_slot(task);
+    int rc = pthread_detach(*task);
+    if (rc != 0) {
+        _z_report_system_error(rc);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC);
+    }
+    if (stack_slot >= 0) {
+        (void)pthread_mutex_lock(&thread_stack_mutex);
+        thread_stack_task_tracked[stack_slot] = false;
+        (void)pthread_mutex_unlock(&thread_stack_mutex);
+    }
+    return _Z_RES_OK;
+}
 
 z_result_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
 
