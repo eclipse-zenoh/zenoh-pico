@@ -64,6 +64,11 @@ struct tcp_proxy {
     int nconns;
 
     pthread_mutex_t mtx;  // guards enabled + conns[]
+
+    bool corrupt_pending;
+    char corrupt_needle[128];
+    char corrupt_replacement[128];
+    size_t corrupt_len;
 };
 
 // ---- utilities ----
@@ -157,6 +162,19 @@ static void pair_close(tcp_pair_t* pr) {
     }
 }
 
+static void maybe_corrupt_next(tcp_proxy_t* p, char* buf, size_t len) {
+    if (!p->corrupt_pending || p->corrupt_len == 0 || len < p->corrupt_len) {
+        return;
+    }
+    for (size_t i = 0; i <= len - p->corrupt_len; i++) {
+        if (memcmp(buf + i, p->corrupt_needle, p->corrupt_len) == 0) {
+            memcpy(buf + i, p->corrupt_replacement, p->corrupt_len);
+            p->corrupt_pending = false;
+            return;
+        }
+    }
+}
+
 // ---- thread ----
 // When disabled, we still recv() (to ACK at TCP level) but DROP data instead of forwarding.
 static void* proxy_thread(void* arg) {
@@ -230,6 +248,7 @@ static void* proxy_thread(void* arg) {
                     pair_close(pr);
                 } else {
                     if (forward_enabled) {
+                        maybe_corrupt_next(p, buf, (size_t)nread);
                         size_t off = 0;
                         size_t total = (size_t)nread;
                         while (off < total) {
@@ -252,6 +271,7 @@ static void* proxy_thread(void* arg) {
                     pair_close(pr);
                 } else {
                     if (forward_enabled) {
+                        maybe_corrupt_next(p, buf, (size_t)nread);
                         size_t off = 0;
                         size_t total = (size_t)nread;
                         while (off < total) {
@@ -421,4 +441,23 @@ void tcp_proxy_drop_for_ms(tcp_proxy_t* p, int ms) {
     tcp_proxy_set_enabled(p, false);
     msleep_(ms);
     tcp_proxy_set_enabled(p, true);
+}
+
+void tcp_proxy_corrupt_next(tcp_proxy_t* p, const char* needle, const char* replacement) {
+    if (p == NULL || needle == NULL || replacement == NULL) {
+        return;
+    }
+
+    size_t needle_len = strlen(needle);
+    size_t replacement_len = strlen(replacement);
+    if (needle_len == 0 || needle_len != replacement_len || needle_len >= sizeof(p->corrupt_needle)) {
+        return;
+    }
+
+    pthread_mutex_lock(&p->mtx);
+    memcpy(p->corrupt_needle, needle, needle_len + 1);
+    memcpy(p->corrupt_replacement, replacement, replacement_len + 1);
+    p->corrupt_len = needle_len;
+    p->corrupt_pending = true;
+    pthread_mutex_unlock(&p->mtx);
 }
