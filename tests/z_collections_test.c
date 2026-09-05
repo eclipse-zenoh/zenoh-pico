@@ -13,9 +13,9 @@
 //
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "zenoh-pico/collections/fifo.h"
@@ -481,10 +481,7 @@ void svec_remove_non_last_element_test(void) {
         uint32_t b;
     } test_svec_elem_t;
 
-    enum {
-        ELEMENT_COUNT = 4,
-        STORAGE_SIZE = 160
-    };
+    enum { ELEMENT_COUNT = 4, STORAGE_SIZE = 160 };
 
     union {
         test_svec_elem_t align;
@@ -508,9 +505,7 @@ void svec_remove_non_last_element_test(void) {
     elems[3] = (test_svec_elem_t){40, 41};
 
     // Save the guard region so we can detect an oversized memmove().
-    memcpy(expected_guard,
-           storage.bytes + ELEMENT_COUNT * sizeof(test_svec_elem_t),
-           sizeof(expected_guard));
+    memcpy(expected_guard, storage.bytes + ELEMENT_COUNT * sizeof(test_svec_elem_t), sizeof(expected_guard));
 
     _z_svec_t vec = {
         ._capacity = ELEMENT_COUNT,
@@ -534,9 +529,8 @@ void svec_remove_non_last_element_test(void) {
     assert(elems[2].b == 41);
 
     // Removing an element must not touch memory outside the logical vector.
-    assert(memcmp(storage.bytes + ELEMENT_COUNT * sizeof(test_svec_elem_t),
-                  expected_guard,
-                  sizeof(expected_guard)) == 0);
+    assert(memcmp(storage.bytes + ELEMENT_COUNT * sizeof(test_svec_elem_t), expected_guard, sizeof(expected_guard)) ==
+           0);
 }
 
 static bool slist_eq_f(const void *left, const void *right) { return strcmp((char *)left, (char *)right) == 0; }
