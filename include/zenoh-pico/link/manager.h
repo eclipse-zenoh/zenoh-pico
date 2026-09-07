@@ -44,6 +44,14 @@ z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t ep);
 z_result_t _z_endpoint_serial_valid(_z_endpoint_t *ep);
 z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
 #endif
+#if Z_FEATURE_LINK_CAN == 1
+z_result_t _z_endpoint_can_valid(_z_endpoint_t *endpoint);
+z_result_t _z_new_link_can(_z_link_t *zl, _z_endpoint_t ep);
+#endif
+#if Z_FEATURE_LINK_ISOTP == 1
+z_result_t _z_endpoint_isotp_valid(_z_endpoint_t *endpoint);
+z_result_t _z_new_link_isotp(_z_link_t *zl, _z_endpoint_t ep);
+#endif
 #if Z_FEATURE_LINK_WS == 1
 z_result_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
 z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
