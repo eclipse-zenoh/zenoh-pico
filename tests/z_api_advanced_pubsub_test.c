@@ -602,6 +602,51 @@ static void test_advanced_retransmission_sample_miss(void) {
     tcp_proxy_destroy(tcp_proxy);
 }
 
+static void test_payload_corruption_is_delivered(void) {
+    printf("test_payload_corruption_is_delivered\n");
+
+    const char *expr = "zenoh-pico/advanced-pubsub/test/payload_corruption";
+    const char *expected_corrupted = "Xayload-ok";
+
+    tcp_proxy_t *tcp_proxy;
+    z_owned_session_t s1, s2;
+    setup_two_peers_with_proxy(&s1, &s2, &tcp_proxy, 9000);
+
+    z_view_keyexpr_t k;
+    ASSERT_OK(z_view_keyexpr_from_str(&k, expr));
+
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&closure, &handler, 1));
+
+    z_owned_subscriber_t sub;
+    ASSERT_OK(z_declare_subscriber(z_loan(s1), &sub, z_loan(k), z_move(closure), NULL));
+
+    z_owned_publisher_t pub;
+    ASSERT_OK(z_declare_publisher(z_loan(s2), &pub, z_loan(k), NULL));
+    z_sleep_ms(TEST_SLEEP_MS);
+
+    tcp_proxy_corrupt_next(tcp_proxy, "payload-ok", expected_corrupted);
+
+    z_owned_bytes_t payload;
+    ASSERT_OK(z_bytes_copy_from_str(&payload, "payload-ok"));
+    ASSERT_OK(z_publisher_put(z_loan(pub), z_move(payload), NULL));
+    z_sleep_ms(TEST_SLEEP_MS);
+
+    expect_next(z_loan(handler), expected_corrupted);
+    expect_empty(z_loan(handler));
+
+    z_drop(z_move(sub));
+    z_drop(z_move(pub));
+    z_drop(z_move(handler));
+
+    z_drop(z_move(s1));
+    z_drop(z_move(s2));
+
+    tcp_proxy_stop(tcp_proxy);
+    tcp_proxy_destroy(tcp_proxy);
+}
+
 /* TODO: Test disabled due to session reconnection issues
 static void test_advanced_late_joiner(void) {
     printf("test_advanced_late_joiner\n");
@@ -720,18 +765,21 @@ static void test_advanced_local_pubsub(void) {
 #endif
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    test_advanced_history(false);
+    bool retransmission_only = argc > 1 && strcmp(argv[1], "--retransmission-only") == 0;
+
+    if (!retransmission_only) {
+        test_advanced_history(false);
 #if defined(ZENOH_LINUX)
-    test_advanced_history(true);
+        test_advanced_history(true);
 #endif
+    }
 #ifdef Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY
     test_advanced_retransmission();
     test_advanced_retransmission_periodic();
     test_advanced_retransmission_heartbeat();
     test_advanced_sample_miss();
     test_advanced_retransmission_sample_miss();
+    test_payload_corruption_is_delivered();
     // test_advanced_late_joiner();
 #endif
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1 && Z_FEATURE_LOCAL_QUERYABLE == 1

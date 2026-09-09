@@ -210,6 +210,9 @@ typedef struct {
 /**
  * Settings for recovering lost messages for Advanced Subscriber.
  *
+ * Recovery detects sequence gaps in samples produced by Advanced Publishers. It does not
+ * validate application payload integrity when a sample is delivered with a valid sequence.
+ *
  * Members:
  *   bool is_enabled: Must be set to ``true``, to enable the lost sample recovery.
  *   ze_advanced_subscriber_last_sample_miss_detection_options_t last_sample_miss_detection:
@@ -235,7 +238,8 @@ typedef struct {
  *     History can only be retransmitted by Publishers that enable caching.
  *   ze_advanced_subscriber_recovery_options_t recovery: Settings for retransmission of detected
  *     lost Samples. Retransmission of lost samples can only be done by Publishers that enable
- *     caching and sample_miss_detection.
+ *     caching and sample_miss_detection. Recovery does not detect payload corruption without a
+ *     sequence gap.
  *   uint64_t query_timeout_ms: Timeout to be used for history and recovery queries.  Default value
  *     will be used if set to ``0``.
  *   bool subscriber_detection: Allow this subscriber to be detected through liveliness.

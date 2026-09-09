@@ -44,4 +44,7 @@ void tcp_proxy_close_all(tcp_proxy_t* p);
 // Convenience: drop (blackhole) for ms, then restore to enabled = true.
 void tcp_proxy_drop_for_ms(tcp_proxy_t* p, int ms);
 
+// Replace the next matching byte sequence with an equal-length replacement.
+void tcp_proxy_corrupt_next(tcp_proxy_t* p, const char* needle, const char* replacement);
+
 #endif  // TCP_PROXY_H

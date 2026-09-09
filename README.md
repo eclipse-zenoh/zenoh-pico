@@ -590,6 +590,16 @@ And on another shell, do:
 
 A publisher will start publishing over UDP multicast and the **zenoh** router will take care of forwarding data from the Zenoh-Pico publisher to the Zenoh-Pico subscriber.
 
+### 3.5. Payload integrity
+
+Zenoh-Pico relies on the underlying link and transport layers for ordinary transmission integrity. It detects malformed
+Zenoh protocol frames and, when advanced publication/subscription recovery is enabled, can detect and recover sequence
+gaps in samples that are still available from the publisher cache.
+
+Zenoh-Pico does not add an end-to-end checksum or authentication tag to TCP/UDP application payloads. If a valid Zenoh
+message is delivered with corrupted payload bytes and no sequence gap, the payload is passed to the application. Add an
+application-level checksum, hash, signature, or HMAC to the payload format when end-to-end data integrity is required.
+
 ## Troubleshooting
 
 ### Activate debug logs
