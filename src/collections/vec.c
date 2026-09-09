@@ -258,7 +258,7 @@ void _z_svec_remove(_z_svec_t *v, size_t pos, z_element_clear_f clear, z_element
     assert(pos < v->_len);
     clear((uint8_t *)v->_val + pos * element_size);
     __z_svec_move_inner((uint8_t *)v->_val + pos * element_size, (uint8_t *)v->_val + (pos + 1) * element_size, move,
-                        (v->_len - pos - 1) * element_size, element_size, use_elem_f);
+                        v->_len - pos - 1, element_size, use_elem_f);
 
     v->_len--;
 }
