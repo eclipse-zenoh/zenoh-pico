@@ -58,7 +58,28 @@ typedef struct {
 #if Z_FEATURE_LINK_SERIAL == 1
         const struct device *_serial;
 #endif
+#if Z_FEATURE_LINK_CAN == 1
+        const struct device *_can_dev;
+#endif
+#if Z_FEATURE_LINK_ISOTP == 1
+        const struct device *_isotp_dev;
+#endif
     };
+#if Z_FEATURE_LINK_ISOTP == 1
+    // Zephyr's ISO-TP contexts are large and must outlive every call, so they
+    // live in a pool in src/system/zephyr/isotp.c and this is the index into
+    // it. -1 means "no slot", which is what a closed link holds.
+    int _isotp_slot;
+#endif
+#if Z_FEATURE_LINK_CAN == 1
+    // Per-link receive state. A CAN controller delivers into a message queue,
+    // and that queue must belong to ONE link: a shared one lets link A dequeue
+    // a frame addressed to link B and drop it, which is silent loss that scales
+    // with the number of links. The filter id is kept so close() can release
+    // the controller's filter slot, of which there are few.
+    struct k_msgq *_can_rx_msgq;
+    int _can_filter_id;
+#endif
 } _z_sys_net_socket_t;
 
 typedef struct {
