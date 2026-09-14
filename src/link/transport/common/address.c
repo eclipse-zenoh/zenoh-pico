@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/transport/socket.h"
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include <arpa/inet.h>
@@ -22,15 +23,16 @@
 #if defined(ZENOH_FREERTOS_LWIP)
 #include "lwip/inet.h"
 #endif
-#if defined(ZENOH_ZEPHYR)
+#if defined(ZENOH_ZEPHYR) && Z_HAS_SOCKET_LINK
 #include <zephyr/net/socket.h>
 #endif
 
 #include "zenoh-pico/link/transport/socket.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if defined(ZENOH_WINDOWS) || defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || \
-    defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_ZEPHYR)
+#if (defined(ZENOH_WINDOWS) || defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || \
+     defined(ZENOH_FREERTOS_LWIP) || defined(ZENOH_ZEPHYR)) &&                                       \
+    Z_HAS_SOCKET_LINK
 
 static z_result_t _z_ipv4_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
     char ip[INET_ADDRSTRLEN] = {0};
