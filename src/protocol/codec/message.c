@@ -166,6 +166,10 @@ z_result_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
     _z_zint_t len = 0;  // Number of elements in the array
     ret |= _z_zsize_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
+        // Each locator requires at least one byte on the wire for the string length.
+        if (len > _z_zbuf_len(zbf)) {
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
+        }
         *a_loc = _z_locator_array_make(len);
 
         // Decode the elements
