@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <zenoh-pico.h>
+#include <zephyr/kernel.h>
 
 #if Z_FEATURE_QUERY == 1
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
@@ -51,7 +51,7 @@ void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    sleep(5);
+    k_sleep(K_SECONDS(5));
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     printf("OK\n");
 
     while (1) {
-        sleep(5);
+        k_sleep(K_SECONDS(5));
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts;
         z_get_options_default(&opts);
