@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zenoh-pico.h>
+#include <zephyr/kernel.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
@@ -40,7 +41,7 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
 }
 
 int main(int argc, char **argv) {
-    sleep(5);
+    k_sleep(K_SECONDS(5));
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -76,7 +77,7 @@ int main(int argc, char **argv) {
     printf("OK!\n");
 
     while (1) {
-        sleep(1);
+        k_sleep(K_SECONDS(1));
     }
 
     printf("Closing Zenoh Session...");
