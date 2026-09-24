@@ -103,3 +103,44 @@ jobs:
           ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_scout.c"
           cd "$ZEPHYR_BASE"
           pio run
+
+  twister:
+    name: Build Zephyr module with Twister (Zephyr ${{ matrix.zephyr }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported LTS, latest release, and main
+        zephyr: [v3.7.2, v4.4.2, main]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: zenoh-pico
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Set up Zephyr workspace
+        run: |
+          pip install west
+          west init -m https://github.com/zephyrproject-rtos/zephyr --mr "${{ matrix.zephyr }}" zephyrproject
+          cd zephyrproject
+          west config manifest.project-filter -- '-.*,+cmsis,+cmsis_6,+hal_stm32'
+          west update --narrow -o=--depth=1
+          pip install -r zephyr/scripts/requirements-base.txt \
+            -r zephyr/scripts/requirements-build-test.txt \
+            -r zephyr/scripts/requirements-run-test.txt
+
+      - name: Install Zephyr SDK
+        run: |
+          SDK_VERSION=$(cat zephyrproject/zephyr/SDK_VERSION)
+          SDK=zephyr-sdk-${SDK_VERSION}
+          wget -q "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${SDK_VERSION}/${SDK}_linux-x86_64_minimal.tar.xz"
+          tar xf "${SDK}_linux-x86_64_minimal.tar.xz" -C ~
+          ~/${SDK}/setup.sh -t arm-zephyr-eabi -h -c
+
+      - name: Build examples
+        working-directory: zephyrproject
+        run: |
+          west twister -T ../zenoh-pico/examples/zephyr --build-only --inline-logs \
+            -x=ZEPHYR_EXTRA_MODULES=${{ github.workspace }}/zenoh-pico

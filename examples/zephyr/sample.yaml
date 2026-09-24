@@ -1,0 +1,54 @@
+sample:
+  name: Zenoh-Pico examples
+common:
+  tags: zenoh
+  build_only: true
+  platform_allow:
+    - nucleo_f767zi
+  integration_platforms:
+    - nucleo_f767zi
+tests:
+  zenoh_pico.z_pub:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_PUB=y
+  zenoh_pico.z_sub:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_SUB=y
+  zenoh_pico.z_pull:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_PULL=y
+  zenoh_pico.z_get:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_GET=y
+  zenoh_pico.z_queryable:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_QUERYABLE=y
+  zenoh_pico.z_scout:
+    extra_configs:
+      - CONFIG_ZP_EXAMPLE_SCOUT=y
+  zenoh_pico.single_thread:
+    extra_configs:
+      - CONFIG_ZENOH_PICO_MULTI_THREAD=n
+  zenoh_pico.ipv6_only:
+    extra_configs:
+      - CONFIG_NET_IPV4=n
+      - CONFIG_NET_DHCPV4=n
+      - CONFIG_NET_CONFIG_NEED_IPV4=n
+      - CONFIG_NET_IPV6=y
+      - CONFIG_NET_CONFIG_NEED_IPV6=y
+  zenoh_pico.serial:
+    extra_configs:
+      - CONFIG_ZENOH_PICO_LINK_SERIAL=y
+  zenoh_pico.all_features:
+    extra_configs:
+      - CONFIG_ZENOH_PICO_UNSTABLE_API=y
+      - CONFIG_ZENOH_PICO_ADVANCED_PUBLICATION=y
+      - CONFIG_ZENOH_PICO_ADVANCED_SUBSCRIPTION=y
+      - CONFIG_ZENOH_PICO_CONNECTIVITY=y
+      - CONFIG_ZENOH_PICO_ADMIN_SPACE=y
+      - CONFIG_ZENOH_PICO_LOCAL_SUBSCRIBER=y
+      - CONFIG_ZENOH_PICO_LOCAL_QUERYABLE=y
+      - CONFIG_ZENOH_PICO_RX_CACHE=y
+      - CONFIG_ZENOH_PICO_MULTICAST_DECLARATIONS=y
+      - CONFIG_ZENOH_PICO_BATCH_TX_MUTEX=y
+      - CONFIG_ZENOH_PICO_BATCH_PEER_MUTEX=y
