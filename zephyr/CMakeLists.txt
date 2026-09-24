@@ -4,6 +4,12 @@ zephyr_compile_definitions(ZENOH_ZEPHYR)
 zephyr_include_directories(../include)
 zephyr_library()
 
+# Before Zephyr 4.2 the POSIX headers are only on the include path with
+# CONFIG_POSIX_API, which zenoh-pico does not need.
+if(NOT CONFIG_POSIX_API AND NOT CONFIG_POSIX_SYSTEM_HEADERS AND NOT CONFIG_POSIX_SYSTEM_INTERFACES)
+  zephyr_include_directories(${ZEPHYR_BASE}/include/zephyr/posix)
+endif()
+
 function(configure_zenoh_feature config)
   string(REPLACE CONFIG_ZENOH_PICO Z_FEATURE feature ${config})
   if(${config})

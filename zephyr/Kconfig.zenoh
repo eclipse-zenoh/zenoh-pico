@@ -1,69 +1,191 @@
-config ZENOH_PICO
-	bool "Zenoh PICO library"
+menuconfig ZENOH_PICO
+	bool "Zenoh-Pico library"
+	depends on NETWORKING
+	select POSIX_SYSTEM_INTERFACES
+	select POSIX_TIMERS
+	select POSIX_NETWORKING
+	select POSIX_FD_MGMT
+	select POSIX_DEVICE_IO
 	help
-	  Enable Zenoh pico support
+	  Enable Zenoh-Pico support.
+
+	  Defaults mirror the standalone CMake build. Links are enabled
+	  automatically when the matching Zephyr networking support is
+	  available.
 
 if ZENOH_PICO
 
-config ZENOH_PICO_LINK_SERIAL
-	bool "Serial Link"
+config HEAP_MEM_POOL_ADD_SIZE_ZENOH_PICO
+	int "Heap memory reserved for Zenoh-Pico"
+	default 32768
 	help
-	  Use serial link
+	  System heap, in bytes, added for Zenoh-Pico sessions and their
+	  transmit, receive and defragmentation buffers.
+
+config ZENOH_PICO_UNSTABLE_API
+	bool "Unstable API"
+	help
+	  Enable APIs that are not yet stabilized and may change without
+	  notice.
+
+menu "API features"
+
+config ZENOH_PICO_PUBLICATION
+	bool "Publication"
+	default y
+
+config ZENOH_PICO_SUBSCRIPTION
+	bool "Subscription"
+	default y
+
+config ZENOH_PICO_QUERY
+	bool "Query"
+	default y
+
+config ZENOH_PICO_QUERYABLE
+	bool "Queryable"
+	default y
+
+config ZENOH_PICO_LIVELINESS
+	bool "Liveliness"
+	default y
+
+config ZENOH_PICO_INTEREST
+	bool "Interest protocol"
+	default y
+	help
+	  Lets peers declare interest in key expressions, which enables
+	  writer-side filtering and matching status.
+
+config ZENOH_PICO_MATCHING
+	bool "Matching status"
+	depends on ZENOH_PICO_INTEREST
+	default y
+
+config ZENOH_PICO_ENCODING_VALUES
+	bool "Predefined encoding values"
+	default y
+
+config ZENOH_PICO_SESSION_CHECK
+	bool "Publisher/querier session check"
+	default y
+
+config ZENOH_PICO_LOCAL_SUBSCRIBER
+	bool "Local subscriptions"
+
+config ZENOH_PICO_LOCAL_QUERYABLE
+	bool "Local queryables"
+
+config ZENOH_PICO_ADVANCED_PUBLICATION
+	bool "Advanced publication"
+	depends on ZENOH_PICO_UNSTABLE_API
+	depends on ZENOH_PICO_PUBLICATION && ZENOH_PICO_QUERYABLE && ZENOH_PICO_LIVELINESS
+
+config ZENOH_PICO_ADVANCED_SUBSCRIPTION
+	bool "Advanced subscription"
+	depends on ZENOH_PICO_UNSTABLE_API
+	depends on ZENOH_PICO_SUBSCRIPTION && ZENOH_PICO_QUERY && ZENOH_PICO_LIVELINESS
+
+config ZENOH_PICO_CONNECTIVITY
+	bool "Connectivity status/events API"
+	depends on ZENOH_PICO_UNSTABLE_API
+
+config ZENOH_PICO_ADMIN_SPACE
+	bool "Admin space"
+	depends on ZENOH_PICO_UNSTABLE_API && ZENOH_PICO_QUERYABLE
+
+endmenu
+
+menu "Transports"
+
+config ZENOH_PICO_UNICAST_TRANSPORT
+	bool "Unicast transport"
+	default y
+
+config ZENOH_PICO_UNICAST_PEER
+	bool "Unicast peer mode"
+	depends on ZENOH_PICO_UNICAST_TRANSPORT
+	default y
+
+config ZENOH_PICO_MULTICAST_TRANSPORT
+	bool "Multicast transport"
+	default y
+
+config ZENOH_PICO_MULTICAST_DECLARATIONS
+	bool "Multicast resource declarations"
+	depends on ZENOH_PICO_MULTICAST_TRANSPORT
+
+config ZENOH_PICO_FRAGMENTATION
+	bool "Fragmentation"
+	default y
+
+config ZENOH_PICO_BATCHING
+	bool "Batching"
+	default y
+
+config ZENOH_PICO_BATCH_TX_MUTEX
+	bool "Hold the TX mutex for a whole batch"
+	depends on ZENOH_PICO_BATCHING && ZENOH_PICO_MULTI_THREAD
+
+config ZENOH_PICO_BATCH_PEER_MUTEX
+	bool "Hold the peer mutex for a whole batch"
+	depends on ZENOH_PICO_BATCHING && ZENOH_PICO_MULTI_THREAD
+
+config ZENOH_PICO_RX_CACHE
+	bool "RX cache"
+
+config ZENOH_PICO_AUTO_RECONNECT
+	bool "Automatic reconnection"
+	default y
+
+endmenu
+
+menu "Links"
+
+config ZENOH_PICO_LINK_TCP
+	bool "TCP link"
+	depends on NET_TCP
+	default y
+	imply DNS_RESOLVER
+
+config ZENOH_PICO_TCP_NODELAY
+	bool "Set TCP_NODELAY on TCP links"
+	depends on ZENOH_PICO_LINK_TCP
+	default y
+
+config ZENOH_PICO_LINK_TLS
+	bool "TLS link"
+	depends on ZENOH_PICO_LINK_TCP && MBEDTLS
+
+config ZENOH_PICO_LINK_UDP_UNICAST
+	bool "UDP unicast link"
+	depends on NET_UDP
+	default y
+
+config ZENOH_PICO_LINK_UDP_MULTICAST
+	bool "UDP multicast link"
+	depends on NET_UDP && ZENOH_PICO_MULTICAST_TRANSPORT
+	depends on NET_IPV4_IGMP || NET_IPV6_MLD
+	default y
+
+config ZENOH_PICO_SCOUTING
+	bool "Scouting"
+	depends on ZENOH_PICO_LINK_UDP_UNICAST
+	default y
+
+config ZENOH_PICO_LINK_SERIAL
+	bool "Serial link"
+	depends on SERIAL
+
+endmenu
 
 config ZENOH_PICO_MULTI_THREAD
 	bool "Multithreading support"
+	default y
+	select POSIX_THREADS
+	select POSIX_CLOCK_SELECTION
 	help
-	  Multithreading support
-
-config ZENOH_PICO_PUBLICATION
-	bool "Publication Support"
-	help
-	  Publication support
-
-config ZENOH_PICO_SUBSCRIPTION
-	bool "Subscription Support"
-	help
-	  Subscription Support
-
-config ZENOH_PICO_QUERY
-	bool "Query Support"
-	help
-	  Query Support
-
-config ZENOH_PICO_QUERYABLE
-	bool "Queryable Support"
-	help
-	  Queryable Support
-
-config ZENOH_PICO_RAWETH_TRANSPORT
-	bool "Raw Ethernet Support"
-	help
-	  Raw Ethernet Support
-
-config ZENOH_PICO_LINK_TCP
-	bool "TCP Link"
-	help
-	  TCP Link
-
-config ZENOH_PICO_LINK_UDP_UNICAST
-	bool "UDP Unicast"
-	help
-	  UDP Unicast
-
-config ZENOH_PICO_LINK_UDP_MULTICAST
-	bool "UDP Multicast"
-	help
-	  UDP Multicast
-
-config ZENOH_PICO_SCOUTING
-	bool "Scouting UDP"
-	help
-	  Scouting UDP
-
-config ZENOH_PICO_LINK_WS
-	bool "WS Link"
-	help
-	  WS Link
+	  Run the read and lease tasks in background threads.
 
 config ZENOH_PICO_THREADS_NUM
 	int "Number of preallocated pthread stacks"
@@ -73,5 +195,49 @@ config ZENOH_PICO_THREADS_NUM
 	  Number of preallocated pthread stacks used when no explicit thread
 	  attributes are provided (attr == NULL). Stack slots are returned to the
 	  pool when threads are joined.
+
+menu "Tuning"
+
+config ZENOH_PICO_FRAG_MAX_SIZE
+	int "Maximum size of a defragmented message"
+	default 4096
+
+config ZENOH_PICO_BATCH_UNICAST_SIZE
+	int "Maximum unicast batch size"
+	default 2048
+
+config ZENOH_PICO_BATCH_MULTICAST_SIZE
+	int "Maximum multicast batch size"
+	default 2048
+
+config ZENOH_PICO_CONFIG_SOCKET_TIMEOUT
+	int "Socket timeout (ms)"
+	default 100
+
+config ZENOH_PICO_TRANSPORT_LEASE
+	int "Lease duration announced to other nodes (ms)"
+	default 10000
+
+config ZENOH_PICO_TRANSPORT_LEASE_EXPIRE_FACTOR
+	int "Lease expire factor"
+	default 3
+
+config ZENOH_PICO_RUNTIME_MAX_TASKS
+	int "Maximum number of runtime tasks"
+	default 64
+
+config ZENOH_PICO_RUNTIME_IDLE_READ_TASK_SLEEP
+	int "Idle read task sleep (ms)"
+	default 0
+
+config ZENOH_PICO_TRANSPORT_ACCEPT_TIMEOUT
+	int "P2P link accept timeout (ms)"
+	default 1000
+
+config ZENOH_PICO_TRANSPORT_CONNECT_TIMEOUT
+	int "P2P link connect timeout (ms)"
+	default 10000
+
+endmenu
 
 endif
