@@ -16,7 +16,7 @@
 
 #if defined(ZENOH_ZEPHYR)
 
-#include <version.h>
+#include <zephyr/version.h>
 
 #if KERNEL_VERSION_MAJOR == 2
 #include <random/rand32.h>
