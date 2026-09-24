@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <zenoh-pico.h>
+#include <zephyr/kernel.h>
 
 #if Z_FEATURE_SCOUTING == 1
 void fprintzid(FILE *stream, z_id_t zid) {
@@ -75,7 +76,7 @@ void drop(void *context) {
 }
 
 int main(void) {
-    sleep(5);
+    k_sleep(K_SECONDS(5));
 
     int *context = (int *)malloc(sizeof(int));
     *context = 0;
