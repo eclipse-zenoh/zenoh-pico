@@ -21,7 +21,6 @@
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <version.h>
 #include <zephyr/random/random.h>
 
 #include "zenoh-pico/config.h"
