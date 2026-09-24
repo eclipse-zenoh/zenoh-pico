@@ -24,30 +24,56 @@
 #include "zenoh-pico/utils/logging.h"
 
 #define RX_DMA_BUFFER_SIZE (_Z_SERIAL_MAX_COBS_BUF_SIZE * 2 + 2)
+#define UART_CLEAR_ALL_ERRORS \
+    (UART_CLEAR_PEF | UART_CLEAR_FEF | UART_CLEAR_NEF | UART_CLEAR_OREF | UART_CLEAR_IDLEF)
 
 static uint8_t _z_threadx_stm32_dma_buffer[RX_DMA_BUFFER_SIZE];
 static uint16_t _z_threadx_stm32_delimiter_offset = 0;
 static TX_SEMAPHORE _z_threadx_stm32_data_ready_semaphore;
 static TX_SEMAPHORE _z_threadx_stm32_data_processing_semaphore;
+static TX_MUTEX _z_threadx_stm32_tx_mutex;
 static uint8_t _z_threadx_stm32_frame_buffer[_Z_SERIAL_MAX_COBS_BUF_SIZE];
 static size_t _z_threadx_stm32_frame_len = 0;
 static size_t _z_threadx_stm32_frame_offset = 0;
 static bool _z_threadx_stm32_initialized = false;
 static uint16_t _z_threadx_stm32_last_dma_offset = 0;
+static uint16_t _z_threadx_stm32_isr_last_offset = 0;
 extern UART_HandleTypeDef ZENOH_HUART;
+
+void _z_threadx_stm32_tx_lock(void) {
+    if (_z_threadx_stm32_initialized) {
+        tx_mutex_get(&_z_threadx_stm32_tx_mutex, TX_WAIT_FOREVER);
+    }
+}
+
+void _z_threadx_stm32_tx_unlock(void) {
+    if (_z_threadx_stm32_initialized) {
+        tx_mutex_put(&_z_threadx_stm32_tx_mutex);
+    }
+}
 
 static z_result_t _z_threadx_stm32_uart_open_impl(void) {
     if (!_z_threadx_stm32_initialized) {
         tx_semaphore_create(&_z_threadx_stm32_data_ready_semaphore, "Data Ready", 0);
         tx_semaphore_create(&_z_threadx_stm32_data_processing_semaphore, "Data Processing", 1);
+        tx_mutex_create(&_z_threadx_stm32_tx_mutex, "Zenoh TX Mutex", TX_NO_INHERIT);
         _z_threadx_stm32_initialized = true;
     }
 
+    while (tx_semaphore_get(&_z_threadx_stm32_data_ready_semaphore, TX_NO_WAIT) == TX_SUCCESS) {}
+    while (tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT) == TX_SUCCESS) {}
+    tx_semaphore_put(&_z_threadx_stm32_data_processing_semaphore);
+
     _z_threadx_stm32_delimiter_offset = 0;
     _z_threadx_stm32_last_dma_offset = 0;
+    _z_threadx_stm32_isr_last_offset = 0;
     _z_threadx_stm32_frame_len = 0;
     _z_threadx_stm32_frame_offset = 0;
-    memset(_z_threadx_stm32_dma_buffer, 0, sizeof(_z_threadx_stm32_dma_buffer));
+    memset(_z_threadx_stm32_dma_buffer, 0xFF, sizeof(_z_threadx_stm32_dma_buffer));
+
+    HAL_UART_AbortReceive(&ZENOH_HUART);
+    __HAL_UART_CLEAR_FLAG(&ZENOH_HUART, UART_CLEAR_ALL_ERRORS);
+    ZENOH_HUART.RxState = HAL_UART_STATE_READY;
 
     if (HAL_UARTEx_ReceiveToIdle_DMA(&ZENOH_HUART, _z_threadx_stm32_dma_buffer, RX_DMA_BUFFER_SIZE) != HAL_OK) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
@@ -89,8 +115,8 @@ static void _z_threadx_stm32_uart_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(
 static size_t _z_threadx_stm32_uart_fill_frame(void) {
     size_t rb = 0;
 
-    if (tx_semaphore_get(&_z_threadx_stm32_data_ready_semaphore, TX_TIMER_TICKS_PER_SECOND) != TX_SUCCESS) {
-        return SIZE_MAX;
+    if (tx_semaphore_get(&_z_threadx_stm32_data_ready_semaphore, TX_TIMER_TICKS_PER_SECOND / 10) != TX_SUCCESS) {
+        return 0;
     }
 
     if (_z_threadx_stm32_delimiter_offset < _z_threadx_stm32_last_dma_offset) {
@@ -98,7 +124,11 @@ static size_t _z_threadx_stm32_uart_fill_frame(void) {
     } else {
         rb = _z_threadx_stm32_delimiter_offset - _z_threadx_stm32_last_dma_offset;
     }
-    if (rb == 0 || rb > sizeof(_z_threadx_stm32_frame_buffer)) {
+    
+    if (rb == 0) {
+        return 0;
+    }
+    if (rb > sizeof(_z_threadx_stm32_frame_buffer)) {
         return SIZE_MAX;
     }
 
@@ -149,7 +179,12 @@ static size_t _z_threadx_stm32_uart_read(_z_sys_net_socket_t sock, uint8_t *ptr,
 static size_t _z_threadx_stm32_uart_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     _ZP_UNUSED(sock);
 
-    if (HAL_UART_Transmit(&ZENOH_HUART, (uint8_t *)ptr, len, 2000) != HAL_OK) {
+    __HAL_UART_CLEAR_FLAG(&ZENOH_HUART, UART_CLEAR_ALL_ERRORS);
+    ZENOH_HUART.gState = HAL_UART_STATE_READY;
+
+    if (HAL_UART_Transmit(&ZENOH_HUART, (uint8_t *)ptr, len, 500) != HAL_OK) {
+        __HAL_UART_CLEAR_FLAG(&ZENOH_HUART, UART_CLEAR_ALL_ERRORS);
+        ZENOH_HUART.gState = HAL_UART_STATE_READY;
         _Z_ERROR("Could not send to serial device!");
         return SIZE_MAX;
     }
@@ -184,24 +219,41 @@ size_t _z_serial_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len)
 }
 
 void zptxstm32_rx_event_cb(UART_HandleTypeDef *huart, uint16_t offset) {
-    static uint16_t last_offset = 0;
     if (huart != &ZENOH_HUART) {
         return;
     }
-    if (offset == last_offset) {
+    if (offset == _z_threadx_stm32_isr_last_offset) {
         return;
     }
-    if (offset < last_offset) {
-        last_offset = 0;
+
+    uint16_t end_offset = offset;
+    
+    // If the DMA buffer wrapped around, we first process up to the end of the buffer
+    if (offset < _z_threadx_stm32_isr_last_offset) {
+        end_offset = RX_DMA_BUFFER_SIZE;
     }
 
-    while (last_offset < offset) {
-        if (_z_threadx_stm32_dma_buffer[last_offset] == (uint8_t)0x00) {
-            tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_WAIT_FOREVER);
-            _z_threadx_stm32_delimiter_offset = last_offset + 1;
+    while (_z_threadx_stm32_isr_last_offset < end_offset) {
+        if (_z_threadx_stm32_dma_buffer[_z_threadx_stm32_isr_last_offset] == (uint8_t)0x00) {
+            // Using NO_WAIT in ISR is required to avoid HardFaults
+            tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT);
+            _z_threadx_stm32_delimiter_offset = _z_threadx_stm32_isr_last_offset + 1;
             tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
         }
-        ++last_offset;
+        ++_z_threadx_stm32_isr_last_offset;
+    }
+    
+    // If we processed to the end of the buffer, wrap back to 0 and process the remainder
+    if (offset < _z_threadx_stm32_isr_last_offset && _z_threadx_stm32_isr_last_offset == RX_DMA_BUFFER_SIZE) {
+        _z_threadx_stm32_isr_last_offset = 0;
+        while (_z_threadx_stm32_isr_last_offset < offset) {
+            if (_z_threadx_stm32_dma_buffer[_z_threadx_stm32_isr_last_offset] == (uint8_t)0x00) {
+                tx_semaphore_get(&_z_threadx_stm32_data_processing_semaphore, TX_NO_WAIT);
+                _z_threadx_stm32_delimiter_offset = _z_threadx_stm32_isr_last_offset + 1;
+                tx_semaphore_put(&_z_threadx_stm32_data_ready_semaphore);
+            }
+            ++_z_threadx_stm32_isr_last_offset;
+        }
     }
 }
 
@@ -211,6 +263,13 @@ void zptxstm32_error_event_cb(UART_HandleTypeDef *huart) {
     }
 
     _Z_ERROR("UART error!");
+    HAL_UART_AbortReceive(&ZENOH_HUART);
+    __HAL_UART_CLEAR_FLAG(&ZENOH_HUART, UART_CLEAR_ALL_ERRORS);
+    ZENOH_HUART.RxState = HAL_UART_STATE_READY;
+    _z_threadx_stm32_isr_last_offset = 0;
+    _z_threadx_stm32_delimiter_offset = 0;
+    _z_threadx_stm32_last_dma_offset = 0;
+    memset(_z_threadx_stm32_dma_buffer, 0xFF, sizeof(_z_threadx_stm32_dma_buffer));
     HAL_UARTEx_ReceiveToIdle_DMA(&ZENOH_HUART, _z_threadx_stm32_dma_buffer, RX_DMA_BUFFER_SIZE);
 }
 

@@ -36,6 +36,13 @@
 
 #define SERIAL_CONNECT_THROTTLE_TIME_MS 250
 
+#if defined(ZENOH_THREADX_STM32)
+static uint8_t _z_stm32_rx_raw_buf[_Z_SERIAL_MAX_COBS_BUF_SIZE];
+static uint8_t _z_stm32_rx_tmp_buf[_Z_SERIAL_MFS_SIZE];
+static uint8_t _z_stm32_tx_raw_buf[_Z_SERIAL_MAX_COBS_BUF_SIZE];
+static uint8_t _z_stm32_tx_tmp_buf[_Z_SERIAL_MFS_SIZE];
+#endif
+
 typedef struct {
     bool _from_pins;
     uint32_t _baudrate;
@@ -143,40 +150,77 @@ static size_t _z_serial_write_all(_z_sys_net_socket_t sock, const uint8_t *ptr, 
 }
 
 static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+#if defined(ZENOH_THREADX_STM32)
+    uint8_t *raw_buf = _z_stm32_rx_raw_buf;
+#else
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if (raw_buf == NULL) {
         _Z_ERROR("Failed to allocate serial COBS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t rb = 0;
+    size_t timeout_cnt = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
         size_t chunk = _z_serial_read(sock, &raw_buf[rb], 1);
+        if (chunk == 0) {
+            if (rb == 0) {
+                return SIZE_MAX;
+            }
+            timeout_cnt++;
+            if (timeout_cnt > 10) {
+                return SIZE_MAX;
+            }
+            continue;
+        }
+        if (chunk == SIZE_MAX) {
+            return SIZE_MAX;
+        }
         if (chunk != 1) {
+#if !defined(ZENOH_THREADX_STM32)
             z_free(raw_buf);
+#endif
             return SIZE_MAX;
         }
 
+        timeout_cnt = 0;
         rb++;
         if (raw_buf[rb - 1] == (uint8_t)0x00) {
             break;
         }
     }
 
+#if defined(ZENOH_THREADX_STM32)
+    uint8_t *tmp_buf = _z_stm32_rx_tmp_buf;
+#else
     uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     if (tmp_buf == NULL) {
         z_free(raw_buf);
         _Z_ERROR("Failed to allocate serial MFS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+#if !defined(ZENOH_THREADX_STM32)
     z_free(raw_buf);
     z_free(tmp_buf);
+#endif
     return ret;
 }
 
+#if defined(ZENOH_THREADX_STM32)
+extern void _z_threadx_stm32_tx_lock(void);
+extern void _z_threadx_stm32_tx_unlock(void);
+#endif
+
 static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
+#if defined(ZENOH_THREADX_STM32)
+    _z_threadx_stm32_tx_lock();
+    uint8_t *tmp_buf = _z_stm32_tx_tmp_buf;
+    uint8_t *raw_buf = _z_stm32_tx_raw_buf;
+#else
     uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if ((raw_buf == NULL) || (tmp_buf == NULL)) {
@@ -185,18 +229,27 @@ static size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t he
         _Z_ERROR("Failed to allocate serial COBS and/or MFS buffer");
         return SIZE_MAX;
     }
+#endif
 
     size_t raw_len =
         _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
     if (raw_len == SIZE_MAX) {
+#if defined(ZENOH_THREADX_STM32)
+        _z_threadx_stm32_tx_unlock();
+#else
         z_free(raw_buf);
         z_free(tmp_buf);
+#endif
         return SIZE_MAX;
     }
 
     size_t written = _z_serial_write_all(sock, raw_buf, raw_len);
+#if defined(ZENOH_THREADX_STM32)
+    _z_threadx_stm32_tx_unlock();
+#else
     z_free(raw_buf);
     z_free(tmp_buf);
+#endif
     return (written == raw_len) ? len : SIZE_MAX;
 }
 
@@ -253,14 +306,20 @@ z_result_t _z_serial_protocol_listen(_z_serial_socket_t *sock, const _z_endpoint
 void _z_serial_protocol_close(_z_serial_socket_t *sock) { _z_serial_close(&sock->_sock); }
 
 z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
+    z_clock_t start = z_clock_now();
+
     while (true) {
         uint8_t header = _Z_FLAG_SERIAL_INIT;
 
         _z_send_serial_internal(sock, header, NULL, 0);
         uint8_t tmp;
         size_t ret = _z_read_serial_internal(sock, &header, &tmp, sizeof(tmp));
+        
         if (ret == SIZE_MAX) {
-            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
+            if (z_clock_elapsed_ms(&start) > Z_TRANSPORT_CONNECT_TIMEOUT) {
+                _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
+            }
+            continue; // Retry sending INIT
         }
 
         if (_Z_HAS_FLAG(header, _Z_FLAG_SERIAL_ACK) && _Z_HAS_FLAG(header, _Z_FLAG_SERIAL_INIT)) {
@@ -280,8 +339,13 @@ z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
 }
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    uint8_t header;
-    return _z_read_serial_internal(sock, &header, ptr, len);
+    uint8_t header = 0;
+    size_t ret = _z_read_serial_internal(sock, &header, ptr, len);
+    if (ret != SIZE_MAX && (_Z_HAS_FLAG(header, _Z_FLAG_SERIAL_RESET) || _Z_HAS_FLAG(header, _Z_FLAG_SERIAL_INIT))) {
+        _Z_DEBUG("Received SERIAL_RESET or SERIAL_INIT header - triggering reconnect");
+        return SIZE_MAX;
+    }
+    return ret;
 }
 
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
