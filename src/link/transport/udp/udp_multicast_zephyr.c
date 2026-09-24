@@ -205,6 +205,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             ifa = net_if_get_default();
             if (ifa != NULL) {
                 // Join the multicast group
+#if defined(CONFIG_NET_IPV4)
                 if (rep._iptcp->ai_family == AF_INET) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
@@ -217,7 +218,10 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 #else
                     net_if_ipv4_maddr_join(mcast);
 #endif
-                } else if (rep._iptcp->ai_family == AF_INET6) {
+                } else
+#endif
+#if defined(CONFIG_NET_IPV6)
+                    if (rep._iptcp->ai_family == AF_INET6) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                     if (!mcast) {
@@ -229,7 +233,9 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 #else
                     net_if_ipv6_maddr_join(mcast);
 #endif
-                } else {
+                } else
+#endif
+                {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
@@ -263,6 +269,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         ifa = net_if_get_default();
         if (ifa != NULL) {
             struct net_if_mcast_addr *mcast = NULL;
+#if defined(CONFIG_NET_IPV4)
             if (rep._iptcp->ai_family == AF_INET) {
                 mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
                 if (mcast != NULL) {
@@ -275,7 +282,10 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                 } else {
                     // Do nothing. The socket will be closed in any case.
                 }
-            } else if (rep._iptcp->ai_family == AF_INET6) {
+            } else
+#endif
+#if defined(CONFIG_NET_IPV6)
+                if (rep._iptcp->ai_family == AF_INET6) {
                 mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                 if (mcast != NULL) {
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
@@ -287,7 +297,9 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                 } else {
                     // Do nothing. The socket will be closed in any case.
                 }
-            } else {
+            } else
+#endif
+            {
                 // Do nothing. It must never not enter here.
                 // Required to be compliant with MISRA 15.7 rule
             }
