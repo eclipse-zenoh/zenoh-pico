@@ -83,6 +83,11 @@ z_result_t _z_task_join(_z_task_t *task) {
         tx_thread_sleep(1);
     }
 
+    UINT del_status = tx_thread_delete(&(task->threadx_thread));
+    if (del_status != TX_SUCCESS && del_status != TX_THREAD_ERROR) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
     return _Z_RES_OK;
 }
 
@@ -92,8 +97,11 @@ z_result_t _z_task_detach(_z_task_t *task) {
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    // Not implemented
-    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    UINT status = tx_thread_terminate(&(task->threadx_thread));
+    if (status != TX_SUCCESS && status != TX_THREAD_ERROR) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
 }
 
 void _z_task_exit(void) {  // NEW with new vesion
@@ -222,7 +230,8 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
     }
 
     ULONG now = tx_time_get();
-    ULONG target_time = (abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000) * (TX_TIMER_TICKS_PER_SECOND / 1000);
+    ULONG target_time =
+        ((abstime->tv_sec * 1000ULL + abstime->tv_nsec / 1000000ULL) * TX_TIMER_TICKS_PER_SECOND) / 1000ULL;
     ULONG block_duration = (target_time > now) ? (target_time - now) : 0;
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
@@ -265,9 +274,9 @@ z_result_t z_sleep_s(size_t time) {
 /*------------------ Clock ------------------*/
 
 void __z_clock_gettime(z_clock_t *ts) {
-    uint64_t ms = tx_time_get() * (TX_TIMER_TICKS_PER_SECOND / 1000);
-    ts->tv_sec = ms / (uint64_t)1000;
-    ts->tv_nsec = (ms % (uint64_t)1000) * (uint64_t)1000;
+    uint64_t ticks = (uint64_t)tx_time_get();
+    ts->tv_sec = ticks / TX_TIMER_TICKS_PER_SECOND;
+    ts->tv_nsec = (ticks % TX_TIMER_TICKS_PER_SECOND) * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
 z_clock_t z_clock_now(void) {
@@ -349,13 +358,13 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
     return (tx_time_get() - *time) * 1000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) * TX_TIMER_TICKS_PER_SECOND; }
+unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) / TX_TIMER_TICKS_PER_SECOND; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
-    ULONG64 time_ns = tx_time_get() * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
+    uint64_t ticks = (uint64_t)tx_time_get();
 
-    t->secs = time_ns / 1000000000ULL;
-    t->nanos = time_ns % 1000000000ULL;
+    t->secs = ticks / TX_TIMER_TICKS_PER_SECOND;
+    t->nanos = (ticks % TX_TIMER_TICKS_PER_SECOND) * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
 
     return _Z_RES_OK;
 }
