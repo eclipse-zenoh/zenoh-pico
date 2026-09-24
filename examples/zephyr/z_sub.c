@@ -40,7 +40,7 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
 }
 
 int main(int argc, char **argv) {
-    sleep(5);
+    z_sleep_s(5);
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     printf("OK!\n");
 
     while (1) {
-        sleep(1);
+        z_sleep_s(1);
     }
 
     printf("Closing Zenoh Session...");

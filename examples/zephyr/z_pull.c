@@ -33,7 +33,7 @@ const size_t INTERVAL = 5000;
 const size_t SIZE = 3;
 
 int main(int argc, char **argv) {
-    sleep(5);
+    z_sleep_s(5);
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
