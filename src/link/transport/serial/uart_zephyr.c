@@ -16,13 +16,7 @@
 
 #if Z_FEATURE_LINK_SERIAL == 1 && defined(ZENOH_ZEPHYR)
 
-#include <version.h>
-
-#if KERNEL_VERSION_MAJOR == 2
-#include <drivers/uart.h>
-#else
 #include <zephyr/drivers/uart.h>
-#endif
 
 #include "zenoh-pico/utils/logging.h"
 
