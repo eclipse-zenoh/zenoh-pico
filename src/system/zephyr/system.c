@@ -16,19 +16,13 @@
 
 #if defined(ZENOH_ZEPHYR)
 
-#include <version.h>
-
-#if KERNEL_VERSION_MAJOR == 2
-#include <random/rand32.h>
-#else
-#include <zephyr/random/random.h>
-#endif
-
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <version.h>
+#include <zephyr/random/random.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/system_error.h"
