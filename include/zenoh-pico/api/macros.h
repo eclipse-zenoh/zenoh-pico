@@ -1218,6 +1218,9 @@ inline z_result_t z_clone(z_owned_string_array_t* dst, const z_loaned_string_arr
     return z_string_array_clone(dst, this_);
 }
 inline z_result_t z_clone(z_owned_hello_t* dst, const z_loaned_hello_t* this_) { return z_hello_clone(dst, this_); }
+inline z_result_t z_clone(z_owned_cancellation_token_t* dst, const z_loaned_cancellation_token_t* this_) {
+    return z_cancellation_token_clone(dst, this_);
+}
 #if Z_FEATURE_CONNECTIVITY == 1
 inline z_result_t z_clone(z_owned_transport_t* dst, const z_loaned_transport_t* this_) {
     return z_transport_clone(dst, this_);
