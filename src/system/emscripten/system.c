@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/system_error.h"
@@ -128,13 +129,25 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
+// emscripten_sleep() requires the module to be built with Asyncify (or JSPI),
+// which is incompatible with a pthreads build. A pthreads build has a real OS
+// thread, so a plain blocking usleep() works and is preferred there; keep
+// emscripten_sleep() as the fallback for non-pthreads (Asyncify) builds.
 z_result_t z_sleep_us(size_t time) {
+#if defined(__EMSCRIPTEN_PTHREADS__)
+    usleep((useconds_t)time);
+#else
     emscripten_sleep((time / 1000) + (time % 1000 == 0 ? 0 : 1));
+#endif
     return 0;
 }
 
 z_result_t z_sleep_ms(size_t time) {
+#if defined(__EMSCRIPTEN_PTHREADS__)
+    usleep((useconds_t)time * 1000);
+#else
     emscripten_sleep(time);
+#endif
     return 0;
 }
 
