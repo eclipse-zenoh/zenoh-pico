@@ -72,7 +72,7 @@ _z_executor_status_t _z_executor_get_next_fut(_z_executor_t *executor, _z_fut_da
         z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
             // The sleeping task is ready to execute
-            _z_fut_data_hmap_iter_t sleeping_idx;
+            _z_fut_data_hmap_iter_t sleeping_idx = 0;
             _z_sleeping_fut_pqueue_pop(&executor->_sleeping_tasks, &sleeping_idx);
             if (_z_fut_data_hmap_index_deque_pop_front(&executor->_ready_tasks, task_idx)) {
                 // We have a non-sleeping task to execute, we should re-enqueue the ready sleeping task as non-sleeping
