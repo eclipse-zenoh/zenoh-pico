@@ -45,7 +45,7 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
     if (sock->_fd >= 0) {
-        close(sock->_fd);
+        zsock_close(sock->_fd);
         sock->_fd = -1;
     }
 }
