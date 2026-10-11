@@ -151,12 +151,20 @@ bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
 
 void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src) {
     _z_zbuf_clear(&src->flow_buff);
+#if Z_FEATURE_UNICAST_PEER == 1
+    /* Only the peer-mode paths ever take ownership of a socket: the inbound
+     * accept in `accept.c` and `_z_new_peer` pass owns_socket=true, while the
+     * client path passes false. With Z_FEATURE_UNICAST_PEER off the flag is
+     * therefore always false and this branch is dead -- but it still drags
+     * `_z_socket_close` into the link, which a socket-free build (serial only,
+     * no IP stack) has no implementation for. */
     if (src->_owns_socket) {
 #if Z_FEATURE_LINK_TLS == 1
         _z_close_tls_socket(&src->_socket);
 #endif
         _z_socket_close(&src->_socket);
     }
+#endif
     _z_transport_peer_common_clear(&src->common);
 }
 
