@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <zenoh-pico.h>
+#include <zephyr/kernel.h>
 
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
@@ -33,7 +33,7 @@
 
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
-    sleep(5);
+    k_sleep(K_SECONDS(5));
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     char buf[256];
     for (int idx = 0; 1; ++idx) {
-        sleep(1);
+        k_sleep(K_SECONDS(1));
         snprintf(buf, sizeof(buf), "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 

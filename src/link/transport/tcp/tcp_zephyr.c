@@ -101,7 +101,7 @@ static z_result_t _z_tcp_zephyr_open(_z_sys_net_socket_t *sock, const _z_sys_net
         }
 
         if (ret != _Z_RES_OK) {
-            close(sock->_fd);
+            zsock_close(sock->_fd);
             sock->_fd = -1;
         }
     } else {
@@ -122,7 +122,7 @@ static z_result_t _z_tcp_zephyr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
     int optflag = 1;
     if (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
-        close(sock->_fd);
+        zsock_close(sock->_fd);
         sock->_fd = -1;
         return _Z_ERR_GENERIC;
     }
@@ -150,7 +150,7 @@ static z_result_t _z_tcp_zephyr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
         return _Z_RES_OK;
     }
 
-    close(sock->_fd);
+    zsock_close(sock->_fd);
     sock->_fd = -1;
     return _Z_ERR_GENERIC;
 }
@@ -167,7 +167,7 @@ static z_result_t _z_tcp_zephyr_accept(const _z_sys_net_socket_t *sock_in, _z_sy
 #if Z_FEATURE_TCP_NODELAY == 1
     int optflag = 1;
     if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
-        close(con_socket);
+        zsock_close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
@@ -176,7 +176,7 @@ static z_result_t _z_tcp_zephyr_accept(const _z_sys_net_socket_t *sock_in, _z_sy
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
-        close(con_socket);
+        zsock_close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
@@ -187,7 +187,7 @@ static z_result_t _z_tcp_zephyr_accept(const _z_sys_net_socket_t *sock_in, _z_sy
 
 static void _z_tcp_zephyr_close(_z_sys_net_socket_t *sock) {
     if (sock->_fd >= 0) {
-        close(sock->_fd);
+        zsock_close(sock->_fd);
         sock->_fd = -1;
     }
 }
