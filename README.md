@@ -104,6 +104,8 @@ tested micro controllers.
 
 #### 2.2.1. Zephyr
 
+Zephyr 3.7 or later is required.
+
 Note: tested with reel_board, nucleo-f767zi, nucleo-f420zi, and nRF52840 boards.
 
 A typical PlatformIO project for Zephyr framework must have the following
