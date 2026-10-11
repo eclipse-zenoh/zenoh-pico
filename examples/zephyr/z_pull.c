@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zenoh-pico.h>
+#include <zephyr/kernel.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
@@ -33,7 +34,7 @@ const size_t INTERVAL = 5000;
 const size_t SIZE = 3;
 
 int main(int argc, char **argv) {
-    sleep(5);
+    k_sleep(K_SECONDS(5));
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -84,7 +85,7 @@ int main(int argc, char **argv) {
         }
         if (res == Z_CHANNEL_NODATA) {
             printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", INTERVAL);
-            z_sleep_ms(INTERVAL);
+            k_msleep(INTERVAL);
         } else {
             break;
         }
