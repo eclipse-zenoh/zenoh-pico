@@ -153,7 +153,11 @@ static bool _z_opt_is_true(const char *val) {
 
 static int _z_tls_bio_send(void *ctx, const unsigned char *buf, size_t len) {
     int fd = *(int *)ctx;
+#if defined(ZENOH_LINUX)
     ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
+#else
+    ssize_t n = send(fd, buf, len, 0);
+#endif
     if (n < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return MBEDTLS_ERR_SSL_WANT_WRITE;
