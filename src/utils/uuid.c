@@ -26,7 +26,7 @@
 void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str) {
     uint8_t n_dash = 0;
     for (uint8_t i = 0; i < 32; i += 2) {
-        if (i == 8 || i == 12 || i == 16 || i == 18) {
+        if (i == 8 || i == 12 || i == 16 || i == 20) {
             n_dash += 1;
         }
         char val[5] = {'0', 'x', uuid_str[i + n_dash], uuid_str[i + 1 + n_dash], '\0'};
