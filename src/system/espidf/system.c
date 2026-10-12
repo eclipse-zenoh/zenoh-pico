@@ -66,6 +66,8 @@ static void z_task_wrapper(void *arg) {
     z_task_arg *targ = (z_task_arg *)arg;
     targ->fun(targ->arg);
     xEventGroupSetBits(targ->join_event, 1);
+    // No one else uses this task argument after this
+    z_free(targ);
     vTaskDelete(NULL);
 }
 
@@ -102,12 +104,14 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *arg_attr, void *(*fun)(v
         task->handle = xTaskCreateStatic(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority,
                                          attr->stack_buffer, attr->task_buffer);
         if (task->handle == NULL) {
+            z_free(z_arg);
             return -1;
         }
     } else {
 #endif /* SUPPORT_STATIC_ALLOCATION */
         if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) !=
             pdPASS) {
+            z_free(z_arg);
             return -1;
         }
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
