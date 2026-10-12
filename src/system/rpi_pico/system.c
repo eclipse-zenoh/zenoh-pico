@@ -72,6 +72,8 @@ static void z_task_wrapper(void *arg) {
     z_task_arg *targ = (z_task_arg *)arg;
     targ->fun(targ->arg);
     xEventGroupSetBits(targ->join_event, 1);
+    // No one else uses this task argument after this
+    z_free(targ);
     vTaskDelete(NULL);
 }
 
@@ -97,6 +99,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     }
 
     if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) != pdPASS) {
+        z_free(z_arg);
         return -1;
     }
 
@@ -105,6 +108,10 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 z_result_t _z_task_join(_z_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
+    // The wrapper does not touch the event group after setting the bit.
+    // Nothing joins a task twice, so delete it here.
+    vEventGroupDelete(task->join_event);
+    task->join_event = NULL;
     return 0;
 }
 
