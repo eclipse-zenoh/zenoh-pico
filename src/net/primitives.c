@@ -390,7 +390,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     }
     _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
 #else
-    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&qle->_zn);
 #endif
     // Find session_queryable entry
     _z_session_queryable_rc_t q = _z_get_session_queryable_by_id(zn, qle->_entity_id);
