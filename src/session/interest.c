@@ -461,8 +461,9 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
     // Retrieve declare data
     _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
     if (prev_decl == NULL) {
+        // Nothing to undo: in multicast a peer cannot know the declarations made before it joined.
         _z_session_mutex_unlock(zn);
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
+        return _Z_RES_OK;
     }
     _z_session_interest_rc_slist_t *intrs =
         __unsafe_z_get_interest_by_key_and_flags(zn, flags, &prev_decl->_key, _z_optional_id_make_none());
