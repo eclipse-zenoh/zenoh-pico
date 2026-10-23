@@ -20,7 +20,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <zephyr/net/socket.h>
 
 #include "zenoh-pico/utils/logging.h"
@@ -61,7 +60,7 @@ static z_result_t _z_udp_zephyr_open(_z_sys_net_socket_t *sock, const _z_sys_net
         }
 
         if (ret != _Z_RES_OK) {
-            close(sock->_fd);
+            zsock_close(sock->_fd);
             sock->_fd = -1;
         }
     } else {
@@ -82,7 +81,7 @@ static z_result_t _z_udp_zephyr_listen(_z_sys_net_socket_t *sock, const _z_sys_n
 
 static void _z_udp_zephyr_close(_z_sys_net_socket_t *sock) {
     if (sock->_fd >= 0) {
-        close(sock->_fd);
+        zsock_close(sock->_fd);
         sock->_fd = -1;
     }
 }
