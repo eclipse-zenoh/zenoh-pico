@@ -56,7 +56,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    sleep(5);
+    z_sleep_s(5);
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     printf("Zenoh setup finished!\n");
 
     while (1) {
-        sleep(1);
+        z_sleep_s(1);
     }
 
     printf("Closing Zenoh Session...");

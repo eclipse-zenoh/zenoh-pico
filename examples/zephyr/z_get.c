@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_QUERY == 1
@@ -51,7 +50,7 @@ void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    sleep(5);
+    z_sleep_s(5);
 
     // Initialize Zenoh Session and other parameters
     z_owned_config_t config;
@@ -76,7 +75,7 @@ int main(int argc, char **argv) {
     printf("OK\n");
 
     while (1) {
-        sleep(5);
+        z_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts;
         z_get_options_default(&opts);

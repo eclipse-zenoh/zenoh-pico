@@ -75,7 +75,7 @@ void drop(void *context) {
 }
 
 int main(void) {
-    sleep(5);
+    z_sleep_s(5);
 
     int *context = (int *)malloc(sizeof(int));
     *context = 0;
