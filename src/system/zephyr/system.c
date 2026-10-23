@@ -362,9 +362,16 @@ void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
 void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
 
 /*------------------ Time ------------------*/
+static void _z_gettimeofday(z_time_t *tv) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    tv->tv_sec = ts.tv_sec;
+    tv->tv_usec = ts.tv_nsec / 1000;
+}
+
 z_time_t z_time_now(void) {
     z_time_t now;
-    gettimeofday(&now, NULL);
+    _z_gettimeofday(&now);
     return now;
 }
 
@@ -378,7 +385,7 @@ const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
 
 unsigned long z_time_elapsed_us(z_time_t *time) {
     z_time_t now;
-    gettimeofday(&now, NULL);
+    _z_gettimeofday(&now);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
@@ -386,7 +393,7 @@ unsigned long z_time_elapsed_us(z_time_t *time) {
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now;
-    gettimeofday(&now, NULL);
+    _z_gettimeofday(&now);
 
     unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
@@ -394,7 +401,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
 
 unsigned long z_time_elapsed_s(z_time_t *time) {
     z_time_t now;
-    gettimeofday(&now, NULL);
+    _z_gettimeofday(&now);
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
@@ -402,7 +409,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     z_time_t now;
-    gettimeofday(&now, NULL);
+    _z_gettimeofday(&now);
     t->secs = now.tv_sec;
     t->nanos = now.tv_usec * 1000;
     return 0;
