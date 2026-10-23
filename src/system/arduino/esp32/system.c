@@ -126,6 +126,10 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 z_result_t _z_task_join(_z_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
+    // The wrapper does not touch the event group after setting the bit.
+    // Nothing joins a task twice, so delete it here.
+    vEventGroupDelete(task->join_event);
+    task->join_event = NULL;
     return _z_task_cancel(task);
 }
 
