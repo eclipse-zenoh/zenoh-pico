@@ -20,7 +20,6 @@
 #include <netdb.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/socket.h>
 
@@ -92,7 +91,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             }
 
             if (ret != _Z_RES_OK) {
-                close(sock->_fd);
+                zsock_close(sock->_fd);
                 sock->_fd = -1;
                 z_free(lsockaddr);
                 return ret;
@@ -102,7 +101,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
             if (laddr == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
-                close(sock->_fd);
+                zsock_close(sock->_fd);
                 sock->_fd = -1;
                 z_free(lsockaddr);
                 return _Z_ERR_GENERIC;
@@ -205,6 +204,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             ifa = net_if_get_default();
             if (ifa != NULL) {
                 // Join the multicast group
+#if defined(CONFIG_NET_IPV4)
                 if (rep._iptcp->ai_family == AF_INET) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
@@ -213,7 +213,10 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                         ret = _Z_ERR_GENERIC;
                     }
                     net_if_ipv4_maddr_join(ifa, mcast);
-                } else if (rep._iptcp->ai_family == AF_INET6) {
+                } else
+#endif
+#if defined(CONFIG_NET_IPV6)
+                    if (rep._iptcp->ai_family == AF_INET6) {
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                     if (!mcast) {
@@ -221,7 +224,9 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                         ret = _Z_ERR_GENERIC;
                     }
                     net_if_ipv6_maddr_join(ifa, mcast);
-                } else {
+                } else
+#endif
+                {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
@@ -232,7 +237,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
         }
 
         if (ret != _Z_RES_OK) {
-            close(sock->_fd);
+            zsock_close(sock->_fd);
             sock->_fd = -1;
         }
 
@@ -255,6 +260,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         ifa = net_if_get_default();
         if (ifa != NULL) {
             struct net_if_mcast_addr *mcast = NULL;
+#if defined(CONFIG_NET_IPV4)
             if (rep._iptcp->ai_family == AF_INET) {
                 mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
                 if (mcast != NULL) {
@@ -263,7 +269,10 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                 } else {
                     // Do nothing. The socket will be closed in any case.
                 }
-            } else if (rep._iptcp->ai_family == AF_INET6) {
+            } else
+#endif
+#if defined(CONFIG_NET_IPV6)
+                if (rep._iptcp->ai_family == AF_INET6) {
                 mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
                 if (mcast != NULL) {
                     net_if_ipv6_maddr_leave(ifa, mcast);
@@ -271,7 +280,9 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                 } else {
                     // Do nothing. The socket will be closed in any case.
                 }
-            } else {
+            } else
+#endif
+            {
                 // Do nothing. It must never not enter here.
                 // Required to be compliant with MISRA 15.7 rule
             }
@@ -279,11 +290,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
     }
 
     if (sockrecv->_fd >= 0) {
-        close(sockrecv->_fd);
+        zsock_close(sockrecv->_fd);
         sockrecv->_fd = -1;
     }
     if (socksend->_fd >= 0) {
-        close(socksend->_fd);
+        zsock_close(socksend->_fd);
         socksend->_fd = -1;
     }
 }
