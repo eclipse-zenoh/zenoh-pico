@@ -76,9 +76,14 @@ z_result_t _z_id_encode_as_slice(_z_wbuf_t *wbf, const _z_id_t *id) {
 /// guarantee that this state will be set in case of errors.
 z_result_t _z_id_decode_as_slice(_z_id_t *id, _z_zbuf_t *zbf) {
     z_result_t ret = _Z_RES_OK;
-    uint8_t len = _z_zbuf_read(zbf);
-    _z_zbuf_read_bytes(zbf, id->id, 0, len);
-    memset(id->id + len, 0, 16 - len);
+    uint8_t len;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&len, zbf));
+    if (len > sizeof(id->id)) {
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    _Z_RETURN_IF_ERR(_z_zbuf_read_exact(zbf, id->id, len));
+    memset(id->id + len, 0, sizeof(id->id) - len);
     return ret;
 }
 

@@ -686,6 +686,90 @@ void timestamp_field(void) {
     _z_wbuf_clear(&wbf);
 }
 
+void timestamp_rejects_oversized_id(void) {
+    uint8_t wire[2 + UINT8_MAX];
+    wire[0] = 0x01;  // Timestamp time = 1, encoded as a one-byte VLE.
+    memset(wire + 2, 0x42, sizeof(wire) - 2);
+
+    for (size_t len = ZENOH_ID_SIZE + 1; len <= UINT8_MAX; len++) {
+        wire[1] = (uint8_t)len;
+        _z_timestamp_t ts = {0};
+        memset(ts.id.id, 0xa5, sizeof(ts.id.id));
+
+        // Supply the full payload so a source-bounds check cannot mask the bug.
+        _z_zbuf_t reader = _z_slice_as_zbuf(_z_slice_alias_buf(wire, 2 + len));
+        z_result_t ret = _z_timestamp_decode(&ts, &reader);
+        assert(ret == _Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
+        (void)(ret);
+        assert(!ts.valid);
+        assert(_z_zbuf_get_rpos(&reader) == 2);
+        for (size_t i = 0; i < sizeof(ts.id.id); i++) {
+            assert(ts.id.id[i] == 0xa5);
+        }
+    }
+}
+
+void timestamp_id_length_boundaries(void) {
+    uint8_t wire[2 + ZENOH_ID_SIZE];
+    wire[0] = 0x01;
+    for (size_t i = 0; i < ZENOH_ID_SIZE; i++) {
+        wire[2 + i] = (uint8_t)(i + 1);
+    }
+
+    for (size_t len = 0; len <= ZENOH_ID_SIZE; len++) {
+        wire[1] = (uint8_t)len;
+        _z_timestamp_t ts = {0};
+        memset(ts.id.id, 0xa5, sizeof(ts.id.id));
+
+        _z_zbuf_t reader = _z_slice_as_zbuf(_z_slice_alias_buf(wire, 2 + len));
+        z_result_t ret = _z_timestamp_decode(&ts, &reader);
+        assert(ret == _Z_RES_OK);
+        (void)(ret);
+        assert(ts.valid);
+        assert(ts.time == 1);
+        assert(memcmp(ts.id.id, wire + 2, len) == 0);
+        for (size_t i = len; i < sizeof(ts.id.id); i++) {
+            assert(ts.id.id[i] == 0);
+        }
+        assert(_z_zbuf_get_rpos(&reader) == 2 + len);
+    }
+}
+
+void timestamp_id_truncated_input(void) {
+    const struct {
+        uint8_t id_len;
+        size_t wire_len;
+        z_result_t expected;
+        size_t read_pos;
+    } cases[] = {
+        // Missing length byte.
+        {16, 1, _Z_ERR_MESSAGE_DESERIALIZATION_FAILED, 1},
+        // Only 15 ID bytes.
+        {16, 17, _Z_ERR_MESSAGE_DESERIALIZATION_FAILED, 2},
+        // Reject before reading ID bytes.
+        {17, 2, _Z_ERR_MESSAGE_DESERIALIZATION_FAILED, 2},
+    };
+    uint8_t wire[2 + ZENOH_ID_SIZE];
+    wire[0] = 0x01;
+    memset(wire + 2, 0x42, sizeof(wire) - 2);
+
+    for (size_t c = 0; c < _ZP_ARRAY_SIZE(cases); c++) {
+        wire[1] = cases[c].id_len;
+        _z_timestamp_t ts = {0};
+        memset(ts.id.id, 0xa5, sizeof(ts.id.id));
+
+        _z_zbuf_t reader = _z_slice_as_zbuf(_z_slice_alias_buf(wire, cases[c].wire_len));
+        z_result_t ret = _z_timestamp_decode(&ts, &reader);
+        assert(ret == cases[c].expected);
+        (void)(ret);
+        assert(!ts.valid);
+        assert(_z_zbuf_get_rpos(&reader) == cases[c].read_pos);
+        for (size_t i = 0; i < sizeof(ts.id.id); i++) {
+            assert(ts.id.id[i] == 0xa5);
+        }
+    }
+}
+
 /*------------------ ResKey field ------------------*/
 _z_wireexpr_t gen_wireexpr(void) {
     _z_wireexpr_t key;
@@ -2314,6 +2398,10 @@ static void network_message_decode_pairwise_matrix(bool check_contents, size_t i
 /*=============================*/
 int main(void) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
+
+    timestamp_rejects_oversized_id();
+    timestamp_id_length_boundaries();
+    timestamp_id_truncated_input();
 
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
