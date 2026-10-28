@@ -92,6 +92,20 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     return ret;
 }
 
+static z_result_t _z_unicast_handshake_unexpected_reply(_z_transport_message_t *msg, const char *expected) {
+    _ZP_UNUSED(expected);
+    z_result_t ret = _Z_ERR_MESSAGE_UNEXPECTED;
+    if (_Z_MID(msg->_header) == _Z_MID_T_CLOSE) {
+        _Z_INFO("Session refused by the remote: received a Close (reason %u) instead of %s",
+                (unsigned)msg->_body._close._reason, expected);
+        ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+    } else {
+        _Z_ERROR("Received an unexpected message (id 0x%02x) instead of %s", (unsigned)_Z_MID(msg->_header), expected);
+    }
+    _z_t_msg_clear(msg);
+    _Z_ERROR_RETURN(ret);
+}
+
 static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                             const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
     z_clock_t recv_deadline = z_clock_now();
@@ -113,8 +127,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _z_transport_message_t iam = {0};
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket, recv_deadline));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
-        _z_t_msg_clear(&iam);
-        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
+        return _z_unicast_handshake_unexpected_reply(&iam, "an InitAck");
     }
     param->_remote_whatami = iam._body._init._whatami;
     _Z_DEBUG("Received Z_INIT(Ack)");
@@ -185,9 +198,8 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _z_transport_message_t oam = {0};
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket, recv_deadline));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
-        _z_t_msg_clear(&oam);
-        _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
-        ret = _Z_ERR_MESSAGE_UNEXPECTED;
+        // Do not go on: the lease and initial SN below would be read from a message that is not an OpenAck
+        return _z_unicast_handshake_unexpected_reply(&oam, "an OpenAck");
     }
     // THIS LOG STRING USED IN TEST, change with caution
     _Z_DEBUG("Received Z_OPEN(Ack)");
