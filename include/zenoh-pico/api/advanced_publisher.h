@@ -113,8 +113,9 @@ typedef struct {
  *   z_publisher_options_t publisher_options: Base publisher options.
  *   ze_advanced_publisher_cache_options_t cache: Publisher cache settings.
  *   ze_advanced_publisher_sample_miss_detection_options_t sample_miss_detection: Allow
- *     matching Subscribers to detect lost samples and optionally ask for retransmission.
- *     Retransmission can only be done if history is enabled on subscriber side.
+ *     matching Advanced Subscribers to detect sequence gaps and optionally ask for retransmission.
+ *     Retransmission requires publisher-side caching and subscriber-side recovery. Subscriber
+ *     history is used for initial or late-joiner historical data queries.
  *   bool publisher_detection: Allow this publisher to be detected through liveliness.
  *   z_loaned_keyexpr_t *publisher_detection_metadata: An optional key expression to be added
  *     to the liveliness token key expression. It can be used to convey meta data.
