@@ -192,6 +192,13 @@ static void _z_tcp_zephyr_close(_z_sys_net_socket_t *sock) {
 }
 
 static size_t _z_tcp_zephyr_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
+#if !defined(CONFIG_NET_CONTEXT_RCVTIMEO)
+    // Without CONFIG_NET_CONTEXT_RCVTIMEO, SO_RCVTIMEO is rejected and recv() would block the lease job.
+    struct zsock_pollfd pfd = {.fd = sock._fd, .events = ZSOCK_POLLIN};
+    if (zsock_poll(&pfd, 1, Z_CONFIG_SOCKET_TIMEOUT) <= 0) {
+        return SIZE_MAX;
+    }
+#endif
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < (ssize_t)0) {
         return SIZE_MAX;
