@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir -p "$ARDUINO_BASE"
           cd "$ARDUINO_BASE"
-          pio init -b esp32thing_plus -O "-DZ_FEATURE_LINK_BLUETOOTH=1 -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG" -O "lib_ldf_mode=deep+"
+          pio init -b esp32thing_plus -O "-DZ_FEATURE_LINK_BLUETOOTH=1 -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG" -O "lib_ldf_mode=deep"
 
           cd "$ARDUINO_BASE/lib"
           ln -sfn "$ZENOH_PICO_BASE" "$ARDUINO_BASE/lib/zenoh-pico"
