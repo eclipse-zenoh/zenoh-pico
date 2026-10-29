@@ -78,3 +78,5 @@ oom-*
 timeout-*
 *.profdata
 *.profraw
+build-wasi/
+build-native/

@@ -19,8 +19,10 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#if !defined(ZENOH_WASI)
 #include <ifaddrs.h>
 #include <net/if.h>
+#endif
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -31,6 +33,34 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
+#if defined(ZENOH_WASI)
+// WASI has no getifaddrs/freeifaddrs; return a wildcard address so that
+// bind() and multicast joins use the default (only) network interface.
+static unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr) {
+    _ZP_UNUSED(iface);
+    unsigned int addrlen = 0U;
+
+    if (sa_family == AF_INET) {
+        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
+        if (*lsockaddr != NULL) {
+            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
+            ((struct sockaddr_in *)*lsockaddr)->sin_family = AF_INET;
+            ((struct sockaddr_in *)*lsockaddr)->sin_addr.s_addr = htonl(INADDR_ANY);
+            addrlen = sizeof(struct sockaddr_in);
+        }
+    } else if (sa_family == AF_INET6) {
+        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
+        if (*lsockaddr != NULL) {
+            (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
+            ((struct sockaddr_in6 *)*lsockaddr)->sin6_family = AF_INET6;
+            (void)memset(&((struct sockaddr_in6 *)*lsockaddr)->sin6_addr, 0, sizeof(struct in6_addr));
+            addrlen = sizeof(struct sockaddr_in6);
+        }
+    }
+
+    return addrlen;
+}
+#else
 static unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr) {
     unsigned int addrlen = 0U;
 
@@ -69,6 +99,7 @@ static unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct
 
     return addrlen;
 }
+#endif
 
 z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
                                  uint32_t tout, const char *iface) {
@@ -106,7 +137,12 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (lsockaddr->sa_family == AF_INET6) {
+#if !defined(ZENOH_WASI)
                 int ifindex = (int)if_nametoindex(iface);
+#else
+                int ifindex = 0;
+                _ZP_UNUSED(iface);
+#endif
                 if ((ret == _Z_RES_OK) &&
                     (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)) {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -229,7 +265,11 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 // flawfinder: ignore
                 (void)memcpy(&mreq.ipv6mr_multiaddr, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr,
                              sizeof(struct in6_addr));
+#if !defined(ZENOH_WASI)
                 mreq.ipv6mr_interface = if_nametoindex(iface);
+#else
+                mreq.ipv6mr_interface = 0;
+#endif
                 if ((ret == _Z_RES_OK) &&
                     (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -258,7 +298,11 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                         struct ipv6_mreq mreq;
                         (void)memset(&mreq, 0, sizeof(mreq));
                         inet_pton(rep._iptcp->ai_family, ip, &mreq.ipv6mr_multiaddr);
+#if !defined(ZENOH_WASI)
                         mreq.ipv6mr_interface = if_nametoindex(iface);
+#else
+                        mreq.ipv6mr_interface = 0;
+#endif
                         if ((ret == _Z_RES_OK) &&
                             (setsockopt(sock->_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0)) {
                             _Z_ERROR_LOG(_Z_ERR_GENERIC);
