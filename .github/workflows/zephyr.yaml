@@ -17,8 +17,8 @@ on:
   workflow_call:
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
+  platformio:
+    name: Build with PlatformIO on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       ZEPHYR_BASE: ${{ github.workspace }}/.ci/zephyrproject
@@ -103,3 +103,34 @@ jobs:
           ln -s "$ZENOH_PICO_BASE/examples/zephyr/z_scout.c"
           cd "$ZEPHYR_BASE"
           pio run
+
+  twister:
+    name: Build Zephyr module with Twister (Zephyr ${{ matrix.zephyr }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported LTS, latest release, and main
+        zephyr: [v3.7.2, v4.5.0, main]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: zenoh-pico
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zephyrproject-rtos/zephyr
+          ref: ${{ matrix.zephyr }}
+          path: zephyr
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Set up Zephyr workspace and SDK
+        uses: zephyrproject-rtos/action-zephyr-setup@be8136a8bba01580485d98b7ad2d32477c36a49a # v1.0.15
+        with:
+          app-path: zephyr
+          west-project-filter: -.*,+cmsis,+cmsis_6,+hal_stm32
+          ccache-cache-key: zephyr-${{ matrix.zephyr }}
+      - name: Build examples
+        run: |
+          west twister -T zenoh-pico/examples/zephyr --build-only --inline-logs \
+            -x=ZEPHYR_EXTRA_MODULES=${{ github.workspace }}/zenoh-pico
