@@ -28,7 +28,12 @@ z_result_t _z_socket_set_blocking(const _z_sys_net_socket_t *sock, bool blocking
     BaseType_t result =
         FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_RCVTIMEO, &option_value, sizeof(option_value));
 
-    if (result != pdPASS) {
+    if (result != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    result = FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_SNDTIMEO, &option_value, sizeof(option_value));
+    if (result != 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
