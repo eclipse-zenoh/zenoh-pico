@@ -83,7 +83,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
     switch (zl->_cap._transport) {
         // Unicast transport
         case Z_LINK_CAP_TRANSPORT_UNICAST: {
-            _z_transport_unicast_establish_param_t tp_param;
+            _z_transport_unicast_establish_param_t tp_param = {0};
             ret = _z_unicast_open_client(&tp_param, zl, local_zid);
             if (ret != _Z_RES_OK) {
                 _z_link_free(&zl);
