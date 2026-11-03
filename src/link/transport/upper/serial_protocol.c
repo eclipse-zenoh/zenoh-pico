@@ -163,14 +163,20 @@ static size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *h
         }
     }
 
-    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    // tmp_buf receives the COBS-decoded frame, but _z_serial_msg_deserialize's
+    // size check compares it against the still-encoded src_len (which includes
+    // byte stuffing and the 0x00 terminator). Sizing it to MFS rejects any frame
+    // whose encoded length exceeds MFS -- i.e. payloads above ~1493 B, despite
+    // the 1500 B MTU. MAX_COBS_BUF bounds the encoded input, so it is always
+    // large enough for the decoded output.
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     if (tmp_buf == NULL) {
         z_free(raw_buf);
-        _Z_ERROR("Failed to allocate serial MFS buffer");
+        _Z_ERROR("Failed to allocate serial COBS buffer");
         return SIZE_MAX;
     }
 
-    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE);
     z_free(raw_buf);
     z_free(tmp_buf);
     return ret;
