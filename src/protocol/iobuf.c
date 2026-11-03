@@ -102,6 +102,11 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src) {
         dst->_buf = (uint8_t *)z_malloc(src->_capacity);
         if (dst->_buf != NULL) {
             (void)memcpy(dst->_buf, src->_buf, src->_capacity);
+        } else {
+            dst->_r_pos = 0;
+            dst->_w_pos = 0;
+            dst->_capacity = 0;
+            dst->_is_alloc = false;
         }
     } else {
         dst->_buf = src->_buf;
