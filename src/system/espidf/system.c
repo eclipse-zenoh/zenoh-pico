@@ -224,7 +224,10 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 
 /*------------------ Sleep ------------------*/
 z_result_t z_sleep_us(size_t time) {
-    vTaskDelay(pdMS_TO_TICKS(time / 1000));
+    // A sub-tick sleep must still yield for at least one tick; vTaskDelay(0) is a bare
+    // yield and turns the executor's short waits into a busy loop that starves lower priorities.
+    TickType_t ticks = pdMS_TO_TICKS(time / 1000);
+    vTaskDelay((time > 0 && ticks == 0) ? 1 : ticks);
     return _Z_RES_OK;
 }
 
