@@ -16,9 +16,14 @@
 
 #if defined(ZP_PLATFORM_SOCKET_ESP32)
 
+#include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "zenoh-pico/config.h"
@@ -53,12 +58,86 @@ static void _z_tcp_esp32_endpoint_clear(_z_sys_net_endpoint_t *ep) {
     ep->_iptcp = NULL;
 }
 
+// Apply the link-layer socket timeout like tcp_lwip.c and the other ports do. Without it recv()
+// blocks forever and a silent peer parks the executor task that runs read, lease and keep-alive.
+// SO_RCVTIMEO = tout (Z_CONFIG_SOCKET_TIMEOUT), SO_SNDTIMEO = 1000 ms, and
+// connect() is non-blocking with a select() bounded by `tout`.
+#define _Z_TCP_ESP32_SEND_TIMEOUT_MS 1000u
+
+static void _z_tcp_esp32_ms_to_timeval(uint32_t ms, struct timeval *tv) {
+    tv->tv_sec = (time_t)(ms / (uint32_t)1000);
+    tv->tv_usec = (suseconds_t)((ms % (uint32_t)1000) * (uint32_t)1000);
+}
+
+static int _z_tcp_esp32_connect_tout(int fd, const struct sockaddr *addr, socklen_t addrlen, uint32_t tout) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        return -1;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        return -1;
+    }
+
+    int rc = connect(fd, addr, addrlen);
+    if (rc < 0) {
+        if (errno != EINPROGRESS) {
+            (void)fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+        fd_set wfds;
+        FD_ZERO(&wfds);
+        FD_SET(fd, &wfds);
+        struct timeval tv;
+        _z_tcp_esp32_ms_to_timeval(tout, &tv);
+        rc = select(fd + 1, NULL, &wfds, NULL, &tv);
+        if (rc <= 0) {
+            if (rc == 0) {
+                errno = ETIMEDOUT;
+            }
+            (void)fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+        int so_error = 0;
+        socklen_t so_len = sizeof(so_error);
+        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &so_len) < 0) {
+            (void)fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+        if (so_error != 0) {
+            errno = so_error;
+            (void)fcntl(fd, F_SETFL, flags);
+            return -1;
+        }
+    }
+
+    // back to blocking: reads/writes are bounded by SO_RCVTIMEO/SO_SNDTIMEO instead
+    if (fcntl(fd, F_SETFL, flags) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
 static z_result_t _z_tcp_esp32_open(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t endpoint, uint32_t tout) {
-    _ZP_UNUSED(tout);
     z_result_t ret = _Z_RES_OK;
 
     sock->_fd = socket(endpoint._iptcp->ai_family, endpoint._iptcp->ai_socktype, endpoint._iptcp->ai_protocol);
     if (sock->_fd != -1) {
+        struct timeval rcv_tv;
+        _z_tcp_esp32_ms_to_timeval(tout, &rcv_tv);
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (void *)&rcv_tv, sizeof(rcv_tv)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+
+        struct timeval snd_tv;
+        _z_tcp_esp32_ms_to_timeval(_Z_TCP_ESP32_SEND_TIMEOUT_MS, &snd_tv);
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_SNDTIMEO, (void *)&snd_tv, sizeof(snd_tv)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            ret = _Z_ERR_GENERIC;
+        }
+
         int optflag = 1;
         if ((ret == _Z_RES_OK) &&
             (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&optflag, sizeof(optflag)) < 0)) {
@@ -86,7 +165,7 @@ static z_result_t _z_tcp_esp32_open(_z_sys_net_socket_t *sock, const _z_sys_net_
 #endif
 
         for (struct addrinfo *it = endpoint._iptcp; it != NULL; it = it->ai_next) {
-            if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
+            if ((ret == _Z_RES_OK) && (_z_tcp_esp32_connect_tout(sock->_fd, it->ai_addr, it->ai_addrlen, tout) < 0)) {
                 if (it->ai_next == NULL) {
                     _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
@@ -162,6 +241,19 @@ static z_result_t _z_tcp_esp32_accept(const _z_sys_net_socket_t *sock_in, _z_sys
     sock_out->_fd = -1;
     int con_socket = accept(sock_in->_fd, &naddr, &nlen);
     if (con_socket < 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    struct timeval rcv_tv;
+    _z_tcp_esp32_ms_to_timeval(Z_CONFIG_SOCKET_TIMEOUT, &rcv_tv);
+    if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&rcv_tv, sizeof(rcv_tv)) < 0) {
+        close(con_socket);
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    struct timeval snd_tv;
+    _z_tcp_esp32_ms_to_timeval(_Z_TCP_ESP32_SEND_TIMEOUT_MS, &snd_tv);
+    if (setsockopt(con_socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&snd_tv, sizeof(snd_tv)) < 0) {
+        close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
