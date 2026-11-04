@@ -14,6 +14,30 @@
 
 #include "zenoh-pico/runtime/executor.h"
 
+// The executor stores wake-up times as milliseconds since its epoch. zp_clock_elapsed_ms_since()
+// returns `unsigned long`, which is 32 bits on ESP32 / RV32 (and other 32-bit targets): its signed
+// intermediate goes negative at 2^31 ms (24.9 days after z_open) and the result wraps at 2^32 ms, after
+// which every sleeping task looks due and the executor spins. Count whole seconds (32-bit safe for 136
+// years) and add the sub-second remainder, so the stored value is a true 64-bit offset.
+static uint64_t _z_executor_ms_since(const z_clock_t *t, const z_clock_t *epoch) {
+    z_clock_t base = *epoch;
+    unsigned long secs = zp_clock_elapsed_s_since((z_clock_t *)t, &base);
+    z_clock_advance_s(&base, secs);
+    if (secs > 0 && zp_clock_elapsed_ms_since(&base, (z_clock_t *)t) > 0) {
+        secs--;  // whole-second count overshot because of the sub-second part
+        base = *epoch;
+        z_clock_advance_s(&base, secs);
+    }
+    return (uint64_t)secs * 1000u + (uint64_t)zp_clock_elapsed_ms_since((z_clock_t *)t, &base);
+}
+
+static z_clock_t _z_executor_epoch_plus_ms(const z_clock_t *epoch, uint64_t ms) {
+    z_clock_t t = *epoch;
+    z_clock_advance_s(&t, (unsigned long)(ms / 1000u));
+    z_clock_advance_ms(&t, (unsigned long)(ms % 1000u));
+    return t;
+}
+
 _z_fut_handle_t _z_executor_spawn(_z_executor_t *executor, _z_fut_t *fut) {
     _z_fut_data_t fut_data;
     _z_fut_move(&fut_data._fut, fut);
@@ -46,8 +70,7 @@ _z_executor_status_t _z_executor_get_status(const _z_executor_t *executor) {
         z_clock_t now = z_clock_now();
         uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
             _z_fut_data_hmap_const_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
-        z_clock_t wake_up_time = executor->_epoch;
-        z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
+        z_clock_t wake_up_time = _z_executor_epoch_plus_ms(&executor->_epoch, wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
             result.status = _Z_EXECUTOR_STATE_READY_TO_EXECUTE_TASK;
         } else {
@@ -68,8 +91,7 @@ _z_executor_status_t _z_executor_get_next_fut(_z_executor_t *executor, _z_fut_da
         z_clock_t now = z_clock_now();
         uint64_t wake_up_time_ms = _z_fut_schedule_get_wake_up_time_ms(
             _z_fut_data_hmap_const_at(&executor->_tasks, *sleeping_idx_ptr)->val._schedule);
-        z_clock_t wake_up_time = executor->_epoch;
-        z_clock_advance_ms(&wake_up_time, (unsigned long)wake_up_time_ms);
+        z_clock_t wake_up_time = _z_executor_epoch_plus_ms(&executor->_epoch, wake_up_time_ms);
         if (zp_clock_elapsed_ms_since(&now, &wake_up_time) > 0) {
             // The sleeping task is ready to execute
             _z_fut_data_hmap_iter_t sleeping_idx = 0;
@@ -133,7 +155,7 @@ _z_executor_status_t _z_executor_spin(_z_executor_t *executor) {
     } else if (fn_result._status == _Z_FUT_STATUS_SLEEPING) {
         // The task is sleeping, we should move it to the sleeping task queue with the wake-up time.
         fut_data->_schedule =
-            _z_fut_schedule_sleeping((uint64_t)zp_clock_elapsed_ms_since(&fn_result._wake_up_time, &executor->_epoch));
+            _z_fut_schedule_sleeping(_z_executor_ms_since(&fn_result._wake_up_time, &executor->_epoch));
         // can't fail since we have enough capacity for all tasks in the hashmap
         _z_sleeping_fut_pqueue_push(&executor->_sleeping_tasks, &fut_idx);
     } else if (fn_result._status == _Z_FUT_STATUS_READY) {
