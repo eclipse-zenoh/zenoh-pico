@@ -199,7 +199,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
         // FIXME: iface passed into the locator is being ignored
         //        default if used instead
-        if (ret != _Z_RES_OK) {
+        if (ret == _Z_RES_OK) {
             struct net_if *ifa = NULL;
             ifa = net_if_get_default();
             if (ifa != NULL) {
