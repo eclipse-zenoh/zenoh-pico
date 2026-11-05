@@ -17,9 +17,11 @@
 
 #if defined(ZP_PLATFORM_SOCKET_ZEPHYR) && (Z_FEATURE_LINK_UDP_MULTICAST == 1)
 
+#include <errno.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <zephyr/net/igmp.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/socket.h>
 
@@ -206,6 +208,14 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 // Join the multicast group
 #if defined(CONFIG_NET_IPV4)
                 if (rep._iptcp->ai_family == AF_INET) {
+#if defined(CONFIG_NET_IPV4_IGMP)
+                    // Join via IGMP: it sends the report and notifies the driver to accept the group MAC
+                    int err = net_ipv4_igmp_join(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr, NULL);
+                    if ((err != 0) && (err != -EALREADY)) {
+                        _Z_ERROR_LOG(_Z_ERR_GENERIC);
+                        ret = _Z_ERR_GENERIC;
+                    }
+#else
                     struct net_if_mcast_addr *mcast = NULL;
                     mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
                     if (!mcast) {
@@ -213,6 +223,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                         ret = _Z_ERR_GENERIC;
                     }
                     net_if_ipv4_maddr_join(ifa, mcast);
+#endif
                 } else
 #endif
 #if defined(CONFIG_NET_IPV6)
@@ -262,6 +273,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
             struct net_if_mcast_addr *mcast = NULL;
 #if defined(CONFIG_NET_IPV4)
             if (rep._iptcp->ai_family == AF_INET) {
+#if defined(CONFIG_NET_IPV4_IGMP)
+                _ZP_UNUSED(mcast);
+                // Errors ignored: the socket will be closed in any case
+                (void)net_ipv4_igmp_leave(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
+#else
                 mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
                 if (mcast != NULL) {
                     net_if_ipv4_maddr_leave(ifa, mcast);
@@ -269,6 +285,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
                 } else {
                     // Do nothing. The socket will be closed in any case.
                 }
+#endif
             } else
 #endif
 #if defined(CONFIG_NET_IPV6)
