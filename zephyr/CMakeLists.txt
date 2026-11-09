@@ -6,6 +6,12 @@ zephyr_include_directories(../include)
 zephyr_include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 zephyr_library()
 
+# Before Zephyr 4.2 the POSIX headers are only on the include path with
+# CONFIG_POSIX_API, which zenoh-pico does not need.
+if(NOT CONFIG_POSIX_API AND NOT CONFIG_POSIX_SYSTEM_HEADERS AND NOT CONFIG_POSIX_SYSTEM_INTERFACES)
+  zephyr_include_directories(${ZEPHYR_BASE}/include/zephyr/posix)
+endif()
+
 zephyr_compile_definitions(ZENOH_ZEPHYR)
 
 # Zenoh pico feature configuration options

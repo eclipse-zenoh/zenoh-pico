@@ -1,0 +1,31 @@
+choice ZP_EXAMPLE
+	prompt "Zenoh-Pico example to build"
+	default ZP_EXAMPLE_PUB
+
+config ZP_EXAMPLE_PUB
+	bool "z_pub: publish on a key expression"
+	depends on ZENOH_PICO_PUBLICATION
+
+config ZP_EXAMPLE_SUB
+	bool "z_sub: subscribe to a key expression"
+	depends on ZENOH_PICO_SUBSCRIPTION
+
+config ZP_EXAMPLE_PULL
+	bool "z_pull: pull samples from a subscriber ring buffer"
+	depends on ZENOH_PICO_SUBSCRIPTION
+
+config ZP_EXAMPLE_GET
+	bool "z_get: send a query"
+	depends on ZENOH_PICO_QUERY
+
+config ZP_EXAMPLE_QUERYABLE
+	bool "z_queryable: answer queries"
+	depends on ZENOH_PICO_QUERYABLE
+
+config ZP_EXAMPLE_SCOUT
+	bool "z_scout: scout for Zenoh nodes"
+	depends on ZENOH_PICO_SCOUTING
+
+endchoice
+
+source "Kconfig.zephyr"
