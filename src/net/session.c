@@ -595,7 +595,9 @@ _z_fut_fn_result_t _z_client_reopen_task_fn(void *ztc_arg, _z_executor_t *execut
                 tc->_session = _z_session_rc_clone_as_weak(&zs);
                 tc->_state = _Z_TRANSPORT_STATE_RECONNECTING;
                 _z_session_rc_drop(&zs);
-                return _z_fut_fn_result_continue();
+                // Retry after 1 s like the open-failure path. An immediate continue()
+                // re-ran connect+send in a tight loop on the executor task and starved the idle task.
+                return _z_fut_fn_result_wake_up_after(1000);
             }
 
             iter = _z_network_message_slist_next(iter);
