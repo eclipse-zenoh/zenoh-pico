@@ -90,12 +90,12 @@ int main(int argc, char** argv) {
     ze_advanced_subscriber_options_t sub_opts;
     ze_advanced_subscriber_options_default(&sub_opts);
     ze_advanced_subscriber_history_options_default(&sub_opts.history);
-    // or sub_opts.history.is_enabled = true;
+    sub_opts.history.is_enabled = true;
     sub_opts.history.detect_late_publishers = true;
     ze_advanced_subscriber_recovery_options_default(&sub_opts.recovery);
-    // or sub_opts.recovery.is_enabled = true;
+    sub_opts.recovery.is_enabled = true;
     ze_advanced_subscriber_last_sample_miss_detection_options_default(&sub_opts.recovery.last_sample_miss_detection);
-    // or sub_opts.recovery.last_sample_miss_detection.is_enabled = true;
+    sub_opts.recovery.last_sample_miss_detection.is_enabled = true;
     sub_opts.recovery.last_sample_miss_detection.periodic_queries_period_ms = 0;
     // use publisher heartbeats by default, otherwise enable periodic queries as follows:
     // sub_opts.recovery.last_sample_miss_detection.periodic_queries_period_ms = 1000;
