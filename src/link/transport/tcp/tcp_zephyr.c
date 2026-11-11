@@ -219,7 +219,18 @@ static size_t _z_tcp_zephyr_read_exact(_z_sys_net_socket_t sock, uint8_t *ptr, s
 }
 
 static size_t _z_tcp_zephyr_write(_z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
-    return (size_t)send(sock._fd, ptr, len, 0);
+    // Zephyr's send() may accept only part of the data when the stack is short of
+    // TX buffers. The caller treats a short write on a stream as a failure, which
+    // would leave part of a frame in the stream, so write until all of it is sent.
+    size_t n = 0;
+    while (n < len) {
+        ssize_t wb = send(sock._fd, ptr + n, len - n, 0);
+        if (wb < (ssize_t)0) {
+            return SIZE_MAX;
+        }
+        n += (size_t)wb;
+    }
+    return n;
 }
 
 z_result_t _z_tcp_endpoint_init(_z_sys_net_endpoint_t *ep, const char *address, const char *port) {
