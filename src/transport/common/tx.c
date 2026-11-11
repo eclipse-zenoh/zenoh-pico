@@ -19,6 +19,7 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -483,6 +484,23 @@ z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z
     return ret;
 }
 
+// The transport is cleared and reopened under the session's transport mutex when
+// the link fails. A sender that does not hold it may use the transport while it
+// is being cleared (a NULL link, dropped mutexes, freed buffers).
+// With congestion control DROP the message is dropped if the mutex is busy.
+static inline z_result_t _z_send_transport_lock(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
+        return _z_mutex_rec_lock(&zn->_mutex_transport);
+    }
+    return _z_mutex_rec_try_lock(&zn->_mutex_transport);
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(cong_ctrl);
+    return _Z_RES_OK;
+#endif
+}
+
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                          z_congestion_control_t cong_ctrl, void *peer) {
 #if defined(Z_TEST_HOOKS)
@@ -495,6 +513,10 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
     }
 #endif
     z_result_t ret = _Z_RES_OK;
+    if (_z_send_transport_lock(zn, cong_ctrl) != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because the transport is busy");
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE: {
@@ -536,11 +558,16 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
+    _z_session_transport_mutex_unlock(zn);
     return ret;
 }
 
 z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
     z_result_t ret = _Z_RES_OK;
+    if (_z_send_transport_lock(zn, cong_ctrl) != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh batch because the transport is busy");
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -567,5 +594,6 @@ z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
+    _z_session_transport_mutex_unlock(zn);
     return ret;
 }
