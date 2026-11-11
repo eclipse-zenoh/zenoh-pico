@@ -79,25 +79,31 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
     return _Z_RES_OK;
 }
 
-static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer, size_t *to_read) {
+static z_result_t _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer, size_t *to_read) {
     switch (ztu->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
+                if (_z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
+                    _Z_INFO("Socket closed");
+                    return _Z_ERR_CONNECTION_CLOSED;
+                }
                 if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztu->_common._zbuf);
-                    return false;
+                    return _Z_NO_DATA_PROCESSED;
                 }
             }
             // Get stream size
             *to_read = _z_read_stream_size(&ztu->_common._zbuf);
             // Read data
             if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
-                _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
+                if (_z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
+                    _Z_INFO("Socket closed");
+                    return _Z_ERR_CONNECTION_CLOSED;
+                }
                 if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
                     _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     _z_zbuf_compact(&ztu->_common._zbuf);
-                    return false;
+                    return _Z_NO_DATA_PROCESSED;
                 }
             }
             break;
@@ -105,13 +111,13 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
             _z_zbuf_compact(&ztu->_common._zbuf);
             *to_read = _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
             if (*to_read == SIZE_MAX) {
-                return false;
+                return _Z_NO_DATA_PROCESSED;
             }
             break;
         default:
             break;
     }
-    return true;
+    return _Z_RES_OK;
 }
 
 z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
@@ -133,12 +139,10 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
         _z_zbuf_reset(&ztu->_common._zbuf);
         size_t to_read = 0;
         // Retrieve data if any
-        if (_z_unicast_client_read(ztu, curr_peer, &to_read)) {
-            // Process data
-            _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read))
-        } else {
-            return _Z_NO_DATA_PROCESSED;
-        }
+        z_result_t read_res = _z_unicast_client_read(ztu, curr_peer, &to_read);
+        _Z_RETURN_IF_ERR(read_res);
+        // Process data
+        _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read));
     }
     return _Z_RES_OK;
 }
@@ -390,7 +394,11 @@ _z_fut_fn_result_t _zp_unicast_read_task_fn(void *ztu_arg, _z_executor_t *execut
         assert(curr_peer != NULL);
         size_t to_read = 0;
         // Retrieve data
-        if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
+        z_result_t read_res = _z_unicast_client_read(ztu, curr_peer, &to_read);
+        if (read_res < _Z_RES_OK) {
+            return _zp_unicast_failed_result(ztu, executor);
+        }
+        if (read_res == _Z_NO_DATA_PROCESSED) {
             // nothing to read
 #if Z_RUNTIME_IDLE_READ_TASK_SLEEP > 0
             return _z_fut_fn_result_wake_up_after(Z_RUNTIME_IDLE_READ_TASK_SLEEP);
