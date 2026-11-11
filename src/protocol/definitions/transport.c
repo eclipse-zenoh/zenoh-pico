@@ -298,6 +298,7 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
 }
 
 void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
+    clone->_sn = msg->_sn;
     clone->_payload = msg->_payload;
     _z_slice_copy(&clone->_payload, &msg->_payload);
     clone->first = msg->first;
