@@ -45,7 +45,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
         _z_transport_message_t t_msg;
         ret = _z_transport_message_decode(&t_msg, &zbuf);
         if (ret != _Z_RES_OK) {
-            _Z_ERROR("Connection closed due to malformed message: %d", ret);
+            _Z_ERROR("Dropping malformed message: %d", ret);
             break;
         }
 
@@ -54,6 +54,12 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm) 
             _Z_ERROR("Dropping message due to processing error: %d", ret);
             break;
         }
+    }
+    // A datagram that cannot be decoded or processed is dropped, and the transport kept: any peer in the group,
+    // or any other application sending to it, could otherwise close the transport of every receiver.
+    // Only a lack of memory is fatal.
+    if (ret != _Z_RES_OK && ret != _Z_ERR_SYSTEM_OUT_OF_MEMORY) {
+        ret = _Z_RES_OK;
     }
     // Move the read position of the read buffer
     _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) + to_read);
