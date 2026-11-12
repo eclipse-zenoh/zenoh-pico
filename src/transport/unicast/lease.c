@@ -138,13 +138,17 @@ _z_fut_fn_result_t _zp_unicast_lease_task_fn(void *ztu_arg, _z_executor_t *execu
     if (mode == Z_WHATAMI_CLIENT) {
         _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
         assert(curr_peer != NULL);
+        // The router promises to send something within the lease it announced, and
+        // sends its keep-alives accordingly. Its lease, not the smaller of the two,
+        // decides when it has expired.
+        _z_zint_t remote_lease = (ztu->_common._remote_lease > 0) ? ztu->_common._remote_lease : ztu->_common._lease;
         if (curr_peer->common._received) {
             // Reset the lease parameters
             curr_peer->common._received = false;
-            return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease);
+            return _z_fut_fn_result_wake_up_after((unsigned long)remote_lease);
         } else {
             // THIS LOG STRING USED IN TEST, change with caution
-            _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
+            _Z_INFO("Closing session because it has expired after %zums", remote_lease);
             return _zp_unicast_failed_result(ztu, executor);
         }
     }
@@ -188,7 +192,8 @@ _z_fut_fn_result_t _zp_unicast_keep_alive_task_fn(void *ztu_arg, _z_executor_t *
             }
         }
         ztu->_common._transmitted = false;
-        return _z_fut_fn_result_wake_up_after((unsigned long)ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+        // This side announced Z_TRANSPORT_LEASE in its OpenSyn, so that is the lease its keep-alives have to keep
+        return _z_fut_fn_result_wake_up_after((unsigned long)Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     }
 // TODO: Should we have a task per peer ?
 #if Z_FEATURE_UNICAST_PEER == 1

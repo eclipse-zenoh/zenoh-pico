@@ -173,7 +173,11 @@ typedef struct {
     _z_zint_t _sn_res;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
+    // Lease used for this side's keep-alives and, in peer mode, for the expiry of the peers
     volatile _z_zint_t _lease;
+    // Lease the remote side announced in its Open message: it promises to send
+    // something within that time. Used for the expiry check in client mode.
+    volatile _z_zint_t _remote_lease;
     volatile bool _transmitted;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_tx;
@@ -268,6 +272,7 @@ typedef struct {
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
     _z_zint_t _lease;
+    _z_zint_t _remote_lease;
     z_whatami_t _remote_whatami;
     uint8_t _key_id_res;
     uint8_t _req_id_res;
