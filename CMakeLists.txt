@@ -32,11 +32,27 @@ else()
   set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
 endif()
 
+# Generate zenoh-pico.h into the build tree; the build and install use that copy.
+# The in-tree include/zenoh-pico.h is kept for non-CMake consumers (PlatformIO,
+# Arduino, ...) and is only rewritten when its content is actually stale.
+# configure_file() always chmods its output, which fails with "Operation not
+# permitted" when the source tree is writable but owned by another user (e.g.
+# CI checkouts on Kubernetes runners), so it must not target the source tree.
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
   @ONLY
 )
+file(READ ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h _zp_generated_header)
+set(_zp_in_tree_header "")
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h)
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h _zp_in_tree_header)
+endif()
+if(NOT _zp_in_tree_header STREQUAL _zp_generated_header)
+  file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h "${_zp_generated_header}")
+endif()
+unset(_zp_generated_header)
+unset(_zp_in_tree_header)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -555,7 +571,7 @@ install(TARGETS ${PICO_LIBS}
   ARCHIVE COMPONENT Dev
   RUNTIME COMPONENT Runtime
 )
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
   DESTINATION include
   COMPONENT Headers
 )
