@@ -83,7 +83,8 @@ static z_result_t _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transpo
     switch (ztu->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                if (_z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
+                if (_z_zbuf_space_left(&ztu->_common._zbuf) > 0 &&
+                    _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
                     _Z_INFO("Socket closed");
                     return _Z_ERR_CONNECTION_CLOSED;
                 }
@@ -96,7 +97,8 @@ static z_result_t _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transpo
             *to_read = _z_read_stream_size(&ztu->_common._zbuf);
             // Read data
             if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
-                if (_z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
+                if (_z_zbuf_space_left(&ztu->_common._zbuf) > 0 &&
+                    _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket) == 0) {
                     _Z_INFO("Socket closed");
                     return _Z_ERR_CONNECTION_CLOSED;
                 }
