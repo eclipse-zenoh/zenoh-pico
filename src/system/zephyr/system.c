@@ -151,6 +151,12 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
         _z_report_system_error(attr_rc);
     }
 
+#ifdef CONFIG_THREAD_NAME
+    char thread_name[CONFIG_THREAD_MAX_NAME_LEN];
+    (void)snprintk(thread_name, sizeof(thread_name), "zenoh%d", stack_slot);
+    (void)pthread_setname_np(*task, thread_name);
+#endif
+
     (void)pthread_mutex_lock(&thread_stack_mutex);
     thread_stack_tasks[stack_slot] = *task;
     thread_stack_task_tracked[stack_slot] = true;
