@@ -61,6 +61,28 @@ static _z_zint_t _z_transport_tx_get_sn(_z_transport_common_t *ztc, z_reliabilit
     return sn;
 }
 
+static z_result_t _z_transport_tx_send_buffer(_z_transport_common_t *ztc, _z_transport_peer_unicast_slist_t *peers) {
+    if (peers == NULL) {
+        _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf, NULL));
+        ztc->_transmitted = true;
+        return _Z_RES_OK;
+    }
+
+    z_result_t result = _Z_RES_OK;
+    for (_z_transport_peer_unicast_slist_t *current = peers; current != NULL;
+         current = _z_transport_peer_unicast_slist_next(current)) {
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(current);
+        z_result_t ret = _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &peer->_socket);
+        if (ret == _Z_RES_OK) {
+            ztc->_transmitted = true;
+        } else if (result == _Z_RES_OK) {
+            // Keep the first failure, but still deliver to the remaining peers.
+            result = ret;
+        }
+    }
+    return result;
+}
+
 #if Z_FEATURE_FRAGMENTATION == 1
 static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc, _z_wbuf_t *frag_buff,
                                                       const _z_network_message_t *n_msg, z_reliability_t reliability,
@@ -70,6 +92,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
     // Encode message on temp buffer
     _Z_RETURN_IF_ERR(_z_network_message_encode(frag_buff, n_msg));
     // Fragment message
+    z_result_t result = _Z_RES_OK;
     while (_z_wbuf_len(frag_buff) > 0) {
         // Get fragment sequence number
         if (!is_first) {
@@ -84,21 +107,16 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
         }
         // Send fragment
         __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link->_cap._flow);
-        if (peers == NULL) {
-            _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf, NULL));
-        } else {
-            _z_transport_peer_unicast_slist_t *curr_list = peers;
-            while (curr_list != NULL) {
-                _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-                // Send on peer socket
-                _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
-                curr_list = _z_transport_peer_unicast_slist_next(curr_list);
-            }
+        ret = _z_transport_tx_send_buffer(ztc, peers);
+        if (ret != _Z_RES_OK && peers == NULL) {
+            return ret;
         }
-        ztc->_transmitted = true;  // Tell session we transmitted data
+        if (result == _Z_RES_OK) {
+            result = ret;
+        }
         is_first = false;
     }
-    return _Z_RES_OK;
+    return result;
 }
 
 static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
@@ -139,22 +157,15 @@ static inline bool _z_transport_tx_batch_has_data(_z_transport_common_t *ztc) {
 static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc, _z_transport_peer_unicast_slist_t *peers) {
     __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link->_cap._flow);
     // Send network message
-    if (peers == NULL) {
-        _Z_RETURN_IF_ERR(_z_link_send_wbuf(ztc->_link, &ztc->_wbuf, NULL));
-    } else {
-        _z_transport_peer_unicast_slist_t *curr_list = peers;
-        while (curr_list != NULL) {
-            _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
-            // Send on peer socket
-            _z_link_send_wbuf(ztc->_link, &ztc->_wbuf, &curr_peer->_socket);
-            curr_list = _z_transport_peer_unicast_slist_next(curr_list);
-        }
+    z_result_t ret = _z_transport_tx_send_buffer(ztc, peers);
+    if (ret != _Z_RES_OK && peers == NULL) {
+        return ret;
     }
-    ztc->_transmitted = true;  // Tell session we transmitted data
 #if Z_FEATURE_BATCHING == 1
+    // A peer batch may already have reached some peers; do not send it again on the next flush.
     ztc->_batch_count = 0;
 #endif
-    return _Z_RES_OK;
+    return ret;
 }
 
 static z_result_t _z_transport_tx_flush_or_incr_batch(_z_transport_common_t *ztc,
