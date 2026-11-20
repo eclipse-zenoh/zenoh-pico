@@ -226,8 +226,14 @@ void _z_declare_data_copy(_z_declare_data_t *dst, const _z_declare_data_t *src) 
     _z_keyexpr_copy(&dst->_key, &src->_key);
 }
 
+// A declaration is identified by the peer that sent it together with its id: every session numbers its entities
+// on its own, so two peers use the same ids for different entities.
 bool _z_declare_data_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
-    return ((left->_id == right->_id) && (left->_type == right->_type));
+    return ((left->_id == right->_id) && (left->_type == right->_type) && (left->_peer == right->_peer));
+}
+
+static bool _z_declare_data_peer_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
+    return left->_peer == right->_peer;
 }
 
 bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two) {
@@ -343,9 +349,10 @@ static z_result_t _unsafe_z_register_declare(_z_session_t *zn, const _z_keyexpr_
     return _Z_RES_OK;
 }
 
-static _z_declare_data_t *_unsafe_z_get_declare(_z_session_t *zn, uint32_t id, uint8_t type) {
+static _z_declare_data_t *_unsafe_z_get_declare(_z_session_t *zn, uint32_t id, uint8_t type,
+                                                _z_transport_peer_common_t *peer) {
     _z_declare_data_slist_t *xs = zn->_remote_declares;
-    _z_declare_data_t comp = {._key = _z_keyexpr_null(), ._id = id, ._type = type, ._complete = false};
+    _z_declare_data_t comp = {._key = _z_keyexpr_null(), ._id = id, ._type = type, ._complete = false, ._peer = peer};
     while (xs != NULL) {
         _z_declare_data_t *decl = _z_declare_data_slist_value(xs);
         if (_z_declare_data_eq(&comp, decl)) {
@@ -356,8 +363,9 @@ static _z_declare_data_t *_unsafe_z_get_declare(_z_session_t *zn, uint32_t id, u
     return NULL;
 }
 
-static z_result_t _unsafe_z_unregister_declare(_z_session_t *zn, uint32_t id, uint8_t type) {
-    _z_declare_data_t decl = {._key = _z_keyexpr_null(), ._id = id, ._type = type, ._complete = false};
+static z_result_t _unsafe_z_unregister_declare(_z_session_t *zn, uint32_t id, uint8_t type,
+                                               _z_transport_peer_common_t *peer) {
+    _z_declare_data_t decl = {._key = _z_keyexpr_null(), ._id = id, ._type = type, ._complete = false, ._peer = peer};
     zn->_remote_declares = _z_declare_data_slist_drop_first_filter(zn->_remote_declares, _z_declare_data_eq, &decl);
     return _Z_RES_OK;
 }
@@ -404,7 +412,7 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_n_msg_declare
     _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&key));
     msg.key = &key;
     // NOTE: it is possible that it is a redeclare of an existing entity - so we might need to update it
-    _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
+    _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type, peer);
     if (prev_decl != NULL) {  // possible change in queryable completness
         prev_decl->_complete = msg.is_complete;
     } else {
@@ -459,7 +467,7 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
     }
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     // Retrieve declare data
-    _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type);
+    _z_declare_data_t *prev_decl = _unsafe_z_get_declare(zn, msg.id, decl_type, peer);
     if (prev_decl == NULL) {
         _z_session_mutex_unlock(zn);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
@@ -467,7 +475,7 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
     _z_session_interest_rc_slist_t *intrs =
         __unsafe_z_get_interest_by_key_and_flags(zn, flags, &prev_decl->_key, _z_optional_id_make_none());
     // Remove declare
-    _unsafe_z_unregister_declare(zn, msg.id, decl_type);
+    _unsafe_z_unregister_declare(zn, msg.id, decl_type, peer);
     _z_session_mutex_unlock(zn);
 
     // Parse session_interest list
@@ -578,6 +586,9 @@ void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t 
         return;
     }
     _z_session_interest_rc_slist_t *intrs = _z_session_interest_rc_slist_clone(zn->_local_interests);
+    // Forget what the peer declared: it must not be replayed to an interest that is registered later
+    _z_declare_data_t gone = {._key = _z_keyexpr_null(), ._id = 0, ._type = 0, ._complete = false, ._peer = peer};
+    zn->_remote_declares = _z_declare_data_slist_drop_all_filter(zn->_remote_declares, _z_declare_data_peer_eq, &gone);
     _z_session_mutex_unlock(zn);
 
     // Parse session_interest list
