@@ -83,6 +83,10 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
     switch (ztu->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                // Make room first: a read of zero bytes returns at once instead of waiting for data
+                if (_z_zbuf_space_left(&ztu->_common._zbuf) == (size_t)0) {
+                    _z_zbuf_compact(&ztu->_common._zbuf);
+                }
                 _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
                 if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztu->_common._zbuf);
@@ -93,6 +97,12 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
             *to_read = _z_read_stream_size(&ztu->_common._zbuf);
             // Read data
             if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
+                // Make room first, as above: move the message, its size included, to the buffer start
+                if (_z_zbuf_space_left(&ztu->_common._zbuf) == (size_t)0) {
+                    _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                    _z_zbuf_compact(&ztu->_common._zbuf);
+                    _z_zbuf_set_rpos(&ztu->_common._zbuf, _Z_MSG_LEN_ENC_SIZE);
+                }
                 _z_link_socket_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
                 if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
                     _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
