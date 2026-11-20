@@ -264,10 +264,17 @@ static void _z_tcp_posix_close(_z_sys_net_socket_t *sock) {
 static size_t _z_tcp_posix_read(_z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < (ssize_t)0) {
+        // Errno can be EAGAIN because of SO_RCVTIMEO
         if (errno != EAGAIN) {
             _Z_DEBUG("Errno: %d\n", errno);
+            // recv() did not wait: do not let a caller that retries starve the other tasks
+            z_sleep_ms(1);
         }
         return SIZE_MAX;
+    }
+    if (rb == (ssize_t)0) {
+        // End of stream, or nothing was asked: recv() did not wait either
+        z_sleep_ms(1);
     }
 
     return (size_t)rb;
