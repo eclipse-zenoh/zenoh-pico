@@ -27,7 +27,8 @@
 
 /* Centralized built-in socket markers for TCP/UDP/WS/TLS transports that use
  * the platform socket layer. */
-#if !defined(ZP_PLATFORM_SOCKET_POSIX) && (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD))
+#if !defined(ZP_PLATFORM_SOCKET_POSIX) && \
+    (defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD) || defined(ZENOH_WASI))
 #define ZP_PLATFORM_SOCKET_POSIX 1
 #endif
 
@@ -82,6 +83,8 @@
 #include "zenoh-pico/system/platform/arduino/esp32.h"
 #elif defined(ZENOH_ARDUINO_OPENCR)
 #include "zenoh-pico/system/platform/arduino/opencr.h"
+#elif defined(ZENOH_WASI)
+#include "zenoh-pico/system/platform/wasi.h"
 #elif defined(ZENOH_EMSCRIPTEN)
 #include "zenoh-pico/system/platform/emscripten.h"
 #elif defined(ZENOH_FLIPPER)
